@@ -23,15 +23,6 @@ add_custom_command(
   COMMAND CXXFLAGS=-fPIC make -C ${SNAP_DIR} Snap.o
   )
 
-# Advds
-#
-# TODO: Remove this one. It is an assortment of some files from different
-# sources. So it is hard to keep track with the upstream. Even worse, some files
-# have severe issues regarding the license. So we should not use them. Luckily
-# those seems easy to write from scratch or find an alternative from well-known
-# libraries (or even the standard libraries).
-set(ADVDS_DIR ${CMAKE_SOURCE_DIR}/lib/advds)
-
 ## Main library
 
 # NOTE: Do not use glob here. Always list source files explicitly. See the style
@@ -39,7 +30,6 @@ set(ADVDS_DIR ${CMAKE_SOURCE_DIR}/lib/advds)
 add_library(macposts STATIC
   src/cc_tree.cpp
   src/due.cpp
-  src/k_shortest_path.cpp
   src/pre_routing.cpp
   src/statistics.cpp
   src/dlink.cpp
@@ -78,7 +68,6 @@ target_include_directories(macposts
   # TODO: Check if those two are really necessary to be public.
   PUBLIC ${SNAP_DIR}
   PUBLIC ${GLIB_DIR}
-  PRIVATE ${ADVDS_DIR}
   )
 set_property(TARGET macposts PROPERTY POSITION_INDEPENDENT_CODE ON)
 

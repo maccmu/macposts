@@ -1,8 +1,6 @@
 #include "factory.h"
 #include "vehicle.h"
 
-#include "union_find.h"
-
 #include <unordered_map>
 
 class MNM_Gridlock_Checker
