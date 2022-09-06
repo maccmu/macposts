@@ -16,6 +16,7 @@ add_subdirectory(lib/eigen)
 # Snap
 find_package(OpenMP REQUIRED)   # Snap requires OpenMP
 
+# TODO: Convert Snap to a CMake based project for each configuration.
 set(SNAP_DIR ${CMAKE_SOURCE_DIR}/lib/snap/snap-core)
 set(GLIB_DIR ${CMAKE_SOURCE_DIR}/lib/snap/glib-core)
 add_custom_command(
@@ -61,6 +62,9 @@ target_link_libraries(macposts
   # and maybe make this private.
   PUBLIC Eigen3::Eigen
   # Snap requires OpenMP
+  #
+  # NOTE: It may not always require OpenMP but often does. See the
+  # 'lib/snap/Makefile.config' file for how it is built on different platforms.
   PRIVATE OpenMP::OpenMP_CXX
   )
 target_include_directories(macposts
