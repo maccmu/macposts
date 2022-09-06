@@ -5,33 +5,23 @@
 # This may not be very strict
 cmake_minimum_required(VERSION 3.10)
 
-project(macposts VERSION 0.1.0)
+project(macposts)
+set(CMAKE_CXX_STANDARD 11)
 
 ## Dependencies
 
-set(DEP_LIBS "")                # Libraries
-set(DEP_INCS "")                # Include directories
-
 # Eigen
-set(CMAKE_CXX_STANDARD 14)      # Eigen requires C++ 14
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
 add_subdirectory(lib/eigen)
-list(APPEND DEP_LIBS PRIVATE Eigen3::Eigen)
 
 # Snap
 find_package(OpenMP REQUIRED)   # Snap requires OpenMP
-list(APPEND DEP_LIBS PRIVATE OpenMP::OpenMP_CXX)
 
 set(SNAP_DIR ${CMAKE_SOURCE_DIR}/lib/snap/snap-core)
 set(GLIB_DIR ${CMAKE_SOURCE_DIR}/lib/snap/glib-core)
 add_custom_command(
-  OUTPUT ${SNAP_DIR}/libsnap.a
-  COMMAND make -C ${SNAP_DIR} lib
+  OUTPUT ${SNAP_DIR}/Snap.o
+  COMMAND make -C ${SNAP_DIR} Snap.o
   )
-list(APPEND DEP_LIBS PRIVATE ${SNAP_DIR}/libsnap.a)
-list(APPEND DEP_INCS PRIVATE ${SNAP_DIR})
-list(APPEND DEP_INCS PRIVATE ${GLIB_DIR})
 
 # Advds
 #
@@ -40,7 +30,7 @@ list(APPEND DEP_INCS PRIVATE ${GLIB_DIR})
 # have severe issues regarding the license. So we should not use them. Luckily
 # those seems easy to write from scratch or find an alternative from well-known
 # libraries (or even the standard libraries).
-list(APPEND DEP_INCS PRIVATE ${CMAKE_SOURCE_DIR}/lib/advds)
+set(ADVDS_DIR ${CMAKE_SOURCE_DIR}/lib/advds)
 
 ## Main library
 
@@ -72,6 +62,20 @@ add_library(macposts STATIC
   src/path.cpp
   src/so_routing.cpp
   src/workzone.cpp
+  # TODO: Here we compile the whole Snap library in to avoid potential issues.
+  # However, it does not look tasteful.
+  ${SNAP_DIR}/Snap.o
   )
-target_include_directories(macposts INTERFACE src ${DEP_INCS})
-target_link_libraries(macposts ${DEP_LIBS})
+target_link_libraries(macposts
+  # TODO: Some header files in src expose Eigen. Check if they can be eliminated
+  # and maybe make this private.
+  PUBLIC Eigen3::Eigen
+  # Snap requires OpenMP
+  PRIVATE OpenMP::OpenMP_CXX
+  )
+target_include_directories(macposts
+  INTERFACE src
+  PRIVATE ${SNAP_DIR}
+  PRIVATE ${GLIB_DIR}
+  PRIVATE ${ADVDS_DIR}
+  )
