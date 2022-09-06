@@ -457,7 +457,8 @@ MNM_Dlink_Ctm_Multiclass::evolve (TInt timestamp)
   // m_finished_array.end(); _veh_it++){ 		MNM_Veh_Multiclass
   // *_veh
   // =
-  // dynamic_cast<MNM_Veh_Multiclass *>(*_veh_it); 		if (_veh -> m_class
+  // dynamic_cast<MNM_Veh_Multiclass *>(*_veh_it); 		if (_veh ->
+  // m_class
   // == 0) _count_car += 1; 		if (_veh -> m_class == 1) _count_truck
   // += 1;
   // 	}
@@ -680,8 +681,8 @@ MNM_Dlink_Ctm_Multiclass::get_link_supply ()
          + TFlt (m_cell_array[0]->m_volume_car))
         / m_flow_scalar;
   // TFlt _real_volume_both = ( TFlt(m_cell_array[0] -> m_volume_truck) * 1 +
-  // 						   TFlt(m_cell_array[0] -> m_volume_car)
-  // ) / m_flow_scalar;
+  // 						   TFlt(m_cell_array[0] ->
+  // m_volume_car) ) / m_flow_scalar;
 
   // m_cell_length can't be 0 according to implementation above
   TFlt _density = _real_volume_both / (m_cell_array[0]->m_cell_length);

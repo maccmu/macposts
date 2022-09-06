@@ -20,7 +20,7 @@ set(SNAP_DIR ${CMAKE_SOURCE_DIR}/lib/snap/snap-core)
 set(GLIB_DIR ${CMAKE_SOURCE_DIR}/lib/snap/glib-core)
 add_custom_command(
   OUTPUT ${SNAP_DIR}/Snap.o
-  COMMAND make -C ${SNAP_DIR} Snap.o
+  COMMAND CXXFLAGS=-fPIC make -C ${SNAP_DIR} Snap.o
   )
 
 # Advds
@@ -75,7 +75,15 @@ target_link_libraries(macposts
   )
 target_include_directories(macposts
   INTERFACE src
-  PRIVATE ${SNAP_DIR}
-  PRIVATE ${GLIB_DIR}
+  # TODO: Check if those two are really necessary to be public.
+  PUBLIC ${SNAP_DIR}
+  PUBLIC ${GLIB_DIR}
   PRIVATE ${ADVDS_DIR}
   )
+set_property(TARGET macposts PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+## Python binding
+
+add_subdirectory(lib/pybind11)
+pybind11_add_module(_macposts_ext macposts/_macposts_ext.cpp)
+target_link_libraries(_macposts_ext PRIVATE macposts)
