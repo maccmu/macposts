@@ -1,0 +1,26 @@
+# pybind11
+graft lib/pybind11/tools
+graft lib/pybind11/include
+include lib/pybind11/CMakeLists.txt
+include lib/pybind11/LICENSE
+
+# Eigen
+graft lib/eigen
+prune lib/eigen/.gitlab
+prune lib/eigen/ci
+
+# Snap
+graft lib/snap/snap-core
+graft lib/snap/glib-core
+include lib/snap/Makefile lib/snap/Makefile.config
+include lib/snap/License.txt
+
+# macposts
+graft src
+include macposts/*.cpp
+include CMakeLists.txt
+
+# exclude generated files…
+global-exclude *.o *.so *.dylib *.dll *.a
+# …and hidden files
+global-exclude .*
