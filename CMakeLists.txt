@@ -11,6 +11,9 @@ set(CMAKE_CXX_STANDARD 11)
 ## Dependencies
 
 # Eigen
+set(EIGEN_BUILD_PKGCONFIG OFF CACHE BOOL "Build Eigen .pc file" FORCE)
+set(EIGEN_BUILD_DOC OFF CACHE BOOL "Build Eigen documentation" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "Build Eigen tests" FORCE)
 add_subdirectory(lib/eigen)
 
 # Snap

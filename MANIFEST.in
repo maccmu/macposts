@@ -5,9 +5,16 @@ include lib/pybind11/CMakeLists.txt
 include lib/pybind11/LICENSE
 
 # Eigen
-graft lib/eigen
-prune lib/eigen/.gitlab
-prune lib/eigen/ci
+graft lib/eigen/Eigen
+graft lib/eigen/blas
+graft lib/eigen/lapack
+graft lib/eigen/unsupported
+graft lib/eigen/demos
+graft lib/eigen/scripts
+graft lib/eigen/bench/spbench
+graft lib/eigen/cmake
+include lib/eigen/CMakeLists.txt
+include lib/eigen/COPYING.*
 
 # Snap
 graft lib/snap/snap-core
