@@ -5,7 +5,7 @@ modeling.
 
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1-dev0"
 
 from _macposts_ext import Dta, Mcdta  # noqa: F401
 from ._compat import *  # noqa: F401,F403
