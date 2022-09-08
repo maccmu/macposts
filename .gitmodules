@@ -1,6 +1,6 @@
 [submodule "lib/snap"]
 	path = lib/snap
-	url = https://github.com/snap-stanford/snap.git
+	url = ../snap.git
 [submodule "lib/eigen"]
 	path = lib/eigen
 	url = https://gitlab.com/libeigen/eigen.git

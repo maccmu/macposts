@@ -8,26 +8,15 @@ cmake_minimum_required(VERSION 3.10)
 project(macposts)
 set(CMAKE_CXX_STANDARD 11)
 
-## Dependencies
+## Main library
 
-# Eigen
 set(EIGEN_BUILD_PKGCONFIG OFF CACHE BOOL "Build Eigen .pc file" FORCE)
 set(EIGEN_BUILD_DOC OFF CACHE BOOL "Build Eigen documentation" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "Build Eigen tests" FORCE)
 add_subdirectory(lib/eigen)
 
-# Snap
-find_package(OpenMP REQUIRED)   # Snap requires OpenMP
-
-# TODO: Convert Snap to a CMake based project for each configuration.
-set(SNAP_DIR ${CMAKE_SOURCE_DIR}/lib/snap/snap-core)
-set(GLIB_DIR ${CMAKE_SOURCE_DIR}/lib/snap/glib-core)
-add_custom_command(
-  OUTPUT ${SNAP_DIR}/Snap.o
-  COMMAND CXXFLAGS=-fPIC make -C ${SNAP_DIR} Snap.o
-  )
-
-## Main library
+add_subdirectory(lib/snap)
+set_property(TARGET snap PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # NOTE: Do not use glob here. Always list source files explicitly. See the style
 # guide at the top of this file.
@@ -56,26 +45,16 @@ add_library(macposts STATIC
   src/path.cpp
   src/so_routing.cpp
   src/workzone.cpp
-  # TODO: Here we compile the whole Snap library in to avoid potential issues.
-  # However, it does not look tasteful.
-  ${SNAP_DIR}/Snap.o
   )
 target_link_libraries(macposts
   # TODO: Some header files in src expose Eigen. Check if they can be eliminated
   # and maybe make this private.
   PUBLIC Eigen3::Eigen
-  # Snap requires OpenMP
-  #
-  # NOTE: It may not always require OpenMP but often does. See the
-  # 'lib/snap/Makefile.config' file for how it is built on different platforms.
-  PRIVATE OpenMP::OpenMP_CXX
+  # We expose many Snap data structures and functions in the interface so this
+  # needs to be public.
+  PUBLIC snap
   )
-target_include_directories(macposts
-  INTERFACE src
-  # TODO: Check if those two are really necessary to be public.
-  PUBLIC ${SNAP_DIR}
-  PUBLIC ${GLIB_DIR}
-  )
+target_include_directories(macposts INTERFACE src)
 set_property(TARGET macposts PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 ## Python binding

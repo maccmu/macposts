@@ -19,7 +19,7 @@ include lib/eigen/COPYING.*
 # Snap
 graft lib/snap/snap-core
 graft lib/snap/glib-core
-include lib/snap/Makefile lib/snap/Makefile.config
+include lib/snap/CMakeLists.txt
 include lib/snap/License.txt
 
 # macposts
