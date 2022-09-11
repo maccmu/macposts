@@ -584,8 +584,8 @@ Mcdta::initialize (std::string folder)
       printf ("MNM_Routing_Biclass_Hybrid start load ID path mapping\n");
       MNM::get_ID_path_mapping (m_ID_path_mapping,
                                 _routing->m_routing_fixed_car->m_path_table);
-      printf ("MNM_Routing_Biclass_Hybrid mapping size %d\n",
-              m_ID_path_mapping.size ());
+      std::cout << "MNM_Routing_Biclass_Hybrid mapping size "
+                << m_ID_path_mapping.size () << std::endl;
       return 0;
     }
   printf ("xxx\n");

@@ -48,7 +48,7 @@ public:
   MNM_DMOND (TInt ID, TFlt flow_scalar);
   virtual ~MNM_DMOND ();
   int virtual evolve (TInt timestamp) override;
-  void virtual print_info ();
+  void virtual print_info () override;
   int virtual add_out_link (MNM_Dlink *out_link) override;
   int hook_up_origin (MNM_Origin *origin);
   std::deque<MNM_Veh *> m_in_veh_queue;
@@ -81,7 +81,7 @@ public:
   MNM_Dnode_Inout (TInt ID, TFlt flow_scalar);
   ~MNM_Dnode_Inout ();
   int virtual evolve (TInt timestamp) override;
-  void virtual print_info ();
+  void virtual print_info () override;
   int virtual prepare_loading () override;
   int virtual add_out_link (MNM_Dlink *out_link) override;
   int virtual add_in_link (MNM_Dlink *in_link) override;

@@ -53,9 +53,4 @@ public:
   // times the num of vehs
 };
 
-// namespace MNM {
-// 	int
-// routing_table_multiply(std::unordered_map<TInt,std::unordered_map<TInt,std::unordered_map<TInt,TFlt*>>>
-// *routing_table, 		float lambda);
-// }
 #endif

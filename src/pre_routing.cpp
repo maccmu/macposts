@@ -231,9 +231,8 @@ int
 MNM_Pre_Routing::update_routing_table_MSA (MNM_PMC_Table pmc_table,
                                            float lambda)
 {
-  // TO DO, not only need to update the routing table, but also the demand of
-  // OD when no departure time choice
-  // MNM::routing_table_multiply(routing_table,1-lambda);
+  // TODO, not only need to update the routing table, but also the demand of OD
+  // when no departure time choice
   return 0;
 }
 
@@ -242,8 +241,7 @@ MNM_Pre_Routing::update_routing_table_MSA1 (MNM_PMC_Table pmc_table_lower,
                                             MNM_PMC_Table pmc_table_upper,
                                             float lambda)
 {
-  // TO DO
-  // MNM::routing_table_multiply(routing_table,1-lambda);
+  // TODO
   return 0;
 }
 
@@ -252,8 +250,7 @@ MNM_Pre_Routing::update_routing_table_MSA2 (MNM_PMC_Table pmc_table_lower,
                                             MNM_PMC_Table pmc_table_upper,
                                             float lambda)
 {
-  // TO DO
-  // MNM::routing_table_multiply(routing_table,1-lambda);
+  // TODO
   return 0;
 }
 
@@ -267,36 +264,5 @@ MNM_Pre_Routing::update_demand (MNM_OD_Factory *od_factory)
 int
 MNM_Pre_Routing::test_function ()
 {
-  return 0;
-}
-
-/**************************************************************************
-                          help functions
-**************************************************************************/
-int
-routing_table_multiply (
-    std::unordered_map<
-        TInt, std::unordered_map<TInt, std::unordered_map<TInt, TFlt *> > >
-        *routing_table,
-    float lambda)
-{
-  for (auto _rt_it = routing_table->begin (); _rt_it != routing_table->end ();
-       _rt_it++)
-    {
-      for (auto _rt_dit = _rt_it->second.begin ();
-           _rt_dit != _rt_it->second.end (); _rt_dit++)
-        {
-          for (auto _demand_it = _rt_dit->second.begin ();
-               _demand_it != _rt_dit->second.end (); _demand_it++)
-            {
-              TFlt *this_demand = _demand_it->second;
-              int demand_size = sizeof (this_demand) / sizeof (this_demand[0]);
-              for (int d_it = 0; d_it < demand_size; d_it++)
-                {
-                  this_demand[d_it] *= lambda;
-                }
-            }
-        }
-    }
   return 0;
 }
