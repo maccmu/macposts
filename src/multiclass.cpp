@@ -7,11 +7,9 @@
 #include <fstream>
 #include <iostream>
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Link Models
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Link Models
+///
 
 MNM_Dlink_Multiclass::MNM_Dlink_Multiclass (
     TInt ID, TInt number_of_lane,
@@ -124,11 +122,10 @@ MNM_Dlink_Multiclass::get_link_freeflow_tt_truck ()
   return m_length / m_ffs_truck;
 }
 
-/*************************************************************************
-                                                Multiclass CTM Functions
-                        (currently only for car & truck two classes)
-        (see: Z. (Sean) Qian et al./Trans. Res. Part B 99 (2017) 183-204)
-**************************************************************************/
+/// Multiclass CTM Functions
+/// (currently only for car & truck two classes)
+/// (see: Z. (Sean) Qian et al./Trans. Res. Part B 99 (2017) 183-204)
+
 MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (
     TInt ID, TInt number_of_lane,
     TFlt length,            // (m)
@@ -734,8 +731,7 @@ MNM_Dlink_Ctm_Multiclass::get_link_tt ()
   return _cost;
 }
 
-/*                                                      Multiclass CTM Cells
-**************************************************************************/
+// Multiclass CTM Cells
 MNM_Dlink_Ctm_Multiclass::Ctm_Cell_Multiclass::Ctm_Cell_Multiclass (
     TFlt cell_length, TFlt unit_time, TFlt hold_cap_car, TFlt hold_cap_truck,
     TFlt critical_density_car, TFlt critical_density_truck, TFlt rho_1_N,
@@ -923,10 +919,8 @@ MNM_Dlink_Ctm_Multiclass::Ctm_Cell_Multiclass::get_perceived_supply (
   return std::max (TFlt (0.0), _tmp) * m_unit_time;
 }
 
-/**************************************************************************
-                                                        Multiclass Link-Queue
-Model
-**************************************************************************/
+/// Multiclass Link-Queue Model
+
 MNM_Dlink_Lq_Multiclass::MNM_Dlink_Lq_Multiclass (
     TInt ID, TInt number_of_lane, TFlt length, TFlt lane_hold_cap_car,
     TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
@@ -1354,10 +1348,8 @@ MNM_Dlink_Lq_Multiclass::get_link_tt ()
   return _cost;
 }
 
-/**************************************************************************
-                                                        Multiclass Point-Queue
-Model
-**************************************************************************/
+/// Multiclass Point-Queue Model
+
 MNM_Dlink_Pq_Multiclass::MNM_Dlink_Pq_Multiclass (
     TInt ID, TInt number_of_lane, TFlt length, TFlt lane_hold_cap_car,
     TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
@@ -1496,15 +1488,12 @@ MNM_Dlink_Pq_Multiclass::get_link_tt ()
   return m_length / m_ffs_car;
 }
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Node Models
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Node Models
+///
 
-/**************************************************************************
-                              Origin node
-**************************************************************************/
+/// Origin node
+
 MNM_DMOND_Multiclass::MNM_DMOND_Multiclass (TInt ID, TFlt flow_scalar,
                                             TFlt veh_convert_factor)
     : MNM_DMOND::MNM_DMOND (ID, flow_scalar)
@@ -1618,9 +1607,8 @@ MNM_DMOND_Multiclass::evolve (TInt timestamp)
   return 0;
 }
 
-/**************************************************************************
-                              Destination node
-**************************************************************************/
+/// Destination node
+
 MNM_DMDND_Multiclass::MNM_DMDND_Multiclass (TInt ID, TFlt flow_scalar,
                                             TFlt veh_convert_factor)
     : MNM_DMDND::MNM_DMDND (ID, flow_scalar)
@@ -1681,9 +1669,8 @@ MNM_DMDND_Multiclass::evolve (TInt timestamp)
   return 0;
 }
 
-/**************************************************************************
-                                                In-out node
-**************************************************************************/
+/// In-out node
+
 MNM_Dnode_Inout_Multiclass::MNM_Dnode_Inout_Multiclass (
     TInt ID, TFlt flow_scalar, TFlt veh_convert_factor)
     : MNM_Dnode::MNM_Dnode (ID, flow_scalar)
@@ -2043,8 +2030,8 @@ MNM_Dnode_Inout_Multiclass::evolve (TInt timestamp)
   return 0;
 }
 
-/*                          FWJ node
-**************************************************************************/
+/// FWJ node
+
 MNM_Dnode_FWJ_Multiclass::MNM_Dnode_FWJ_Multiclass (TInt ID, TFlt flow_scalar,
                                                     TFlt veh_convert_factor)
     : MNM_Dnode_Inout_Multiclass::MNM_Dnode_Inout_Multiclass (
@@ -2078,8 +2065,8 @@ MNM_Dnode_FWJ_Multiclass::compute_flow ()
   return 0;
 }
 
-/*               General Road Junction node
-**************************************************************************/
+/// General Road Junction node
+
 MNM_Dnode_GRJ_Multiclass::MNM_Dnode_GRJ_Multiclass (TInt ID, TFlt flow_scalar,
                                                     TFlt veh_convert_factor)
     : MNM_Dnode_Inout_Multiclass::MNM_Dnode_Inout_Multiclass (
@@ -2116,15 +2103,12 @@ MNM_Dnode_GRJ_Multiclass::compute_flow ()
   return 0;
 }
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass OD
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass OD
+///
 
-/**************************************************************************
-                                        Origin
-**************************************************************************/
+/// Origin
+
 MNM_Origin_Multiclass::MNM_Origin_Multiclass (TInt ID, TInt max_interval,
                                               TFlt flow_scalar, TInt frequency)
     : MNM_Origin::MNM_Origin (ID, max_interval, flow_scalar, frequency)
@@ -2364,9 +2348,8 @@ MNM_Origin_Multiclass::release_one_interval_biclass (
   return 0;
 }
 
-/**************************************************************************
-                                        Destination
-**************************************************************************/
+/// Destination
+
 MNM_Destination_Multiclass::MNM_Destination_Multiclass (TInt ID)
     : MNM_Destination::MNM_Destination (ID)
 {
@@ -2375,11 +2358,10 @@ MNM_Destination_Multiclass::MNM_Destination_Multiclass (TInt ID)
 
 MNM_Destination_Multiclass::~MNM_Destination_Multiclass () { ; }
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass Vehicle
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass Vehicle
+///
+
 MNM_Veh_Multiclass::MNM_Veh_Multiclass (TInt ID, TInt vehicle_class,
                                         TInt start_time)
     : MNM_Veh::MNM_Veh (ID, start_time)
@@ -2391,15 +2373,12 @@ MNM_Veh_Multiclass::MNM_Veh_Multiclass (TInt ID, TInt vehicle_class,
 
 MNM_Veh_Multiclass::~MNM_Veh_Multiclass () { ; }
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass Factory
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass Factory
+///
 
-/**************************************************************************
-                          Vehicle Factory
-**************************************************************************/
+/// Vehicle Factory
+
 MNM_Veh_Factory_Multiclass::MNM_Veh_Factory_Multiclass ()
     : MNM_Veh_Factory::MNM_Veh_Factory ()
 {
@@ -2423,9 +2402,8 @@ MNM_Veh_Factory_Multiclass::make_veh_multiclass (TInt timestamp,
   return _veh;
 }
 
-/**************************************************************************
-                          Node factory
-**************************************************************************/
+/// Node factory
+
 MNM_Node_Factory_Multiclass::MNM_Node_Factory_Multiclass ()
     : MNM_Node_Factory::MNM_Node_Factory ()
 {
@@ -2460,9 +2438,8 @@ MNM_Node_Factory_Multiclass::make_node_multiclass (
   return _node;
 }
 
-/**************************************************************************
-                          Link factory
-**************************************************************************/
+/// Link factory
+
 MNM_Link_Factory_Multiclass::MNM_Link_Factory_Multiclass ()
     : MNM_Link_Factory::MNM_Link_Factory ()
 {
@@ -2507,9 +2484,8 @@ MNM_Link_Factory_Multiclass::make_link_multiclass (
   return _link;
 }
 
-/**************************************************************************
-                          OD factory
-**************************************************************************/
+/// OD factory
+
 MNM_OD_Factory_Multiclass::MNM_OD_Factory_Multiclass ()
     : MNM_OD_Factory::MNM_OD_Factory ()
 {
@@ -2538,11 +2514,10 @@ MNM_OD_Factory_Multiclass::make_origin (TInt ID, TInt max_interval,
   return _origin;
 }
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass IO Functions
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass IO Functions
+///
+
 int
 MNM_IO_Multiclass::build_node_factory_multiclass (
     std::string file_folder, MNM_ConfReader *conf_reader,
@@ -2809,11 +2784,10 @@ MNM_IO_Multiclass::build_demand_multiclass (std::string file_folder,
   return 0;
 }
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass DTA
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass DTA
+///
+
 MNM_Dta_Multiclass::MNM_Dta_Multiclass (std::string file_folder)
     : MNM_Dta::MNM_Dta (file_folder)
 {
@@ -2914,11 +2888,9 @@ MNM_Dta_Multiclass::pre_loading ()
   return 0;
 }
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                Multiclass DTA Gradient Utils
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass DTA Gradient Utils
+///
 
 // All functions/API to python should be coded under this namespace
 namespace MNM_DTA_GRADIENT
@@ -2990,6 +2962,44 @@ get_link_inflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
     }
   return link->m_N_in_truck->get_result (TFlt (end_time))
          - link->m_N_in_truck->get_result (TFlt (start_time));
+}
+
+TFlt
+get_link_outflow_car (MNM_Dlink_Multiclass *link, TFlt start_time,
+                      TFlt end_time)
+{
+  if (!link)
+    throw std::runtime_error ("link is null");
+  if (!link->m_N_out_car)
+    throw std::runtime_error ("link cumulative curve is null");
+  return (link->m_N_out_car->get_result (end_time)
+          - link->m_N_out_car->get_result (start_time));
+}
+
+TFlt
+get_link_outflow_car (MNM_Dlink_Multiclass *link, TInt start_time,
+                      TInt end_time)
+{
+  return get_link_outflow_car (link, TFlt (start_time), TFlt (end_time));
+}
+
+TFlt
+get_link_outflow_truck (MNM_Dlink_Multiclass *link, TFlt start_time,
+                        TFlt end_time)
+{
+  if (!link)
+    throw std::runtime_error ("link is null");
+  if (!link->m_N_out_truck)
+    throw std::runtime_error ("link cumulative curve is null");
+  return (link->m_N_out_truck->get_result (end_time)
+          - link->m_N_out_truck->get_result (start_time));
+}
+
+TFlt
+get_link_outflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
+                        TInt end_time)
+{
+  return get_link_outflow_truck (link, TFlt (start_time), TFlt (end_time));
 }
 
 TFlt
@@ -3214,11 +3224,10 @@ add_dar_records_truck (std::vector<dar_record *> &record,
 
 } // end namespace MNM_DTA_GRADIENT
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                        Multiclass Emissions
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass Emissions
+///
+
 MNM_Cumulative_Emission_Multiclass::MNM_Cumulative_Emission_Multiclass (
     TFlt unit_time, TInt freq)
     : MNM_Cumulative_Emission::MNM_Cumulative_Emission (unit_time, freq)

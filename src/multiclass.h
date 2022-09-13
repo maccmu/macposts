@@ -10,11 +10,9 @@
 
 class MNM_Destination_Multiclass;
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Link Models
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Link Models
+///
 
 class MNM_Dlink_Multiclass : public MNM_Dlink
 {
@@ -53,11 +51,10 @@ public:
   MNM_Tree_Cumulative_Curve *m_N_out_tree_truck;
 };
 
-/**************************************************************************
-                                                        Multiclass CTM
-                        (currently only for car & truck two classes)
-        (see: Z. (Sean) Qian et al./Trans. Res. Part B 99 (2017) 183-204)
-**************************************************************************/
+/// Multiclass CTM Functions
+/// (currently only for car & truck two classes)
+/// (see: Z. (Sean) Qian et al./Trans. Res. Part B 99 (2017) 183-204)
+
 class MNM_Dlink_Ctm_Multiclass : public MNM_Dlink_Multiclass
 {
 public:
@@ -145,10 +142,8 @@ public:
   std::deque<MNM_Veh *> m_veh_queue_truck;
 };
 
-/**************************************************************************
-                                                        Multiclass Link-Queue
-Model
-**************************************************************************/
+/// Multiclass Link-Queue Model
+
 class MNM_Dlink_Lq_Multiclass : public MNM_Dlink_Multiclass
 {
 public:
@@ -197,10 +192,8 @@ public:
   TFlt m_veh_convert_factor;
 };
 
-/**************************************************************************
-                                                        Multiclass Point-Queue
-Model
-**************************************************************************/
+/// Multiclass Point-Queue Model
+
 class MNM_Dlink_Pq_Multiclass : public MNM_Dlink_Multiclass
 {
 public:
@@ -232,15 +225,12 @@ public:
   TFlt m_veh_convert_factor;
 };
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Node Models
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Node Models
+///
 
-/**************************************************************************
-                              Origin node
-**************************************************************************/
+/// Origin node
+
 class MNM_DMOND_Multiclass : public MNM_DMOND
 {
 public:
@@ -250,9 +240,8 @@ public:
   TFlt m_veh_convert_factor;
 };
 
-/**************************************************************************
-                              Destination node
-**************************************************************************/
+/// Destination node
+
 class MNM_DMDND_Multiclass : public MNM_DMDND
 {
 public:
@@ -262,9 +251,8 @@ public:
   TFlt m_veh_convert_factor;
 };
 
-/**************************************************************************
-                              In-Out node
-**************************************************************************/
+/// In-out node
+
 class MNM_Dnode_Inout_Multiclass : public MNM_Dnode
 {
 public:
@@ -290,8 +278,8 @@ protected:
   TFlt m_veh_convert_factor;
 };
 
-/*                           FWJ node
-**************************************************************************/
+/// FWJ node
+
 class MNM_Dnode_FWJ_Multiclass : public MNM_Dnode_Inout_Multiclass
 {
 public:
@@ -301,8 +289,8 @@ public:
   int virtual compute_flow () override;
 };
 
-/*                  General Road Junction node
-**************************************************************************/
+/// General Road Junction node
+
 class MNM_Dnode_GRJ_Multiclass : public MNM_Dnode_Inout_Multiclass
 {
 public:
@@ -323,11 +311,10 @@ private:
   std::vector<int> getOnLocations (int a);
 };
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass OD
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass OD
+///
+
 class MNM_Origin_Multiclass : public MNM_Origin
 {
 public:
@@ -361,11 +348,10 @@ public:
   ~MNM_Destination_Multiclass ();
 };
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass Vehicle
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass Vehicle
+///
+
 class MNM_Veh_Multiclass : public MNM_Veh
 {
 public:
@@ -377,11 +363,10 @@ public:
                                   // visualization
 };
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass Factory
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass Factory
+///
+
 class MNM_Veh_Factory_Multiclass : public MNM_Veh_Factory
 {
 public:
@@ -433,11 +418,10 @@ public:
                                               TInt frequency) override;
 };
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass IO Functions
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass IO Functions
+///
+
 class MNM_IO_Multiclass : public MNM_IO
 {
 public:
@@ -449,22 +433,16 @@ public:
                                             MNM_Link_Factory *link_factory,
                                             std::string file_name
                                             = "MNM_input_link");
-  // static int build_od_factory_multiclass(std::string file_folder,
-  // 										MNM_ConfReader
-  // *conf_reader,
-  // MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory) { 	return
-  // build_od_factory(file_folder, conf_reader, od_factory, node_factory);
-  // };
+
   static int build_demand_multiclass (std::string file_folder,
                                       MNM_ConfReader *conf_reader,
                                       MNM_OD_Factory *od_factory);
 };
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                                Multiclass DTA
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass DTA
+///
+
 class MNM_Dta_Multiclass : public MNM_Dta
 {
 public:
@@ -475,11 +453,10 @@ public:
   int virtual pre_loading () override;
 };
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                Multiclass DTA Gradient Utils
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass DTA Gradient Utils
+///
+
 namespace MNM_DTA_GRADIENT
 {
 TFlt get_link_inflow_car (MNM_Dlink_Multiclass *link, TFlt start_time,
@@ -490,6 +467,14 @@ TFlt get_link_inflow_truck (MNM_Dlink_Multiclass *link, TFlt start_time,
                             TFlt end_time);
 TFlt get_link_inflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
                             TInt end_time);
+TFlt get_link_outflow_car (MNM_Dlink_Multiclass *link, TFlt start_time,
+                           TFlt end_time);
+TFlt get_link_outflow_car (MNM_Dlink_Multiclass *link, TInt start_time,
+                           TInt end_time);
+TFlt get_link_outflow_truck (MNM_Dlink_Multiclass *link, TFlt start_time,
+                             TFlt end_time);
+TFlt get_link_outflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
+                             TInt end_time);
 
 TFlt get_average_waiting_time_at_intersection (MNM_Dlink_Multiclass *link);
 TInt get_is_spillback (
@@ -510,11 +495,10 @@ int add_dar_records_truck (std::vector<dar_record *> &record,
                            TFlt end_time);
 }
 
-/******************************************************************************************************************
-*******************************************************************************************************************
-                                                                                        Multiclass Emissions
-*******************************************************************************************************************
-******************************************************************************************************************/
+///
+/// Multiclass Emissions
+///
+
 class MNM_Cumulative_Emission_Multiclass : public MNM_Cumulative_Emission
 {
 public:

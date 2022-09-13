@@ -514,9 +514,17 @@ public:
                                            py::array_t<int> end_intervals);
   py::array_t<double> get_link_truck_inflow (py::array_t<int> start_intervals,
                                              py::array_t<int> end_intervals);
+  py::array_t<double> get_link_car_outflow (py::array_t<int> start_intervals,
+                                            py::array_t<int> end_intervals);
+  py::array_t<double> get_link_truck_outflow (py::array_t<int> start_intervals,
+                                              py::array_t<int> end_intervals);
+
+  py::array_t<double> get_car_link_in_cc (int link_ID);
+  py::array_t<double> get_truck_link_in_cc (int link_ID);
+  py::array_t<double> get_car_link_out_cc (int link_ID);
+  py::array_t<double> get_truck_link_out_cc (int link_ID);
 
   int register_paths (py::array_t<int> paths);
-  // py::array_t<double> get_car_link_out_cc(int link_ID);
 
   py::array_t<double> get_enroute_and_queue_veh_stats_agg ();
   py::array_t<double> get_queue_veh_each_link (py::array_t<int> useful_links,
@@ -1147,6 +1155,141 @@ Mcdta::get_link_truck_inflow (py::array_t<int> start_intervals,
   return result;
 }
 
+py::array_t<double>
+Mcdta::get_link_car_outflow (py::array_t<int> start_intervals,
+                             py::array_t<int> end_intervals)
+{
+  auto start_buf = start_intervals.request ();
+  auto end_buf = end_intervals.request ();
+  if (start_buf.ndim != 1 || end_buf.ndim != 1)
+    throw std::runtime_error ("input dismensions mismatch");
+  if (start_buf.shape[0] != end_buf.shape[0])
+    throw std::runtime_error ("input lengths mismatch");
+  int l = start_buf.shape[0];
+  int new_shape[] = { (int)m_link_vec.size (), l };
+  auto result = py::array_t<double> (new_shape);
+  auto result_buf = result.request ();
+  double *result_ptr = (double *)result_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
+  for (int t = 0; t < l; ++t)
+    {
+      if (end_ptr[t] < start_ptr[t])
+        throw std::runtime_error ("end time smaller than start time");
+      if (end_ptr[t] > get_cur_loading_interval ())
+        throw std::runtime_error ("loaded data not enough");
+      for (size_t i = 0; i < m_link_vec.size (); ++i)
+        result_ptr[i * l + t] = MNM_DTA_GRADIENT::get_link_outflow_car (
+            m_link_vec[i], TFlt (start_ptr[t]), TFlt (end_ptr[t])) ();
+    }
+  return result;
+}
+
+py::array_t<double>
+Mcdta::get_link_truck_outflow (py::array_t<int> start_intervals,
+                               py::array_t<int> end_intervals)
+{
+  auto start_buf = start_intervals.request ();
+  auto end_buf = end_intervals.request ();
+  if (start_buf.ndim != 1 || end_buf.ndim != 1)
+    throw std::runtime_error ("input dismensions mismatch");
+  if (start_buf.shape[0] != end_buf.shape[0])
+    throw std::runtime_error ("input lengths mismatch");
+  int l = start_buf.shape[0];
+  int new_shape[] = { (int)m_link_vec.size (), l };
+  auto result = py::array_t<double> (new_shape);
+  auto result_buf = result.request ();
+  double *result_ptr = (double *)result_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
+  for (int t = 0; t < l; ++t)
+    {
+      if (end_ptr[t] < start_ptr[t])
+        throw std::runtime_error ("end time smaller than start time");
+      if (end_ptr[t] > get_cur_loading_interval ())
+        throw std::runtime_error ("loaded data not enough");
+      for (size_t i = 0; i < m_link_vec.size (); ++i)
+        result_ptr[i * l + t] = MNM_DTA_GRADIENT::get_link_outflow_truck (
+            m_link_vec[i], TFlt (start_ptr[t]), TFlt (end_ptr[t])) ();
+    }
+  return result;
+}
+
+py::array_t<double>
+Mcdta::get_car_link_in_cc (int link_ID)
+{
+  auto l = dynamic_cast<MNM_Dlink_Multiclass *> (
+      m_mcdta->m_link_factory->get_link (TInt (link_ID)));
+  if (!l->m_N_in_car)
+    throw std::runtime_error ("cc not installed");
+  auto rec = l->m_N_in_car->m_recorder;
+  int shape[2] = { (int)rec.size (), 2 };
+  auto result = py::array_t<double> (shape);
+  double *result_ptr = (double *)result.request ().ptr;
+  for (size_t i = 0; i < rec.size (); ++i)
+    {
+      result_ptr[i * 2] = rec[i].first ();
+      result_ptr[i * 2 + 1] = rec[i].second ();
+    }
+  return result;
+}
+
+py::array_t<double>
+Mcdta::get_truck_link_in_cc (int link_ID)
+{
+  auto l = dynamic_cast<MNM_Dlink_Multiclass *> (
+      m_mcdta->m_link_factory->get_link (TInt (link_ID)));
+  if (!l->m_N_in_truck)
+    throw std::runtime_error ("cc not installed");
+  auto rec = l->m_N_in_truck->m_recorder;
+  int shape[2] = { (int)rec.size (), 2 };
+  auto result = py::array_t<double> (shape);
+  double *result_ptr = (double *)result.request ().ptr;
+  for (size_t i = 0; i < rec.size (); ++i)
+    {
+      result_ptr[i * 2] = rec[i].first ();
+      result_ptr[i * 2 + 1] = rec[i].second ();
+    }
+  return result;
+}
+
+py::array_t<double>
+Mcdta::get_car_link_out_cc (int link_ID)
+{
+  auto l = dynamic_cast<MNM_Dlink_Multiclass *> (
+      m_mcdta->m_link_factory->get_link (TInt (link_ID)));
+  if (!l->m_N_out_car)
+    throw std::runtime_error ("cc not installed");
+  auto rec = l->m_N_out_car->m_recorder;
+  int shape[2] = { (int)rec.size (), 2 };
+  auto result = py::array_t<double> (shape);
+  double *result_ptr = (double *)result.request ().ptr;
+  for (size_t i = 0; i < rec.size (); ++i)
+    {
+      result_ptr[i * 2] = rec[i].first ();
+      result_ptr[i * 2 + 1] = rec[i].second ();
+    }
+  return result;
+}
+
+py::array_t<double>
+Mcdta::get_truck_link_out_cc (int link_ID)
+{
+  auto l = dynamic_cast<MNM_Dlink_Multiclass *> (
+      m_mcdta->m_link_factory->get_link (TInt (link_ID)));
+  if (!l->m_N_out_truck)
+    throw std::runtime_error ("cc not installed");
+  auto rec = l->m_N_out_truck->m_recorder;
+  int shape[2] = { (int)rec.size (), 2 };
+  auto result = py::array_t<double> (shape);
+  double *result_ptr = (double *)result.request ().ptr;
+  for (size_t i = 0; i < rec.size (); ++i)
+    {
+      result_ptr[i * 2] = rec[i].first ();
+      result_ptr[i * 2 + 1] = rec[i].second ();
+    }
+  return result;
+}
 int
 Mcdta::register_paths (py::array_t<int> paths)
 {
@@ -1181,28 +1324,6 @@ Mcdta::register_paths (py::array_t<int> paths)
   m_path_set = std::set<MNM_Path *> (m_path_vec.begin (), m_path_vec.end ());
   return 0;
 }
-
-// py::array_t<double> Mcdta::get_car_link_out_cc(int link_ID)
-// {
-//   MNM_Dlink_Multiclass *_link = (MNM_Dlink_Multiclass *) m_mcdta ->
-//   m_link_factory -> get_link(TInt(link_ID)); printf("%d\n", _link ->
-//   m_link_ID()); if (_link -> m_N_out_car == NULL){
-//     throw std::runtime_error("Error, Mcdta::get_car_link_out_cc, cc not
-//     installed");
-//   }
-//   printf("1\n");
-//   std::deque<std::pair<TFlt, TFlt>> _record = _link -> m_N_out_car ->
-//   m_recorder; int new_shape [2] = { (int) _record.size(), 2}; auto result =
-//   py::array_t<double>(new_shape); printf("2\n"); auto result_buf =
-//   result.request(); double *result_prt = (double *) result_buf.ptr;
-//   printf("3\n");
-//   for (size_t i=0; i< _record.size(); ++i){
-//     result_prt[i * 2 ] = _record[i].first();
-//     result_prt[i * 2 + 1 ] =  _record[i].second();
-//   }
-//   printf("5\n");
-//   return result;
-// }
 
 py::array_t<double>
 Mcdta::get_enroute_and_queue_veh_stats_agg ()
@@ -1495,17 +1616,21 @@ PYBIND11_MODULE (_macposts_ext, m)
       .def ("get_truck_link_tt", &Mcdta::get_truck_link_tt)
       .def ("get_car_link_out_num", &Mcdta::get_car_link_out_num)
       .def ("get_truck_link_out_num", &Mcdta::get_truck_link_out_num)
-      // .def("get_car_link_out_cc", &Mcdta::get_car_link_out_cc);
       .def ("get_car_link_speed", &Mcdta::get_car_link_speed)
       .def ("get_truck_link_speed", &Mcdta::get_truck_link_speed)
       .def ("get_link_car_inflow", &Mcdta::get_link_car_inflow)
       .def ("get_link_truck_inflow", &Mcdta::get_link_truck_inflow)
+      .def ("get_link_car_outflow", &Mcdta::get_link_car_outflow)
+      .def ("get_link_truck_outflow", &Mcdta::get_link_truck_outflow)
       .def ("get_enroute_and_queue_veh_stats_agg",
             &Mcdta::get_enroute_and_queue_veh_stats_agg)
       .def ("get_queue_veh_each_link", &Mcdta::get_queue_veh_each_link)
       .def ("get_car_link_out_num", &Mcdta::get_car_link_out_num)
       .def ("get_truck_link_out_num", &Mcdta::get_truck_link_out_num)
-      //.def("get_car_link_out_cc", &Mcdta::get_car_link_out_cc)
+      .def ("get_car_link_in_cc", &Mcdta::get_car_link_in_cc)
+      .def ("get_truck_link_in_cc", &Mcdta::get_truck_link_in_cc)
+      .def ("get_car_link_out_cc", &Mcdta::get_car_link_out_cc)
+      .def ("get_truck_link_out_cc", &Mcdta::get_truck_link_out_cc)
       .def ("get_car_dar_matrix", &Mcdta::get_car_dar_matrix)
       .def ("get_truck_dar_matrix", &Mcdta::get_truck_dar_matrix)
 
