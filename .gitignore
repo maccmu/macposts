@@ -2,6 +2,8 @@
 *.a
 *.o
 *.so
+*.dylib
+*.dll
 __pycache__/
 *.py[cod]
 /build/
@@ -9,3 +11,5 @@ __pycache__/
 *.egg-info
 *.patch
 *.diff
+TAGS
+tags
