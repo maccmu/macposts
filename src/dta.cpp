@@ -1,5 +1,4 @@
 #include "dta.h"
-#include "omp.h"
 
 MNM_Dta::MNM_Dta (std::string file_folder)
 {

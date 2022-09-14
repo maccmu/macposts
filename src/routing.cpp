@@ -1,5 +1,4 @@
 #include "routing.h"
-#include <omp.h>
 
 MNM_Routing::MNM_Routing (PNEGraph &graph, MNM_OD_Factory *od_factory,
                           MNM_Node_Factory *node_factory,
@@ -154,7 +153,6 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
       for (auto _it = m_od_factory->m_destination_map.begin ();
            _it != m_od_factory->m_destination_map.end (); _it++)
         {
-          // #pragma omp task firstprivate(_it)
           // {
           _dest = _it->second;
           _dest_node_ID = _dest->m_dest_node->m_node_ID;
