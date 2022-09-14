@@ -59,7 +59,7 @@ class CMakeBuild(build_ext):
         build_temp = Path(self.build_temp) / ext.name
         if not build_temp.exists():
             build_temp.mkdir(parents=True, exist_ok=False)
-        check_call(["cmake", ext.sourcedir] + cmake_args, cwd=build_temp)
+        check_call(["cmake", str(ext.sourcedir)] + cmake_args, cwd=build_temp)
         check_call(["cmake", "--build", "."] + build_args, cwd=build_temp)
 
 setup(
