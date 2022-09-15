@@ -111,5 +111,5 @@ void static inline copy_veh (MNM_Veh *_veh, MNM_Veh *_new_veh,
       _veh->get_destination ()->m_Dest_ID));
   _new_veh->set_origin (
       _shot->m_od_factory->get_origin (_veh->get_origin ()->m_Origin_ID));
-};
+}
 #endif

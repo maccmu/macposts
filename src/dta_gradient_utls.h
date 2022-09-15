@@ -38,5 +38,5 @@ int add_dar_records_eigen (std::vector<Eigen::Triplet<double> > &record,
                            TFlt start_time, TFlt end_time, int link_ind,
                            int interval_ind, int num_e_link, int num_e_path,
                            double *f_ptr);
-};
+}
 #endif
