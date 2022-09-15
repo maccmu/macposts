@@ -1,13 +1,17 @@
-#include "Snap.h"
-#include "dta.h"
-#include "dta_gradient_utls.h"
-#include "multiclass.h"
+// XXX: Include other header first, then Snap, then ours to avoid some nasty
+// compilation errors on macOS.
+
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <set>
 #include <unordered_map>
 #include <vector>
+
+#include <Snap.h>
+#include <dta.h>
+#include <dta_gradient_utls.h>
+#include <multiclass.h>
 
 namespace py = pybind11;
 using SparseMatrixR = Eigen::SparseMatrix<double, Eigen::RowMajor>;
