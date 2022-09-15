@@ -1,5 +1,8 @@
-// XXX: Include other header first, then Snap, then ours to avoid some nasty
-// compilation errors on macOS.
+// XXX: On macOS with the stock Clang compiler, including 'pybind11/eigen.h'
+// after 'Snap.h' will cause a nasty compilation error because Snap defines an
+// overloaded '!=' operator and the compiler is confused. So here is a quick
+// and dirty fix: include 'pybind11/eigen.h' first. However, we probably need
+// to find a real solution.
 
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
