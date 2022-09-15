@@ -27,3 +27,6 @@ jobs:
 
     - name: Build and install
       run: pip install --verbose .
+
+    - name: Try to import
+      run: python -c 'import macposts'
