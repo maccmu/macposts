@@ -1,7 +1,7 @@
 # macposts
 
 A toolkit for transportation network modeling. To install from the repository,
-first ensure a working C++ toolchain (with OpenMP support) and CMake >= 3.10.
+first ensure a working C++ toolchain (with OpenMP support) and CMake ≥ 3.10.
 Then clone this repository (with `--recurse-submodules` ), and run at the root:
 
 ```sh
@@ -18,10 +18,10 @@ instead to also install the development tools and enable editable mode.
 
 ## Contributors
 
-- Wei Ma: original author and former maintainer.
-- Xidong Pi: former co-maintainer.
-- Pengji Zhang: current maintainer.
-- Sean Qian: advisor.
+- Wei Ma: author and former maintainer
+- Xidong Pi: co-author and former maintainer
+- Pengji Zhang: current maintainer
+- Sean Qian: advisor
 
 ## License
 
