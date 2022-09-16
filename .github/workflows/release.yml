@@ -28,7 +28,7 @@ jobs:
         platform: [ubuntu-latest, macos-latest]
 
     name: Release wheels on ${{ matrix.platform }}
-    runs: ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}
 
     steps:
     - uses: actions/checkout@v3
