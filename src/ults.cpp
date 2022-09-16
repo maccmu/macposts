@@ -2,7 +2,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <string>
-
+#include <Snap.h>
 #include "ults.h"
 
 namespace MNM_Ults
