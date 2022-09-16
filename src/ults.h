@@ -6,41 +6,28 @@
 #include <map>
 #include <string>
 
-// struct TIntHash {
-//  std::size_t operator()(const TInt& i) const
-//  {
-//      return std::hash<int>()(i());
-//  }
-// };
-
-namespace std
+template <> struct std::hash<TInt>
 {
-template <> struct hash<TInt>
-{
-  typedef TInt argument_type;
-  typedef std::size_t result_type;
-  result_type
-  operator() (argument_type const &s) const
+  std::size_t
+  operator() (const TInt &s) const
   {
     return std::hash<int> () (s ());
   }
 };
-}
 
-class MNM_Ults
+namespace MNM_Ults
 {
-public:
-  static TInt round (TFlt in);
-  static TFlt min (TFlt a, TFlt b);
-  static TInt min (TInt a, TInt b);
-  static TFlt max (TFlt a, TFlt b);
-  static TFlt divide (TFlt a, TFlt b);
-  static TInt mod (TInt a, TInt b);
-  static TFlt rand_flt ();
-  static TFlt max_link_cost ();
-  static int copy_file (const char *srce_file, const char *dest_file);
-  static int copy_file (std::string srce_file, std::string dest_file);
-};
+  TInt round (TFlt a);
+  TFlt min (TFlt a, TFlt b);
+  TInt min (TInt a, TInt b);
+  TFlt max (TFlt a, TFlt b);
+  TFlt divide (TFlt a, TFlt b);
+  TInt mod (TInt a, TInt b);
+  TFlt rand_flt ();
+  TFlt max_link_cost ();
+  int copy_file (const char *srce_file, const char *dest_file);
+  int copy_file (std::string srce_file, std::string dest_file);
+}
 
 class Chameleon
 {

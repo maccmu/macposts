@@ -6,11 +6,11 @@
 #include <string>
 
 TInt
-MNM_Ults::round (TFlt in)
+MNM_Ults::round (TFlt a)
 {
   TFlt rdNum = TFlt (std::rand () / (1.0 * RAND_MAX));
-  TFlt floorN = TFlt (TInt (in));
-  if ((in - floorN) > rdNum)
+  TFlt floorN = TFlt (TInt (a));
+  if ((a - floorN) > rdNum)
     return TInt (floorN + 1);
   else
     return TInt (floorN);
