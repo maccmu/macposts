@@ -1,87 +1,88 @@
-#include "ults.h"
-
 #include <fstream>
 #include <sstream>
 #include <stdlib.h>
 #include <string>
 
-TInt
-MNM_Ults::round (TFlt in)
-{
-  TFlt rdNum = TFlt (std::rand () / (1.0 * RAND_MAX));
-  TFlt floorN = TFlt (TInt (in));
-  if ((in - floorN) > rdNum)
-    return TInt (floorN + 1);
-  else
-    return TInt (floorN);
-}
+#include "ults.h"
 
-TInt
-MNM_Ults::min (TInt a, TInt b)
+namespace MNM_Ults
 {
-  return a < b ? a : b;
-}
+  TInt
+  round (TFlt in)
+  {
+    TFlt rdNum = TFlt (std::rand () / (1.0 * RAND_MAX));
+    TFlt floorN = TFlt (TInt (in));
+    if ((in - floorN) > rdNum)
+      return TInt (floorN + 1);
+    else
+      return TInt (floorN);
+  }
 
-TFlt
-MNM_Ults::min (TFlt a, TFlt b)
-{
-  return a < b ? a : b;
-}
+  TInt
+  min (TInt a, TInt b)
+  {
+    return a < b ? a : b;
+  }
 
-TFlt
-MNM_Ults::max (TFlt a, TFlt b)
-{
-  return a > b ? a : b;
-}
+  TFlt
+  min (TFlt a, TFlt b)
+  {
+    return a < b ? a : b;
+  }
 
-TFlt
-MNM_Ults::divide (TFlt a, TFlt b)
-{
-  if (a == TFlt (0))
-    return TFlt (0);
-  if (b == TFlt (0))
-    return TFlt (0);
-  return a / b;
-}
+  TFlt
+  max (TFlt a, TFlt b)
+  {
+    return a > b ? a : b;
+  }
 
-TInt
-MNM_Ults::mod (TInt a, TInt b)
-{
-  if (b == TInt (0))
-    return TInt (0);
-  return a % b;
-}
+  TFlt
+  divide (TFlt a, TFlt b)
+  {
+    if (a == TFlt (0))
+      return TFlt (0);
+    if (b == TFlt (0))
+      return TFlt (0);
+    return a / b;
+  }
 
-TFlt
-MNM_Ults::rand_flt ()
-{
-  return TFlt ((double)rand () / (RAND_MAX));
-}
+  TInt
+  mod (TInt a, TInt b)
+  {
+    if (b == TInt (0))
+      return TInt (0);
+    return a % b;
+  }
 
-TFlt
-MNM_Ults::max_link_cost ()
-{
-  return TFlt (60 * 60);
-}
+  TFlt
+  rand_flt ()
+  {
+    return TFlt ((double)rand () / (RAND_MAX));
+  }
 
-int
-MNM_Ults::copy_file (const char *srce_file, const char *dest_file)
-{
-  std::ifstream srce (srce_file, std::ios::binary);
-  std::ofstream dest (dest_file, std::ios::binary);
-  dest << srce.rdbuf ();
-  return 0;
-}
+  TFlt
+  max_link_cost ()
+  {
+    return TFlt (60 * 60);
+  }
 
-int
-MNM_Ults::copy_file (std::string srce_file, std::string dest_file)
-{
-  return MNM_Ults::copy_file (srce_file.c_str (), dest_file.c_str ());
+  int
+  copy_file (const char *srce_file, const char *dest_file)
+  {
+    std::ifstream srce (srce_file, std::ios::binary);
+    std::ofstream dest (dest_file, std::ios::binary);
+    dest << srce.rdbuf ();
+    return 0;
+  }
+
+  int
+  copy_file (std::string srce_file, std::string dest_file)
+  {
+    return MNM_Ults::copy_file (srce_file.c_str (), dest_file.c_str ());
+  }
 }
 
 Chameleon::Chameleon (std::string const &value) { value_ = value; }
-
-#include <iostream>
 
 Chameleon::Chameleon (const char *c) { value_ = c; }
 
@@ -176,7 +177,7 @@ ConfigFile::Value (std::string const &section, std::string const &entry) const
 {
 
   std::map<std::string, Chameleon>::const_iterator ci
-      = content_.find (section + '/' + entry);
+    = content_.find (section + '/' + entry);
 
   if (ci == content_.end ())
     throw "does not exist";
@@ -195,8 +196,8 @@ ConfigFile::Value (std::string const &section, std::string const &entry,
   catch (const char *)
     {
       return content_
-          .insert (std::make_pair (section + '/' + entry, Chameleon (value)))
-          .first->second;
+        .insert (std::make_pair (section + '/' + entry, Chameleon (value)))
+        .first->second;
     }
 }
 
@@ -211,8 +212,8 @@ ConfigFile::Value (std::string const &section, std::string const &entry,
   catch (const char *)
     {
       return content_
-          .insert (std::make_pair (section + '/' + entry, Chameleon (value)))
-          .first->second;
+        .insert (std::make_pair (section + '/' + entry, Chameleon (value)))
+        .first->second;
     }
 }
 
