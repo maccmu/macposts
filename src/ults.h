@@ -11,22 +11,22 @@ template <> struct std::hash<TInt>
   std::size_t
   operator() (const TInt &s) const
   {
-    return std::hash<int> () (s());
+    return std::hash<int> () (s ());
   }
 };
 
 namespace MNM_Ults
 {
-  TInt round (TFlt in);
-  TFlt min (TFlt a, TFlt b);
-  TInt min (TInt a, TInt b);
-  TFlt max (TFlt a, TFlt b);
-  TFlt divide (TFlt a, TFlt b);
-  TInt mod (TInt a, TInt b);
-  TFlt rand_flt ();
-  TFlt max_link_cost ();
-  int copy_file (const char *srce_file, const char *dest_file);
-  int copy_file (std::string srce_file, std::string dest_file);
+TInt round (TFlt in);
+TFlt min (TFlt a, TFlt b);
+TInt min (TInt a, TInt b);
+TFlt max (TFlt a, TFlt b);
+TFlt divide (TFlt a, TFlt b);
+TInt mod (TInt a, TInt b);
+TFlt rand_flt ();
+TFlt max_link_cost ();
+int copy_file (const char *srce_file, const char *dest_file);
+int copy_file (std::string srce_file, std::string dest_file);
 }
 
 class Chameleon

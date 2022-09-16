@@ -27,16 +27,17 @@ public:
                                   std::unordered_map<TInt, TFlt> &dist_to_dest,
                                   std::unordered_map<TInt, TFlt> &cost_map,
                                   std::unordered_map<TInt, TInt> &output_map);
-  static int all_to_one_Dijkstra (
-      TInt destination_ID, PNEGraph graph,
-      std::unordered_map<TInt, TFlt *> &cost_map,
-      std::unordered_map<TInt, TFlt *> &dist_to_dest,
-      std::unordered_map<TInt, TInt *> &output_map, TInt cost_position,
-      TInt dist_position, TInt output_position);
-  static int all_to_one_Dijkstra_deprecated (
-      TInt dest_node_ID, PNEGraph graph,
-      std::unordered_map<TInt, TFlt> &cost_map,
-      std::unordered_map<TInt, TInt> &output_map);
+  static int
+  all_to_one_Dijkstra (TInt destination_ID, PNEGraph graph,
+                       std::unordered_map<TInt, TFlt *> &cost_map,
+                       std::unordered_map<TInt, TFlt *> &dist_to_dest,
+                       std::unordered_map<TInt, TInt *> &output_map,
+                       TInt cost_position, TInt dist_position,
+                       TInt output_position);
+  static int
+  all_to_one_Dijkstra_deprecated (TInt dest_node_ID, PNEGraph graph,
+                                  std::unordered_map<TInt, TFlt> &cost_map,
+                                  std::unordered_map<TInt, TInt> &output_map);
   static int all_to_one_FIFO (TInt dest_node_ID, PNEGraph graph,
                               const std::unordered_map<TInt, TFlt> &cost_map,
                               std::unordered_map<TInt, TInt> &output_map);
