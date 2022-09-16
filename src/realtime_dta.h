@@ -99,7 +99,7 @@ MNM_Dta_Screenshot *make_empty_screenshot (std::string file_folder,
 int update_path_p (Path_Table *path_table, TInt col, TFlt step_size);
 }
 
-void static inline copy_veh (MNM_Veh *_veh, MNM_Veh *_new_veh,
+static inline void copy_veh (MNM_Veh *_veh, MNM_Veh *_new_veh,
                              MNM_Dta_Screenshot *_shot)
 {
   _new_veh->m_current_link

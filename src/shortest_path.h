@@ -16,41 +16,41 @@ class MNM_Path;
 class MNM_Shortest_Path
 {
 public:
-  int static one_to_one (TInt origin_node_ID, TInt dest_node_ID,
+  static int one_to_one (TInt origin_node_ID, TInt dest_node_ID,
                          PNEGraph graph,
                          std::unordered_map<TInt, TFlt> &cost_map,
                          std::vector<TInt> &output_array);
-  int static all_to_one_Dijkstra (TInt dest_node_ID, PNEGraph graph,
+  static int all_to_one_Dijkstra (TInt dest_node_ID, PNEGraph graph,
                                   std::unordered_map<TInt, TFlt> &cost_map,
                                   std::unordered_map<TInt, TInt> &output_map);
-  int static all_to_one_Dijkstra (TInt destination_ID, PNEGraph graph,
+  static int all_to_one_Dijkstra (TInt destination_ID, PNEGraph graph,
                                   std::unordered_map<TInt, TFlt> &dist_to_dest,
                                   std::unordered_map<TInt, TFlt> &cost_map,
                                   std::unordered_map<TInt, TInt> &output_map);
-  int static all_to_one_Dijkstra (
+  static int all_to_one_Dijkstra (
       TInt destination_ID, PNEGraph graph,
       std::unordered_map<TInt, TFlt *> &cost_map,
       std::unordered_map<TInt, TFlt *> &dist_to_dest,
       std::unordered_map<TInt, TInt *> &output_map, TInt cost_position,
       TInt dist_position, TInt output_position);
-  int static all_to_one_Dijkstra_deprecated (
+  static int all_to_one_Dijkstra_deprecated (
       TInt dest_node_ID, PNEGraph graph,
       std::unordered_map<TInt, TFlt> &cost_map,
       std::unordered_map<TInt, TInt> &output_map);
-  int static all_to_one_FIFO (TInt dest_node_ID, PNEGraph graph,
+  static int all_to_one_FIFO (TInt dest_node_ID, PNEGraph graph,
                               const std::unordered_map<TInt, TFlt> &cost_map,
                               std::unordered_map<TInt, TInt> &output_map);
-  int static all_to_one_LIFO (TInt dest_node_ID, PNEGraph graph,
+  static int all_to_one_LIFO (TInt dest_node_ID, PNEGraph graph,
                               std::unordered_map<TInt, TFlt> &cost_map,
                               std::unordered_map<TInt, TInt> &output_map);
   /*------------------------------------------------------------
                             TDSP
   -------------------------------------------------------------*/
-  int static all_to_one_TDSP (TInt dest_node_ID, PNEGraph graph,
+  static int all_to_one_TDSP (TInt dest_node_ID, PNEGraph graph,
                               std::unordered_map<TInt, TFlt *> &cost_map,
                               std::unordered_map<TInt, TInt *> &output_map,
                               TInt num_interval);
-  bool static is_FIFO (PNEGraph graph,
+  static bool is_FIFO (PNEGraph graph,
                        std::unordered_map<TInt, TFlt *> &cost_map,
                        TInt num_interval, TFlt unit_time);
 };

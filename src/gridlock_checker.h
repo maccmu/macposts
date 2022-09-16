@@ -12,7 +12,7 @@ public:
   bool is_gridlocked ();
   int initialize ();
   MNM_Veh *get_last_veh (MNM_Dlink *link);
-  bool static has_cycle (PNEGraph graph);
+  static bool has_cycle (PNEGraph graph);
 
   MNM_Link_Factory *m_link_factory;
   std::unordered_map<TInt, MNM_Veh *> m_link_veh_map;

@@ -30,16 +30,16 @@ template <> struct hash<TInt>
 class MNM_Ults
 {
 public:
-  TInt static round (TFlt in);
-  TFlt static min (TFlt a, TFlt b);
-  TInt static min (TInt a, TInt b);
-  TFlt static max (TFlt a, TFlt b);
-  TFlt static divide (TFlt a, TFlt b);
-  TInt static mod (TInt a, TInt b);
-  TFlt static rand_flt ();
-  TFlt static max_link_cost ();
-  int static copy_file (const char *srce_file, const char *dest_file);
-  int static copy_file (std::string srce_file, std::string dest_file);
+  static TInt round (TFlt in);
+  static TFlt min (TFlt a, TFlt b);
+  static TInt min (TInt a, TInt b);
+  static TFlt max (TFlt a, TFlt b);
+  static TFlt divide (TFlt a, TFlt b);
+  static TInt mod (TInt a, TInt b);
+  static TFlt rand_flt ();
+  static TFlt max_link_cost ();
+  static int copy_file (const char *srce_file, const char *dest_file);
+  static int copy_file (std::string srce_file, std::string dest_file);
 };
 
 class Chameleon
