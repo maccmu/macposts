@@ -2,10 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [main]
-    # tags: ["v*"]
-  pull_request:
-    branches: [main]
+    tags: ["v*"]
 
 jobs:
   sdist:
@@ -39,7 +36,26 @@ jobs:
         submodules: true
 
     - uses: pypa/cibuildwheel@v2.10.0
+      env:
+        CIBW_ARCHS: native
+        # We do not support PyPy (for now) and Snap does not build for musl.
+        CIBW_SKIP: "pp* *-musllinux_*"
 
     - uses: actions/upload-artifact@v3
       with:
         path: wheelhouse/*.whl
+
+  upload:
+    needs: [sdist, wheels]
+    name: Upload artifacts to assets
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: artifact
+        path: dist
+
+    - uses: softprops/action-gh-release@v1
+      with:
+        files: dist/*
