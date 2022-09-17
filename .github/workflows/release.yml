@@ -56,6 +56,10 @@ jobs:
         name: artifact
         path: dist
 
+    - name: Create checksums
+      run: sha256sum * > SHA256SUMS
+      working-directory: dist
+
     - uses: softprops/action-gh-release@v1
       with:
         files: dist/*
