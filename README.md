@@ -17,11 +17,57 @@ pip install -e .[dev]
 
 instead to also install the development tools and enable editable mode.
 
+## Frequently asked questions
+
+* How is this project related to [MAC-POSTS]?
+
+  This project is the maintained fork of MAC-POSTS. We took over the maintenance
+  work a few years ago. At that time, we found that the Git repository was very
+  large due to the data files in tree, and the Git commit history was not very
+  formally maintained. So we decided to start clean and made this new
+  repository.
+
+* Will this be compatible with MAC-POSTS?
+
+  Mostly yes. The Python API should be compatible (except that the library is
+  now named `macpsots` instead of `MNMAPI`) while breaking changes may have been
+  introduced to the underlying C++ library (we are unsure because we do not know
+  which functions are internal). We will maintain the backward compatibility for
+  the Python binding in the future. So it is recommended to only use the Python
+  library and treat the whole C++ library as internal.
+
+* Where are the data and examples?
+
+  We are working on designing some examples and publish the data elsewhere. So
+  stay tuned. Meanwhile, you can try the old data and examples in [MAC-POSTS].
+
+* Where is the Git repository?
+
+  The Git repository is hosted on an internal server currently. However, we also
+  have a GitHub mirror for the repository, for which the main branch is
+  regularly updated (other branches may not be available). The GitHub repository
+  is also used to generate compiled Python packages.
+
+  This is because currently we still consider this project in the pre-alpha
+  stage and want to craft it a bit more before we can comfortably make it really
+  public.
+
+* How to report issues and send patches?
+
+  As said, we think this project is still in its infancy and are developing it
+  mainly internally. So the issues page on GitHub is closed. If you want to
+  report issues, please feel free to contact any of the committers in the Git
+  history. The pull requests page is still open and we will review and accept
+  patches there. You can also send patches via email as well.
+
+[MAC-POSTS]: https://github.com/Lemma1/MAC-POSTS
+
 ## Contributors
 
 - Wei Ma: author and former maintainer
 - Xidong Pi: co-author and former maintainer
 - Pengji Zhang: current maintainer
+- Pinchao Zhang: contributor
 - Sean Qian: advisor
 
 ## License
