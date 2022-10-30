@@ -38,8 +38,9 @@ instead to also install the development tools and enable editable mode.
 
 * Where are the data and examples?
 
-  We are working on designing some examples and publish the data elsewhere. So
-  stay tuned. Meanwhile, you can try the old data and examples in [MAC-POSTS].
+  We are working on designing some examples and will publish the data elsewhere.
+  So stay tuned. Meanwhile, you can try the old data and examples in
+  [MAC-POSTS].
 
 * Where is the Git repository?
 
