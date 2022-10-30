@@ -17,6 +17,13 @@ pip install -e .[dev]
 
 instead to also install the development tools and enable editable mode.
 
+For normal users, you can instead use the precompiled wheels of tagged releases
+for certain platforms and Python versions on the GitHub [releases] page. There
+are “sdist” packages on the [releases] page as well. To install an sdist
+package, a C++ toolchain and CMake are required.
+
+[releases]: https://github.com/kunhtkun/macposts/releases
+
 ## Frequently asked questions
 
 * How is this project related to [MAC-POSTS]?
@@ -46,8 +53,7 @@ instead to also install the development tools and enable editable mode.
 
   The Git repository is hosted on an internal server currently. However, we also
   have a GitHub mirror for the repository, for which the main branch is
-  regularly updated (other branches may not be available). The GitHub repository
-  is also used to generate compiled Python packages.
+  regularly updated (other branches may not be available).
 
   This is because currently we still consider this project in the pre-alpha
   stage and want to craft it a bit more before we can comfortably make it really
