@@ -13,3 +13,4 @@ __pycache__/
 *.diff
 TAGS
 tags
+.ipynb_checkpoints/

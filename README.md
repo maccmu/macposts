@@ -24,6 +24,11 @@ package, a C++ toolchain and CMake are required.
 
 [releases]: https://github.com/kunhtkun/macposts/releases
 
+## Usage
+
+Currently there is nothing that could be considered as the documentation. If you
+still want to use it, you may check the ‘examples’ directory in this repository.
+
 ## Frequently asked questions
 
 * How is this project related to [MAC-POSTS]?
@@ -42,12 +47,6 @@ package, a C++ toolchain and CMake are required.
   which functions are internal). We will maintain the backward compatibility for
   the Python binding in the future. So it is recommended to only use the Python
   library and treat the whole C++ library as internal.
-
-* Where are the data and examples?
-
-  We are working on designing some examples and will publish the data elsewhere.
-  So stay tuned. Meanwhile, you can try the old data and examples in
-  [MAC-POSTS].
 
 * Where is the Git repository?
 
