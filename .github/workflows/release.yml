@@ -36,7 +36,7 @@ jobs:
         submodules: true
         persist-credentials: false
 
-    - uses: pypa/cibuildwheel@v2.10.0
+    - uses: pypa/cibuildwheel@v2.11.2
       env:
         CIBW_ARCHS: native
         # We do not support PyPy (for now) and Snap does not build for musl.
