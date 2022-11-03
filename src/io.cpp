@@ -25,11 +25,15 @@ MNM_IO::build_node_factory (std::string file_folder,
 
   if (_node_file.is_open ())
     {
-      // printf("Start build node factory.\n");
-      std::getline (_node_file, _line); // skip the first line
-      for (int i = 0; i < _num_of_node; ++i)
+      for (int i = 0; i < _num_of_node;)
         {
           std::getline (_node_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           // if (_words.size() == 2) {
           if (_words.size () >= 2)
@@ -105,11 +109,15 @@ MNM_IO::build_link_factory (std::string file_folder,
 
   if (_link_file.is_open ())
     {
-      // printf("Start build link factory.\n");
-      std::getline (_link_file, _line); // skip the first line
-      for (int i = 0; i < _num_of_link; ++i)
+      for (int i = 0; i < _num_of_link;)
         {
           std::getline (_link_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           // if (_words.size() == 7) {
           if (_words.size () >= 7)
@@ -202,12 +210,15 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
   MNM_Destination *_dest;
   if (_od_file.is_open ())
     {
-      // printf("Start build Origin-Destination factory.\n");
-      std::getline (_od_file, _line); // skip the first line
-      // printf("Processing Origin node.\n");
-      for (int i = 0; i < _num_of_O; ++i)
+      for (int i = 0; i < _num_of_O;)
         {
           std::getline (_od_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (_words.size () == 2)
             {
@@ -224,11 +235,16 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
                   ->hook_up_origin (_origin);
             }
         }
-      std::getline (_od_file, _line); // skip another line
-      // printf("Processing Destination node.\n");
-      for (int i = 0; i < _num_of_D; ++i)
+
+      for (int i = 0; i < _num_of_D;)
         {
           std::getline (_od_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (_words.size () == 2)
             {
@@ -271,13 +287,16 @@ MNM_IO::hook_up_od_node (std::string file_folder, MNM_ConfReader *conf_reader,
   MNM_Destination *_dest;
   if (_od_file.is_open ())
     {
-      // printf("Start build Origin-Destination factory.\n");
-      std::getline (_od_file, _line); // skip the first line
-      // printf("Processing Origin node.\n");
-      for (int i = 0; i < _num_of_O; ++i)
+      for (int i = 0; i < _num_of_O;)
         {
           std::getline (_od_file, _line);
           _words = split (_line, ' ');
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           if (_words.size () == 2)
             {
               // std::cout << "Processing: " << _line << "\n";
@@ -292,11 +311,16 @@ MNM_IO::hook_up_od_node (std::string file_folder, MNM_ConfReader *conf_reader,
                   ->hook_up_origin (_origin);
             }
         }
-      std::getline (_od_file, _line); // skip another line
-      // printf("Processing Destination node.\n");
-      for (int i = 0; i < _num_of_D; ++i)
+
+      for (int i = 0; i < _num_of_D;)
         {
           std::getline (_od_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (_words.size () == 2)
             {
@@ -339,12 +363,15 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
   std::vector<std::string> _words;
   if (_od_file.is_open ())
     {
-      // printf("Start build Origin-Destination factory.\n");
-      std::getline (_od_file, _line); // skip the first line
-      // printf("Processing Origin node.\n");
-      for (int i = 0; i < _num_of_O; ++i)
+      for (int i = 0; i < _num_of_O;)
         {
           std::getline (_od_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (_words.size () == 2)
             {
@@ -355,11 +382,16 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
                                        _frequency);
             }
         }
-      std::getline (_od_file, _line); // skip another line
-      // printf("Processing Destination node.\n");
-      for (int i = 0; i < _num_of_D; ++i)
+
+      for (int i = 0; i < _num_of_D;)
         {
           std::getline (_od_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (_words.size () == 2)
             {
@@ -391,10 +423,15 @@ MNM_IO::build_graph (std::string file_folder, MNM_ConfReader *conf_reader)
   int _link_ID, _from_ID, _to_ID;
   std::string _line;
   std::vector<std::string> _words;
-  std::getline (_graph_file, _line); // skip one line
-  for (int i = 0; i < _num_of_link; ++i)
+  for (int i = 0; i < _num_of_link;)
     {
       std::getline (_graph_file, _line);
+      _line = trim (_line);
+      if (_line.empty () || _line[0] == '#')
+        {
+          continue;
+        }
+      ++i;
       _words = split (_line, ' ');
       if (_words.size () == 3)
         {
@@ -441,11 +478,16 @@ MNM_IO::build_demand (std::string file_folder, MNM_ConfReader *conf_reader,
       // printf("Start build demand profile.\n");
       TFlt *_demand_vector = (TFlt *)malloc (sizeof (TFlt) * _max_interval);
       memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval);
-      std::getline (_demand_file, _line); // skip the first line
-      for (int i = 0; i < _num_OD; ++i)
+      for (int i = 0; i < _num_OD;)
         {
           std::getline (_demand_file, _line);
           // std::cout << "Processing: " << _line << "\n";
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           // if (TInt(_words.size()) == (_max_interval + 2)) {
           if (TInt (_words.size ()) >= (_max_interval + 2))
@@ -607,11 +649,15 @@ MNM_IO::build_vms_facotory (std::string file_folder, PNEGraph graph,
   if (_vms_file.is_open ())
     {
       // printf("Start build demand profile.\n");
-      std::getline (_vms_file, _line); // skip the first line
-      for (int i = 0; i < num_vms; ++i)
+      for (int i = 0; i < num_vms;)
         {
           std::getline (_vms_file, _line);
-          // std::cout << "Processing: " << _line << "\n";
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (TInt (_words.size ()) == 2)
             {

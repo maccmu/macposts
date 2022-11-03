@@ -2543,11 +2543,15 @@ MNM_IO_Multiclass::build_node_factory_multiclass (
       = dynamic_cast<MNM_Node_Factory_Multiclass *> (node_factory);
   if (_node_file.is_open ())
     {
-      std::getline (_node_file, _line); // skip the first line
-      for (int i = 0; i < _num_of_node; ++i)
+      for (int i = 0; i < _num_of_node;)
         {
           std::getline (_node_file, _line);
-          // printf("%d\n", i);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (_words.size () == 3)
             {
@@ -2626,11 +2630,15 @@ MNM_IO_Multiclass::build_link_factory_multiclass (
 
   if (_link_file.is_open ())
     {
-      // printf("Start build link factory.\n");
-      std::getline (_link_file, _line); // skip the first line
-      for (int i = 0; i < _num_of_link; ++i)
+      for (int i = 0; i < _num_of_link;)
         {
           std::getline (_link_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (_words.size () == 11)
             {
@@ -2739,10 +2747,15 @@ MNM_IO_Multiclass::build_demand_multiclass (std::string file_folder,
       TFlt _demand_car;
       TFlt _demand_truck;
 
-      std::getline (_demand_file, _line); // skip the first line
-      for (int i = 0; i < _num_OD; ++i)
+      for (int i = 0; i < _num_OD;)
         {
           std::getline (_demand_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           _words = split (_line, ' ');
           if (TInt (_words.size ()) == (_max_interval * 2 + 2))
             {
