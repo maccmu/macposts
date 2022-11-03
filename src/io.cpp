@@ -549,12 +549,26 @@ MNM_IO::load_path_table (std::string file_name, PNEGraph graph, TInt num_path,
   TInt _path_ID_counter = 0;
   if (_path_table_file.is_open ())
     {
-      for (int i = 0; i < Num_Path; ++i)
+      for (int i = 0; i < Num_Path;)
         {
           std::getline (_path_table_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
           if (w_buffer)
             {
-              std::getline (_buffer_file, _buffer_line);
+              while (1)
+                {
+                  std::getline (_buffer_file, _buffer_line);
+                  _buffer_line = trim (_buffer_line);
+                  if (!_line.empty () && _line[0] != '#')
+                    {
+                      break;
+                    }
+                }
               _buffer_words = split (_buffer_line, ' ');
             }
           // std::cout << "Processing: " << _line << "\n";
