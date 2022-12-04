@@ -231,27 +231,27 @@ Dta::get_link_inflow (py::array_t<int> start_intervals,
   int new_shape[2] = { (int)m_link_vec.size (), l };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  int *start_prt = (int *)start_buf.ptr;
-  int *end_prt = (int *)end_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
-          if (end_prt[t] < start_prt[t])
+          if (end_ptr[t] < start_ptr[t])
             {
               throw std::runtime_error ("Error, Dta::get_link_inflow, end "
                                         "time smaller than start time");
             }
-          if (end_prt[t] > get_cur_loading_interval ())
+          if (end_ptr[t] > get_cur_loading_interval ())
             {
               throw std::runtime_error (
                   "Error, Dta::get_link_inflow, loaded data not enough");
             }
 
-          result_prt[i * l + t] = MNM_DTA_GRADIENT::get_link_inflow (
-              m_link_vec[i], TFlt (start_prt[t]), TFlt (end_prt[t])) ();
-          // printf("i %d, t %d, %f\n", i, t, result_prt[i * l + t]);
+          result_ptr[i * l + t] = MNM_DTA_GRADIENT::get_link_inflow (
+              m_link_vec[i], TFlt (start_ptr[t]), TFlt (end_ptr[t])) ();
+          // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
   return result;
@@ -271,19 +271,19 @@ Dta::get_link_tt (py::array_t<int> start_intervals)
 
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  int *start_prt = (int *)start_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
-          if (start_prt[t] > get_cur_loading_interval ())
+          if (start_ptr[t] > get_cur_loading_interval ())
             {
               throw std::runtime_error (
                   "Error, Dta::get_link_tt, loaded data not enough");
             }
-          result_prt[i * l + t] = MNM_DTA_GRADIENT::get_travel_time (
-              m_link_vec[i], TFlt (start_prt[t])) ();
+          result_ptr[i * l + t] = MNM_DTA_GRADIENT::get_travel_time (
+              m_link_vec[i], TFlt (start_ptr[t])) ();
         }
     }
   return result;
@@ -302,19 +302,19 @@ Dta::get_path_tt (py::array_t<int> start_intervals)
   int new_shape[2] = { (int)m_path_vec.size (), l };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  int *start_prt = (int *)start_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
-      if (start_prt[t] > get_cur_loading_interval ())
+      if (start_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error (
               "Error, Dta::get_path_tt, loaded data not enough");
         }
       for (size_t i = 0; i < m_path_vec.size (); ++i)
         {
-          result_prt[i * l + t] = MNM_DTA_GRADIENT::get_path_travel_time (
-              m_path_vec[i], TFlt (start_prt[t]), m_dta->m_link_factory) ();
+          result_ptr[i * l + t] = MNM_DTA_GRADIENT::get_path_travel_time (
+              m_path_vec[i], TFlt (start_ptr[t]), m_dta->m_link_factory) ();
         }
     }
   return result;
@@ -333,11 +333,11 @@ Dta::get_link_in_cc (int link_ID)
   int new_shape[2] = { (int)_record.size (), 2 };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_prt[i * 2] = _record[i].first ();
-      result_prt[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first ();
+      result_ptr[i * 2 + 1] = _record[i].second ();
     }
   return result;
 }
@@ -355,11 +355,11 @@ Dta::get_link_out_cc (int link_ID)
   int new_shape[2] = { (int)_record.size (), 2 };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_prt[i * 2] = _record[i].first ();
-      result_prt[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first ();
+      result_ptr[i * 2 + 1] = _record[i].second ();
     }
   return result;
 }
@@ -381,8 +381,8 @@ Dta::get_dar_matrix (py::array_t<int> start_intervals,
           "Error, Dta::get_link_inflow, input length mismatch");
     }
   int l = start_buf.shape[0];
-  int *start_prt = (int *)start_buf.ptr;
-  int *end_prt = (int *)end_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
   std::vector<dar_record *> _record = std::vector<dar_record *> ();
   // for (size_t i = 0; i<m_link_vec.size(); ++i){
   //   m_link_vec[i] -> m_N_in_tree -> print_out();
@@ -391,35 +391,35 @@ Dta::get_dar_matrix (py::array_t<int> start_intervals,
     {
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
-          if (end_prt[t] < start_prt[t])
+          if (end_ptr[t] < start_ptr[t])
             {
               throw std::runtime_error ("Error, Dta::get_dar_matrix, end time "
                                         "smaller than start time");
             }
-          if (end_prt[t] > get_cur_loading_interval ())
+          if (end_ptr[t] > get_cur_loading_interval ())
             {
               throw std::runtime_error (
                   "Error, Dta::get_dar_matrix, loaded data not enough");
             }
           MNM_DTA_GRADIENT::add_dar_records (_record, m_link_vec[i],
-                                             m_path_map, TFlt (start_prt[t]),
-                                             TFlt (end_prt[t]));
+                                             m_path_map, TFlt (start_ptr[t]),
+                                             TFlt (end_ptr[t]));
         }
     }
   // path_ID, assign_time, link_ID, start_int, flow
   int new_shape[2] = { (int)_record.size (), 5 };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
   dar_record *tmp_record;
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_prt[i * 5 + 0] = (double)tmp_record->path_ID ();
-      result_prt[i * 5 + 1] = (double)tmp_record->assign_int ();
-      result_prt[i * 5 + 2] = (double)tmp_record->link_ID ();
-      result_prt[i * 5 + 3] = (double)tmp_record->link_start_int ();
-      result_prt[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 0] = (double)tmp_record->path_ID ();
+      result_ptr[i * 5 + 1] = (double)tmp_record->assign_int ();
+      result_ptr[i * 5 + 2] = (double)tmp_record->link_ID ();
+      result_ptr[i * 5 + 3] = (double)tmp_record->link_start_int ();
+      result_ptr[i * 5 + 4] = tmp_record->flow ();
     }
   for (size_t i = 0; i < _record.size (); ++i)
     {
@@ -455,8 +455,8 @@ Dta::get_complete_dar_matrix (py::array_t<int> start_intervals,
           "Error, Dta::get_link_inflow, input path flow mismatch");
     }
   int l = start_buf.shape[0];
-  int *start_prt = (int *)start_buf.ptr;
-  int *end_prt = (int *)end_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
   double *f_ptr = (double *)f_buf.ptr;
 
   std::vector<Eigen::Triplet<double> > _record;
@@ -465,19 +465,19 @@ Dta::get_complete_dar_matrix (py::array_t<int> start_intervals,
     {
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
-          if (end_prt[t] < start_prt[t])
+          if (end_ptr[t] < start_ptr[t])
             {
               throw std::runtime_error ("Error, Dta::get_dar_matrix, end time "
                                         "smaller than start time");
             }
-          if (end_prt[t] > get_cur_loading_interval ())
+          if (end_ptr[t] > get_cur_loading_interval ())
             {
               throw std::runtime_error (
                   "Error, Dta::get_dar_matrix, loaded data not enough");
             }
           MNM_DTA_GRADIENT::add_dar_records_eigen (
-              _record, m_link_vec[i], m_path_map, TFlt (start_prt[t]),
-              TFlt (end_prt[t]), i, t, _num_e_link, _num_e_path, f_ptr);
+              _record, m_link_vec[i], m_path_map, TFlt (start_ptr[t]),
+              TFlt (end_ptr[t]), i, t, _num_e_link, _num_e_path, f_ptr);
         }
     }
   SparseMatrixR mat (num_intervals * _num_e_link, num_intervals * _num_e_path);
@@ -746,10 +746,10 @@ Mcdta::get_waiting_time_at_intersections ()
   int new_shape[1] = { (int)m_link_vec.size () };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
-      result_prt[i]
+      result_ptr[i]
           = MNM_DTA_GRADIENT::get_average_waiting_time_at_intersection (
               m_link_vec[i]) ();
     }
@@ -763,10 +763,10 @@ Mcdta::get_link_spillback ()
   int new_shape[1] = { (int)m_link_vec.size () };
   auto result = py::array_t<int> (new_shape);
   auto result_buf = result.request ();
-  int *result_prt = (int *)result_buf.ptr;
+  int *result_ptr = (int *)result_buf.ptr;
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
-      result_prt[i] = MNM_DTA_GRADIENT::get_is_spillback (m_link_vec[i]) ();
+      result_ptr[i] = MNM_DTA_GRADIENT::get_is_spillback (m_link_vec[i]) ();
     }
 
   return result;
@@ -785,9 +785,9 @@ Mcdta::get_path_tt_car (py::array_t<int> link_IDs,
   int new_shape[1] = { num_link };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
 
-  double *start_prt = (double *)start_buf.ptr;
+  double *start_ptr = (double *)start_buf.ptr;
   int *links_ptr = (int *)links_buf.ptr;
   MNM_Dlink *_link;
   for (int i = 0; i < links_buf.shape[0]; i++)
@@ -800,7 +800,7 @@ Mcdta::get_path_tt_car (py::array_t<int> link_IDs,
           for (int t = 0; t < num_int; ++t)
             {
               double _tmp = MNM_DTA_GRADIENT::get_travel_time_car (
-                                _mclink, TFlt (start_prt[t])) ()
+                                _mclink, TFlt (start_ptr[t])) ()
                             * 5;
               if (_tmp > 20 * (_mclink->m_length / _mclink->m_ffs_car))
                 {
@@ -809,7 +809,7 @@ Mcdta::get_path_tt_car (py::array_t<int> link_IDs,
               avg_tt += _tmp; // seconds
             }
           avg_tt /= num_int;
-          result_prt[i] = avg_tt;
+          result_ptr[i] = avg_tt;
         }
       else
         {
@@ -834,9 +834,9 @@ Mcdta::get_path_tt_truck (py::array_t<int> link_IDs,
   int new_shape[1] = { num_link };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
 
-  double *start_prt = (double *)start_buf.ptr;
+  double *start_ptr = (double *)start_buf.ptr;
   int *links_ptr = (int *)links_buf.ptr;
   MNM_Dlink *_link;
   for (int i = 0; i < links_buf.shape[0]; i++)
@@ -849,7 +849,7 @@ Mcdta::get_path_tt_truck (py::array_t<int> link_IDs,
           for (int t = 0; t < num_int; ++t)
             {
               double _tmp = MNM_DTA_GRADIENT::get_travel_time_truck (
-                                _mclink, TFlt (start_prt[t])) ()
+                                _mclink, TFlt (start_ptr[t])) ()
                             * 5;
               if (_tmp > 20 * (_mclink->m_length / _mclink->m_ffs_truck))
                 {
@@ -858,7 +858,7 @@ Mcdta::get_path_tt_truck (py::array_t<int> link_IDs,
               avg_tt += _tmp; // seconds
             }
           avg_tt /= num_int;
-          result_prt[i] = avg_tt;
+          result_ptr[i] = avg_tt;
         }
       else
         {
@@ -885,11 +885,11 @@ Mcdta::get_car_link_tt (py::array_t<double> start_intervals)
 
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  double *start_prt = (double *)start_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  double *start_ptr = (double *)start_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
-      if (start_prt[t] > get_cur_loading_interval ())
+      if (start_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error (
               "Error, Mcdta::get_car_link_tt, loaded data not enough");
@@ -897,13 +897,13 @@ Mcdta::get_car_link_tt (py::array_t<double> start_intervals)
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
           double _tmp = MNM_DTA_GRADIENT::get_travel_time_car (
-              m_link_vec[i], TFlt (start_prt[t])) ();
+              m_link_vec[i], TFlt (start_ptr[t])) ();
           // if (_tmp * 5 > 20 * (m_link_vec[i] -> m_length / m_link_vec[i] ->
           // m_ffs_car)){
           //     _tmp = 20 * m_link_vec[i] -> m_length / m_link_vec[i] ->
           //     m_ffs_car / 5.0;
           // }
-          result_prt[i * l + t] = _tmp * 5;
+          result_ptr[i * l + t] = _tmp * 5;
         }
     }
   return result;
@@ -930,12 +930,12 @@ Mcdta::get_car_link_tt_robust (py::array_t<double> start_intervals,
 
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  double *start_prt = (double *)start_buf.ptr;
-  double *end_prt = (double *)end_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  double *start_ptr = (double *)start_buf.ptr;
+  double *end_ptr = (double *)end_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
-      if (start_prt[t] > get_cur_loading_interval ())
+      if (start_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error (
               "Error, Mcdta::get_car_link_tt_robust, loaded data not "
@@ -944,13 +944,13 @@ Mcdta::get_car_link_tt_robust (py::array_t<double> start_intervals,
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
           double _tmp = MNM_DTA_GRADIENT::get_travel_time_car_robust (
-              m_link_vec[i], TFlt (start_prt[t]), TFlt (end_prt[t])) ();
+              m_link_vec[i], TFlt (start_ptr[t]), TFlt (end_ptr[t])) ();
           // if (_tmp * 5 > 20 * (m_link_vec[i] -> m_length / m_link_vec[i] ->
           // m_ffs_car)){
           //     _tmp = 20 * m_link_vec[i] -> m_length / m_link_vec[i] ->
           //     m_ffs_car / 5.0;
           // }
-          result_prt[i * l + t] = _tmp * 5;
+          result_ptr[i * l + t] = _tmp * 5;
         }
     }
   return result;
@@ -971,11 +971,11 @@ Mcdta::get_truck_link_tt (py::array_t<double> start_intervals)
 
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  double *start_prt = (double *)start_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  double *start_ptr = (double *)start_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
-      if (start_prt[t] > get_cur_loading_interval ())
+      if (start_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error (
               "Error, Mcdta::get_truck_link_tt, loaded data not enough");
@@ -983,13 +983,13 @@ Mcdta::get_truck_link_tt (py::array_t<double> start_intervals)
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
           double _tmp = MNM_DTA_GRADIENT::get_travel_time_truck (
-              m_link_vec[i], TFlt (start_prt[t])) ();
+              m_link_vec[i], TFlt (start_ptr[t])) ();
           // if (_tmp * 5 > 20 * (m_link_vec[i] -> m_length / m_link_vec[i] ->
           // m_ffs_truck)){
           //     _tmp = 20 * m_link_vec[i] -> m_length / m_link_vec[i] ->
           //     m_ffs_truck / 5.0;
           // }
-          result_prt[i * l + t] = _tmp * 5;
+          result_ptr[i * l + t] = _tmp * 5;
         }
     }
   return result;
@@ -1009,11 +1009,11 @@ Mcdta::get_car_link_speed (py::array_t<double> start_intervals)
 
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  double *start_prt = (double *)start_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  double *start_ptr = (double *)start_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
-      if (start_prt[t] > get_cur_loading_interval ())
+      if (start_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error (
               "Error, Mcdta::get_car_link_speed, loaded data not enough");
@@ -1021,9 +1021,9 @@ Mcdta::get_car_link_speed (py::array_t<double> start_intervals)
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
           int _tt = MNM_DTA_GRADIENT::get_travel_time_car (
-                        m_link_vec[i], TFlt (start_prt[t])) ()
+                        m_link_vec[i], TFlt (start_ptr[t])) ()
                     * m_mcdta->m_unit_time; // seconds
-          result_prt[i * l + t]
+          result_ptr[i * l + t]
               = (m_link_vec[i]->m_length) / _tt * 3600 / 1600; // mile per hour
         }
     }
@@ -1044,11 +1044,11 @@ Mcdta::get_truck_link_speed (py::array_t<double> start_intervals)
 
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  double *start_prt = (double *)start_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  double *start_ptr = (double *)start_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
-      if (start_prt[t] > get_cur_loading_interval ())
+      if (start_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error ("Error, Mcdta::get_truck_link_speed, "
                                     "loaded data not enough");
@@ -1056,9 +1056,9 @@ Mcdta::get_truck_link_speed (py::array_t<double> start_intervals)
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
           int _tt = MNM_DTA_GRADIENT::get_travel_time_truck (
-                        m_link_vec[i], TFlt (start_prt[t])) ()
+                        m_link_vec[i], TFlt (start_ptr[t])) ()
                     * m_mcdta->m_unit_time; // seconds
-          result_prt[i * l + t]
+          result_ptr[i * l + t]
               = (m_link_vec[i]->m_length) / _tt * 3600 / 1600; // mile per hour
         }
     }
@@ -1085,26 +1085,26 @@ Mcdta::get_link_car_inflow (py::array_t<int> start_intervals,
   int new_shape[2] = { (int)m_link_vec.size (), l };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  int *start_prt = (int *)start_buf.ptr;
-  int *end_prt = (int *)end_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
-      if (end_prt[t] < start_prt[t])
+      if (end_ptr[t] < start_ptr[t])
         {
           throw std::runtime_error ("Error, Mcdta::get_link_car_inflow, "
                                     "end time smaller than start time");
         }
-      if (end_prt[t] > get_cur_loading_interval ())
+      if (end_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error (
               "Error, Mcdta::get_link_car_inflow, loaded data not enough");
         }
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
-          result_prt[i * l + t] = MNM_DTA_GRADIENT::get_link_inflow_car (
-              m_link_vec[i], TFlt (start_prt[t]), TFlt (end_prt[t])) ();
-          // printf("i %d, t %d, %f\n", i, t, result_prt[i * l + t]);
+          result_ptr[i * l + t] = MNM_DTA_GRADIENT::get_link_inflow_car (
+              m_link_vec[i], TFlt (start_ptr[t]), TFlt (end_ptr[t])) ();
+          // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
   return result;
@@ -1130,26 +1130,26 @@ Mcdta::get_link_truck_inflow (py::array_t<int> start_intervals,
   int new_shape[2] = { (int)m_link_vec.size (), l };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  int *start_prt = (int *)start_buf.ptr;
-  int *end_prt = (int *)end_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
   for (int t = 0; t < l; ++t)
     {
-      if (end_prt[t] < start_prt[t])
+      if (end_ptr[t] < start_ptr[t])
         {
           throw std::runtime_error ("Error, Mcdta::get_link_truck_inflow, "
                                     "end time smaller than start time");
         }
-      if (end_prt[t] > get_cur_loading_interval ())
+      if (end_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error ("Error, Mcdta::get_link_truck_inflow, "
                                     "loaded data not enough");
         }
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
-          result_prt[i * l + t] = MNM_DTA_GRADIENT::get_link_inflow_truck (
-              m_link_vec[i], TFlt (start_prt[t]), TFlt (end_prt[t])) ();
-          // printf("i %d, t %d, %f\n", i, t, result_prt[i * l + t]);
+          result_ptr[i * l + t] = MNM_DTA_GRADIENT::get_link_inflow_truck (
+              m_link_vec[i], TFlt (start_ptr[t]), TFlt (end_ptr[t])) ();
+          // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
   return result;
@@ -1332,7 +1332,7 @@ Mcdta::get_enroute_and_queue_veh_stats_agg ()
   int new_shape[2] = { _tot_interval, 3 };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
 
   if ((int)m_mcdta->m_enroute_veh_num.size () != get_cur_loading_interval ())
     {
@@ -1351,11 +1351,11 @@ Mcdta::get_enroute_and_queue_veh_stats_agg ()
     {
       for (int i = 0; i < _tot_interval; ++i)
         {
-          result_prt[i * 3]
+          result_ptr[i * 3]
               = (m_mcdta->m_enroute_veh_num[i]()) / (m_mcdta->m_flow_scalar);
-          result_prt[i * 3 + 1]
+          result_ptr[i * 3 + 1]
               = (m_mcdta->m_queue_veh_num[i]()) / (m_mcdta->m_flow_scalar);
-          result_prt[i * 3 + 2] = (m_mcdta->m_enroute_veh_num[i]()
+          result_ptr[i * 3 + 2] = (m_mcdta->m_enroute_veh_num[i]()
                                    - m_mcdta->m_queue_veh_num[i]())
                                   / (m_mcdta->m_flow_scalar);
         }
@@ -1384,13 +1384,13 @@ Mcdta::get_queue_veh_each_link (py::array_t<int> useful_links,
   int new_shape[2] = { num_links, num_intervals };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
-  double *intervals_prt = (double *)intervals_buf.ptr;
-  double *links_prt = (double *)links_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
+  double *intervals_ptr = (double *)intervals_buf.ptr;
+  double *links_ptr = (double *)links_buf.ptr;
 
   for (int t = 0; t < num_intervals; ++t)
     {
-      if (intervals_prt[t] > get_cur_loading_interval ())
+      if (intervals_ptr[t] > get_cur_loading_interval ())
         {
           throw std::runtime_error (
               "Error, Mcdta::get_queue_veh_each_link, too large interval "
@@ -1398,15 +1398,15 @@ Mcdta::get_queue_veh_each_link (py::array_t<int> useful_links,
         }
       for (int i = 0; i < num_links; ++i)
         {
-          if (m_mcdta->m_queue_veh_map.find (links_prt[i])
+          if (m_mcdta->m_queue_veh_map.find (links_ptr[i])
               == m_mcdta->m_queue_veh_map.end ())
             {
               throw std::runtime_error (
                   "Error, Mcdta::get_queue_veh_each_link, can't find link "
                   "ID");
             }
-          result_prt[i * num_intervals + t]
-              = (*(m_mcdta->m_queue_veh_map[links_prt[i]]))[intervals_prt[t]];
+          result_ptr[i * num_intervals + t]
+              = (*(m_mcdta->m_queue_veh_map[links_ptr[i]]))[intervals_ptr[t]];
         }
     }
   return result;
@@ -1462,8 +1462,8 @@ Mcdta::get_car_dar_matrix (py::array_t<int> start_intervals,
           "Error, Mcdta::get_car_dar_matrix, input length mismatch");
     }
   int l = start_buf.shape[0];
-  int *start_prt = (int *)start_buf.ptr;
-  int *end_prt = (int *)end_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
   std::vector<dar_record *> _record = std::vector<dar_record *> ();
   // for (size_t i = 0; i<m_link_vec.size(); ++i){
   //   m_link_vec[i] -> m_N_in_tree -> print_out();
@@ -1473,37 +1473,37 @@ Mcdta::get_car_dar_matrix (py::array_t<int> start_intervals,
       // printf("Current processing time: %d\n", t);
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
-          if (end_prt[t] < start_prt[t])
+          if (end_ptr[t] < start_ptr[t])
             {
               throw std::runtime_error (
                   "Error, Mcdta::get_car_dar_matrix, end time smaller "
                   "than start time");
             }
-          if (end_prt[t] > get_cur_loading_interval ())
+          if (end_ptr[t] > get_cur_loading_interval ())
             {
               throw std::runtime_error (
                   "Error, Mcdta::get_car_dar_matrix, loaded data not "
                   "enough");
             }
           MNM_DTA_GRADIENT::add_dar_records_car (
-              _record, m_link_vec[i], m_path_set, TFlt (start_prt[t]),
-              TFlt (end_prt[t]));
+              _record, m_link_vec[i], m_path_set, TFlt (start_ptr[t]),
+              TFlt (end_ptr[t]));
         }
     }
   // path_ID, assign_time, link_ID, start_int, flow
   int new_shape[2] = { (int)_record.size (), 5 };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
   dar_record *tmp_record;
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_prt[i * 5 + 0] = (double)tmp_record->path_ID ();
-      result_prt[i * 5 + 1] = (double)tmp_record->assign_int ();
-      result_prt[i * 5 + 2] = (double)tmp_record->link_ID ();
-      result_prt[i * 5 + 3] = (double)tmp_record->link_start_int ();
-      result_prt[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 0] = (double)tmp_record->path_ID ();
+      result_ptr[i * 5 + 1] = (double)tmp_record->assign_int ();
+      result_ptr[i * 5 + 2] = (double)tmp_record->link_ID ();
+      result_ptr[i * 5 + 3] = (double)tmp_record->link_start_int ();
+      result_ptr[i * 5 + 4] = tmp_record->flow ();
     }
   for (size_t i = 0; i < _record.size (); ++i)
     {
@@ -1530,8 +1530,8 @@ Mcdta::get_truck_dar_matrix (py::array_t<int> start_intervals,
           "Error, Mcdta::get_truck_dar_matrix, input length mismatch");
     }
   int l = start_buf.shape[0];
-  int *start_prt = (int *)start_buf.ptr;
-  int *end_prt = (int *)end_buf.ptr;
+  int *start_ptr = (int *)start_buf.ptr;
+  int *end_ptr = (int *)end_buf.ptr;
   std::vector<dar_record *> _record = std::vector<dar_record *> ();
   // for (size_t i = 0; i<m_link_vec.size(); ++i){
   //   m_link_vec[i] -> m_N_in_tree -> print_out();
@@ -1540,37 +1540,37 @@ Mcdta::get_truck_dar_matrix (py::array_t<int> start_intervals,
     {
       for (size_t i = 0; i < m_link_vec.size (); ++i)
         {
-          if (end_prt[t] < start_prt[t])
+          if (end_ptr[t] < start_ptr[t])
             {
               throw std::runtime_error (
                   "Error, Mcdta::get_truck_dar_matrix, end time smaller "
                   "than start time");
             }
-          if (end_prt[t] > get_cur_loading_interval ())
+          if (end_ptr[t] > get_cur_loading_interval ())
             {
               throw std::runtime_error (
                   "Error, Mcdta::get_truck_dar_matrix, loaded data not "
                   "enough");
             }
           MNM_DTA_GRADIENT::add_dar_records_truck (
-              _record, m_link_vec[i], m_path_set, TFlt (start_prt[t]),
-              TFlt (end_prt[t]));
+              _record, m_link_vec[i], m_path_set, TFlt (start_ptr[t]),
+              TFlt (end_ptr[t]));
         }
     }
   // path_ID, assign_time, link_ID, start_int, flow
   int new_shape[2] = { (int)_record.size (), 5 };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
-  double *result_prt = (double *)result_buf.ptr;
+  double *result_ptr = (double *)result_buf.ptr;
   dar_record *tmp_record;
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_prt[i * 5 + 0] = (double)tmp_record->path_ID ();
-      result_prt[i * 5 + 1] = (double)tmp_record->assign_int ();
-      result_prt[i * 5 + 2] = (double)tmp_record->link_ID ();
-      result_prt[i * 5 + 3] = (double)tmp_record->link_start_int ();
-      result_prt[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 0] = (double)tmp_record->path_ID ();
+      result_ptr[i * 5 + 1] = (double)tmp_record->assign_int ();
+      result_ptr[i * 5 + 2] = (double)tmp_record->link_ID ();
+      result_ptr[i * 5 + 3] = (double)tmp_record->link_start_int ();
+      result_ptr[i * 5 + 4] = tmp_record->flow ();
     }
   for (size_t i = 0; i < _record.size (); ++i)
     {
