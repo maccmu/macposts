@@ -149,7 +149,7 @@ ConfigFile::ConfigFile (std::string const &configFile)
   int posEqual;
   while (std::getline (file, line))
     {
-
+      line = trim (line);
       if (!line.length ())
         continue;
 
