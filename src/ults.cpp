@@ -153,22 +153,20 @@ ConfigFile::ConfigFile (std::string const &configFile)
       if (!line.length ())
         continue;
 
-      if (line[0] == '#')
-        continue;
-      if (line[0] == ';')
-        continue;
-
-      if (line[0] == '[')
+      switch (line[0])
         {
+        case '#':
+        case ';':
+          continue;
+        case '[':
           inSection = trim (line.substr (1, line.find (']') - 1));
           continue;
+        default:
+          posEqual = line.find ('=');
+          name = trim (line.substr (0, posEqual));
+          value = trim (line.substr (posEqual + 1));
+          content_[inSection + '/' + name] = Chameleon (value);
         }
-
-      posEqual = line.find ('=');
-      name = trim (line.substr (0, posEqual));
-      value = trim (line.substr (posEqual + 1));
-
-      content_[inSection + '/' + name] = Chameleon (value);
     }
 }
 
