@@ -7,6 +7,12 @@
 
 namespace MNM_Ults
 {
+void
+srand (unsigned int s)
+{
+  std::srand (s);
+}
+
 TInt
 round (TFlt in)
 {

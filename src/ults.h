@@ -17,6 +17,7 @@ template <> struct std::hash<TInt>
 
 namespace MNM_Ults
 {
+void srand (unsigned int s);
 TInt round (TFlt in);
 TFlt min (TFlt a, TFlt b);
 TInt min (TInt a, TInt b);
