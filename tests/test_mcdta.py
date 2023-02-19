@@ -3,12 +3,12 @@ import numpy as np
 from .conftest import SEED
 
 
-def test_sevenlink_mc(network_sevenlink_mc):
+def test_7link_mc(network_7link_mc):
     macposts.set_random_state(SEED)
     links = list(range(1, 8))
 
     mcdta = macposts.Mcdta()
-    mcdta.initialize(str(network_sevenlink_mc))
+    mcdta.initialize(str(network_7link_mc))
     mcdta.register_links(links)
     mcdta.install_cc()
     mcdta.run_whole()

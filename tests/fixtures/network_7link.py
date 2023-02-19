@@ -6,7 +6,7 @@ import pytest
 
 
 @pytest.fixture(scope="session")
-def network_sevenlink_mc(tmp_path_factory):
+def network_7link_mc(tmp_path_factory):
     config = """\
 [DTA]
 network_name = Snap_graph

@@ -3,12 +3,12 @@ import numpy as np
 from .conftest import SEED
 
 
-def test_threelink(network_threelink):
+def test_3link(network_3link):
     macposts.set_random_state(SEED)
     links = [2, 3, 4]
 
     dta = macposts.Dta()
-    dta.initialize(str(network_threelink))
+    dta.initialize(str(network_3link))
     dta.register_links(links)
     dta.install_cc()
     dta.run_whole()
