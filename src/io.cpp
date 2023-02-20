@@ -873,12 +873,16 @@ std::vector<std::string>
 MNM_IO::split (const std::string &text, char sep)
 {
   std::vector<std::string> tokens;
-  std::size_t start = 0, end = 0;
+  // Skip leading separators if any
+  std::size_t start = text.find_first_not_of (sep, 0);
+  std::size_t end;
   while ((end = text.find (sep, start)) != std::string::npos)
     {
       tokens.push_back (text.substr (start, end - start));
-      start = end + 1;
+      // Skip successive separators in between
+      start = text.find_first_not_of (sep, end + 1);
     }
-  tokens.push_back (text.substr (start));
+  if (start < text.size ())
+    tokens.push_back (text.substr (start));
   return tokens;
 }
