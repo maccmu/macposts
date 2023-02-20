@@ -7,8 +7,7 @@ def test_3link_mc(network_3link_mc):
     macposts.set_random_state(SEED)
     links = [2, 3, 4]
 
-    mcdta = macposts.Mcdta()
-    mcdta.initialize(str(network_3link_mc))
+    mcdta = macposts.Mcdta.from_files(network_3link_mc)
     mcdta.register_links(links)
     mcdta.install_cc()
     mcdta.run_whole()

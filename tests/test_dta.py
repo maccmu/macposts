@@ -7,8 +7,7 @@ def test_3link(network_3link):
     macposts.set_random_state(SEED)
     links = [2, 3, 4]
 
-    dta = macposts.Dta()
-    dta.initialize(str(network_3link))
+    dta = macposts.Dta.from_files(network_3link)
     dta.register_links(links)
     dta.install_cc()
     dta.run_whole()
