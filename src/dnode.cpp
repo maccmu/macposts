@@ -110,15 +110,6 @@ MNM_DMOND::evolve (TInt timestamp)
         }
     }
 
-  // for (unsigned i=0; i<m_out_link_array.size(); ++i){
-  //   _link = m_out_link_array[i];
-  //   if (m_out_volume.find(_link) -> second != 0){
-  //     printf("Something wrong in moving vehicles on DMOND\n");
-  //     printf("Remaining out volume in link %d is %d\n", (int)_link ->
-  //     m_link_ID, (int)m_out_volume.find(_link) -> second); exit(-1);
-  //   }
-  // }
-  // printf("Finish MNM_DMOND evolve\n");
   return 0;
 }
 
@@ -184,8 +175,7 @@ MNM_DMDND::evolve (TInt timestamp)
           _veh = _link->m_finished_array.front ();
           if (_veh->get_next_link () != NULL)
             {
-              printf ("Something wrong in DMDND evolve\n");
-              exit (-1);
+              throw std::runtime_error ("invalid vehicle state");
             }
           m_out_veh_queue.push_back (_veh);
           _veh->set_current_link (NULL);
@@ -270,12 +260,7 @@ MNM_Dnode_Inout::prepare_supplyANDdemand ()
                          (*_veh_it)->get_next_link ())
               == m_out_link_array.end ())
             {
-              printf ("Vehicle in the wrong node, no exit!\n");
-              printf ("Vehicle is on link %d, node %d, next link ID "
-                      "is: %d\n",
-                      _in_link->m_link_ID (), m_node_ID (),
-                      (*_veh_it)->get_next_link ()->m_link_ID ());
-              exit (-1);
+              throw std::runtime_error ("vehicle on wrong node");
             }
         }
       for (size_t j = 0; j < m_out_link_array.size (); ++j)
@@ -418,24 +403,6 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
         {
           _in_link = m_in_link_array[i];
           _num_to_move = m_veh_tomove[i * _offset + j];
-          // printf("In node %d, from link %d to link %d, %d to
-          // move\n", m_node_ID, _in_link ->m_link_ID,
-          // _out_link->m_link_ID, _num_to_move); for (size_t k=0;
-          // k<_size; ++k){
-          //   if (_num_to_move > 0){
-          //     _veh = _in_link->m_finished_array[k];
-          //     if (_veh -> get_next_link() == _out_link){
-          //       _out_link ->m_incoming_array.push_back(_veh);
-          //       _veh -> set_current_link(_out_link);
-          //       // _in_link -> m_finished_array.pop_front();
-
-          //       _num_to_move -= 1;
-          //     }
-          //   }
-          //   else{
-          //     break; // break the inner most structure
-          //   }
-          // }
           auto _veh_it = _in_link->m_finished_array.begin ();
           while (_veh_it != _in_link->m_finished_array.end ())
             {
@@ -451,31 +418,12 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
                       _num_to_move -= 1;
                       if (_out_link->m_N_in_tree != NULL)
                         {
-                          // printf("record out link
-                          // cc tree: link ID %d,
-                          // time %d, path id %d,
-                          // assign interval %d\n",
-                          // _out_link ->
-                          // m_link_ID(),
-                          // timestamp()+1, _veh ->
-                          // m_path -> m_path_ID(),
-                          // _veh ->
-                          // m_assign_interval());
                           _out_link->m_N_in_tree->add_flow (
                               TFlt (timestamp + 1), TFlt (1) / m_flow_scalar,
                               _veh->m_path, _veh->m_assign_interval);
                         }
                       if (_in_link->m_N_out_tree != NULL)
                         {
-                          // printf("record in link
-                          // cc tree: link ID %d,
-                          // time %d, path id %d,
-                          // assign interval %d\n",
-                          // _in_link -> m_link_ID(),
-                          // timestamp()+1, _veh ->
-                          // m_path -> m_path_ID(),
-                          // _veh ->
-                          // m_assign_interval());
                           _in_link->m_N_out_tree->add_flow (
                               TFlt (timestamp + 1), TFlt (1) / m_flow_scalar,
                               _veh->m_path, _veh->m_assign_interval);
@@ -493,21 +441,11 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
             }
           if (_num_to_move != 0)
             {
-              printf ("Something wrong during the vehicle "
-                      "moving, remaining to move %d\n",
-                      (int)_num_to_move);
-              printf ("The finished veh queue is now size %d\n",
-                      (int)_in_link->m_finished_array.size ());
-              printf ("But it is heading to %d\n",
-                      (int)_in_link->m_finished_array.front ()
-                          ->get_next_link ()
-                          ->m_link_ID);
-              exit (-1);
+              throw std::runtime_error ("invalid state when moving vehicles");
             }
         }
-      // make the queue randomly perturbed, may not be true in signal
+      // TODO: make the queue randomly perturbed, may not be true in signal
       // controlled intersection
-      // TODO
       random_shuffle (_out_link->m_incoming_array.begin (),
                       _out_link->m_incoming_array.end ());
     }

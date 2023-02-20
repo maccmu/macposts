@@ -748,8 +748,7 @@ MNM_Realtime_Dta::get_statistics (MNM_Node_Factory *node_factory,
     }
   else
     {
-      printf ("Only support LRN now!\n");
-      exit (-1);
+      throw std::runtime_error ("only support LRn mode");
     }
 }
 /**************************************************************************

@@ -70,8 +70,7 @@ MNM_Node_Factory::make_node (TInt ID, DNode_type node_type, TFlt flow_scalar)
       _node = new MNM_DMDND (ID, flow_scalar);
       break;
     default:
-      printf ("Wrong node type.\n");
-      exit (-1);
+      throw std::runtime_error ("unknown node type");
     }
   m_node_map.insert (std::pair<TInt, MNM_Dnode *> (ID, _node));
   return _node;
@@ -138,8 +137,7 @@ MNM_Link_Factory::make_link (TInt ID, DLink_type link_type, TFlt lane_hold_cap,
                                  flow_scalar);
       break;
     default:
-      printf ("Wrong link type.\n");
-      exit (-1);
+      throw std::runtime_error ("unknown link type");
     }
   m_link_map.insert (std::pair<TInt, MNM_Dlink *> (ID, _link));
   return _link;
@@ -163,8 +161,7 @@ MNM_Link_Factory::delete_link (TInt ID)
   auto _map_it = m_link_map.find (ID);
   if (_map_it == m_link_map.end ())
     {
-      printf ("Can't delete link!\n");
-      exit (-1);
+      throw std::runtime_error ("failed to delete link");
     }
   m_link_map.erase (_map_it);
   return 0;

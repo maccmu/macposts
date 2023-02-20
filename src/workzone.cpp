@@ -41,8 +41,7 @@ MNM_Workzone::add_workzone_link (TInt link_ID)
   MNM_Dlink *_link = m_link_factory->get_link (link_ID);
   if (_link == NULL)
     {
-      printf ("No disabled link in the link factory\n");
-      exit (-1);
+      throw std::runtime_error ("failed to get link");
     }
   MNM_Dnode *_from_node, *_to_node;
   _from_node

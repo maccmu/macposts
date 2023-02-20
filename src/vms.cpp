@@ -98,10 +98,7 @@ MNM_Link_Vms::generate_detour_link (Path_Table *path_table,
     }
   if (_largest_link < 0)
     {
-      printf ("optimal is: %.4f, real is %.4f\n", (float)_tmp_optimal,
-              (float)_tmp_real);
-      printf ("Something wrong in generate_detour_link\n");
-      exit (-1);
+      throw std::runtime_error ("invalid state");
     }
   m_detour_link_ID = _largest_link;
   return _largest_link;
@@ -161,8 +158,7 @@ generate_vms_instructions (std::string file_name, MNM_Vms_Factory *vms_factory,
   _vms_info_file.open (file_name, std::ios::out);
   if (!_vms_info_file.is_open ())
     {
-      printf ("Error happens when open _vms_info_file\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + file_name);
     }
 
   std::string _info;

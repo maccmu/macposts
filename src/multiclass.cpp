@@ -145,9 +145,8 @@ MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (
   // Jam density for private cars and trucks cannot be negative
   if ((lane_hold_cap_car < 0) || (lane_hold_cap_truck < 0))
     {
-      printf ("lane_hold_cap can't be negative, current link ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative lane_hold_cap for link "
+                                + std::to_string (m_link_ID ()));
     }
   // Jam density for private cars cannot be too large
   if (lane_hold_cap_car > TFlt (400) / TFlt (1600))
@@ -165,10 +164,8 @@ MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (
   // Maximum flux for private cars and trucks cannot be negative
   if ((lane_flow_cap_car < 0) || (lane_flow_cap_truck < 0))
     {
-      printf ("lane_flow_cap can't be less than zero, current link ID "
-              "is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative lane_flow_cap for link "
+                                + std::to_string (m_link_ID ()));
     }
   // Maximum flux for private cars cannot be too large
   if (lane_flow_cap_car > TFlt (3500) / TFlt (3600))
@@ -185,32 +182,26 @@ MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (
 
   if ((ffs_car < 0) || (ffs_truck < 0))
     {
-      printf ("free-flow speed can't be less than zero, current link ID "
-              "is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative ffs for link "
+                                + std::to_string (m_link_ID ()));
     }
 
   if (veh_convert_factor < 1)
     {
-      printf ("veh_convert_factor can't be less than 1, current link ID "
-              "is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("invalid veh_convert_factor for link "
+                                + std::to_string (m_link_ID ()));
     }
 
   if (flow_scalar < 1)
     {
-      printf ("flow_scalar can't be less than 1, current link ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("invalid flow_scalar for link "
+                                + std::to_string (m_link_ID ()));
     }
 
   if (unit_time <= 0)
     {
-      printf ("unit_time should be positive, current link ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative unit_time for link "
+                                + std::to_string (m_link_ID ()));
     }
   m_unit_time = unit_time;
   m_lane_flow_cap_car = lane_flow_cap_car;
@@ -239,17 +230,16 @@ MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (
 
   if (m_lane_hold_cap_car <= m_lane_critical_density_car)
     {
-      printf ("Wrong private car parameters, current link ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("invalid car parameters for link "
+                                + std::to_string (m_link_ID ()));
     }
   m_wave_speed_car = m_lane_flow_cap_car
                      / (m_lane_hold_cap_car - m_lane_critical_density_car);
 
   if (m_lane_hold_cap_truck <= m_lane_critical_density_truck)
     {
-      printf ("Wrong truck parameters, current link ID is %d\n", m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("invalid truck parameters for link "
+                                + std::to_string (m_link_ID ()));
     }
   m_wave_speed_truck
       = m_lane_flow_cap_truck
@@ -319,8 +309,7 @@ MNM_Dlink_Ctm_Multiclass::init_cell_array (TFlt unit_time,
           m_ffs_truck, m_wave_speed_car, m_wave_speed_truck, m_flow_scalar);
       if (cell == NULL)
         {
-          printf ("Fail to initialize some standard cell.\n");
-          exit (-1);
+          throw std::runtime_error ("failed to create cell");
         }
       m_cell_array.push_back (cell);
     }
@@ -341,8 +330,7 @@ MNM_Dlink_Ctm_Multiclass::init_cell_array (TFlt unit_time,
           m_ffs_truck, m_wave_speed_car, m_wave_speed_truck, m_flow_scalar);
       if (cell == NULL)
         {
-          printf ("Fail to initialize the last cell.\n");
-          exit (-1);
+          throw std::runtime_error ("failed to create cell");
         }
       m_cell_array.push_back (cell);
     }
@@ -520,9 +508,7 @@ MNM_Dlink_Ctm_Multiclass::move_last_cell ()
                 }
               else
                 {
-                  printf ("Dlink_CTM_Multiclass::Some thing "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               _num_veh_tomove_car--;
             }
@@ -537,9 +523,7 @@ MNM_Dlink_Ctm_Multiclass::move_last_cell ()
                 }
               else
                 {
-                  printf ("Dlink_CTM_Multiclass::Some thing "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               _num_veh_tomove_truck--;
             }
@@ -558,9 +542,7 @@ MNM_Dlink_Ctm_Multiclass::move_last_cell ()
                 }
               else
                 {
-                  printf ("Dlink_CTM_Multiclass::Some thing "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               _num_veh_tomove_truck--;
             }
@@ -575,9 +557,7 @@ MNM_Dlink_Ctm_Multiclass::move_last_cell ()
                 }
               else
                 {
-                  printf ("Dlink_CTM_Multiclass::Some thing "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               _num_veh_tomove_car--;
             }
@@ -1161,9 +1141,7 @@ MNM_Dlink_Lq_Multiclass::evolve (TInt timestamp)
                 }
               else
                 {
-                  printf ("Dlink_Lq_Multiclass::Some thing "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               _num_veh_tomove_car--;
             }
@@ -1178,9 +1156,7 @@ MNM_Dlink_Lq_Multiclass::evolve (TInt timestamp)
                 }
               else
                 {
-                  printf ("Dlink_Lq_Multiclass::Some thing "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               _num_veh_tomove_truck--;
             }
@@ -1199,9 +1175,7 @@ MNM_Dlink_Lq_Multiclass::evolve (TInt timestamp)
                 }
               else
                 {
-                  printf ("Dlink_Lq_Multiclass::Some thing "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               _num_veh_tomove_truck--;
             }
@@ -1216,9 +1190,7 @@ MNM_Dlink_Lq_Multiclass::evolve (TInt timestamp)
                 }
               else
                 {
-                  printf ("Dlink_Lq_Multiclass::Some thing "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               _num_veh_tomove_car--;
             }
@@ -1228,8 +1200,7 @@ MNM_Dlink_Lq_Multiclass::evolve (TInt timestamp)
   if ((m_veh_out_buffer_car.size () != 0)
       || (m_veh_out_buffer_car.size () != 0))
     {
-      printf ("Something wrong with our buffer, not empty!\n");
-      exit (-1);
+      throw std::runtime_error ("non-empty buffer");
     }
   m_tot_wait_time_at_intersection
       += m_finished_array.size () / m_flow_scalar * m_unit_time;
@@ -1638,8 +1609,7 @@ MNM_DMDND_Multiclass::evolve (TInt timestamp)
               _link->m_finished_array.front ());
           if (_veh->get_next_link () != NULL)
             {
-              printf ("Something wrong in DMDND evolve\n");
-              exit (-1);
+              throw std::runtime_error ("invalid state");
             }
           m_out_veh_queue.push_back (_veh);
           _veh->set_current_link (NULL);
@@ -1746,12 +1716,7 @@ MNM_Dnode_Inout_Multiclass::prepare_supplyANDdemand ()
                          (*_veh_it)->get_next_link ())
               == m_out_link_array.end ())
             {
-              printf ("Vehicle in the wrong node, no exit!\n");
-              printf ("Vehicle is on link %d, node %d, next link ID "
-                      "is: %d\n",
-                      _in_link->m_link_ID (), m_node_ID (),
-                      (*_veh_it)->get_next_link ()->m_link_ID ());
-              exit (-1);
+              throw std::runtime_error ("vehicle in wrong node");
             }
         }
       for (size_t j = 0; j < _num_out; ++j)
@@ -1936,10 +1901,7 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
           // printf("\n");
           if (_to_move > 0.001)
             {
-              printf ("Something wrong during the vehicle "
-                      "moving, remaining to move %.16f\n",
-                      (float)_to_move);
-              exit (-1);
+              throw std::runtime_error ("invalid state");
             }
         }
       random_shuffle (_out_link->m_incoming_array.begin (),
@@ -2431,8 +2393,7 @@ MNM_Node_Factory_Multiclass::make_node_multiclass (
       _node = new MNM_DMDND_Multiclass (ID, flow_scalar, veh_convert_factor);
       break;
     default:
-      printf ("Wrong node type.\n");
-      exit (-1);
+      throw std::runtime_error ("unknown node type");
     }
   m_node_map.insert ({ ID, _node });
   return _node;
@@ -2477,8 +2438,7 @@ MNM_Link_Factory_Multiclass::make_link_multiclass (
           unit_time, veh_convert_factor, flow_scalar);
       break;
     default:
-      printf ("Wrong link type.\n");
-      exit (-1);
+      throw std::runtime_error ("unknown link type");
     }
   m_link_map.insert ({ ID, _link });
   return _link;
@@ -2579,14 +2539,11 @@ MNM_IO_Multiclass::build_node_factory_multiclass (
                       _veh_convert_factor);
                   continue;
                 }
-              printf ("Wrong node type, %s\n", _type.c_str ());
-              exit (-1);
+              throw std::runtime_error ("unknown node type: " + _type);
             }
           else
             {
-              printf ("MNM_IO_Multiclass::build_node_factory_"
-                      "Multiclass: Wrong length of line.\n");
-              exit (-1);
+              throw std::runtime_error ("failed to parse line: " + _line);
             }
         }
       _node_file.close ();
@@ -2695,14 +2652,11 @@ MNM_IO_Multiclass::build_link_factory_multiclass (
                       _flow_scalar);
                   continue;
                 }
-              printf ("Wrong link type, %s\n", _type.c_str ());
-              exit (-1);
+              throw std::runtime_error ("unknown link type: " + _type);
             }
           else
             {
-              printf ("MNM_IO::build_link_factory::Wrong length "
-                      "of line.\n");
-              exit (-1);
+              throw std::runtime_error ("failed to parse line: " + _line);
             }
         }
       _link_file.close ();
@@ -2784,10 +2738,9 @@ MNM_IO_Multiclass::build_demand_multiclass (std::string file_folder,
             }
           else
             {
-              printf ("Something wrong in build_demand!\n");
               free (_demand_vector_car);
               free (_demand_vector_truck);
-              exit (-1);
+              throw std::runtime_error ("failed to build demand");
             }
         }
       free (_demand_vector_car);

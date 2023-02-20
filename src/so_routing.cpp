@@ -131,8 +131,7 @@ MNM_Routing_Predetermined::update_routing (TInt timestamp)
                 }
               else if (_remain_demand > 0 && _thisdemand < 0)
                 {
-                  std::cout << "somthing wrong with the demand " << std::endl;
-                  exit (1);
+                  throw std::runtime_error ("invalid state");
                 }
               _thisdemand--;
               _remain_demand--;
@@ -187,8 +186,7 @@ MNM_Routing_Predetermined::update_routing (TInt timestamp)
             {
               if (m_tracker.find (_veh)->second->size () != 0)
                 {
-                  printf ("Something wrong in fixed routing!\n");
-                  exit (-1);
+                  throw std::runtime_error ("errors in fixed routing");
                 }
               _veh->set_next_link (NULL);
               // m_tracker.erase(m_tracker.find(_veh));
@@ -198,22 +196,14 @@ MNM_Routing_Predetermined::update_routing (TInt timestamp)
               // printf("2.3\n");
               if (m_tracker.find (_veh) == m_tracker.end ())
                 {
-                  printf ("Vehicle not registered in link, "
-                          "impossible!\n");
-                  exit (-1);
+                  throw std::runtime_error ("vehicle unregistred in link");
                 }
               if (_veh->get_current_link () == _veh->get_next_link ())
                 {
                   _next_link_ID = m_tracker.find (_veh)->second->front ();
                   if (_next_link_ID == -1)
                     {
-                      printf ("Something wrong in routing, "
-                              "wrong next link 2\n");
-                      printf ("The node is %d, the vehicle "
-                              "should head to %d\n",
-                              (int)_node_ID,
-                              (int)_veh_dest->m_dest_node->m_node_ID);
-                      exit (-1);
+                      throw std::runtime_error ("invalid next link");
                     }
                   _next_link = m_link_factory->get_link (_next_link_ID);
                   _veh->set_next_link (_next_link);

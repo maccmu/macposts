@@ -54,9 +54,7 @@ MNM_Statistics::init_record_value ()
       m_record_volume = false;
       break;
     default:
-      printf ("MNM_Statistics::init_record_value_volume::Something "
-              "wrong!\n");
-      exit (-1);
+      throw std::runtime_error ("invalid value for rec_volume");
     }
   switch (m_self_config->get_int ("rec_tt"))
     {
@@ -67,8 +65,7 @@ MNM_Statistics::init_record_value ()
       m_record_tt = false;
       break;
     default:
-      printf ("MNM_Statistics::init_record_value_tt::Something wrong!\n");
-      exit (-1);
+      throw std::runtime_error ("invalid value for rec_tt");
     }
   return 0;
 }
@@ -111,9 +108,8 @@ MNM_Statistics::init_record ()
                                                 std::ofstream::out);
               if (!m_load_interval_volume_file.is_open ())
                 {
-                  printf ("Error happens when open "
-                          "m_load_interval_volume_file\n");
-                  exit (-1);
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
                 }
               m_load_interval_volume_file << _str;
             }
@@ -127,9 +123,8 @@ MNM_Statistics::init_record ()
                                                   std::ofstream::out);
               if (!m_record_interval_volume_file.is_open ())
                 {
-                  printf ("Error happens when open "
-                          "m_record_interval_volume_file\n");
-                  exit (-1);
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
                 }
               m_record_interval_volume_file << _str;
             }
@@ -168,9 +163,8 @@ MNM_Statistics::init_record ()
               m_load_interval_tt_file.open (_file_name, std::ofstream::out);
               if (!m_load_interval_tt_file.is_open ())
                 {
-                  printf ("Error happens when open "
-                          "m_load_interval_tt_file\n");
-                  exit (-1);
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
                 }
               m_load_interval_tt_file << _str;
             }
@@ -183,9 +177,8 @@ MNM_Statistics::init_record ()
               m_record_interval_tt_file.open (_file_name, std::ofstream::out);
               if (!m_record_interval_tt_file.is_open ())
                 {
-                  printf ("Error happens when open "
-                          "m_record_interval_tt_file\n");
-                  exit (-1);
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
                 }
               m_record_interval_tt_file << _str;
             }

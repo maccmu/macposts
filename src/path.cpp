@@ -116,8 +116,7 @@ MNM_Pathset::normalize_p ()
     {
       if (_path->m_p < 0)
         {
-          printf ("Negative probability, impossible!\n");
-          exit (-1);
+          throw std::runtime_error ("invalid probability");
         }
       if (_path->m_p < _min_p)
         {
@@ -405,19 +404,16 @@ save_path_table (Path_Table *path_table, MNM_OD_Factory *od_factory,
       _path_buffer_file.open (_data_file_name, std::ofstream::out);
       if (!_path_buffer_file.is_open ())
         {
-          printf ("Error happens when open _path_buffer_file\n");
-          exit (-1);
+          throw std::runtime_error ("failed to open file: " + _data_file_name);
         }
     }
   std::ofstream _path_table_file;
   _path_table_file.open (_file_name, std::ofstream::out);
   if (!_path_table_file.is_open ())
     {
-      printf ("Error happens when open _path_table_file\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + _file_name);
     }
   TInt _dest_node_ID, _origin_node_ID;
-  // printf("ssssssma\n");
   for (auto _d_it = od_factory->m_destination_map.begin ();
        _d_it != od_factory->m_destination_map.end (); _d_it++)
     {

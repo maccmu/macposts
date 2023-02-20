@@ -8,25 +8,21 @@ MNM_Dlink::MNM_Dlink (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs)
   m_link_ID = ID;
   if (ffs < 0)
     {
-      printf ("link speed less than zero, current link ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative link speed for link "
+                                + std::to_string (m_link_ID ()));
     }
   m_ffs = ffs;
 
   if (number_of_lane < 0)
     {
-      printf ("m_number_of_lane less than zero, current link ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative number of lanes for link "
+                                + std::to_string (m_link_ID ()));
     }
   m_number_of_lane = number_of_lane;
 
   if (length < 0)
     {
-      printf ("link length less than zero, current link ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative length for link " + m_link_ID ());
     }
   m_length = length;
 
@@ -115,10 +111,8 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
 {
   if (lane_hold_cap < 0)
     {
-      printf ("lane_hold_cap can't be less than zero, current link ID "
-              "is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative lane_hold_cap for link "
+                                + std::to_string (m_link_ID ()));
     }
   if (lane_hold_cap > TFlt (300) / TFlt (1600))
     {
@@ -130,10 +124,8 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
 
   if (lane_flow_cap < 0)
     {
-      printf ("lane_flow_cap can't be less than zero, current link ID "
-              "is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative lane_flow_cap for link "
+                                + std::to_string (m_link_ID ()));
     }
   if (lane_flow_cap > TFlt (3500) / TFlt (3600))
     {
@@ -166,19 +158,16 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
                  // capcity, v is free flow speed. i.e., wvRatio should < 1.
   if (m_wave_ratio < 0)
     {
-      printf ("Wave ratio won't less than zero, current link ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative wave ratio for link "
+                                + std::to_string (m_link_ID ()));
     }
   m_last_wave_ratio = (m_lane_flow_cap
                        / (_lane_hold_cap_last_cell - m_lane_flow_cap / m_ffs))
                       / m_ffs;
   if (m_last_wave_ratio < 0)
     {
-      printf ("Last cell Wave ratio won't less than zero, current link "
-              "ID is %d\n",
-              m_link_ID ());
-      exit (-1);
+      throw std::runtime_error ("negative last cell wave ratio for link "
+                                + std::to_string (m_link_ID ()));
     }
   init_cell_array (unit_time, _std_cell_length, _lane_hold_cap_last_cell);
 }
@@ -206,8 +195,7 @@ MNM_Dlink_Ctm::init_cell_array (TFlt unit_time, TFlt std_cell_length,
           m_wave_ratio);
       if (aCell == NULL)
         {
-          // LOG(WARNING) << "Fail to init the cell.";
-          exit (-1);
+          throw std::runtime_error ("failed to initialize cell");
         };
       m_cell_array.push_back (aCell);
       aCell = NULL;
@@ -222,8 +210,7 @@ MNM_Dlink_Ctm::init_cell_array (TFlt unit_time, TFlt std_cell_length,
           m_last_wave_ratio);
       if (aCell == NULL)
         {
-          // LOG(WARNING) << "Fail to init the cell.";
-          exit (-1);
+          throw std::runtime_error ("failed to initialize cell");
         }
       m_cell_array.push_back (aCell);
     }
@@ -319,8 +306,7 @@ MNM_Dlink_Ctm::clear_incoming_array ()
   // m_flow_scalar) );
   if (get_link_supply () * m_flow_scalar < m_incoming_array.size ())
     {
-      // LOG(WARNING) << "Wrong incoming array size";
-      exit (-1);
+      throw std::runtime_error ("wrong incoming array size");
     }
   move_veh_queue (&m_incoming_array, &(m_cell_array[0]->m_veh_queue),
                   m_incoming_array.size ());
@@ -346,9 +332,7 @@ MNM_Dlink_Ctm::move_last_cell ()
         }
       else
         {
-          printf ("Dlink_CTM::Some thing wrong!\n");
-          exit (-1);
-          // _veh -> get_destionation() -> receive_veh(_veh);
+          throw std::runtime_error ("invalid vehicle state");
         }
     }
   return 0;
@@ -586,8 +570,7 @@ MNM_Dlink_Lq::clear_incoming_array ()
   if (TInt (m_incoming_array.size ())
       > TInt (get_link_supply () * m_flow_scalar))
     {
-      printf ("Error in MNM_Dlink_Lq::clear_incoming_array()\n");
-      exit (-1);
+      throw std::runtime_error ("invalid incoming array size");
     }
   move_veh_queue (&m_incoming_array, &m_veh_queue, m_incoming_array.size ());
 
@@ -1022,8 +1005,7 @@ MNM_Dlink_Ltm::clear_incoming_array ()
   if (TInt (m_incoming_array.size ())
       > TInt (get_link_supply () * m_flow_scalar))
     {
-      printf ("Error in MNM_Dlink_Ltm::clear_incoming_array()\n");
-      exit (-1);
+      throw std::runtime_error ("invalid incoming array size");
     }
   m_N_in2.add_increment (
       std::pair<TFlt, TFlt> (TFlt (m_current_timestamp * m_unit_time),
@@ -1069,9 +1051,7 @@ MNM_Dlink_Ltm::evolve (TInt timestamp)
           _veh = m_finished_array.back ();
           if (_veh == NULL)
             {
-              printf ("Error in MNM_Dlink_Ltm::evolve -> not "
-                      "enough in finish\n");
-              exit (-1);
+              throw std::runtime_error ("no enough finished vehicles");
             }
           m_veh_queue.push_front (_veh);
           m_finished_array.pop_back ();
@@ -1092,9 +1072,7 @@ MNM_Dlink_Ltm::evolve (TInt timestamp)
           _veh = m_veh_queue.front ();
           if (_veh == NULL)
             {
-              printf ("Error in MNM_Dlink_Ltm::evolve -> not "
-                      "enough in veh_queue\n");
-              exit (-1);
+              throw std::runtime_error ("no enough vehicles in vehicle queue");
             }
           m_finished_array.push_back (_veh);
           m_veh_queue.pop_front ();

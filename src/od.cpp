@@ -9,8 +9,7 @@ MNM_Origin::MNM_Origin (TInt ID, TInt max_interval, TFlt flow_scalar,
   m_current_assign_interval = 0;
   if (frequency <= 0)
     {
-      printf ("MNM_Origin::MNM_Origin::Wrong frequency.\n");
-      exit (-1);
+      throw std::runtime_error ("invalid frequency");
     }
   m_frequency = frequency;
   m_demand = std::unordered_map<MNM_Destination *, TFlt *> ();
@@ -133,17 +132,9 @@ MNM_Destination::receive (TInt current_interval)
       _veh = m_dest_node->m_out_veh_queue.front ();
       if (_veh->get_destination () != this)
         {
-          printf ("The veh is heading to %d, but we are %d\n",
-                  (int)_veh->get_destination ()->m_dest_node->m_node_ID,
-                  (int)m_dest_node->m_node_ID);
-          printf ("MNM_Destination::receive: Something wrong!\n");
-          exit (-1);
+          throw std::runtime_error ("invalid state");
         }
       _veh->finish (current_interval);
-      // printf("Receive Vehicle ID: %d, origin node is %d, destination
-      // node is %d\n", _veh -> m_veh_ID(), _veh -> get_origin() ->
-      // m_origin_node -> m_node_ID(), _veh -> get_destination() ->
-      // m_dest_node -> m_node_ID());
       m_dest_node->m_out_veh_queue.pop_front ();
     }
 
@@ -172,8 +163,7 @@ get_demand_bynode (TInt O_node, TInt D_node, TInt assign_inter,
           return _origin->m_demand.find (_dest)->second[assign_inter];
         }
     }
-  printf ("get_demand_bynode::Can't find the origin or destination.\n");
-  exit (-1);
+  throw std::runtime_error ("failed to find origin/destination");
 }
 
 }

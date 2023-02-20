@@ -68,9 +68,7 @@ MNM_Link_Tt::update_tt (TInt timestamp)
                 }
               else
                 {
-                  printf ("update_marginal_cost::Impossible "
-                          "case!\n");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
             }
         }

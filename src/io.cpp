@@ -65,14 +65,11 @@ MNM_IO::build_node_factory (std::string file_folder,
                                            _flow_scalar);
                   continue;
                 }
-              printf ("Wrong node type, %s\n", _type.c_str ());
-              exit (-1);
+              throw std::runtime_error ("unknown node type: " + _type);
             }
           else
             {
-              printf ("MNM_IO::build_node_factory::Wrong length "
-                      "of line.\n");
-              exit (-1);
+              throw std::runtime_error ("failed to parse line: " + _line);
             }
         }
       _node_file.close ();
@@ -170,14 +167,11 @@ MNM_IO::build_link_factory (std::string file_folder,
                                            _unit_time, _flow_scalar);
                   continue;
                 }
-              printf ("Wrong link type, %s\n", _type.c_str ());
-              exit (-1);
+              throw std::runtime_error ("unknown link type: " + _type);
             }
           else
             {
-              printf ("MNM_IO::build_link_factory::Wrong length "
-                      "of line.\n");
-              exit (-1);
+              throw std::runtime_error ("failed to parse line: " + _line);
             }
         }
       _link_file.close ();
@@ -504,9 +498,8 @@ MNM_IO::build_demand (std::string file_folder, MNM_ConfReader *conf_reader,
             }
           else
             {
-              printf ("Something wrong in build_demand!\n");
               free (_demand_vector);
-              exit (-1);
+              throw std::runtime_error ("failed to build demand");
             }
         }
       free (_demand_vector);
@@ -636,15 +629,9 @@ MNM_IO::load_path_table (std::string file_name, PNEGraph graph, TInt num_path,
     }
   else
     {
-      printf ("Can't open path table file!\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open path table file");
     }
   printf ("Finish Loading Path Table!\n");
-  // printf("path table %p\n", _path_table);
-  // printf("path table %s\n", _path_table -> find(100283) -> second ->
-  // find(150153) -> second
-  //                           -> m_path_vec.front() ->
-  //                           node_vec_to_string());
   return _path_table;
 }
 
@@ -681,8 +668,7 @@ MNM_IO::build_vms_facotory (std::string file_folder, PNEGraph graph,
             }
           else
             {
-              printf ("Something wrong in build_vms!\n");
-              exit (-1);
+              throw std::runtime_error ("failed to build vms");
             }
         }
       _vms_file.close ();
@@ -722,8 +708,7 @@ MNM_IO::read_int_float (std::string file_name,
             }
           else
             {
-              printf ("Something wrong in read_int_float!\n");
-              exit (-1);
+              throw std::runtime_error ("failed to build read_int_float");
             }
         }
       _file.close ();
@@ -827,8 +812,7 @@ MNM_IO::build_workzone_list (std::string file_folder, MNM_Workzone *workzone)
             }
           else
             {
-              printf ("Something wrong in build_workzone!\n");
-              exit (-1);
+              throw std::runtime_error ("failed to build workzone");
             }
         }
       _workzone_file.close ();
