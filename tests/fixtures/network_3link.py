@@ -1,6 +1,4 @@
-"""A toy network with three links.
-
-"""
+"""A toy network with three links."""
 
 import pytest
 
@@ -66,7 +64,7 @@ route_frq = 20
     demands = """\
 1 1 100 100 100 100 100 0 0 0 0 0
 """
-    base_dir = tmp_path_factory.mktemp("network_threelink")
+    base_dir = tmp_path_factory.mktemp("network_3link")
     for name, contents in [
         ("config.conf", config),
         ("Snap_graph", graph),
@@ -141,7 +139,7 @@ route_frq = 20
     demands = """\
 1 1 100 100 100 100 100 0 0 0 0 0 20 20 20 20 20 0 0 0 0 0
 """
-    base_dir = tmp_path_factory.mktemp("network_threelink")
+    base_dir = tmp_path_factory.mktemp("network_3link_mc")
     for name, contents in [
         ("config.conf", config),
         ("Snap_graph", graph),

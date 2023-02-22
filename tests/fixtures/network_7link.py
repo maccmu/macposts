@@ -1,6 +1,4 @@
-"""A toy network with seven links.
-
-"""
+"""A toy network with seven links."""
 
 import pytest
 
@@ -94,7 +92,7 @@ route_frq = 180
 40 40 40 40 40 10 10 10 10 33
 40 40 40 40 40 80 80 80 80 34
 """
-    base_dir = tmp_path_factory.mktemp("network_sevenlink")
+    base_dir = tmp_path_factory.mktemp("network_7link")
     for name, contents in [
         ("config.conf", config),
         ("Snap_graph", graph),
@@ -199,7 +197,7 @@ route_frq = 180
 40 40 40 40 40 10 10 10 10 33 40 40 40 40 40 10 10 10 10 33
 40 40 40 40 40 80 80 80 80 34 40 40 40 40 40 80 80 80 80 33
 """
-    base_dir = tmp_path_factory.mktemp("network_sevenlink")
+    base_dir = tmp_path_factory.mktemp("network_7link_mc")
     for name, contents in [
         ("config.conf", config),
         ("Snap_graph", graph),

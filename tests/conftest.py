@@ -26,7 +26,7 @@ def as_plugin(path):
     return name
 
 
-# Add all network fixtures
+# Add all fixtures
 for directory in fixtures_directories:
     files = list_files(directory, r"^_")
     pytest_plugins += [
