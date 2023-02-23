@@ -41,7 +41,7 @@ MNM_Dlink_Multiclass::MNM_Dlink_Multiclass (
   m_spill_back
       = false; // if spill back happens during simulation, then set to true
 
-  install_cumulative_curve_multiclass ();
+  // install_cumulative_curve_multiclass ();
 
   // !!! Close cc_tree if only doing loading to save a lot of memory !!!
   // install_cumulative_curve_tree_multiclass();
