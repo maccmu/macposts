@@ -3,7 +3,7 @@
 A toolkit for transportation network modeling. To install from the repository,
 first ensure a working C++ toolchain (note that MSVC is not supported now and we
 appreciate any help on the Windows build) and CMake ≥ 3.10. Then clone this
-repository (with `--recurse-submodules` ), and run at the project root:
+repository, initialize and clone all submodules, and run at the project root:
 
 ```sh
 pip install .
@@ -15,7 +15,9 @@ For development, run
 pip install -e .[dev]
 ```
 
-instead to also install the development tools and enable editable mode.
+instead to also install the development tools and enable editable mode. If you
+need debug information for the C++ library (and also enable other settings for
+debugging), set the environment variable `DEBUG` to `1` before installation.
 
 For normal users, you can instead use the precompiled wheels of tagged releases
 for certain platforms and Python versions on the GitHub [releases] page. There
