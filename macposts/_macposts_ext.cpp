@@ -100,6 +100,7 @@ Dta::initialize (std::string folder)
       // printf("mapping size %d\n", m_ID_path_mapping.size());
       return 0;
     }
+  // TODO: Check this.
   std::runtime_error ("Dta:: Routing type not implemented in API");
   return -1;
 }
@@ -604,7 +605,7 @@ Mcdta::initialize (std::string folder)
                 << m_ID_path_mapping.size () << std::endl;
       return 0;
     }
-  printf ("xxx\n");
+  // TODO: Check this.
   std::runtime_error ("Mcdta:: Routing type not implemented in API");
   return -1;
 }
