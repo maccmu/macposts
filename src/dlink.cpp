@@ -143,27 +143,26 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
       m_num_cells = 1;
     }
   TFlt _lane_hold_cap_last_cell
-      = MNM_Ults::max (((m_length - TFlt (m_num_cells - 1) * _std_cell_length)
-                        / _std_cell_length)
-                           * m_lane_hold_cap,
-                       m_lane_hold_cap);
+    = MNM_Ults::max (((m_length - TFlt (m_num_cells - 1) * _std_cell_length)
+                      / _std_cell_length)
+                       * m_lane_hold_cap,
+                     m_lane_hold_cap);
   TFlt _wave_speed
-      = m_lane_flow_cap
-        / (m_lane_hold_cap
-           - m_lane_flow_cap
-                 / m_ffs); // laneFlwCap/ffs is the critical density.
+    = m_lane_flow_cap
+      / (m_lane_hold_cap
+         - m_lane_flow_cap / m_ffs); // laneFlwCap/ffs is the critical density.
   m_wave_ratio
-      = _wave_speed
-        / m_ffs; // note that h >= 2c/v, where h is holding capacity, c is
-                 // capcity, v is free flow speed. i.e., wvRatio should < 1.
+    = _wave_speed
+      / m_ffs; // note that h >= 2c/v, where h is holding capacity, c is
+               // capcity, v is free flow speed. i.e., wvRatio should < 1.
   if (m_wave_ratio < 0)
     {
       throw std::runtime_error ("negative wave ratio for link "
                                 + std::to_string (m_link_ID ()));
     }
-  m_last_wave_ratio = (m_lane_flow_cap
-                       / (_lane_hold_cap_last_cell - m_lane_flow_cap / m_ffs))
-                      / m_ffs;
+  m_last_wave_ratio
+    = (m_lane_flow_cap / (_lane_hold_cap_last_cell - m_lane_flow_cap / m_ffs))
+      / m_ffs;
   if (m_last_wave_ratio < 0)
     {
       throw std::runtime_error ("negative last cell wave ratio for link "
@@ -185,14 +184,14 @@ int
 MNM_Dlink_Ctm::init_cell_array (TFlt unit_time, TFlt std_cell_length,
                                 TFlt lane_hold_cap_last_cell)
 {
-
   Ctm_Cell *aCell = NULL;
   for (int i = 0; i < m_num_cells - 1; ++i)
     {
-      aCell = new Ctm_Cell (
-          TFlt (m_number_of_lane) * std_cell_length * m_lane_hold_cap,
-          TFlt (m_number_of_lane) * m_lane_flow_cap * unit_time, m_flow_scalar,
-          m_wave_ratio);
+      aCell
+        = new Ctm_Cell (TFlt (m_number_of_lane) * std_cell_length
+                          * m_lane_hold_cap,
+                        TFlt (m_number_of_lane) * m_lane_flow_cap * unit_time,
+                        m_flow_scalar, m_wave_ratio);
       if (aCell == NULL)
         {
           throw std::runtime_error ("failed to initialize cell");
@@ -204,10 +203,11 @@ MNM_Dlink_Ctm::init_cell_array (TFlt unit_time, TFlt std_cell_length,
   // since the last cell is a non-standard cell
   if (m_length > 0.0)
     {
-      aCell = new Ctm_Cell (
-          TFlt (m_number_of_lane) * std_cell_length * lane_hold_cap_last_cell,
-          TFlt (m_number_of_lane) * m_lane_flow_cap * unit_time, m_flow_scalar,
-          m_last_wave_ratio);
+      aCell
+        = new Ctm_Cell (TFlt (m_number_of_lane) * std_cell_length
+                          * lane_hold_cap_last_cell,
+                        TFlt (m_number_of_lane) * m_lane_flow_cap * unit_time,
+                        m_flow_scalar, m_last_wave_ratio);
       if (aCell == NULL)
         {
           throw std::runtime_error ("failed to initialize cell");
@@ -226,8 +226,7 @@ MNM_Dlink_Ctm::print_info ()
 {
   printf ("Total number of cell: \t%d\t Standard wave ratio: \t%.4f\nLast "
           "cell wave ratio: \t%.4f\n",
-          int (m_num_cells), double (m_wave_ratio),
-          double (m_last_wave_ratio));
+          int (m_num_cells), double (m_wave_ratio), double (m_last_wave_ratio));
   printf ("Volume for each cell is:\n");
   for (int i = 0; i < m_num_cells; ++i)
     {
@@ -251,7 +250,7 @@ MNM_Dlink_Ctm::update_out_veh ()
         }
     }
   m_cell_array[m_num_cells - 1]->m_out_veh
-      = m_cell_array[m_num_cells - 1]->m_veh_queue.size ();
+    = m_cell_array[m_num_cells - 1]->m_veh_queue.size ();
   return 0;
 }
 
@@ -269,8 +268,7 @@ MNM_Dlink_Ctm::evolve (TInt timestamp)
         {
           _num_veh_tomove = m_cell_array[i]->m_out_veh;
           move_veh_queue (&(m_cell_array[i]->m_veh_queue),
-                          &(m_cell_array[i + 1]->m_veh_queue),
-                          _num_veh_tomove);
+                          &(m_cell_array[i + 1]->m_veh_queue), _num_veh_tomove);
         }
     }
   /* last cell */
@@ -287,8 +285,8 @@ MNM_Dlink_Ctm::evolve (TInt timestamp)
         }
     }
   m_cell_array[m_num_cells - 1]->m_volume
-      = m_cell_array[m_num_cells - 1]->m_veh_queue.size ()
-        + m_finished_array.size ();
+    = m_cell_array[m_num_cells - 1]->m_veh_queue.size ()
+      + m_finished_array.size ();
   return 0;
 }
 
@@ -370,9 +368,9 @@ MNM_Dlink_Ctm::Ctm_Cell::get_supply ()
   if (m_wave_ratio <= 1.0) // this one is quite tricky, why not just
                            // _min(flwCap, hldCap - curDensity)*wvRatio?
     return m_flow_cap > _real_volume
-               ? m_flow_cap
-               : TFlt ((m_hold_cap - _real_volume)
-                       * m_wave_ratio); // flowCap equals to critical density
+             ? m_flow_cap
+             : TFlt ((m_hold_cap - _real_volume)
+                     * m_wave_ratio); // flowCap equals to critical density
   else
     return std::min (m_flow_cap, TFlt (m_hold_cap - _real_volume));
 }
@@ -411,7 +409,7 @@ MNM_Dlink_Ctm::get_link_tt ()
       else
         {
           _spd = MNM_Ults::max (0.001 * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
-                                                   / ((_rhoj - _rhok) * _rho));
+                                                 / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -468,9 +466,9 @@ MNM_Dlink_Pq::print_info ()
 {
   printf ("Link Dynamic model: Point Queue\n");
   printf ("Real volume in the link: %.4f\n",
-          (float)(m_volume / m_flow_scalar));
+          (float) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
-          (float)(TFlt (m_finished_array.size ()) / m_flow_scalar));
+          (float) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }
 
 int
@@ -527,7 +525,7 @@ MNM_Dlink_Pq::get_link_tt ()
         {
           _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
                                 m_lane_flow_cap * (_rhoj - _rho)
-                                    / ((_rhoj - _rhok) * _rho));
+                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -560,8 +558,8 @@ MNM_Dlink_Lq::get_link_supply ()
 {
   TFlt _cur_density = get_link_flow () / m_length;
   return _cur_density > m_k_c
-             ? TFlt (get_flow_from_density (_cur_density) * m_unit_time)
-             : TFlt (m_C * m_unit_time);
+           ? TFlt (get_flow_from_density (_cur_density) * m_unit_time)
+           : TFlt (m_C * m_unit_time);
 }
 
 int
@@ -583,9 +581,9 @@ MNM_Dlink_Lq::print_info ()
 {
   printf ("Link Dynamic model: Link Queue\n");
   printf ("Real volume in the link: %.4f\n",
-          (float)(m_volume / m_flow_scalar));
+          (float) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
-          (float)(TFlt (m_finished_array.size ()) / m_flow_scalar));
+          (float) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }
 
 int
@@ -598,9 +596,9 @@ MNM_Dlink_Lq::evolve (TInt timestamp)
     {
       // printf("2\n");
       TInt _veh_to_reduce
-          = TInt (m_finished_array.size ()) - TInt (_demand * m_flow_scalar);
+        = TInt (m_finished_array.size ()) - TInt (_demand * m_flow_scalar);
       _veh_to_reduce
-          = std::min (_veh_to_reduce, TInt (m_finished_array.size ()));
+        = std::min (_veh_to_reduce, TInt (m_finished_array.size ()));
       // printf("_veh_to_reduce %d, finished size is %d\n",
       // _veh_to_reduce(), (int)m_finished_array.size());
       for (int i = 0; i < _veh_to_reduce; ++i)
@@ -661,7 +659,7 @@ MNM_Dlink_Lq::get_link_tt ()
         {
           _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
                                 m_lane_flow_cap * (_rhoj - _rho)
-                                    / ((_rhoj - _rhok) * _rho));
+                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -709,7 +707,7 @@ MNM_Dlink_Lq::get_demand ()
 
 MNM_Cumulative_Curve::MNM_Cumulative_Curve ()
 {
-  m_recorder = std::deque<std::pair<TFlt, TFlt> > ();
+  m_recorder = std::deque<std::pair<TFlt, TFlt>> ();
 }
 
 MNM_Cumulative_Curve::~MNM_Cumulative_Curve () { m_recorder.clear (); }
@@ -776,8 +774,8 @@ MNM_Cumulative_Curve::add_increment (std::pair<TFlt, TFlt> r)
   if (r.first < _best.first)
     {
       throw std::runtime_error (
-          "Error, MNM_Cumulative_Curve::add_increment, early time "
-          "index");
+        "Error, MNM_Cumulative_Curve::add_increment, early time "
+        "index");
     }
   if (r.first == _best.first)
     {
@@ -817,8 +815,8 @@ MNM_Cumulative_Curve::get_approximated_result (TFlt time)
         {
           return m_recorder[i - 1].second
                  + (m_recorder[i].second - m_recorder[i - 1].second)
-                       / (m_recorder[i].first - m_recorder[i - 1].first)
-                       * (time - m_recorder[i - 1].first);
+                     / (m_recorder[i].first - m_recorder[i - 1].first)
+                     * (time - m_recorder[i - 1].first);
         }
     }
   return m_recorder.back ().second;
@@ -919,8 +917,7 @@ MNM_Cumulative_Curve::to_string ()
                  + std::to_string (m_recorder[i].second) + ",";
     }
   _output += std::to_string (int (m_recorder[m_recorder.size () - 1].first))
-             + ":"
-             + std::to_string (m_recorder[m_recorder.size () - 1].second);
+             + ":" + std::to_string (m_recorder[m_recorder.size () - 1].second);
   return _output;
 }
 
@@ -945,8 +942,7 @@ MNM_Dlink_Ltm::MNM_Dlink_Ltm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
   m_N_out2 = MNM_Cumulative_Curve ();
   m_previous_finished_flow = TFlt (0);
   m_record_size
-      = TInt (MNM_Ults::max (m_length / m_w, m_length / m_ffs) / m_unit_time)
-        + 1;
+    = TInt (MNM_Ults::max (m_length / m_w, m_length / m_ffs) / m_unit_time) + 1;
 }
 
 MNM_Dlink_Ltm::~MNM_Dlink_Ltm () { m_veh_queue.clear (); }
@@ -981,7 +977,7 @@ MNM_Dlink_Ltm::get_link_tt ()
         {
           _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
                                 m_lane_flow_cap * (_rhoj - _rho)
-                                    / ((_rhoj - _rhok) * _rho));
+                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -993,9 +989,9 @@ MNM_Dlink_Ltm::print_info ()
 {
   printf ("Link Dynamic model: Link Transmission Model\n");
   printf ("Real volume in the link: %.4f\n",
-          (float)(m_volume / m_flow_scalar));
+          (float) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
-          (float)(TFlt (m_finished_array.size ()) / m_flow_scalar));
+          (float) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }
 
 int
@@ -1008,8 +1004,8 @@ MNM_Dlink_Ltm::clear_incoming_array ()
       throw std::runtime_error ("invalid incoming array size");
     }
   m_N_in2.add_increment (
-      std::pair<TFlt, TFlt> (TFlt (m_current_timestamp * m_unit_time),
-                             TFlt (m_incoming_array.size ()) / m_flow_scalar));
+    std::pair<TFlt, TFlt> (TFlt (m_current_timestamp * m_unit_time),
+                           TFlt (m_incoming_array.size ()) / m_flow_scalar));
   move_veh_queue (&m_incoming_array, &m_veh_queue, m_incoming_array.size ());
 
   m_volume = TInt (m_finished_array.size () + m_veh_queue.size ());
@@ -1021,12 +1017,12 @@ TFlt
 MNM_Dlink_Ltm::get_link_supply ()
 {
   // printf("MNM_Dlink_Ltm::get_link_supply\n");
-  TFlt _recv = m_N_out2.get_result (
-                   TFlt (m_current_timestamp * m_unit_time + m_unit_time)
-                   - m_length / m_w)
-               + m_hold_cap - m_N_in2.get_result (TFlt (m_current_timestamp));
+  TFlt _recv
+    = m_N_out2.get_result (
+        TFlt (m_current_timestamp * m_unit_time + m_unit_time) - m_length / m_w)
+      + m_hold_cap - m_N_in2.get_result (TFlt (m_current_timestamp));
   TFlt _res = MNM_Ults::min (_recv, m_lane_flow_cap * TFlt (m_number_of_lane)
-                                        * m_unit_time);
+                                      * m_unit_time);
   return MNM_Ults::max (_res, TFlt (0));
 }
 
@@ -1043,9 +1039,9 @@ MNM_Dlink_Ltm::evolve (TInt timestamp)
   if (_demand < TFlt (m_finished_array.size ()) / m_flow_scalar)
     {
       TInt _veh_to_reduce
-          = TInt (m_finished_array.size ()) - TInt (_demand * m_flow_scalar);
+        = TInt (m_finished_array.size ()) - TInt (_demand * m_flow_scalar);
       _veh_to_reduce
-          = std::min (_veh_to_reduce, TInt (m_finished_array.size ()));
+        = std::min (_veh_to_reduce, TInt (m_finished_array.size ()));
       for (int i = 0; i < _veh_to_reduce; ++i)
         {
           _veh = m_finished_array.back ();
@@ -1090,13 +1086,13 @@ MNM_Dlink_Ltm::get_demand ()
   // printf("MNM_Dlink_Ltm::get_demand\n");
   TFlt _real_finished_flow = m_previous_finished_flow
                              - TFlt (m_finished_array.size ()) / m_flow_scalar;
-  m_N_out2.add_increment (std::pair<TFlt, TFlt> (
-      TFlt (m_current_timestamp * m_unit_time), _real_finished_flow));
+  m_N_out2.add_increment (
+    std::pair<TFlt, TFlt> (TFlt (m_current_timestamp * m_unit_time),
+                           _real_finished_flow));
   TFlt _send
-      = m_N_in2.get_result (
-            TFlt (m_current_timestamp * m_unit_time + m_unit_time)
-            - m_length / m_ffs)
-        - m_N_out2.get_result (TFlt (m_current_timestamp * m_unit_time));
+    = m_N_in2.get_result (TFlt (m_current_timestamp * m_unit_time + m_unit_time)
+                          - m_length / m_ffs)
+      - m_N_out2.get_result (TFlt (m_current_timestamp * m_unit_time));
   return MNM_Ults::min (_send, m_lane_flow_cap * TFlt (m_number_of_lane)
-                                   * m_unit_time);
+                                 * m_unit_time);
 }

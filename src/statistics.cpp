@@ -82,9 +82,9 @@ MNM_Statistics::init_record ()
         {
           _link_ID = _link_it->first;
           m_load_interval_volume.insert (
-              std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
           m_record_interval_volume.insert (
-              std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
         }
 
       if (m_self_config->get_int ("volume_load_automatic_rec") == 1
@@ -104,8 +104,7 @@ MNM_Statistics::init_record ()
               _file_name = m_file_folder + "/"
                            + m_self_config->get_string ("rec_folder")
                            + "/MNM_output_load_interval_volume";
-              m_load_interval_volume_file.open (_file_name,
-                                                std::ofstream::out);
+              m_load_interval_volume_file.open (_file_name, std::ofstream::out);
               if (!m_load_interval_volume_file.is_open ())
                 {
                   throw std::runtime_error ("failed to open file: "
@@ -138,9 +137,9 @@ MNM_Statistics::init_record ()
         {
           _link_ID = _link_it->first;
           m_load_interval_tt.insert (
-              std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
           m_record_interval_tt.insert (
-              std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
         }
 
       if (m_self_config->get_int ("tt_load_automatic_rec") == 1
@@ -327,8 +326,8 @@ MNM_Statistics_Lrn::update_record (TInt timestamp)
               _flow = _link->get_link_flow ();
               m_load_interval_volume.find (_link->m_link_ID)->second = _flow;
               m_record_interval_volume.find (_link->m_link_ID)->second
-                  = m_to_be_volume.find (_link->m_link_ID)->second
-                    + _flow / TFlt (m_n);
+                = m_to_be_volume.find (_link->m_link_ID)->second
+                  + _flow / TFlt (m_n);
               m_to_be_volume.find (_link->m_link_ID)->second = TFlt (0);
             }
         }
@@ -341,7 +340,7 @@ MNM_Statistics_Lrn::update_record (TInt timestamp)
               _flow = _link->get_link_flow ();
               m_load_interval_volume.find (_link->m_link_ID)->second = _flow;
               m_to_be_volume.find (_link->m_link_ID)->second
-                  += _flow / TFlt (m_n);
+                += _flow / TFlt (m_n);
             }
         }
     }
@@ -356,8 +355,8 @@ MNM_Statistics_Lrn::update_record (TInt timestamp)
               _flow = _link->get_link_tt ();
               m_load_interval_tt.find (_link->m_link_ID)->second = _flow;
               m_record_interval_tt.find (_link->m_link_ID)->second
-                  = m_to_be_tt.find (_link->m_link_ID)->second
-                    + _flow / TFlt (m_n);
+                = m_to_be_tt.find (_link->m_link_ID)->second
+                  + _flow / TFlt (m_n);
               m_to_be_tt.find (_link->m_link_ID)->second = TFlt (0);
             }
         }

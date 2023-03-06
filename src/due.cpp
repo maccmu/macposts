@@ -13,7 +13,7 @@ MNM_Due::MNM_Due (std::string file_folder)
   IAssert (m_dta_config->get_int ("total_interval") > 0);
   IAssert (m_dta_config->get_int ("total_interval")
            >= m_dta_config->get_int ("assign_frq")
-                  * m_dta_config->get_int ("max_interval"));
+                * m_dta_config->get_int ("max_interval"));
   m_unit_time = m_dta_config->get_float ("unit_time");
   m_total_loading_inter = m_dta_config->get_int ("total_interval");
   m_due_config = new MNM_ConfReader (m_file_folder + "/config.conf", "DUE");
@@ -99,12 +99,12 @@ MNM_Due::update_demand_from_path_table (MNM_Dta *dta)
               if (_it_it.second->m_path_vec.size () > 0)
                 {
                   _one_path = _it_it.second->m_path_vec[0];
-                  _org = ((MNM_DMOND *)dta->m_node_factory->get_node (
-                              _one_path->m_node_vec.front ()))
-                             ->m_origin;
-                  _dest = ((MNM_DMDND *)dta->m_node_factory->get_node (
-                               _one_path->m_node_vec.back ()))
-                              ->m_dest;
+                  _org = ((MNM_DMOND *) dta->m_node_factory->get_node (
+                            _one_path->m_node_vec.front ()))
+                           ->m_origin;
+                  _dest = ((MNM_DMDND *) dta->m_node_factory->get_node (
+                             _one_path->m_node_vec.back ()))
+                            ->m_dest;
                   _org->m_demand[_dest][_col] = _tot_dmd;
                 }
             }
@@ -151,7 +151,7 @@ MNM_Due::compute_merit_function ()
                   _tt = get_tt (_depart_time, _path);
                   _dis_utl = get_disutility (_depart_time, _tt);
                   _total_gap
-                      += (_dis_utl - _lowest_dis_utl) * _path->m_buffer[_col];
+                    += (_dis_utl - _lowest_dis_utl) * _path->m_buffer[_col];
                 }
             }
         }
@@ -182,7 +182,7 @@ MNM_Due::get_tt (TFlt depart_time, MNM_Path *path)
   for (TInt _link_ID : path->m_link_vec)
     {
       _query_time
-          = MNM_Ults::min (TInt (_cur_time), TInt (m_total_loading_inter - 1));
+        = MNM_Ults::min (TInt (_cur_time), TInt (m_total_loading_inter - 1));
       _cur_time += m_cost_map[_link_ID][_query_time];
     }
   return _cur_time - depart_time;
@@ -197,9 +197,9 @@ MNM_Due::build_cost_map (MNM_Dta *dta)
       _link = _link_it.second;
       for (int i = 0; i < m_total_loading_inter; i++)
         {
-          m_cost_map[_link_it.first][i] = MNM_DTA_GRADIENT::get_travel_time (
-                                              _link, TFlt (i * m_unit_time))
-                                          / m_unit_time;
+          m_cost_map[_link_it.first][i]
+            = MNM_DTA_GRADIENT::get_travel_time (_link, TFlt (i * m_unit_time))
+              / m_unit_time;
         }
     }
   return 0;
@@ -276,12 +276,12 @@ MNM_Due_Msa::init_path_flow ()
               for (int _col = 0; _col < m_total_assign_inter; _col++)
                 {
                   // printf("25m\n");
-                  _org = ((MNM_DMOND *)m_base_dta->m_node_factory->get_node (
-                              _path->m_node_vec.front ()))
-                             ->m_origin;
-                  _dest = ((MNM_DMDND *)m_base_dta->m_node_factory->get_node (
-                               _path->m_node_vec.back ()))
-                              ->m_dest;
+                  _org = ((MNM_DMOND *) m_base_dta->m_node_factory->get_node (
+                            _path->m_node_vec.front ()))
+                           ->m_origin;
+                  _dest = ((MNM_DMDND *) m_base_dta->m_node_factory->get_node (
+                             _path->m_node_vec.back ()))
+                            ->m_dest;
                   _dmd = _org->m_demand[_dest][_col];
                   // printf("%lf\n", _dmd());
                   _path->m_buffer[_col] = TFlt (1.0) / _len * _dmd;
@@ -333,8 +333,9 @@ MNM_Due_Msa::update_path_table (MNM_Dta *dta, int iter)
     {
       _dest = _it.second;
       _dest_node_ID = _dest->m_dest_node->m_node_ID;
-      MNM_TDSP_Tree *_tdsp_tree = new MNM_TDSP_Tree (
-          _dest_node_ID, dta->m_graph, m_total_loading_inter);
+      MNM_TDSP_Tree *_tdsp_tree
+        = new MNM_TDSP_Tree (_dest_node_ID, dta->m_graph,
+                             m_total_loading_inter);
       _tdsp_tree->initialize ();
       build_cost_map (dta);
       // printf("111\n");
@@ -346,10 +347,10 @@ MNM_Due_Msa::update_path_table (MNM_Dta *dta, int iter)
           _path_result = get_best_route (_orig_node_ID, _tdsp_tree);
           _path = _path_result.first;
           _path_set
-              = MNM::get_pathset (m_path_table, _orig_node_ID, _dest_node_ID);
+            = MNM::get_pathset (m_path_table, _orig_node_ID, _dest_node_ID);
           // TFlt _len = TFlt(_path_set -> m_path_vec.size());
           _tot_oneOD_demand
-              = compute_total_demand (_orig, _dest, m_total_assign_inter);
+            = compute_total_demand (_orig, _dest, m_total_assign_inter);
           _tot_change = 0.0;
           _best_path = NULL;
           if (_path_set->is_in (_path))
@@ -370,9 +371,9 @@ MNM_Due_Msa::update_path_table (MNM_Dta *dta, int iter)
                           // printf("iter %d\n",
                           // iter);
                           _tmp_change
-                              = MNM_Ults::min (_tmp_path->m_buffer[_col],
-                                               _tot_oneOD_demand * m_step_size
-                                                   / TFlt (iter + 1));
+                            = MNM_Ults::min (_tmp_path->m_buffer[_col],
+                                             _tot_oneOD_demand * m_step_size
+                                               / TFlt (iter + 1));
                           // printf("tmp change
                           // %lf\n", _tmp_change());
                           _tmp_path->m_buffer[_col] -= _tmp_change;

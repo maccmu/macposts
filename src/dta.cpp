@@ -87,12 +87,12 @@ int
 MNM_Dta::set_statistics ()
 {
   MNM_ConfReader *_record_config
-      = new MNM_ConfReader (m_file_folder + "/config.conf", "STAT");
+    = new MNM_ConfReader (m_file_folder + "/config.conf", "STAT");
   if (_record_config->get_string ("rec_mode") == "LRn")
     {
-      m_statistics = new MNM_Statistics_Lrn (m_file_folder, m_config,
-                                             _record_config, m_od_factory,
-                                             m_node_factory, m_link_factory);
+      m_statistics
+        = new MNM_Statistics_Lrn (m_file_folder, m_config, _record_config,
+                                  m_od_factory, m_node_factory, m_link_factory);
     }
   // printf("set_statistics finished\n");
   return 0;
@@ -111,34 +111,42 @@ MNM_Dta::set_routing ()
   else if (m_config->get_string ("routing_type") == "Predetermined")
     {
       Path_Table *_path_table
-          = MNM::build_pathset (m_graph, m_od_factory, m_link_factory);
+        = MNM::build_pathset (m_graph, m_od_factory, m_link_factory);
       MNM_Pre_Routing *_pre_routing
-          = new MNM_Pre_Routing (_path_table, m_od_factory);
-      m_routing = new MNM_Routing_Predetermined (
-          m_graph, m_od_factory, m_node_factory, m_link_factory, _path_table,
-          _pre_routing, m_total_assign_inter);
+        = new MNM_Pre_Routing (_path_table, m_od_factory);
+      m_routing
+        = new MNM_Routing_Predetermined (m_graph, m_od_factory, m_node_factory,
+                                         m_link_factory, _path_table,
+                                         _pre_routing, m_total_assign_inter);
     }
   else if (m_config->get_string ("routing_type") == "Fixed")
     {
       MNM_ConfReader *_tmp_conf
-          = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
+        = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
       Path_Table *_path_table;
       if (_tmp_conf->get_string ("choice_portion") == "Buffer")
         {
-          _path_table = MNM_IO::load_path_table (
-              m_file_folder + "/" + _tmp_conf->get_string ("path_file_name"),
-              m_graph, _tmp_conf->get_int ("num_path"), true);
+          _path_table
+            = MNM_IO::load_path_table (m_file_folder + "/"
+                                         + _tmp_conf->get_string (
+                                           "path_file_name"),
+                                       m_graph, _tmp_conf->get_int ("num_path"),
+                                       true);
         }
       else
         {
-          _path_table = MNM_IO::load_path_table (
-              m_file_folder + "/" + _tmp_conf->get_string ("path_file_name"),
-              m_graph, _tmp_conf->get_int ("num_path"), false);
+          _path_table
+            = MNM_IO::load_path_table (m_file_folder + "/"
+                                         + _tmp_conf->get_string (
+                                           "path_file_name"),
+                                       m_graph, _tmp_conf->get_int ("num_path"),
+                                       false);
         }
       TInt _buffer_len = _tmp_conf->get_int ("buffer_length");
-      m_routing = new MNM_Routing_Fixed (
-          m_graph, m_od_factory, m_node_factory, m_link_factory,
-          _tmp_conf->get_int ("route_frq"), _buffer_len);
+      m_routing
+        = new MNM_Routing_Fixed (m_graph, m_od_factory, m_node_factory,
+                                 m_link_factory,
+                                 _tmp_conf->get_int ("route_frq"), _buffer_len);
       m_routing->init_routing (_path_table);
       delete _tmp_conf;
     }
@@ -159,25 +167,32 @@ MNM_Dta::set_routing ()
   else if (m_config->get_string ("routing_type") == "Hybrid")
     {
       MNM_ConfReader *_tmp_conf
-          = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
+        = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
       Path_Table *_path_table;
       if (_tmp_conf->get_string ("choice_portion") == "Buffer")
         {
-          _path_table = MNM_IO::load_path_table (
-              m_file_folder + "/" + _tmp_conf->get_string ("path_file_name"),
-              m_graph, _tmp_conf->get_int ("num_path"), true);
+          _path_table
+            = MNM_IO::load_path_table (m_file_folder + "/"
+                                         + _tmp_conf->get_string (
+                                           "path_file_name"),
+                                       m_graph, _tmp_conf->get_int ("num_path"),
+                                       true);
         }
       else
         {
-          _path_table = MNM_IO::load_path_table (
-              m_file_folder + "/" + _tmp_conf->get_string ("path_file_name"),
-              m_graph, _tmp_conf->get_int ("num_path"), false);
+          _path_table
+            = MNM_IO::load_path_table (m_file_folder + "/"
+                                         + _tmp_conf->get_string (
+                                           "path_file_name"),
+                                       m_graph, _tmp_conf->get_int ("num_path"),
+                                       false);
         }
       TInt _route_freq_fixed = _tmp_conf->get_int ("route_frq");
       TInt _buffer_len = _tmp_conf->get_int ("buffer_length");
-      m_routing = new MNM_Routing_Hybrid (
-          m_file_folder, m_graph, m_statistics, m_od_factory, m_node_factory,
-          m_link_factory, _route_freq_fixed, _buffer_len);
+      m_routing
+        = new MNM_Routing_Hybrid (m_file_folder, m_graph, m_statistics,
+                                  m_od_factory, m_node_factory, m_link_factory,
+                                  _route_freq_fixed, _buffer_len);
       m_routing->init_routing (_path_table);
       delete _tmp_conf;
     }
@@ -191,33 +206,41 @@ MNM_Dta::set_routing ()
   else if (m_config->get_string ("routing_type") == "Biclass_Hybrid")
     {
       MNM_ConfReader *_tmp_conf
-          = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
+        = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
       Path_Table *_path_table;
       if (_tmp_conf->get_string ("choice_portion") == "Buffer")
         {
-          _path_table = MNM_IO::load_path_table (
-              m_file_folder + "/" + _tmp_conf->get_string ("path_file_name"),
-              m_graph, _tmp_conf->get_int ("num_path"), true);
+          _path_table
+            = MNM_IO::load_path_table (m_file_folder + "/"
+                                         + _tmp_conf->get_string (
+                                           "path_file_name"),
+                                       m_graph, _tmp_conf->get_int ("num_path"),
+                                       true);
         }
       else
         {
-          _path_table = MNM_IO::load_path_table (
-              m_file_folder + "/" + _tmp_conf->get_string ("path_file_name"),
-              m_graph, _tmp_conf->get_int ("num_path"), false);
+          _path_table
+            = MNM_IO::load_path_table (m_file_folder + "/"
+                                         + _tmp_conf->get_string (
+                                           "path_file_name"),
+                                       m_graph, _tmp_conf->get_int ("num_path"),
+                                       false);
         }
       TInt _buffer_len = _tmp_conf->get_int ("buffer_length");
       TInt _route_freq_fixed = _tmp_conf->get_int ("route_frq");
-      m_routing = new MNM_Routing_Biclass_Hybrid (
-          m_file_folder, m_graph, m_statistics, m_od_factory, m_node_factory,
-          m_link_factory, _route_freq_fixed, _buffer_len);
+      m_routing
+        = new MNM_Routing_Biclass_Hybrid (m_file_folder, m_graph, m_statistics,
+                                          m_od_factory, m_node_factory,
+                                          m_link_factory, _route_freq_fixed,
+                                          _buffer_len);
       m_routing->init_routing (_path_table);
       delete _tmp_conf;
     }
 
   else
     {
-      m_routing = new MNM_Routing_Random (m_graph, m_od_factory,
-                                          m_node_factory, m_link_factory);
+      m_routing = new MNM_Routing_Random (m_graph, m_od_factory, m_node_factory,
+                                          m_link_factory);
       m_routing->init_routing ();
     }
   return 0;
@@ -311,8 +334,8 @@ MNM_Dta::is_ok ()
   // check node
   printf ("Checking......Node consistent!\n");
   _temp_flag
-      = (m_graph->GetNodes () == m_config->get_int ("num_of_node"))
-        && (m_graph->GetNodes () == TInt (m_node_factory->m_node_map.size ()));
+    = (m_graph->GetNodes () == m_config->get_int ("num_of_node"))
+      && (m_graph->GetNodes () == TInt (m_node_factory->m_node_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
@@ -320,8 +343,8 @@ MNM_Dta::is_ok ()
   // check link
   printf ("Checking......Link consistent!\n");
   _temp_flag
-      = (m_graph->GetEdges () == m_config->get_int ("num_of_link"))
-        && (m_graph->GetEdges () == TInt (m_link_factory->m_link_map.size ()));
+    = (m_graph->GetEdges () == m_config->get_int ("num_of_link"))
+      && (m_graph->GetEdges () == TInt (m_link_factory->m_link_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
@@ -372,7 +395,7 @@ MNM_Dta::check_origin_destination_connectivity ()
   MNM_Destination *_dest;
   TInt _dest_node_ID;
   std::unordered_map<TInt, TInt> _shortest_path_tree
-      = std::unordered_map<TInt, TInt> ();
+    = std::unordered_map<TInt, TInt> ();
   std::unordered_map<TInt, TFlt> _cost_map;
   for (auto _map_it : m_link_factory->m_link_map)
     {
@@ -389,8 +412,8 @@ MNM_Dta::check_origin_destination_connectivity ()
       for (auto _map_it : m_od_factory->m_origin_map)
         {
           if (_shortest_path_tree
-                  .find (_map_it.second->m_origin_node->m_node_ID)
-                  ->second
+                .find (_map_it.second->m_origin_node->m_node_ID)
+                ->second
               == -1)
             {
               return false;
@@ -445,7 +468,7 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   if (verbose)
     printf ("-------------------------------    Interval %d   "
             "------------------------------ \n",
-            (int)load_int);
+            (int) load_int);
   // step 1: Origin release vehicle
   if (verbose)
     printf ("Realsing!\n");
@@ -492,23 +515,25 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
                         == "Biclass_Hybrid"))
                 {
                   TFlt _ad_ratio_car
-                      = m_config->get_float ("adaptive_ratio_car");
+                    = m_config->get_float ("adaptive_ratio_car");
                   if (_ad_ratio_car > 1)
                     _ad_ratio_car = 1;
                   if (_ad_ratio_car < 0)
                     _ad_ratio_car = 0;
 
                   TFlt _ad_ratio_truck
-                      = m_config->get_float ("adaptive_ratio_truck");
+                    = m_config->get_float ("adaptive_ratio_truck");
                   if (_ad_ratio_truck > 1)
                     _ad_ratio_truck = 1;
                   if (_ad_ratio_truck < 0)
                     _ad_ratio_truck = 0;
                   // NOTE: in this case the release function
                   // is different
-                  _origin->release_one_interval_biclass (
-                      load_int, m_veh_factory, assign_int, _ad_ratio_car,
-                      _ad_ratio_truck);
+                  _origin->release_one_interval_biclass (load_int,
+                                                         m_veh_factory,
+                                                         assign_int,
+                                                         _ad_ratio_car,
+                                                         _ad_ratio_truck);
                 }
               else
                 {
@@ -595,7 +620,7 @@ MNM_Dta::loading (bool verbose)
       if (verbose)
         printf ("-------------------------------    Interval %d   "
                 "------------------------------ \n",
-                (int)_cur_int);
+                (int) _cur_int);
       // step 1: Origin release vehicle
       if (verbose)
         printf ("Realsing!\n");
@@ -644,23 +669,25 @@ MNM_Dta::loading (bool verbose)
                             == "Biclass_Hybrid"))
                     {
                       TFlt _ad_ratio_car
-                          = m_config->get_float ("adaptive_ratio_car");
+                        = m_config->get_float ("adaptive_ratio_car");
                       if (_ad_ratio_car > 1)
                         _ad_ratio_car = 1;
                       if (_ad_ratio_car < 0)
                         _ad_ratio_car = 0;
 
                       TFlt _ad_ratio_truck
-                          = m_config->get_float ("adaptive_ratio_truck");
+                        = m_config->get_float ("adaptive_ratio_truck");
                       if (_ad_ratio_truck > 1)
                         _ad_ratio_truck = 1;
                       if (_ad_ratio_truck < 0)
                         _ad_ratio_truck = 0;
                       // NOTE: in this case the release
                       // function is different
-                      _origin->release_one_interval_biclass (
-                          _cur_int, m_veh_factory, _assign_inter,
-                          _ad_ratio_car, _ad_ratio_truck);
+                      _origin->release_one_interval_biclass (_cur_int,
+                                                             m_veh_factory,
+                                                             _assign_inter,
+                                                             _ad_ratio_car,
+                                                             _ad_ratio_truck);
                     }
                   else
                     {

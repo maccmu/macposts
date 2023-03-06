@@ -63,7 +63,7 @@ mod (TInt a, TInt b)
 TFlt
 rand_flt ()
 {
-  return TFlt ((double)rand () / (RAND_MAX));
+  return TFlt ((double) rand () / (RAND_MAX));
 }
 
 TFlt
@@ -179,9 +179,8 @@ ConfigFile::ConfigFile (std::string const &configFile)
 Chameleon const &
 ConfigFile::Value (std::string const &section, std::string const &entry) const
 {
-
   std::map<std::string, Chameleon>::const_iterator ci
-      = content_.find (section + '/' + entry);
+    = content_.find (section + '/' + entry);
 
   if (ci == content_.end ())
     throw "does not exist";
@@ -200,8 +199,8 @@ ConfigFile::Value (std::string const &section, std::string const &entry,
   catch (const char *)
     {
       return content_
-          .insert (std::make_pair (section + '/' + entry, Chameleon (value)))
-          .first->second;
+        .insert (std::make_pair (section + '/' + entry, Chameleon (value)))
+        .first->second;
     }
 }
 
@@ -216,8 +215,8 @@ ConfigFile::Value (std::string const &section, std::string const &entry,
   catch (const char *)
     {
       return content_
-          .insert (std::make_pair (section + '/' + entry, Chameleon (value)))
-          .first->second;
+        .insert (std::make_pair (section + '/' + entry, Chameleon (value)))
+        .first->second;
     }
 }
 

@@ -64,7 +64,7 @@ MNM_DMOND::evolve (TInt timestamp)
           < TFlt (m_out_volume.find (_link)->second))
         {
           m_out_volume.find (_link)->second = TInt (
-              MNM_Ults::round (_link->get_link_supply () * m_flow_scalar));
+            MNM_Ults::round (_link->get_link_supply () * m_flow_scalar));
         }
     }
   /* move vehicle */
@@ -74,9 +74,10 @@ MNM_DMOND::evolve (TInt timestamp)
       _link = m_out_link_array[i];
       if (_link->m_N_in != NULL)
         {
-          _link->m_N_in->add_increment (std::pair<TFlt, TFlt> (
-              TFlt (timestamp + 1),
-              TFlt (m_out_volume.find (_link)->second) / m_flow_scalar));
+          _link->m_N_in->add_increment (
+            std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                   TFlt (m_out_volume.find (_link)->second)
+                                     / m_flow_scalar));
         }
       if (m_in_veh_queue.size () != 0)
         {
@@ -167,8 +168,9 @@ MNM_DMDND::evolve (TInt timestamp)
       _size = _link->m_finished_array.size ();
       if (_link->m_N_out != NULL)
         {
-          _link->m_N_out->add_increment (std::pair<TFlt, TFlt> (
-              TFlt (timestamp + 1), TFlt (_size) / m_flow_scalar));
+          _link->m_N_out->add_increment (
+            std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                   TFlt (_size) / m_flow_scalar));
         }
       for (size_t j = 0; j < _size; ++j)
         {
@@ -229,13 +231,13 @@ MNM_Dnode_Inout::prepare_loading ()
   TInt _num_out = m_out_link_array.size ();
   // printf("node id %d, num_in: %d, num_out: %d\n",m_node_ID(), _num_in(),
   // _num_out());
-  m_demand = (TFlt *)malloc (sizeof (TFlt) * _num_in * _num_out);
+  m_demand = (TFlt *) malloc (sizeof (TFlt) * _num_in * _num_out);
   memset (m_demand, 0x0, sizeof (TFlt) * _num_in * _num_out);
-  m_supply = (TFlt *)malloc (sizeof (TFlt) * _num_out);
+  m_supply = (TFlt *) malloc (sizeof (TFlt) * _num_out);
   memset (m_supply, 0x0, sizeof (TFlt) * _num_out);
-  m_veh_flow = (TFlt *)malloc (sizeof (TFlt) * _num_in * _num_out);
+  m_veh_flow = (TFlt *) malloc (sizeof (TFlt) * _num_in * _num_out);
   memset (m_veh_flow, 0x0, sizeof (TFlt) * _num_in * _num_out);
-  m_veh_tomove = (TInt *)malloc (sizeof (TInt) * _num_in * _num_out);
+  m_veh_tomove = (TInt *) malloc (sizeof (TInt) * _num_in * _num_out);
   memset (m_veh_tomove, 0x0, sizeof (TInt) * _num_in * _num_out);
   return 0;
 }
@@ -313,7 +315,7 @@ MNM_Dnode_Inout::round_flow_to_vehicle ()
       for (size_t i = 0; i < m_in_link_array.size (); ++i)
         {
           m_veh_tomove[i * _offset + j]
-              = MNM_Ults::round (m_veh_flow[i * _offset + j] * m_flow_scalar);
+            = MNM_Ults::round (m_veh_flow[i * _offset + j] * m_flow_scalar);
           _to_move += m_veh_tomove[i * _offset + j];
           // printf("Rounding %d, %d the value %f to %d\n", i, j,
           // m_veh_flow[i * _offset + j] * m_flow_scalar,
@@ -360,8 +362,9 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
           // printf("record out link cc: link ID %d, time %d, value
           // %f\n", _out_link -> m_link_ID(), timestamp()+1, (float)
           // TFlt(_temp_sum)/m_flow_scalar);
-          _out_link->m_N_in->add_increment (std::pair<TFlt, TFlt> (
-              TFlt (timestamp + 1), TFlt (_temp_sum) / m_flow_scalar));
+          _out_link->m_N_in->add_increment (
+            std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                   TFlt (_temp_sum) / m_flow_scalar));
         }
     }
 
@@ -380,8 +383,9 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
           // printf("record in link cc: link ID %d, time %d, value
           // %f\n", _in_link -> m_link_ID(), timestamp()+1, (float)
           // TFlt(_temp_sum)/m_flow_scalar);
-          _in_link->m_N_out->add_increment (std::pair<TFlt, TFlt> (
-              TFlt (timestamp + 1), TFlt (_temp_sum) / m_flow_scalar));
+          _in_link->m_N_out->add_increment (
+            std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                   TFlt (_temp_sum) / m_flow_scalar));
         }
     }
   return 0;
@@ -413,20 +417,22 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
                     {
                       _out_link->m_incoming_array.push_back (_veh);
                       _veh->set_current_link (_out_link);
-                      _veh_it = _in_link->m_finished_array.erase (
-                          _veh_it); // c++ 11
+                      _veh_it
+                        = _in_link->m_finished_array.erase (_veh_it); // c++ 11
                       _num_to_move -= 1;
                       if (_out_link->m_N_in_tree != NULL)
                         {
-                          _out_link->m_N_in_tree->add_flow (
-                              TFlt (timestamp + 1), TFlt (1) / m_flow_scalar,
-                              _veh->m_path, _veh->m_assign_interval);
+                          _out_link->m_N_in_tree
+                            ->add_flow (TFlt (timestamp + 1),
+                                        TFlt (1) / m_flow_scalar, _veh->m_path,
+                                        _veh->m_assign_interval);
                         }
                       if (_in_link->m_N_out_tree != NULL)
                         {
-                          _in_link->m_N_out_tree->add_flow (
-                              TFlt (timestamp + 1), TFlt (1) / m_flow_scalar,
-                              _veh->m_path, _veh->m_assign_interval);
+                          _in_link->m_N_out_tree
+                            ->add_flow (TFlt (timestamp + 1),
+                                        TFlt (1) / m_flow_scalar, _veh->m_path,
+                                        _veh->m_assign_interval);
                         }
                     }
                   else
@@ -521,13 +527,12 @@ MNM_Dnode_FWJ::compute_flow ()
         }
       for (size_t i = 0; i < m_in_link_array.size (); ++i)
         {
-          _portion
-              = MNM_Ults::divide (m_demand[i * _offset + j], _sum_in_flow);
+          _portion = MNM_Ults::divide (m_demand[i * _offset + j], _sum_in_flow);
           // printf("Portion is %.4f, sum in flow is %.4f, demand is
           // %.4f\n", _portion, _sum_in_flow, m_demand[i * _offset +
           // j]);
-          m_veh_flow[i * _offset + j] = MNM_Ults::min (
-              m_demand[i * _offset + j], _portion * m_supply[j]);
+          m_veh_flow[i * _offset + j]
+            = MNM_Ults::min (m_demand[i * _offset + j], _portion * m_supply[j]);
           // printf("to link %d the flow is %.4f\n",
           // m_out_link_array[j] -> m_link_ID, m_veh_flow[i * _offset
           // + j]);
@@ -559,9 +564,9 @@ MNM_Dnode_GRJ::prepare_loading ()
 {
   MNM_Dnode_Inout::prepare_loading ();
   TInt _num_in = m_in_link_array.size ();
-  m_d_a = (TFlt *)malloc (sizeof (TFlt) * _num_in);
+  m_d_a = (TFlt *) malloc (sizeof (TFlt) * _num_in);
   memset (m_d_a, 0x0, sizeof (TFlt) * _num_in);
-  m_C_a = (TFlt *)malloc (sizeof (TFlt) * _num_in);
+  m_C_a = (TFlt *) malloc (sizeof (TFlt) * _num_in);
   memset (m_C_a, 0x0, sizeof (TFlt) * _num_in);
   return 0;
 }
@@ -591,8 +596,7 @@ MNM_Dnode_GRJ::compute_flow ()
       for (size_t j = 0; j < m_out_link_array.size (); ++j)
         {
           m_veh_flow[i * _offset + j]
-              = _f_a
-                * MNM_Ults::divide (m_demand[i * _offset + j], m_supply[j]);
+            = _f_a * MNM_Ults::divide (m_demand[i * _offset + j], m_supply[j]);
           // printf("to link %d the flow is %.4f\n",
           // m_out_link_array[j] -> m_link_ID, m_veh_flow[i * _offset
           // + j]);
@@ -634,12 +638,12 @@ MNM_Dnode_GRJ::getOnLocations (int a)
 }
 
 template <typename T>
-std::vector<std::vector<T> >
+std::vector<std::vector<T>>
 MNM_Dnode_GRJ::powerSet (const std::vector<T> &set)
 {
-  std::vector<std::vector<T> > result;
+  std::vector<std::vector<T>> result;
   int numPowerSets
-      = static_cast<int> (pow (2.0, static_cast<double> (set.size ())));
+    = static_cast<int> (pow (2.0, static_cast<double> (set.size ())));
   for (int i = 0; i < numPowerSets; ++i)
     {
       std::vector<int> onLocations = getOnLocations (i);

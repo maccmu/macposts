@@ -16,8 +16,7 @@ class MNM_Path;
 class MNM_Shortest_Path
 {
 public:
-  static int one_to_one (TInt origin_node_ID, TInt dest_node_ID,
-                         PNEGraph graph,
+  static int one_to_one (TInt origin_node_ID, TInt dest_node_ID, PNEGraph graph,
                          std::unordered_map<TInt, TFlt> &cost_map,
                          std::vector<TInt> &output_array);
   static int all_to_one_Dijkstra (TInt dest_node_ID, PNEGraph graph,
@@ -115,8 +114,7 @@ public:
 
 struct LessThanByCost
 {
-  bool
-  operator() (const MNM_Cost *lhs, const MNM_Cost *rhs) const
+  bool operator() (const MNM_Cost *lhs, const MNM_Cost *rhs) const
   {
     return lhs->m_cost >= rhs->m_cost;
   }

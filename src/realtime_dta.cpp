@@ -22,7 +22,7 @@ MNM_Realtime_Dta::initialize ()
 {
   m_dta_config = new MNM_ConfReader (m_file_folder + "/config.conf", "DTA");
   m_realtime_dta_config
-      = new MNM_ConfReader (m_file_folder + "/config.conf", "REALTIME_DTA");
+    = new MNM_ConfReader (m_file_folder + "/config.conf", "REALTIME_DTA");
   m_graph = MNM_IO::build_graph (m_file_folder, m_dta_config);
   MNM_IO::build_od_factory (m_file_folder, m_dta_config, m_od_factory);
   MNM_IO::build_demand (m_file_folder, m_dta_config, m_od_factory);
@@ -49,9 +49,9 @@ MNM_Realtime_Dta::initialize ()
   m_total_assign_inter = m_dta_config->get_int ("max_interval");
 
   m_estimation_step_size
-      = m_realtime_dta_config->get_float ("estimation_step_size");
+    = m_realtime_dta_config->get_float ("estimation_step_size");
   m_optimization_step_size
-      = m_realtime_dta_config->get_float ("optimization_step_size");
+    = m_realtime_dta_config->get_float ("optimization_step_size");
   return 0;
 }
 
@@ -74,7 +74,7 @@ MNM_Realtime_Dta::init_running ()
     {
       m_average_link_tt.insert (std::pair<TInt, TFlt> (_link_it.GetId (), 0));
       m_link_tt_difference.insert (
-          std::pair<TInt, TFlt> (_link_it.GetId (), 0));
+        std::pair<TInt, TFlt> (_link_it.GetId (), 0));
     }
 
   for (auto _it : *m_path_table)
@@ -110,8 +110,7 @@ MNM_Realtime_Dta::reset ()
 int
 MNM_Realtime_Dta::build_path_table ()
 {
-  std::string _file_name
-      = m_realtime_dta_config->get_string ("path_file_name");
+  std::string _file_name = m_realtime_dta_config->get_string ("path_file_name");
   std::string _whole_path = m_file_folder + "/" + _file_name;
   TInt _num_path = m_realtime_dta_config->get_int ("num_path");
   m_path_table = MNM_IO::load_path_table (_whole_path, m_graph, _num_path);
@@ -120,8 +119,8 @@ MNM_Realtime_Dta::build_path_table ()
 
 int
 MNM_Realtime_Dta::get_estimation_gradient (
-    MNM_Dta_Screenshot *screenshot, TInt max_inter, TInt assign_inter,
-    Path_Table *path_table, std::unordered_map<TInt, TFlt> *link_spd_map)
+  MNM_Dta_Screenshot *screenshot, TInt max_inter, TInt assign_inter,
+  Path_Table *path_table, std::unordered_map<TInt, TFlt> *link_spd_map)
 {
   TInt _grad_position = 1;
 
@@ -140,7 +139,7 @@ MNM_Realtime_Dta::get_estimation_gradient (
   TFlt num_link = TFlt (_link_factory->m_link_map.size ());
 
   MNM_Link_Tt *_link_tt
-      = new MNM_Link_Tt (_link_factory, m_dta_config->get_float ("unit_time"));
+    = new MNM_Link_Tt (_link_factory, m_dta_config->get_float ("unit_time"));
   for (auto _map_it : m_average_link_tt)
     {
       _map_it.second = 0;
@@ -167,7 +166,7 @@ MNM_Realtime_Dta::get_estimation_gradient (
       _real_inter = _cur_inter;
       printf ("-------------------------------    Interval %d   "
               "------------------------------ \n",
-              (int)_real_inter);
+              (int) _real_inter);
       // step 1: Origin release vehicle
 
       // printf("Realsing!\n");
@@ -226,7 +225,7 @@ MNM_Realtime_Dta::get_estimation_gradient (
           for (auto _map_it : _link_tt->m_tt_map)
             {
               m_average_link_tt.find (_map_it.first->m_link_ID)->second
-                  += _map_it.second / TFlt (m_sample_points);
+                += _map_it.second / TFlt (m_sample_points);
             }
         }
       // _link_tt -> print_info();
@@ -237,9 +236,9 @@ MNM_Realtime_Dta::get_estimation_gradient (
     {
       TInt _link_ID = _map_it.first;
       TFlt _measure_tt
-          = _link_factory->get_link (_link_ID)->m_length / _map_it.second;
+        = _link_factory->get_link (_link_ID)->m_length / _map_it.second;
       m_link_tt_difference.find (_link_ID)->second
-          = m_average_link_tt.find (_link_ID)->second - _measure_tt;
+        = m_average_link_tt.find (_link_ID)->second - _measure_tt;
       // printf("For link ID %d, the tt difference is %.4f\n",
       // (int)_link_ID,
       // (float)m_link_tt_difference.find(_link_ID)->second);
@@ -276,11 +275,12 @@ MNM_Realtime_Dta::get_estimation_gradient (
                   // cost is %.4f\n", (float)_tmp_tt,
                   // (float)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
                   // _tmp_tt));
-                  _tmp_grad += MNM_Ults::divide (
-                      m_link_tt_difference.find (_link_ID)->second
-                          * MNM::calculate_link_mc (
-                              _link_factory->get_link (_link_ID), _tmp_tt),
-                      _demand * num_link);
+                  _tmp_grad += MNM_Ults::
+                    divide (m_link_tt_difference.find (_link_ID)->second
+                              * MNM::calculate_link_mc (_link_factory
+                                                          ->get_link (_link_ID),
+                                                        _tmp_tt),
+                            _demand * num_link);
                 }
               _path->m_buffer[_grad_position] = _tmp_grad;
               // printf("grad is %.4f\n", _tmp_grad);
@@ -315,7 +315,7 @@ MNM_Realtime_Dta::get_optimization_gradient (MNM_Dta_Screenshot *screenshot,
   TFlt num_link = TFlt (_link_factory->m_link_map.size ());
 
   MNM_Link_Tt *_link_tt
-      = new MNM_Link_Tt (_link_factory, m_dta_config->get_float ("unit_time"));
+    = new MNM_Link_Tt (_link_factory, m_dta_config->get_float ("unit_time"));
   for (auto _map_it : m_average_link_tt)
     {
       _map_it.second = 0;
@@ -339,7 +339,7 @@ MNM_Realtime_Dta::get_optimization_gradient (MNM_Dta_Screenshot *screenshot,
       _real_inter = _cur_inter;
       printf ("-------------------------------    Interval %d   "
               "------------------------------ \n",
-              (int)_real_inter);
+              (int) _real_inter);
       // step 1: Origin release vehicle
 
       // printf("Realsing!\n");
@@ -397,7 +397,7 @@ MNM_Realtime_Dta::get_optimization_gradient (MNM_Dta_Screenshot *screenshot,
           for (auto _map_it : _link_tt->m_tt_map)
             {
               m_average_link_tt.find (_map_it.first->m_link_ID)->second
-                  += _map_it.second / TFlt (m_sample_points);
+                += _map_it.second / TFlt (m_sample_points);
             }
         }
       // _link_tt -> print_info();
@@ -436,10 +436,10 @@ MNM_Realtime_Dta::get_optimization_gradient (MNM_Dta_Screenshot *screenshot,
                   // (float)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
                   // _tmp_tt));
                   _tmp_grad += MNM_Ults::divide (_tmp_tt, _demand);
-                  _tmp_grad += MNM_Ults::divide (
-                      MNM::calculate_link_mc (_link, _tmp_tt)
-                          * _link->get_link_flow (),
-                      _demand * num_link);
+                  _tmp_grad
+                    += MNM_Ults::divide (MNM::calculate_link_mc (_link, _tmp_tt)
+                                           * _link->get_link_flow (),
+                                         _demand * num_link);
                 }
               _path->m_buffer[_grad_position] = _tmp_grad;
               // printf("grad is %.4f\n", _tmp_grad);
@@ -499,23 +499,27 @@ MNM_Realtime_Dta::update_compliance_ratio (TInt assign_inter)
             {
               for (MNM_Path *_path : *_link_path_it.second)
                 {
-                  _est_flow = _path->m_buffer[0]
-                              * MNM::get_demand_bynode (
-                                  _path->m_node_vec.front (),
-                                  _path->m_node_vec.back (), assign_inter,
-                                  m_before_shot->m_node_factory);
-                  _real_flow = _path->m_p
-                               * MNM::get_demand_bynode (
-                                   _path->m_node_vec.front (),
-                                   _path->m_node_vec.back (), assign_inter,
-                                   m_before_shot->m_node_factory);
+                  _est_flow
+                    = _path->m_buffer[0]
+                      * MNM::get_demand_bynode (_path->m_node_vec.front (),
+                                                _path->m_node_vec.back (),
+                                                assign_inter,
+                                                m_before_shot->m_node_factory);
+                  _real_flow
+                    = _path->m_p
+                      * MNM::get_demand_bynode (_path->m_node_vec.front (),
+                                                _path->m_node_vec.back (),
+                                                assign_inter,
+                                                m_before_shot->m_node_factory);
                 }
             }
         }
-      _tmp_ratio = MNM_Ults::max (
-          MNM_Ults::min (MNM_Ults::divide (_est_flow - _real_flow, _est_flow),
-                         0),
-          1);
+      _tmp_ratio
+        = MNM_Ults::max (MNM_Ults::min (MNM_Ults::divide (_est_flow
+                                                            - _real_flow,
+                                                          _est_flow),
+                                        0),
+                         1);
       _vms->m_compliance_ratio = _vms->m_compliance_ratio * (1 - Learning_Rate)
                                  + _tmp_ratio * Learning_Rate;
     }
@@ -539,7 +543,7 @@ MNM_Realtime_Dta::estimate_previous (TInt assign_inter)
 {
   std::string _spd_name = m_file_folder + "/MNM_input_spd";
   std::unordered_map<TInt, TFlt> _link_spd_map
-      = std::unordered_map<TInt, TFlt> ();
+    = std::unordered_map<TInt, TFlt> ();
   MNM_IO::read_int_float (_spd_name, &_link_spd_map);
   MNM_Dta_Screenshot *_tmp_shot;
 
@@ -670,7 +674,7 @@ MNM_Realtime_Dta::predict_next (TInt next_assign_inter)
         {
           printf ("-------------------------------    Interval %d   "
                   "------------------------------ \n",
-                  (int)_cur_inter);
+                  (int) _cur_inter);
         }
 
       // step 1: Origin release vehicle
@@ -738,12 +742,12 @@ MNM_Realtime_Dta::get_statistics (MNM_Node_Factory *node_factory,
                                   MNM_Link_Factory *link_factory)
 {
   MNM_ConfReader *_record_config
-      = new MNM_ConfReader (m_file_folder + "/config.conf", "STAT");
+    = new MNM_ConfReader (m_file_folder + "/config.conf", "STAT");
   if (_record_config->get_string ("rec_mode") == "LRn")
     {
-      MNM_Statistics *_statistics = new MNM_Statistics_Lrn (
-          m_file_folder, m_dta_config, _record_config, m_od_factory,
-          node_factory, link_factory);
+      MNM_Statistics *_statistics
+        = new MNM_Statistics_Lrn (m_file_folder, m_dta_config, _record_config,
+                                  m_od_factory, node_factory, link_factory);
       return _statistics;
     }
   else
@@ -765,8 +769,8 @@ MNM_Dta_Screenshot::MNM_Dta_Screenshot (std::string file_folder,
   m_veh_factory = new MNM_Veh_Factory ();
   m_node_factory = new MNM_Node_Factory ();
   m_link_factory = new MNM_Link_Factory ();
-  m_routing = new MNM_Routing_Fixed (graph, od_factory, m_node_factory,
-                                     m_link_factory);
+  m_routing
+    = new MNM_Routing_Fixed (graph, od_factory, m_node_factory, m_link_factory);
 }
 
 MNM_Dta_Screenshot::~MNM_Dta_Screenshot ()
@@ -830,9 +834,8 @@ MNM_Dta_Screenshot::hook_up_node_and_link ()
 namespace MNM
 {
 int
-run_from_screenshot (MNM_Dta_Screenshot *screenshot,
-                     MNM_ConfReader *dta_config, TInt max_inter,
-                     TInt assign_inter, Path_Table *path_table,
+run_from_screenshot (MNM_Dta_Screenshot *screenshot, MNM_ConfReader *dta_config,
+                     TInt max_inter, TInt assign_inter, Path_Table *path_table,
                      MNM_OD_Factory *od_factory, std::string file_folder)
 {
   TInt _cur_inter = 0;
@@ -936,7 +939,7 @@ make_screenshot (std::string file_folder, MNM_ConfReader *config,
                  MNM_Routing_Fixed *old_routing)
 {
   MNM_Dta_Screenshot *_shot
-      = new MNM_Dta_Screenshot (file_folder, config, graph, od_factory);
+    = new MNM_Dta_Screenshot (file_folder, config, graph, od_factory);
   _shot->build_static_network ();
   MNM_Dlink *_dlink, *_new_dlink;
   TInt _link_ID;
@@ -953,21 +956,23 @@ make_screenshot (std::string file_folder, MNM_ConfReader *config,
       for (MNM_Veh *_veh : _dlink->m_finished_array)
         {
           _new_veh
-              = _new_veh_factory->make_veh (_veh->m_start_time, _veh->m_type);
+            = _new_veh_factory->make_veh (_veh->m_start_time, _veh->m_type);
           copy_veh (_veh, _new_veh, _shot);
           _new_dlink->m_finished_array.push_back (_new_veh);
-          _shot->m_routing->add_veh_path (
-              _new_veh, old_routing->m_tracker.find (_veh)->second);
+          _shot->m_routing
+            ->add_veh_path (_new_veh,
+                            old_routing->m_tracker.find (_veh)->second);
         }
 
       for (MNM_Veh *_veh : _dlink->m_incoming_array)
         {
           _new_veh
-              = _new_veh_factory->make_veh (_veh->m_start_time, _veh->m_type);
+            = _new_veh_factory->make_veh (_veh->m_start_time, _veh->m_type);
           copy_veh (_veh, _new_veh, _shot);
           _new_dlink->m_incoming_array.push_back (_new_veh);
-          _shot->m_routing->add_veh_path (
-              _new_veh, old_routing->m_tracker.find (_veh)->second);
+          _shot->m_routing
+            ->add_veh_path (_new_veh,
+                            old_routing->m_tracker.find (_veh)->second);
         }
 
       if (MNM_Dlink_Ctm *_ctm = dynamic_cast<MNM_Dlink_Ctm *> (_dlink))
@@ -984,8 +989,9 @@ make_screenshot (std::string file_folder, MNM_ConfReader *config,
                                                          _veh->m_type);
                   copy_veh (_veh, _new_veh, _shot);
                   _new_cell->m_veh_queue.push_back (_new_veh);
-                  _shot->m_routing->add_veh_path (
-                      _new_veh, old_routing->m_tracker.find (_veh)->second);
+                  _shot->m_routing
+                    ->add_veh_path (_new_veh,
+                                    old_routing->m_tracker.find (_veh)->second);
                 }
             }
         }
@@ -996,13 +1002,14 @@ make_screenshot (std::string file_folder, MNM_ConfReader *config,
                _veh_it != _pq->m_veh_queue.end (); _veh_it++)
             {
               MNM_Veh *_veh = _veh_it->first;
-              _new_veh = _new_veh_factory->make_veh (_veh->m_start_time,
-                                                     _veh->m_type);
+              _new_veh
+                = _new_veh_factory->make_veh (_veh->m_start_time, _veh->m_type);
               copy_veh (_veh, _new_veh, _shot);
               _new_pq->m_veh_queue.insert (
-                  std::pair<MNM_Veh *, TInt> (_new_veh, _veh_it->second));
-              _shot->m_routing->add_veh_path (
-                  _new_veh, old_routing->m_tracker.find (_veh)->second);
+                std::pair<MNM_Veh *, TInt> (_new_veh, _veh_it->second));
+              _shot->m_routing
+                ->add_veh_path (_new_veh,
+                                old_routing->m_tracker.find (_veh)->second);
             }
         }
     }
@@ -1014,10 +1021,11 @@ make_screenshot (std::string file_folder, MNM_ConfReader *config,
 MNM_Dta_Screenshot *
 make_screenshot (MNM_Dta_Screenshot *screenshot)
 {
-  return MNM::make_screenshot (
-      screenshot->m_file_folder, screenshot->m_config,
-      screenshot->m_od_factory, screenshot->m_link_factory,
-      screenshot->m_node_factory, screenshot->m_graph, screenshot->m_routing);
+  return MNM::make_screenshot (screenshot->m_file_folder, screenshot->m_config,
+                               screenshot->m_od_factory,
+                               screenshot->m_link_factory,
+                               screenshot->m_node_factory, screenshot->m_graph,
+                               screenshot->m_routing);
 }
 
 MNM_Dta_Screenshot *
@@ -1025,7 +1033,7 @@ make_empty_screenshot (std::string file_folder, MNM_ConfReader *config,
                        MNM_OD_Factory *od_factory, PNEGraph graph)
 {
   MNM_Dta_Screenshot *_shot
-      = new MNM_Dta_Screenshot (file_folder, config, graph, od_factory);
+    = new MNM_Dta_Screenshot (file_folder, config, graph, od_factory);
   _shot->build_static_network ();
   return _shot;
 }

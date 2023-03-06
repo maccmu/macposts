@@ -17,8 +17,8 @@ class MNM_Destination_Multiclass;
 class MNM_Dlink_Multiclass : public MNM_Dlink
 {
 public:
-  MNM_Dlink_Multiclass (TInt ID, TInt number_of_lane, TFlt length,
-                        TFlt ffs_car, TFlt ffs_truck);
+  MNM_Dlink_Multiclass (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs_car,
+                        TFlt ffs_truck);
   ~MNM_Dlink_Multiclass ();
 
   // use this one instead of the one in Dlink class
@@ -283,8 +283,7 @@ protected:
 class MNM_Dnode_FWJ_Multiclass : public MNM_Dnode_Inout_Multiclass
 {
 public:
-  MNM_Dnode_FWJ_Multiclass (TInt ID, TFlt flow_scalar,
-                            TFlt veh_convert_factor);
+  MNM_Dnode_FWJ_Multiclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor);
   ~MNM_Dnode_FWJ_Multiclass ();
   int virtual compute_flow () override;
 };
@@ -294,20 +293,19 @@ public:
 class MNM_Dnode_GRJ_Multiclass : public MNM_Dnode_Inout_Multiclass
 {
 public:
-  MNM_Dnode_GRJ_Multiclass (TInt ID, TFlt flow_scalar,
-                            TFlt veh_convert_factor);
+  MNM_Dnode_GRJ_Multiclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor);
   ~MNM_Dnode_GRJ_Multiclass ();
   int virtual compute_flow () override;
   int virtual prepare_loading () override;
 
 private:
-  std::vector<std::vector<MNM_Dlink *> > m_pow;
+  std::vector<std::vector<MNM_Dlink *>> m_pow;
   TFlt get_theta ();
   int prepare_outflux ();
   TFlt *m_d_a; // 1d array
   TFlt *m_C_a; // 1d array
   template <typename T>
-  std::vector<std::vector<T> > powerSet (const std::vector<T> &set);
+  std::vector<std::vector<T>> powerSet (const std::vector<T> &set);
   std::vector<int> getOnLocations (int a);
 };
 
@@ -328,10 +326,11 @@ public:
                                     TInt assign_interval,
                                     TFlt adaptive_ratio) override;
 
-  int virtual release_one_interval_biclass (
-      TInt current_interval, MNM_Veh_Factory *veh_factory,
-      TInt assign_interval, TFlt adaptive_ratio_car,
-      TFlt adaptive_ratio_truck) override;
+  int virtual release_one_interval_biclass (TInt current_interval,
+                                            MNM_Veh_Factory *veh_factory,
+                                            TInt assign_interval,
+                                            TFlt adaptive_ratio_car,
+                                            TFlt adaptive_ratio_truck) override;
 
   // use this one instead of add_dest_demand in the base class
   int add_dest_demand_multiclass (MNM_Destination_Multiclass *dest,
@@ -374,9 +373,8 @@ public:
   ~MNM_Veh_Factory_Multiclass ();
 
   // use this one instead of make_veh in the base class
-  MNM_Veh_Multiclass *make_veh_multiclass (TInt timestamp,
-                                           Vehicle_type veh_type,
-                                           TInt vehicle_cls);
+  MNM_Veh_Multiclass *
+  make_veh_multiclass (TInt timestamp, Vehicle_type veh_type, TInt vehicle_cls);
 };
 
 class MNM_Node_Factory_Multiclass : public MNM_Node_Factory
@@ -397,14 +395,11 @@ public:
   ~MNM_Link_Factory_Multiclass ();
 
   // use this one instead of make_link in the base class
-  MNM_Dlink *make_link_multiclass (TInt ID, DLink_type_multiclass link_type,
-                                   TInt number_of_lane, TFlt length,
-                                   TFlt lane_hold_cap_car,
-                                   TFlt lane_hold_cap_truck,
-                                   TFlt lane_flow_cap_car,
-                                   TFlt lane_flow_cap_truck, TFlt ffs_car,
-                                   TFlt ffs_truck, TFlt unit_time,
-                                   TFlt veh_convert_factor, TFlt flow_scalar);
+  MNM_Dlink *make_link_multiclass (
+    TInt ID, DLink_type_multiclass link_type, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car,
+    TFlt lane_flow_cap_truck, TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar);
 };
 
 class MNM_OD_Factory_Multiclass : public MNM_OD_Factory
@@ -478,7 +473,7 @@ TFlt get_link_outflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
 
 TFlt get_average_waiting_time_at_intersection (MNM_Dlink_Multiclass *link);
 TInt get_is_spillback (
-    MNM_Dlink_Multiclass *link); // 0 - no spillback, 1 - spillback
+  MNM_Dlink_Multiclass *link); // 0 - no spillback, 1 - spillback
 
 TFlt get_travel_time_car (MNM_Dlink_Multiclass *link, TFlt start_time);
 TFlt get_travel_time_car_robust (MNM_Dlink_Multiclass *link, TFlt start_time,

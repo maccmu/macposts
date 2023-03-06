@@ -82,9 +82,9 @@ MNM_Node_Factory::get_node (TInt ID)
   auto _node_it = m_node_map.find (ID);
   if (_node_it == m_node_map.end ())
     {
-      printf ("No such node ID %d\n", (int)ID);
+      printf ("No such node ID %d\n", (int) ID);
       throw std::runtime_error (
-          "Error, MNM_Node_Factory::get_node, node not exists");
+        "Error, MNM_Node_Factory::get_node, node not exists");
     }
   return _node_it->second;
 }
@@ -117,24 +117,24 @@ MNM_Link_Factory::make_link (TInt ID, DLink_type link_type, TFlt lane_hold_cap,
   switch (link_type)
     {
     case MNM_TYPE_CTM:
-      _link = new MNM_Dlink_Ctm (ID, lane_hold_cap, lane_flow_cap,
-                                 number_of_lane, length, ffs, unit_time,
-                                 flow_scalar);
+      _link
+        = new MNM_Dlink_Ctm (ID, lane_hold_cap, lane_flow_cap, number_of_lane,
+                             length, ffs, unit_time, flow_scalar);
       break;
     case MNM_TYPE_PQ:
       _link
-          = new MNM_Dlink_Pq (ID, lane_hold_cap, lane_flow_cap, number_of_lane,
-                              length, ffs, unit_time, flow_scalar);
+        = new MNM_Dlink_Pq (ID, lane_hold_cap, lane_flow_cap, number_of_lane,
+                            length, ffs, unit_time, flow_scalar);
       break;
     case MNM_TYPE_LQ:
       _link
-          = new MNM_Dlink_Lq (ID, lane_hold_cap, lane_flow_cap, number_of_lane,
-                              length, ffs, unit_time, flow_scalar);
+        = new MNM_Dlink_Lq (ID, lane_hold_cap, lane_flow_cap, number_of_lane,
+                            length, ffs, unit_time, flow_scalar);
       break;
     case MNM_TYPE_LTM:
-      _link = new MNM_Dlink_Ltm (ID, lane_hold_cap, lane_flow_cap,
-                                 number_of_lane, length, ffs, unit_time,
-                                 flow_scalar);
+      _link
+        = new MNM_Dlink_Ltm (ID, lane_hold_cap, lane_flow_cap, number_of_lane,
+                             length, ffs, unit_time, flow_scalar);
       break;
     default:
       throw std::runtime_error ("unknown link type");
@@ -150,7 +150,7 @@ MNM_Link_Factory::get_link (TInt ID)
   if (_link_it == m_link_map.end ())
     {
       throw std::runtime_error (
-          "Error, MNM_Link_Factory::get_link, link not exists");
+        "Error, MNM_Link_Factory::get_link, link not exists");
     }
   return _link_it->second;
 }
@@ -217,8 +217,8 @@ MNM_OD_Factory::get_destination (TInt ID)
   if (_d_it == m_destination_map.end ())
     {
       throw std::runtime_error (
-          "Error, MNM_OD_Factory::get_destination, destination not "
-          "exists");
+        "Error, MNM_OD_Factory::get_destination, destination not "
+        "exists");
     }
   return _d_it->second;
 }
@@ -230,7 +230,7 @@ MNM_OD_Factory::get_origin (TInt ID)
   if (_o_it == m_origin_map.end ())
     {
       throw std::runtime_error (
-          "Error, MNM_OD_Factory::get_origin, origin not exists");
+        "Error, MNM_OD_Factory::get_origin, origin not exists");
     }
   return _o_it->second;
 }

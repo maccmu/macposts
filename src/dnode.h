@@ -123,13 +123,13 @@ public:
   int virtual prepare_loading () override;
 
 private:
-  std::vector<std::vector<MNM_Dlink *> > m_pow;
+  std::vector<std::vector<MNM_Dlink *>> m_pow;
   TFlt get_theta ();
   int prepare_outflux ();
   TFlt *m_d_a; // 1d array
   TFlt *m_C_a; // 1d array
   template <typename T>
-  std::vector<std::vector<T> > powerSet (const std::vector<T> &set);
+  std::vector<std::vector<T>> powerSet (const std::vector<T> &set);
   std::vector<int> getOnLocations (int a);
 };
 #endif

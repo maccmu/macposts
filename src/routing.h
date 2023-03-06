@@ -12,7 +12,7 @@
 #include <unordered_map>
 
 typedef std::unordered_map<MNM_Destination *, std::unordered_map<TInt, TInt> *>
-    Routing_Table;
+  Routing_Table;
 
 class MNM_Routing
 {
@@ -62,8 +62,8 @@ class MNM_Routing_Fixed : public MNM_Routing
 public:
   MNM_Routing_Fixed (PNEGraph &graph, MNM_OD_Factory *od_factory,
                      MNM_Node_Factory *node_factory,
-                     MNM_Link_Factory *link_factory,
-                     TInt route_frq = TInt (-1), TInt buffer_len = TInt (-1));
+                     MNM_Link_Factory *link_factory, TInt route_frq = TInt (-1),
+                     TInt buffer_len = TInt (-1));
   ~MNM_Routing_Fixed ();
   int virtual init_routing (Path_Table *path_table = NULL) override;
   int virtual update_routing (TInt timestamp) override;

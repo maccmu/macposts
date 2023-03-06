@@ -18,10 +18,7 @@ MNM_Cumulative_Emission::MNM_Cumulative_Emission (TFlt unit_time, TInt freq)
   m_link_vector = std::vector<MNM_Dlink *> ();
 }
 
-MNM_Cumulative_Emission::~MNM_Cumulative_Emission ()
-{
-  m_link_vector.clear ();
-}
+MNM_Cumulative_Emission::~MNM_Cumulative_Emission () { m_link_vector.clear (); }
 
 int
 MNM_Cumulative_Emission::register_link (MNM_Dlink *link)
@@ -34,9 +31,9 @@ TFlt
 MNM_Cumulative_Emission::calculate_fuel_rate (TFlt v)
 {
   TFlt _fule_eco
-      = 1.19102380 * 1e-07 * pow (v, 5) - 2.67383161 * 1e-05 * pow (v, 4)
-        + 2.35409750 * 1e-03 * pow (v, 3) - 1.11752399 * 1e-01 * pow (v, 2)
-        + 2.96137050 * pow (v, 1) - 1.51623933;
+    = 1.19102380 * 1e-07 * pow (v, 5) - 2.67383161 * 1e-05 * pow (v, 4)
+      + 2.35409750 * 1e-03 * pow (v, 3) - 1.11752399 * 1e-01 * pow (v, 2)
+      + 2.96137050 * pow (v, 1) - 1.51623933;
   // printf("fuel rate is %lf\n", 1.0/_fule_eco());
   return MNM_Ults::max (TFlt (1) / _fule_eco, TFlt (0));
 }
@@ -75,14 +72,12 @@ MNM_Cumulative_Emission::calculate_CO2_rate (TFlt v)
 TFlt
 MNM_Cumulative_Emission::calculate_HC_rate (TFlt v)
 {
-  TFlt _HC_rate = 1.61479076909784e-13 * pow (v, 8.0)
-                  - 1.27884474982285e-10 * pow (v, 7.0)
-                  + 2.92924270300974e-8 * pow (v, 6.0)
-                  - 3.23670086149171e-6 * pow (v, 5.0)
-                  + 0.000201135990745703 * pow (v, 4.0)
-                  - 0.00737871178398462 * pow (v, 3.0)
-                  + 0.15792241257931 * pow (v, 2.0) - 1.82687242201925 * v
-                  + 9.84559996919605;
+  TFlt _HC_rate
+    = 1.61479076909784e-13 * pow (v, 8.0) - 1.27884474982285e-10 * pow (v, 7.0)
+      + 2.92924270300974e-8 * pow (v, 6.0) - 3.23670086149171e-6 * pow (v, 5.0)
+      + 0.000201135990745703 * pow (v, 4.0) - 0.00737871178398462 * pow (v, 3.0)
+      + 0.15792241257931 * pow (v, 2.0) - 1.82687242201925 * v
+      + 9.84559996919605;
   // printf("HC rate is %lf\n", _HC_rate());
   return MNM_Ults::max (_HC_rate, TFlt (0));
 }

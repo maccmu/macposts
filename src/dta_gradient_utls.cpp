@@ -5,7 +5,6 @@
 
 namespace MNM_DTA_GRADIENT
 {
-
 TFlt
 get_link_inflow (MNM_Dlink *link, TFlt start_time, TFlt end_time)
 {
@@ -80,7 +79,7 @@ get_path_travel_time (MNM_Path *path, TFlt start_time,
   if (link_factory == NULL)
     {
       throw std::runtime_error (
-          "Error, get_path_travel_time link link_factory is null");
+        "Error, get_path_travel_time link link_factory is null");
     }
   TFlt _end_time = start_time;
   MNM_Dlink *_link;
@@ -104,8 +103,8 @@ add_dar_records (std::vector<dar_record *> &record, MNM_Dlink *link,
   if (link->m_N_in_tree == NULL)
     {
       throw std::runtime_error (
-          "Error, add_dar_records link cummulative curve tree is not "
-          "installed");
+        "Error, add_dar_records link cummulative curve tree is not "
+        "installed");
     }
   MNM_Path *_path;
   for (auto path_it : link->m_N_in_tree->m_record)
@@ -143,7 +142,7 @@ add_dar_records (std::vector<dar_record *> &record, MNM_Dlink *link,
 }
 
 int
-add_dar_records_eigen (std::vector<Eigen::Triplet<double> > &record,
+add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
                        MNM_Dlink *link,
                        std::unordered_map<MNM_Path *, int> path_map,
                        TFlt start_time, TFlt end_time, int link_ind,
@@ -157,8 +156,8 @@ add_dar_records_eigen (std::vector<Eigen::Triplet<double> > &record,
   if (link->m_N_in_tree == NULL)
     {
       throw std::runtime_error (
-          "Error, add_dar_records link cummulative curve tree is not "
-          "installed");
+        "Error, add_dar_records link cummulative curve tree is not "
+        "installed");
     }
   MNM_Path *_path;
   int _x, _y;
@@ -185,8 +184,9 @@ add_dar_records_eigen (std::vector<Eigen::Triplet<double> > &record,
                   //     (float)new_record ->
                   //     link_start_int(), (float) new_record
                   //     -> flow());
-                  record.push_back (Eigen::Triplet<double> (
-                      (double)_x, (double)_y, tmp_flow () / f_ptr[_y]));
+                  record.push_back (
+                    Eigen::Triplet<double> ((double) _x, (double) _y,
+                                            tmp_flow () / f_ptr[_y]));
                 }
             }
         }

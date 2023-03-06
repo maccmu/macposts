@@ -28,7 +28,7 @@ MNM_Origin::~MNM_Origin ()
 int
 MNM_Origin::add_dest_demand (MNM_Destination *dest, TFlt *demand)
 {
-  TFlt *_demand = (TFlt *)malloc (sizeof (TFlt) * m_max_assign_interval);
+  TFlt *_demand = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval);
   for (int i = 0; i < m_max_assign_interval; ++i)
     {
       _demand[i] = TFlt (demand[i]);
@@ -48,13 +48,12 @@ MNM_Origin::release (MNM_Veh_Factory *veh_factory, TInt current_interval)
       for (auto _demand_it = m_demand.begin (); _demand_it != m_demand.end ();
            _demand_it++)
         {
-          _veh_to_release = TInt (
-              MNM_Ults::round ((_demand_it->second)[m_current_assign_interval]
-                               * m_flow_scalar));
+          _veh_to_release = TInt (MNM_Ults::round (
+            (_demand_it->second)[m_current_assign_interval] * m_flow_scalar));
           for (int i = 0; i < _veh_to_release; ++i)
             {
-              _veh = veh_factory->make_veh (current_interval,
-                                            MNM_TYPE_ADAPTIVE);
+              _veh
+                = veh_factory->make_veh (current_interval, MNM_TYPE_ADAPTIVE);
               _veh->set_destination (_demand_it->first);
               _veh->set_origin (this);
               m_origin_node->m_in_veh_queue.push_back (_veh);
@@ -78,7 +77,7 @@ MNM_Origin::release_one_interval (TInt current_interval,
        _demand_it++)
     {
       _veh_to_release = TInt (MNM_Ults::round (
-          (_demand_it->second)[assign_interval] * m_flow_scalar));
+        (_demand_it->second)[assign_interval] * m_flow_scalar));
       for (int i = 0; i < _veh_to_release; ++i)
         {
           if (adaptive_ratio == TFlt (0))
@@ -87,8 +86,8 @@ MNM_Origin::release_one_interval (TInt current_interval,
             }
           else if (adaptive_ratio == TFlt (1))
             {
-              _veh = veh_factory->make_veh (current_interval,
-                                            MNM_TYPE_ADAPTIVE);
+              _veh
+                = veh_factory->make_veh (current_interval, MNM_TYPE_ADAPTIVE);
             }
           else
             {
@@ -100,8 +99,8 @@ MNM_Origin::release_one_interval (TInt current_interval,
                 }
               else
                 {
-                  _veh = veh_factory->make_veh (current_interval,
-                                                MNM_TYPE_STATIC);
+                  _veh
+                    = veh_factory->make_veh (current_interval, MNM_TYPE_STATIC);
                 }
             }
           _veh->set_destination (_demand_it->first);
@@ -122,7 +121,6 @@ MNM_Destination::~MNM_Destination () {}
 int
 MNM_Destination::receive (TInt current_interval)
 {
-
   MNM_Veh *_veh;
   size_t _num_to_receive = m_dest_node->m_out_veh_queue.size ();
   // printf("Dest node %d out vehicle: %d\n", m_dest_node -> m_node_ID,
@@ -143,7 +141,6 @@ MNM_Destination::receive (TInt current_interval)
 
 namespace MNM
 {
-
 TFlt
 get_demand_bynode (TInt O_node, TInt D_node, TInt assign_inter,
                    MNM_Node_Factory *node_factory)

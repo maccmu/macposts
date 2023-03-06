@@ -32,12 +32,12 @@ public:
   // //initial the first pre routing scheme
   Path_Table *m_path_table; // std::unordered_map<TInt,
                             // std::unordered_map<TInt, MNM_Pathset*>*>
-  std::unordered_map<
-      TInt, std::unordered_map<TInt, std::unordered_map<TInt, TFlt *> > >
-      *routing_table;
+  std::unordered_map<TInt,
+                     std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>>
+    *routing_table;
   int update_routing_table_MSA (
-      MNM_PMC_Table pmc_table,
-      float lambda); // assume single-valued PMC, update routing table
+    MNM_PMC_Table pmc_table,
+    float lambda); // assume single-valued PMC, update routing table
   int update_routing_table_MSA1 (MNM_PMC_Table pmc_table_lower,
                                  MNM_PMC_Table pmc_table_upper, float lambda);
   int update_routing_table_MSA2 (MNM_PMC_Table pmc_table_lower,

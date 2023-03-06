@@ -12,7 +12,7 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
   // std::unordered_map<TInt, std::unordered_map<TInt, MNM_Pathset*>*>
   // <O_id,<D_id,pathset>> first generate, assign all demand to one path
   routing_table = new std::unordered_map<
-      TInt, std::unordered_map<TInt, std::unordered_map<TInt, TFlt *> > > ();
+    TInt, std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>> ();
   m_path_table = path_table;
   TInt _dest_node_ID, _origin_node_ID;
   TInt _oid;
@@ -37,8 +37,8 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
           //-----
           int size_demand = _o_it->second->m_max_assign_interval;
           std::unordered_map<MNM_Destination *, TFlt *>::const_iterator
-              demand_it
-              = _o_it->second->m_demand.find (_d_it->second);
+            demand_it
+            = _o_it->second->m_demand.find (_d_it->second);
           if (demand_it != _o_it->second->m_demand.end ())
             {
               TFlt *demand = demand_it->second;
@@ -56,15 +56,16 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
               if (routing_table->find (_origin_node_ID)
                   == routing_table->end ())
                 {
-                  std::unordered_map<TInt, std::unordered_map<TInt, TFlt *> >
-                      _destmap = std::unordered_map<
-                          TInt, std::unordered_map<TInt, TFlt *> > ();
+                  std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>
+                    _destmap
+                    = std::unordered_map<TInt,
+                                         std::unordered_map<TInt, TFlt *>> ();
                   std::unordered_map<TInt, TFlt *> _path_demand_map
-                      = std::unordered_map<TInt, TFlt *> ();
+                    = std::unordered_map<TInt, TFlt *> ();
                   _path_demand_map.insert (std::make_pair (0, demand_copy));
                   int _path_size = path_table->at (_origin_node_ID)
-                                       ->at (_dest_node_ID)
-                                       ->m_path_vec.size ();
+                                     ->at (_dest_node_ID)
+                                     ->m_path_vec.size ();
                   // std::cout<<"Path Set Size:" <<
                   // _path_size <<std::endl;
 
@@ -77,24 +78,25 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
                           demand_copy[demand_it] = TFlt (0.0);
                         }
                       _path_demand_map.insert (
-                          std::make_pair (_k, demand_copy));
+                        std::make_pair (_k, demand_copy));
                     }
                   _destmap.insert (
-                      std::make_pair (_dest_node_ID, _path_demand_map));
+                    std::make_pair (_dest_node_ID, _path_demand_map));
                   routing_table->insert (
-                      std::make_pair (_origin_node_ID, _destmap));
+                    std::make_pair (_origin_node_ID, _destmap));
                 }
               else
                 {
-                  std::unordered_map<TInt, std::unordered_map<TInt, TFlt *> >
-                      _destmap = std::unordered_map<
-                          TInt, std::unordered_map<TInt, TFlt *> > ();
+                  std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>
+                    _destmap
+                    = std::unordered_map<TInt,
+                                         std::unordered_map<TInt, TFlt *>> ();
                   std::unordered_map<TInt, TFlt *> _path_demand_map
-                      = std::unordered_map<TInt, TFlt *> ();
+                    = std::unordered_map<TInt, TFlt *> ();
                   _path_demand_map.insert (std::make_pair (0, demand_copy));
                   int _path_size = path_table->at (_origin_node_ID)
-                                       ->at (_dest_node_ID)
-                                       ->m_path_vec.size ();
+                                     ->at (_dest_node_ID)
+                                     ->m_path_vec.size ();
                   // std::cout<<"Path Set Size:" <<
                   // _path_size <<std::endl;
 
@@ -107,14 +109,14 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
                           demand_copy[demand_it] = TFlt (0.0);
                         }
                       _path_demand_map.insert (
-                          std::make_pair (_k, demand_copy));
+                        std::make_pair (_k, demand_copy));
                     }
                   _destmap.insert (
-                      std::make_pair (_dest_node_ID, _path_demand_map));
+                    std::make_pair (_dest_node_ID, _path_demand_map));
 
                   routing_table->find (_origin_node_ID)
-                      ->second.insert (
-                          std::make_pair (_dest_node_ID, _path_demand_map));
+                    ->second.insert (
+                      std::make_pair (_dest_node_ID, _path_demand_map));
                 }
             }
         }
@@ -145,7 +147,6 @@ int
 MNM_Pre_Routing::reassign_routing (TInt oid, TInt did, TInt pid, TInt interval,
                                    TFlt lambda)
 {
-
   // TO DO: for period _int, in time _int, assign all demand to path pid
   // denote the new routing scheme as f_n, original as f_o
   // update routing table as f = (1-lambda)* f_o + lambda *f_n
@@ -165,8 +166,8 @@ MNM_Pre_Routing::reassign_routing (TInt oid, TInt did, TInt pid, TInt interval,
       if (_path_demand->first == pid)
         {
           _path_demand->second[interval]
-              = (1 - lambda) * _path_demand->second[interval]
-                + lambda * _total_demand;
+            = (1 - lambda) * _path_demand->second[interval]
+              + lambda * _total_demand;
           // std::cout <<  _path_demand -> first << "path : "
           // <<(1-lambda) * _path_demand -> second[interval] + lambda
           // * _total_demand << std::endl;
@@ -177,7 +178,7 @@ MNM_Pre_Routing::reassign_routing (TInt oid, TInt did, TInt pid, TInt interval,
           // (1-lambda) * _path_demand -> second[interval]<<
           // std::endl;
           _path_demand->second[interval]
-              = (1 - lambda) * _path_demand->second[interval];
+            = (1 - lambda) * _path_demand->second[interval];
         }
     }
   // std::cout << "Within reassign:" << pid << std::endl;
@@ -208,8 +209,7 @@ MNM_Pre_Routing::toString ()
               MNM_Pathset *_path_set = m_path_table->at (_oid)->at (_did);
               _path = _path_set->m_path_vec[_pid];
               result += "Path " + std::to_string (_pid) + ":";
-              for (size_t _l_it = 0; _l_it < _path->m_link_vec.size ();
-                   _l_it++)
+              for (size_t _l_it = 0; _l_it < _path->m_link_vec.size (); _l_it++)
                 {
                   result += std::to_string (_path->m_link_vec[_l_it]) + ",";
                 }

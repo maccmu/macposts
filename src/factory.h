@@ -56,8 +56,8 @@ public:
   MNM_OD_Factory ();
   virtual ~MNM_OD_Factory ();
   virtual MNM_Destination *make_destination (TInt ID);
-  virtual MNM_Origin *make_origin (TInt ID, TInt max_interval,
-                                   TFlt flow_scalar, TInt frequency);
+  virtual MNM_Origin *make_origin (TInt ID, TInt max_interval, TFlt flow_scalar,
+                                   TInt frequency);
   virtual MNM_Destination *get_destination (TInt ID);
   virtual MNM_Origin *get_origin (TInt ID);
   std::unordered_map<TInt, MNM_Origin *> m_origin_map;

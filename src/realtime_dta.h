@@ -26,9 +26,8 @@ public:
   int get_estimation_gradient (MNM_Dta_Screenshot *screenshot, TInt max_inter,
                                TInt assign_inter, Path_Table *path_table,
                                std::unordered_map<TInt, TFlt> *link_spd_map);
-  int get_optimization_gradient (MNM_Dta_Screenshot *screenshot,
-                                 TInt max_inter, TInt assign_inter,
-                                 Path_Table *path_table);
+  int get_optimization_gradient (MNM_Dta_Screenshot *screenshot, TInt max_inter,
+                                 TInt assign_inter, Path_Table *path_table);
   int one_iteration (TInt assign_inter);
   int estimate_previous (TInt assign_inter);
   int optimize_next (TInt next_assign_inter);
@@ -49,7 +48,7 @@ public:
 
   std::unordered_map<TInt, TFlt> m_average_link_tt;
   std::unordered_map<TInt, TFlt>
-      m_link_tt_difference; // only used in estimation
+    m_link_tt_difference; // only used in estimation
   std::string m_file_folder;
   PNEGraph m_graph;
   MNM_OD_Factory *m_od_factory;
@@ -103,13 +102,13 @@ static inline void
 copy_veh (MNM_Veh *_veh, MNM_Veh *_new_veh, MNM_Dta_Screenshot *_shot)
 {
   _new_veh->m_current_link
-      = _shot->m_link_factory->get_link (_veh->m_current_link->m_link_ID);
+    = _shot->m_link_factory->get_link (_veh->m_current_link->m_link_ID);
   _new_veh->m_start_time = _veh->m_start_time;
   _new_veh->m_next_link
-      = _shot->m_link_factory->get_link (_veh->m_next_link->m_link_ID);
-  _new_veh->set_destination (_shot->m_od_factory->get_destination (
-      _veh->get_destination ()->m_Dest_ID));
+    = _shot->m_link_factory->get_link (_veh->m_next_link->m_link_ID);
+  _new_veh->set_destination (
+    _shot->m_od_factory->get_destination (_veh->get_destination ()->m_Dest_ID));
   _new_veh->set_origin (
-      _shot->m_od_factory->get_origin (_veh->get_origin ()->m_Origin_ID));
+    _shot->m_od_factory->get_origin (_veh->get_origin ()->m_Origin_ID));
 }
 #endif

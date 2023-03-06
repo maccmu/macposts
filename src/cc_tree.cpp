@@ -3,8 +3,9 @@
 
 MNM_Tree_Cumulative_Curve::MNM_Tree_Cumulative_Curve ()
 {
-  m_record = std::unordered_map<
-      MNM_Path *, std::unordered_map<TInt, MNM_Cumulative_Curve *> > ();
+  m_record
+    = std::unordered_map<MNM_Path *,
+                         std::unordered_map<TInt, MNM_Cumulative_Curve *>> ();
 }
 
 MNM_Tree_Cumulative_Curve::~MNM_Tree_Cumulative_Curve ()
@@ -40,13 +41,13 @@ MNM_Tree_Cumulative_Curve::add_flow (TFlt timestamp, TFlt flow, MNM_Path *path,
       // -> m_path_ID, departing_int);
       m_record[path][departing_int] = new MNM_Cumulative_Curve ();
       m_record[path][departing_int]->add_record (
-          std::pair<TFlt, TFlt> (TFlt (0), TFlt (0)));
+        std::pair<TFlt, TFlt> (TFlt (0), TFlt (0)));
     }
   // printf("CC tree, adding flow, time %d, flow %f, path id %d, depart time
   // %d \n", (int) timestamp(), (float) flow(), (int) path -> m_path_ID,
   // (int) departing_int);
   m_record[path][departing_int]->add_increment (
-      std::make_pair (timestamp, flow));
+    std::make_pair (timestamp, flow));
   return 0;
 }
 

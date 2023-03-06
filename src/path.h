@@ -27,8 +27,7 @@ public:
   TFlt *m_buffer;
   TInt m_buffer_length;
   int allocate_buffer (TInt length);
-  inline bool
-  operator== (const MNM_Path &rhs)
+  inline bool operator== (const MNM_Path &rhs)
   {
     if (m_link_vec.size () != rhs.m_link_vec.size ())
       return false;
@@ -43,8 +42,7 @@ public:
 
 struct LessByPathP
 {
-  bool
-  operator() (const MNM_Path *lhs, const MNM_Path *rhs) const
+  bool operator() (const MNM_Path *lhs, const MNM_Path *rhs) const
   {
     return lhs->m_p >= rhs->m_p;
   }
@@ -61,7 +59,7 @@ public:
 };
 
 typedef std::unordered_map<TInt, std::unordered_map<TInt, MNM_Pathset *> *>
-    Path_Table;
+  Path_Table;
 
 namespace MNM
 {
@@ -73,8 +71,7 @@ int save_path_table (Path_Table *path_table, MNM_OD_Factory *m_od_factory,
                      bool w_buffer = false);
 int print_path_table (Path_Table *path_table, MNM_OD_Factory *m_od_factory,
                       bool w_buffer = false);
-Path_Table *build_shortest_pathset (PNEGraph &graph,
-                                    MNM_OD_Factory *od_factory,
+Path_Table *build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
                                     MNM_Link_Factory *link_factory);
 // int save_path_table_w_buffer(Path_Table *path_table, MNM_OD_Factory
 // *od_factory);

@@ -80,7 +80,7 @@ int
 MNM_Link_Tt::register_vehicle (MNM_Veh *veh, TInt current_time)
 {
   Vehicle_Record *_record
-      = new Vehicle_Record{ veh->get_current_link (), TFlt (current_time) };
+    = new Vehicle_Record{ veh->get_current_link (), TFlt (current_time) };
   m_tracker.insert (std::pair<MNM_Veh *, Vehicle_Record *> (veh, _record));
   return 0;
 }
@@ -112,13 +112,12 @@ MNM_Link_Tt::print_info ()
       _link = _link_it.first;
       _tt = _link_it.second;
       printf ("In link ID %d, the travel time is %.4f.\n",
-              (int)_link->m_link_ID, (float)_tt);
+              (int) _link->m_link_ID, (float) _tt);
     }
 }
 
 namespace MNM
 {
-
 TFlt
 calculate_link_mc (MNM_Dlink *link, TFlt link_tt)
 {

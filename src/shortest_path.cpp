@@ -14,18 +14,17 @@ MNM_Shortest_Path::one_to_one (TInt origin_node_ID, TInt dest_node_ID,
 
 int
 MNM_Shortest_Path::all_to_one_Dijkstra (
-    TInt destination_ID, PNEGraph graph,
-    std::unordered_map<TInt, TFlt> &cost_map,
-    std::unordered_map<TInt, TInt> &output_map)
+  TInt destination_ID, PNEGraph graph, std::unordered_map<TInt, TFlt> &cost_map,
+  std::unordered_map<TInt, TInt> &output_map)
 {
   std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>, LessThanByCost> m_Q
-      = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
-                            LessThanByCost> ();
+    = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
+                          LessThanByCost> ();
   MNM_Cost *dest_cost = new MNM_Cost (destination_ID, TFlt (0));
   m_Q.push (dest_cost);
 
   std::unordered_map<TInt, TFlt> dist_to_dest
-      = std::unordered_map<TInt, TFlt> ();
+    = std::unordered_map<TInt, TFlt> ();
 
   for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
     {
@@ -33,10 +32,10 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
       if (_node_id != destination_ID)
         {
           dist_to_dest.insert (
-              { _node_id, TFlt (std::numeric_limits<double>::max ()) });
+            { _node_id, TFlt (std::numeric_limits<double>::max ()) });
           output_map.insert (
-              { _node_id, -1 }); // If the destination is not
-                                 // accessible the output remains -1
+            { _node_id, -1 }); // If the destination is not
+                               // accessible the output remains -1
         }
     }
   dist_to_dest[destination_ID] = TFlt (0);
@@ -78,14 +77,14 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
 
 int
 MNM_Shortest_Path::all_to_one_Dijkstra (
-    TInt destination_ID, PNEGraph graph,
-    std::unordered_map<TInt, TFlt> &dist_to_dest,
-    std::unordered_map<TInt, TFlt> &cost_map,
-    std::unordered_map<TInt, TInt> &output_map)
+  TInt destination_ID, PNEGraph graph,
+  std::unordered_map<TInt, TFlt> &dist_to_dest,
+  std::unordered_map<TInt, TFlt> &cost_map,
+  std::unordered_map<TInt, TInt> &output_map)
 {
   std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>, LessThanByCost> m_Q
-      = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
-                            LessThanByCost> ();
+    = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
+                          LessThanByCost> ();
   MNM_Cost *dest_cost = new MNM_Cost (destination_ID, TFlt (0));
   m_Q.push (dest_cost);
 
@@ -98,10 +97,10 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
       if (_node_id != destination_ID)
         {
           dist_to_dest.insert (
-              { _node_id, TFlt (std::numeric_limits<double>::max ()) });
+            { _node_id, TFlt (std::numeric_limits<double>::max ()) });
           output_map.insert (
-              { _node_id, -1 }); // If the destination is not
-                                 // accessible the output remains -1
+            { _node_id, -1 }); // If the destination is not
+                               // accessible the output remains -1
         }
     }
   dist_to_dest[destination_ID] = TFlt (0);
@@ -143,15 +142,15 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
 
 int
 MNM_Shortest_Path::all_to_one_Dijkstra (
-    TInt destination_ID, PNEGraph graph,
-    std::unordered_map<TInt, TFlt *> &cost_map,
-    std::unordered_map<TInt, TFlt *> &dist_to_dest,
-    std::unordered_map<TInt, TInt *> &output_map, TInt cost_position,
-    TInt dist_position, TInt output_position)
+  TInt destination_ID, PNEGraph graph,
+  std::unordered_map<TInt, TFlt *> &cost_map,
+  std::unordered_map<TInt, TFlt *> &dist_to_dest,
+  std::unordered_map<TInt, TInt *> &output_map, TInt cost_position,
+  TInt dist_position, TInt output_position)
 {
   std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>, LessThanByCost> m_Q
-      = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
-                            LessThanByCost> ();
+    = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
+                          LessThanByCost> ();
   MNM_Cost *dest_cost = new MNM_Cost (destination_ID, TFlt (0));
   m_Q.push (dest_cost);
 
@@ -164,10 +163,10 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
       if (_node_id != destination_ID)
         {
           dist_to_dest[_node_id][dist_position]
-              = TFlt (std::numeric_limits<double>::max ());
+            = TFlt (std::numeric_limits<double>::max ());
           output_map[_node_id][output_position]
-              = -1; // If the destination is not accessible the
-                    // output remains -1
+            = -1; // If the destination is not accessible the
+                  // output remains -1
         }
     }
   dist_to_dest[destination_ID][dist_position] = TFlt (0);
@@ -202,9 +201,8 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
 
 int
 MNM_Shortest_Path::all_to_one_Dijkstra_deprecated (
-    TInt dest_node_ID, PNEGraph graph,
-    std::unordered_map<TInt, TFlt> &cost_map,
-    std::unordered_map<TInt, TInt> &output_map)
+  TInt dest_node_ID, PNEGraph graph, std::unordered_map<TInt, TFlt> &cost_map,
+  std::unordered_map<TInt, TInt> &output_map)
 {
   // if (output_map.size() != 0){
   //   // printf("Output map already exist, clear!\n");
@@ -216,10 +214,10 @@ MNM_Shortest_Path::all_to_one_Dijkstra_deprecated (
 
   // std::deque<MNM_Cost*> m_Q = std::deque<MNM_Cost*>();
   std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>, LessThanByCost> m_Q
-      = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
-                            LessThanByCost> ();
+    = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
+                          LessThanByCost> ();
   std::unordered_map<TInt, MNM_Cost *> m_Q_support
-      = std::unordered_map<TInt, MNM_Cost *> ();
+    = std::unordered_map<TInt, MNM_Cost *> ();
   MNM_Cost *_cost = new MNM_Cost (dest_node_ID, TFlt (0));
   // m_Q.push_back(_cost);
   m_Q.push (_cost);
@@ -287,9 +285,9 @@ MNM_Shortest_Path::all_to_one_Dijkstra_deprecated (
 
 int
 MNM_Shortest_Path::all_to_one_FIFO (
-    TInt dest_node_ID, PNEGraph graph,
-    const std::unordered_map<TInt, TFlt> &cost_map,
-    std::unordered_map<TInt, TInt> &output_map)
+  TInt dest_node_ID, PNEGraph graph,
+  const std::unordered_map<TInt, TFlt> &cost_map,
+  std::unordered_map<TInt, TInt> &output_map)
 {
   // if (output_map.size() != 0){
   //   // printf("Output map already exist, clear!\n");
@@ -306,7 +304,7 @@ MNM_Shortest_Path::all_to_one_FIFO (
 
   std::deque<TInt> m_Q = std::deque<TInt> ();
   std::unordered_map<TInt, bool> m_Q_support
-      = std::unordered_map<TInt, bool> ();
+    = std::unordered_map<TInt, bool> ();
 
   m_Q.push_back (dest_node_ID);
   m_Q_support.insert (std::pair<TInt, bool> (dest_node_ID, true));
@@ -390,7 +388,7 @@ MNM_Shortest_Path::all_to_one_LIFO (TInt dest_node_ID, PNEGraph graph,
 
   std::deque<TInt> m_Q = std::deque<TInt> ();
   std::unordered_map<TInt, bool> m_Q_support
-      = std::unordered_map<TInt, bool> ();
+    = std::unordered_map<TInt, bool> ();
 
   m_Q.push_front (dest_node_ID);
   m_Q_support.insert (std::pair<TInt, bool> (dest_node_ID, true));
@@ -469,9 +467,8 @@ CompareCostDecendSort (MNM_Cost *lhs, MNM_Cost *rhs)
 -------------------------------------------------------------*/
 int
 MNM_Shortest_Path::all_to_one_TDSP (
-    TInt dest_node_ID, PNEGraph graph,
-    std::unordered_map<TInt, TFlt *> &cost_map,
-    std::unordered_map<TInt, TInt *> &output_map, TInt num_interval)
+  TInt dest_node_ID, PNEGraph graph, std::unordered_map<TInt, TFlt *> &cost_map,
+  std::unordered_map<TInt, TInt *> &output_map, TInt num_interval)
 {
   return 0;
 }
@@ -553,19 +550,19 @@ MNM_TDSP_Tree::update_tree (std::unordered_map<TInt, TFlt *> &cost_map)
       for (int t = 0; t < m_max_interval; ++t)
         {
           _node_ID = _node_it.GetId ();
-          m_dist[_node_ID][t]
-              = _node_ID == m_dest_node_ID
-                    ? TFlt (0)
-                    : TFlt (std::numeric_limits<double>::max ());
+          m_dist[_node_ID][t] = _node_ID == m_dest_node_ID
+                                  ? TFlt (0)
+                                  : TFlt (std::numeric_limits<double>::max ());
           m_tree[_node_ID][t] = -1;
         }
     }
 
   // printf("SP in last t\n");
   // run last time interval
-  MNM_Shortest_Path::all_to_one_Dijkstra (
-      m_dest_node_ID, m_graph, cost_map, m_dist, m_tree, m_max_interval - 1,
-      m_max_interval - 1, m_max_interval - 1);
+  MNM_Shortest_Path::all_to_one_Dijkstra (m_dest_node_ID, m_graph, cost_map,
+                                          m_dist, m_tree, m_max_interval - 1,
+                                          m_max_interval - 1,
+                                          m_max_interval - 1);
   // printf("Process M-2 to 0\n");
   // main loop for t = M-2 down to 0
   TFlt _temp_cost, _edge_cost;
@@ -579,9 +576,9 @@ MNM_TDSP_Tree::update_tree (std::unordered_map<TInt, TFlt *> &cost_map)
           _dst_node = _edge_it.GetDstNId ();
           _src_node = _edge_it.GetSrcNId ();
           _edge_cost = cost_map[_edge_it.GetId ()][t];
-          _temp_cost = _edge_cost
-                       + get_distance_to_destination (_dst_node,
-                                                      TFlt (t) + _edge_cost);
+          _temp_cost
+            = _edge_cost
+              + get_distance_to_destination (_dst_node, TFlt (t) + _edge_cost);
           if (m_dist[_src_node][t] > _temp_cost)
             {
               // printf("At time %d, src %d to des %d\n", t,

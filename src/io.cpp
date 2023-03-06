@@ -224,9 +224,9 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
 
               /* hook up */
               _origin->m_origin_node
-                  = (MNM_DMOND *)node_factory->get_node (_node_ID);
-              ((MNM_DMOND *)node_factory->get_node (_node_ID))
-                  ->hook_up_origin (_origin);
+                = (MNM_DMOND *) node_factory->get_node (_node_ID);
+              ((MNM_DMOND *) node_factory->get_node (_node_ID))
+                ->hook_up_origin (_origin);
             }
         }
 
@@ -249,9 +249,9 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
 
               /* hook up */
               _dest->m_dest_node
-                  = (MNM_DMDND *)node_factory->get_node (_node_ID);
-              ((MNM_DMDND *)node_factory->get_node (_node_ID))
-                  ->hook_up_destination (_dest);
+                = (MNM_DMDND *) node_factory->get_node (_node_ID);
+              ((MNM_DMDND *) node_factory->get_node (_node_ID))
+                ->hook_up_destination (_dest);
             }
         }
     }
@@ -300,9 +300,9 @@ MNM_IO::hook_up_od_node (std::string file_folder, MNM_ConfReader *conf_reader,
 
               /* hook up */
               _origin->m_origin_node
-                  = (MNM_DMOND *)node_factory->get_node (_node_ID);
-              ((MNM_DMOND *)node_factory->get_node (_node_ID))
-                  ->hook_up_origin (_origin);
+                = (MNM_DMOND *) node_factory->get_node (_node_ID);
+              ((MNM_DMOND *) node_factory->get_node (_node_ID))
+                ->hook_up_origin (_origin);
             }
         }
 
@@ -325,9 +325,9 @@ MNM_IO::hook_up_od_node (std::string file_folder, MNM_ConfReader *conf_reader,
 
               /* hook up */
               _dest->m_dest_node
-                  = (MNM_DMDND *)node_factory->get_node (_node_ID);
-              ((MNM_DMDND *)node_factory->get_node (_node_ID))
-                  ->hook_up_destination (_dest);
+                = (MNM_DMDND *) node_factory->get_node (_node_ID);
+              ((MNM_DMDND *) node_factory->get_node (_node_ID))
+                ->hook_up_destination (_dest);
             }
         }
     }
@@ -470,7 +470,7 @@ MNM_IO::build_demand (std::string file_folder, MNM_ConfReader *conf_reader,
   if (_demand_file.is_open ())
     {
       // printf("Start build demand profile.\n");
-      TFlt *_demand_vector = (TFlt *)malloc (sizeof (TFlt) * _max_interval);
+      TFlt *_demand_vector = (TFlt *) malloc (sizeof (TFlt) * _max_interval);
       memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval);
       for (int i = 0; i < _num_OD;)
         {
@@ -574,18 +574,17 @@ MNM_IO::load_path_table (std::string file_name, PNEGraph graph, TInt num_path,
                 {
                   _new_map = new std::unordered_map<TInt, MNM_Pathset *> ();
                   _path_table->insert (
-                      std::pair<TInt,
-                                std::unordered_map<TInt, MNM_Pathset *> *> (
-                          _origin_node_ID, _new_map));
+                    std::pair<TInt, std::unordered_map<TInt, MNM_Pathset *>
+                                      *> (_origin_node_ID, _new_map));
                 }
               if (_path_table->find (_origin_node_ID)
-                      ->second->find (_dest_node_ID)
+                    ->second->find (_dest_node_ID)
                   == _path_table->find (_origin_node_ID)->second->end ())
                 {
                   _pathset = new MNM_Pathset ();
                   _path_table->find (_origin_node_ID)
-                      ->second->insert (std::pair<TInt, MNM_Pathset *> (
-                          _dest_node_ID, _pathset));
+                    ->second->insert (
+                      std::pair<TInt, MNM_Pathset *> (_dest_node_ID, _pathset));
                 }
               _path = new MNM_Path ();
               _path->m_path_ID = _path_ID_counter;
@@ -612,13 +611,13 @@ MNM_IO::load_path_table (std::string file_name, PNEGraph graph, TInt num_path,
                   for (int i = 0; i < _buffer_len (); ++i)
                     {
                       _path->m_buffer[i]
-                          = TFlt (std::stof (trim (_buffer_words[i])));
+                        = TFlt (std::stof (trim (_buffer_words[i])));
                     }
                 }
 
               _path_table->find (_origin_node_ID)
-                  ->second->find (_dest_node_ID)
-                  ->second->m_path_vec.push_back (_path);
+                ->second->find (_dest_node_ID)
+                ->second->m_path_vec.push_back (_path);
             }
         }
       _path_table_file.close ();
@@ -768,7 +767,7 @@ MNM_IO::read_float (std::string file_name, std::vector<TFlt *> *reader)
           std::getline (_file, _line);
           _words = split (_line, ' ');
           _len = TInt (_words.size ());
-          _tmp_flt = (TFlt *)malloc (sizeof (TFlt) * _len);
+          _tmp_flt = (TFlt *) malloc (sizeof (TFlt) * _len);
           // std::cout << "Processing: " << _line << "\n";
           for (int j = 0; j < _len; ++j)
             {
@@ -839,13 +838,13 @@ MNM_IO::dump_cumulative_curve (std::string file_folder,
       if (_link->m_N_in != NULL)
         {
           std::string _temp_s_in
-              = _temp_s + "in," + _link->m_N_in->to_string () + "\n";
+            = _temp_s + "in," + _link->m_N_in->to_string () + "\n";
           _cc_file << _temp_s_in;
         }
       if (_link->m_N_out != NULL)
         {
           std::string _temp_s_out
-              = _temp_s + "out," + _link->m_N_out->to_string () + "\n";
+            = _temp_s + "out," + _link->m_N_out->to_string () + "\n";
           _cc_file << _temp_s_out;
         }
     }

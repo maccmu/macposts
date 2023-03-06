@@ -22,8 +22,8 @@ public:
   virtual ~MNM_Origin ();
   TInt m_Origin_ID;
   int virtual release (
-      MNM_Veh_Factory *veh_factory,
-      TInt current_interval); // TODO change to generalized version
+    MNM_Veh_Factory *veh_factory,
+    TInt current_interval); // TODO change to generalized version
   int virtual release_one_interval (TInt current_interval,
                                     MNM_Veh_Factory *veh_factory,
                                     TInt assign_interval, TFlt adaptive_ratio);

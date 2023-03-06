@@ -58,7 +58,7 @@ public:
   MNM_Cumulative_Emission *m_emission;
 
   std::unordered_map<TInt, std::deque<TInt> *>
-      m_queue_veh_map;                // queuing vehicle number for each link
+    m_queue_veh_map;                  // queuing vehicle number for each link
   std::deque<TInt> m_queue_veh_num;   // total queuing vehicle number
   std::deque<TInt> m_enroute_veh_num; // total enroute vehicle number
 };

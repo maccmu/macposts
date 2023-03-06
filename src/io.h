@@ -37,8 +37,7 @@ public:
                               MNM_Node_Factory *node_factory);
   static PNEGraph build_graph (std::string file_folder,
                                MNM_ConfReader *conf_reader);
-  static int build_demand (std::string file_folder,
-                           MNM_ConfReader *conf_reader,
+  static int build_demand (std::string file_folder, MNM_ConfReader *conf_reader,
                            MNM_OD_Factory *od_factory);
   static Path_Table *load_path_table (std::string file_name, PNEGraph graph,
                                       TInt num_path, bool w_buffer = false,
@@ -56,8 +55,7 @@ public:
 
   // private:
   static std::vector<std::string> split (const std::string &text, char sep);
-  static std::string inline &
-  ltrim (std::string &s)
+  static std::string inline &ltrim (std::string &s)
   {
     s.erase (s.begin (), std::find_if (s.begin (), s.end (), [] (int c) {
                return !std::isspace (c);
@@ -66,22 +64,17 @@ public:
   }
 
   // trim from end
-  static std::string inline &
-  rtrim (std::string &s)
+  static std::string inline &rtrim (std::string &s)
   {
     s.erase (std::find_if (s.rbegin (), s.rend (),
                            [] (int c) { return !std::isspace (c); })
-                 .base (),
+               .base (),
              s.end ());
     return s;
   }
 
   // trim from both ends
-  static std::string inline &
-  trim (std::string &s)
-  {
-    return ltrim (rtrim (s));
-  }
+  static std::string inline &trim (std::string &s) { return ltrim (rtrim (s)); }
 };
 
 #endif

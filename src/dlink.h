@@ -23,7 +23,7 @@ class MNM_Cumulative_Curve
 public:
   MNM_Cumulative_Curve ();
   ~MNM_Cumulative_Curve ();
-  std::deque<std::pair<TFlt, TFlt> > m_recorder;
+  std::deque<std::pair<TFlt, TFlt>> m_recorder;
   int add_record (std::pair<TFlt, TFlt> r);
   int add_increment (std::pair<TFlt, TFlt> r);
   TFlt get_result (TFlt time);
@@ -44,8 +44,8 @@ public:
   MNM_Tree_Cumulative_Curve ();
   ~MNM_Tree_Cumulative_Curve ();
   std::unordered_map<MNM_Path *,
-                     std::unordered_map<TInt, MNM_Cumulative_Curve *> >
-      m_record;
+                     std::unordered_map<TInt, MNM_Cumulative_Curve *>>
+    m_record;
   int add_flow (TFlt timestamp, TFlt flow, MNM_Path *path, TInt departing_int);
   int print_out ();
 };

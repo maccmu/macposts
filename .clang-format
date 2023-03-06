@@ -1,1 +1,16 @@
 BasedOnStyle: GNU
+Language: Cpp
+Standard: c++11
+AlignOperands: Align
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+BreakBeforeBinaryOperators: All
+BreakBeforeBraces: GNU
+ColumnLimit: 80
+ContinuationIndentWidth: 2
+IndentPPDirectives: AfterHash
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+PenaltyBreakBeforeFirstCallParameter: 2000
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: Always
+UseTab: Never

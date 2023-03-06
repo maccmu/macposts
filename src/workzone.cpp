@@ -44,15 +44,14 @@ MNM_Workzone::add_workzone_link (TInt link_ID)
       throw std::runtime_error ("failed to get link");
     }
   MNM_Dnode *_from_node, *_to_node;
-  _from_node
-      = m_node_factory->get_node (m_graph->GetEI (link_ID).GetSrcNId ());
+  _from_node = m_node_factory->get_node (m_graph->GetEI (link_ID).GetSrcNId ());
   _to_node = m_node_factory->get_node (m_graph->GetEI (link_ID).GetDstNId ());
   _from_node->m_out_link_array.erase (
-      std::remove (_from_node->m_out_link_array.begin (),
-                   _from_node->m_out_link_array.end (), _link));
+    std::remove (_from_node->m_out_link_array.begin (),
+                 _from_node->m_out_link_array.end (), _link));
   _to_node->m_in_link_array.erase (
-      std::remove (_to_node->m_in_link_array.begin (),
-                   _to_node->m_in_link_array.end (), _link));
+    std::remove (_to_node->m_in_link_array.begin (),
+                 _to_node->m_in_link_array.end (), _link));
   m_graph->DelEdge (link_ID);
   m_link_factory->delete_link (link_ID);
   m_disabled_link.push_back (_link);

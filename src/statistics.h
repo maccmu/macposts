@@ -59,8 +59,7 @@ class MNM_Statistics_Lrn : public MNM_Statistics
 {
 public:
   MNM_Statistics_Lrn (std::string file_folder, MNM_ConfReader *conf_reader,
-                      MNM_ConfReader *record_config,
-                      MNM_OD_Factory *od_factory,
+                      MNM_ConfReader *record_config, MNM_OD_Factory *od_factory,
                       MNM_Node_Factory *node_factory,
                       MNM_Link_Factory *link_factory);
   ~MNM_Statistics_Lrn ();

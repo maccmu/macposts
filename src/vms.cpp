@@ -29,8 +29,9 @@ MNM_Link_Vms::hook_link (PNEGraph graph)
     {
       m_out_link_vec.push_back (_node_it.GetOutEId (e));
       std::vector<MNM_Path *> *_v = new std::vector<MNM_Path *> ();
-      m_link_path_map.insert (std::pair<TInt, std::vector<MNM_Path *> *> (
-          _node_it.GetOutEId (e), _v));
+      m_link_path_map.insert (
+        std::pair<TInt, std::vector<MNM_Path *> *> (_node_it.GetOutEId (e),
+                                                    _v));
     }
   return 0;
 }
@@ -53,7 +54,7 @@ MNM_Link_Vms::hook_path (Path_Table *path_table)
                       != _path->m_link_vec.end ())
                     {
                       m_link_path_map.find (_link_ID)->second->push_back (
-                          _path);
+                        _path);
                     }
                 }
             }
@@ -80,15 +81,15 @@ MNM_Link_Vms::generate_detour_link (Path_Table *path_table,
         {
           // printf("prabablity is %f\n", _path -> buffer[2] );
           _tmp_optimal
-              += _path->m_buffer[2]
-                 * MNM::get_demand_bynode (_path->m_node_vec.front (),
-                                           _path->m_node_vec.back (),
-                                           next_assign_inter, node_factory);
+            += _path->m_buffer[2]
+               * MNM::get_demand_bynode (_path->m_node_vec.front (),
+                                         _path->m_node_vec.back (),
+                                         next_assign_inter, node_factory);
           _tmp_real
-              += _path->m_buffer[0]
-                 * MNM::get_demand_bynode (_path->m_node_vec.front (),
-                                           _path->m_node_vec.back (),
-                                           next_assign_inter, node_factory);
+            += _path->m_buffer[0]
+               * MNM::get_demand_bynode (_path->m_node_vec.front (),
+                                         _path->m_node_vec.back (),
+                                         next_assign_inter, node_factory);
         }
       if (_tmp_optimal - _tmp_real > _largest_diff)
         {
@@ -148,7 +149,6 @@ MNM_Vms_Factory::hook_path (Path_Table *path_table)
 
 namespace MNM
 {
-
 int
 generate_vms_instructions (std::string file_name, MNM_Vms_Factory *vms_factory,
                            MNM_Link_Factory *link_factory)
@@ -181,7 +181,7 @@ generate_vms_instructions (std::string file_name, MNM_Vms_Factory *vms_factory,
             {
               _info = std::string ("Congestion ahead, ")
                       + std::to_string (
-                          static_cast<int> (_link->get_link_tt () / 60))
+                        static_cast<int> (_link->get_link_tt () / 60))
                       + std::string (" minutes to get to next exit.\n");
             }
           else

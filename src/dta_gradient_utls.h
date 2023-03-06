@@ -32,7 +32,7 @@ TFlt get_path_travel_time (MNM_Path *path, TFlt start_time,
 int add_dar_records (std::vector<dar_record *> &record, MNM_Dlink *link,
                      std::unordered_map<MNM_Path *, int> path_map,
                      TFlt start_time, TFlt end_time);
-int add_dar_records_eigen (std::vector<Eigen::Triplet<double> > &record,
+int add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
                            MNM_Dlink *link,
                            std::unordered_map<MNM_Path *, int> path_map,
                            TFlt start_time, TFlt end_time, int link_ind,

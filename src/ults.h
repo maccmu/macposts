@@ -8,8 +8,7 @@
 
 template <> struct std::hash<TInt>
 {
-  std::size_t
-  operator() (const TInt &s) const
+  std::size_t operator() (const TInt &s) const
   {
     return std::hash<int> () (s ());
   }
