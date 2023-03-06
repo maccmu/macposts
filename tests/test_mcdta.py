@@ -9,6 +9,8 @@ def test_3link_mc(network_3link_mc):
 
     mcdta = macposts.Mcdta.from_files(network_3link_mc)
     mcdta.register_links(links)
+    assert links == list(mcdta.registered_links)
+
     mcdta.install_cc()
     mcdta.run_whole()
 
@@ -42,6 +44,8 @@ def test_7link_mc(network_7link_mc):
     mcdta = macposts.Mcdta()
     mcdta.initialize(str(network_7link_mc))
     mcdta.register_links(links)
+    assert links == list(mcdta.registered_links)
+
     mcdta.install_cc()
     mcdta.run_whole()
 

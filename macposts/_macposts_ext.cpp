@@ -33,6 +33,9 @@ public:
   int run_once ();
   int run_whole ();
   int register_links (py::array_t<int> links);
+  // FIXME: This returns a Numpy array for consistency, but it should really be
+  // better to use a plain list.
+  py::array_t<int> get_registered_links ();
   int register_paths (py::array_t<int> paths);
   int get_cur_loading_interval ();
   py::array_t<double> get_link_inflow (py::array_t<int> start_intervals,
@@ -175,6 +178,17 @@ Dta::register_links (py::array_t<int> links)
         }
     }
   return 0;
+}
+
+py::array_t<int>
+Dta::get_registered_links ()
+{
+  auto results = py::array_t<int> (m_link_vec.size ());
+  auto results_buf = results.request ();
+  int *results_ptr = static_cast<int *> (results_buf.ptr);
+  for (int idx = 0; idx < m_link_vec.size (); idx++)
+    results_ptr[idx] = (int)m_link_vec[idx]->m_link_ID;
+  return results;
 }
 
 int
@@ -499,6 +513,9 @@ public:
   int install_cc_tree ();
   int run_whole ();
   int register_links (py::array_t<int> links);
+  // FIXME: This returns a Numpy array for consistency, but it should really be
+  // better to use a plain list.
+  py::array_t<int> get_registered_links ();
   int get_cur_loading_interval ();
   py::array_t<double> get_emission_stats ();
 
@@ -677,6 +694,17 @@ Mcdta::register_links (py::array_t<int> links)
         }
     }
   return 0;
+}
+
+py::array_t<int>
+Mcdta::get_registered_links ()
+{
+  auto results = py::array_t<int> (m_link_vec.size ());
+  auto results_buf = results.request ();
+  int *results_ptr = static_cast<int *> (results_buf.ptr);
+  for (int idx = 0; idx < m_link_vec.size (); idx++)
+    results_ptr[idx] = (int)m_link_vec[idx]->m_link_ID;
+  return results;
 }
 
 int
@@ -1600,6 +1628,8 @@ simulation.)pbdoc");
       .def ("install_cc_tree", &Dta::install_cc_tree)
       .def ("get_cur_loading_interval", &Dta::get_cur_loading_interval)
       .def ("register_links", &Dta::register_links)
+      .def_property_readonly ("registered_links", &Dta::get_registered_links,
+                              "IDs of previously registered links.")
       .def ("register_paths", &Dta::register_paths)
       .def ("get_link_tt", &Dta::get_link_tt)
       .def ("get_path_tt", &Dta::get_path_tt)
@@ -1618,6 +1648,8 @@ simulation.)pbdoc");
       .def ("get_emission_stats", &Mcdta::get_emission_stats)
       .def ("get_cur_loading_interval", &Mcdta::get_cur_loading_interval)
       .def ("register_links", &Mcdta::register_links)
+      .def_property_readonly ("registered_links", &Mcdta::get_registered_links,
+                              "IDs of previously registered links.")
       .def ("register_paths", &Mcdta::register_paths)
       .def ("get_car_link_tt", &Mcdta::get_car_link_tt)
       .def ("get_car_link_tt_robust", &Mcdta::get_car_link_tt_robust)

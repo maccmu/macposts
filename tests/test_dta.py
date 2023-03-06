@@ -9,6 +9,8 @@ def test_3link(network_3link):
 
     dta = macposts.Dta.from_files(network_3link)
     dta.register_links(links)
+    assert links == list(dta.registered_links)
+
     dta.install_cc()
     dta.run_whole()
 
@@ -28,6 +30,8 @@ def test_7link(network_7link):
     dta = macposts.Dta()
     dta.initialize(str(network_7link))
     dta.register_links(links)
+    assert links == list(dta.registered_links)
+
     dta.install_cc()
     dta.run_whole()
 
