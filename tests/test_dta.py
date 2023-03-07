@@ -14,7 +14,7 @@ def test_3link(network_3link):
     dta.install_cc()
     dta.run_whole()
 
-    _, in_cc = dta.get_in_ccs(links[0])
+    _, in_cc = dta.get_in_ccs([links[0]])
     in_cc_ = dta.get_link_in_cc(links[0])[:, 1::2]
     assert np.all(in_cc == in_cc_)
 
@@ -40,7 +40,7 @@ def test_7link(network_7link):
     dta.install_cc()
     dta.run_whole()
 
-    _, in_cc = dta.get_in_ccs(links[0])
+    _, in_cc = dta.get_in_ccs([links[0]])
     in_cc_ = dta.get_link_in_cc(links[0])[:, 1::2]
     assert np.all(in_cc == in_cc_)
 

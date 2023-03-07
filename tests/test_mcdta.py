@@ -14,10 +14,10 @@ def test_3link_mc(network_3link_mc):
     mcdta.install_cc()
     mcdta.run_whole()
 
-    _, in_cc = mcdta.get_car_in_ccs(links[0])
+    _, in_cc = mcdta.get_car_in_ccs([links[0]])
     in_cc_ = mcdta.get_car_link_in_cc(links[0])[:, 1::2]
     assert np.all(in_cc == in_cc_)
-    _, in_cc = mcdta.get_truck_in_ccs(links[0])
+    _, in_cc = mcdta.get_truck_in_ccs([links[0]])
     in_cc_ = mcdta.get_truck_link_in_cc(links[0])[:, 1::2]
     assert np.all(in_cc == in_cc_)
 
@@ -49,10 +49,10 @@ def test_7link_mc(network_7link_mc):
     mcdta.install_cc()
     mcdta.run_whole()
 
-    _, in_cc = mcdta.get_car_in_ccs(links[0])
+    _, in_cc = mcdta.get_car_in_ccs([links[0]])
     in_cc_ = mcdta.get_car_link_in_cc(links[0])[:, 1::2]
     assert np.all(in_cc == in_cc_)
-    _, in_cc = mcdta.get_truck_in_ccs(links[0])
+    _, in_cc = mcdta.get_truck_in_ccs([links[0]])
     in_cc_ = mcdta.get_truck_link_in_cc(links[0])[:, 1::2]
     assert np.all(in_cc == in_cc_)
 

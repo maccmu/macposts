@@ -27,11 +27,6 @@ class _CommonMixin:
     def _get_ccs(self, link_func, links):
         if links is None:
             links = self.registered_links
-        else:
-            try:
-                _ = iter(links)
-            except TypeError:
-                links = [links]
         ccs = np.hstack([link_func(link) for link in links])
         ticks = ccs[:, 0].astype(np.int_)
         ccs = ccs[:, 1::2]
@@ -83,9 +78,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
         Required arguments *links* should be an iterable of link IDs and
         specify the desired links for which the cumulative curves will be
         retrieved. It could also be None, in which case all registered links
-        will be used. For backward compatibility, if *links* is not iterable,
-        it will be treated as a list of one element. However, that is not
-        recommended.
+        will be used.
 
         Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
         Numpy arrays.
@@ -99,9 +92,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
         Required arguments *links* should be an iterable of link IDs and
         specify the desired links for which the cumulative curves will be
         retrieved. It could also be None, in which case all registered links
-        will be used. For backward compatibility, if *links* is not iterable,
-        it will be treated as a list of one element. However, that is not
-        recommended.
+        will be used.
 
         Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
         Numpy arrays.
@@ -115,9 +106,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
         Required arguments *links* should be an iterable of link IDs and
         specify the desired links for which the cumulative curves will be
         retrieved. It could also be None, in which case all registered links
-        will be used. For backward compatibility, if *links* is not iterable,
-        it will be treated as a list of one element. However, that is not
-        recommended.
+        will be used.
 
         Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
         Numpy arrays.
@@ -131,9 +120,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
         Required arguments *links* should be an iterable of link IDs and
         specify the desired links for which the cumulative curves will be
         retrieved. It could also be None, in which case all registered links
-        will be used. For backward compatibility, if *links* is not iterable,
-        it will be treated as a list of one element. However, that is not
-        recommended.
+        will be used.
 
         Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
         Numpy arrays.
