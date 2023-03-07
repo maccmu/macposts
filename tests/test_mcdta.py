@@ -14,18 +14,18 @@ def test_3link_mc(network_3link_mc):
     mcdta.install_cc()
     mcdta.run_whole()
 
-    car_in_ccs = np.hstack([mcdta.get_car_link_in_cc(link) for link in links])[
-        :, 1::2
-    ]
-    car_out_ccs = np.hstack(
-        [mcdta.get_car_link_out_cc(link) for link in links]
-    )[:, 1::2]
-    truck_in_ccs = np.hstack(
-        [mcdta.get_truck_link_in_cc(link) for link in links]
-    )[:, 1::2]
-    truck_out_ccs = np.hstack(
-        [mcdta.get_truck_link_out_cc(link) for link in links]
-    )[:, 1::2]
+    _, in_cc = mcdta.get_car_in_ccs(links[0])
+    in_cc_ = mcdta.get_car_link_in_cc(links[0])[:, 1::2]
+    assert np.all(in_cc == in_cc_)
+    _, in_cc = mcdta.get_truck_in_ccs(links[0])
+    in_cc_ = mcdta.get_truck_link_in_cc(links[0])[:, 1::2]
+    assert np.all(in_cc == in_cc_)
+
+    ticks, car_in_ccs = mcdta.get_car_in_ccs()
+    ticks_, car_out_ccs = mcdta.get_car_out_ccs(links)
+    assert np.all(ticks == ticks_)
+    ticks, truck_in_ccs = mcdta.get_truck_in_ccs(links)
+    ticks_, truck_out_ccs = mcdta.get_truck_out_ccs()
 
     assert car_in_ccs.shape == (201, 3)
     assert car_out_ccs.shape == car_in_ccs.shape
@@ -49,12 +49,16 @@ def test_7link_mc(network_7link_mc):
     mcdta.install_cc()
     mcdta.run_whole()
 
-    car_in_ccs = np.hstack([mcdta.get_car_link_in_cc(link) for link in links])[
-        :, 1::2
-    ]
-    car_out_ccs = np.hstack(
-        [mcdta.get_car_link_out_cc(link) for link in links]
-    )[:, 1::2]
+    _, in_cc = mcdta.get_car_in_ccs(links[0])
+    in_cc_ = mcdta.get_car_link_in_cc(links[0])[:, 1::2]
+    assert np.all(in_cc == in_cc_)
+    _, in_cc = mcdta.get_truck_in_ccs(links[0])
+    in_cc_ = mcdta.get_truck_link_in_cc(links[0])[:, 1::2]
+    assert np.all(in_cc == in_cc_)
+
+    ticks, car_in_ccs = mcdta.get_car_in_ccs(links)
+    ticks_, car_out_ccs = mcdta.get_car_out_ccs()
+    assert np.all(ticks == ticks_)
     assert car_in_ccs.shape[1] == 7
     assert car_out_ccs.shape == car_in_ccs.shape
     assert np.isclose(car_in_ccs[0, 0], 0)
