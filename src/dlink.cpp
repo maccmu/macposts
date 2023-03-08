@@ -22,7 +22,8 @@ MNM_Dlink::MNM_Dlink (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs)
 
   if (length < 0)
     {
-      throw std::runtime_error ("negative length for link " + m_link_ID ());
+      throw std::runtime_error ("negative length for link "
+                                + std::to_string (m_link_ID ()));
     }
   m_length = length;
 
