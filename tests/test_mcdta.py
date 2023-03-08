@@ -4,18 +4,15 @@ import pytest
 from .conftest import SEED
 
 
-@pytest.mark.parametrize(
-    "network,links",
-    [("network_3link_mc", [2, 3, 4]), ("network_7link_mc", list(range(1, 8)))],
-)
-def test_reproducibility(network, links, request):
+@pytest.mark.parametrize("network", ["network_3link_mc", "network_7link_mc"])
+def test_reproducibility(network, request):
     car_in_ccs, car_out_ccs = None, None
     truck_in_ccs, truck_out_ccs = None, None
     network = request.getfixturevalue(network)
     for _ in range(10):
         macposts.set_random_state(SEED)
         mcdta = macposts.Mcdta.from_files(network)
-        mcdta.register_links(links)
+        mcdta.register_links()
         mcdta.install_cc()
         mcdta.run_whole()
         car_in_ccs_ = mcdta.get_car_in_ccs()[1]
@@ -36,6 +33,7 @@ def test_3link_mc(network_3link_mc):
     links = [2, 3, 4]
 
     mcdta = macposts.Mcdta.from_files(network_3link_mc)
+    assert links == list(mcdta.links)
     mcdta.register_links(links)
     assert links == list(mcdta.registered_links)
 
@@ -71,6 +69,7 @@ def test_7link_mc(network_7link_mc):
 
     mcdta = macposts.Mcdta()
     mcdta.initialize(str(network_7link_mc))
+    assert links == list(mcdta.links)
     mcdta.register_links(links)
     assert links == list(mcdta.registered_links)
 

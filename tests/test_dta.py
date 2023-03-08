@@ -4,17 +4,14 @@ import pytest
 from .conftest import SEED
 
 
-@pytest.mark.parametrize(
-    "network,links",
-    [("network_3link", [2, 3, 4]), ("network_7link", list(range(1, 8)))],
-)
-def test_reproducibility(network, links, request):
+@pytest.mark.parametrize("network", ["network_3link", "network_7link"])
+def test_reproducibility(network, request):
     in_ccs, out_ccs = None, None
     network = request.getfixturevalue(network)
     for _ in range(10):
         macposts.set_random_state(SEED)
         dta = macposts.Dta.from_files(network)
-        dta.register_links(links)
+        dta.register_links()
         dta.install_cc()
         dta.run_whole()
         in_ccs_ = dta.get_in_ccs()[1]
@@ -30,6 +27,7 @@ def test_3link(network_3link):
     links = [2, 3, 4]
 
     dta = macposts.Dta.from_files(network_3link)
+    assert links == list(dta.links)
     dta.register_links(links)
     assert links == list(dta.registered_links)
 
@@ -56,6 +54,7 @@ def test_7link(network_7link):
 
     dta = macposts.Dta()
     dta.initialize(str(network_7link))
+    assert links == list(dta.links)
     dta.register_links(links)
     assert links == list(dta.registered_links)
 

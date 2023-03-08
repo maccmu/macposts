@@ -32,6 +32,9 @@ public:
   int install_cc_tree ();
   int run_once ();
   int run_whole ();
+  // FIXME: This returns a Numpy array for consistency, but it should really be
+  // better to use a plain list.
+  py::array_t<int> get_all_links ();
   int register_links (py::array_t<int> links);
   // FIXME: This returns a Numpy array for consistency, but it should really be
   // better to use a plain list.
@@ -146,6 +149,22 @@ int
 Dta::get_cur_loading_interval ()
 {
   return m_dta->m_current_loading_interval ();
+}
+
+py::array_t<int>
+Dta::get_all_links ()
+{
+  if (!m_dta)
+    throw std::runtime_error ("DTA uninitialized");
+  auto &link_map = m_dta->m_link_factory->m_link_map;
+  auto results = py::array_t<int> (link_map.size ());
+  auto results_buf = results.request ();
+  int *results_ptr = static_cast<int *> (results_buf.ptr);
+  int idx = 0;
+  for (auto link : m_dta->m_link_factory->m_link_map)
+    results_ptr[idx++] = link.first;
+  results.attr ("sort") ();
+  return results;
 }
 
 int
@@ -519,6 +538,9 @@ public:
   int install_cc ();
   int install_cc_tree ();
   int run_whole ();
+  // FIXME: This returns a Numpy array for consistency, but it should really be
+  // better to use a plain list.
+  py::array_t<int> get_all_links ();
   int register_links (py::array_t<int> links);
   // FIXME: This returns a Numpy array for consistency, but it should really be
   // better to use a plain list.
@@ -660,6 +682,22 @@ Mcdta::run_whole ()
   m_mcdta->pre_loading ();
   m_mcdta->loading (false);
   return 0;
+}
+
+py::array_t<int>
+Mcdta::get_all_links ()
+{
+  if (!m_mcdta)
+    throw std::runtime_error ("MCDTA uninitialized");
+  auto &link_map = m_mcdta->m_link_factory->m_link_map;
+  auto results = py::array_t<int> (link_map.size ());
+  auto results_buf = results.request ();
+  int *results_ptr = static_cast<int *> (results_buf.ptr);
+  int idx = 0;
+  for (auto link : m_mcdta->m_link_factory->m_link_map)
+    results_ptr[idx++] = link.first;
+  results.attr ("sort") ();
+  return results;
 }
 
 int
@@ -1656,6 +1694,7 @@ simulation.
     .def ("install_cc", &Dta::install_cc)
     .def ("install_cc_tree", &Dta::install_cc_tree)
     .def ("get_cur_loading_interval", &Dta::get_cur_loading_interval)
+    .def_property_readonly ("links", &Dta::get_all_links, "IDs of all links.")
     .def ("register_links", &Dta::register_links)
     .def_property_readonly ("registered_links", &Dta::get_registered_links,
                             "IDs of previously registered links.")
@@ -1676,6 +1715,7 @@ simulation.
     .def ("install_cc_tree", &Mcdta::install_cc_tree)
     .def ("get_emission_stats", &Mcdta::get_emission_stats)
     .def ("get_cur_loading_interval", &Mcdta::get_cur_loading_interval)
+    .def_property_readonly ("links", &Mcdta::get_all_links, "IDs of all links.")
     .def ("register_links", &Mcdta::register_links)
     .def_property_readonly ("registered_links", &Mcdta::get_registered_links,
                             "IDs of previously registered links.")

@@ -24,6 +24,20 @@ class _CommonMixin:
         obj.initialize(str(directory))
         return obj
 
+    def register_links(self, links=None):
+        """Register *links* for recording cumulative curves.
+
+        If a link is not registered, in order to save memory space, the
+        cumulative curves for it will not be available after simulation.
+
+        Note that *links* defaults to None, which means all links will be
+        registered.
+
+        """
+        if links is None:
+            links = self.links
+        super().register_links(links)
+
     def _get_ccs(self, link_func, links):
         if links is None:
             links = self.registered_links
