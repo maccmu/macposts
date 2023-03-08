@@ -1,4 +1,5 @@
 #include "od.h"
+#include <algorithm>
 
 MNM_Origin::MNM_Origin (TInt ID, TInt max_interval, TFlt flow_scalar,
                         TInt frequency)
@@ -111,6 +112,8 @@ MNM_Origin::release_one_interval (TInt current_interval,
           m_origin_node->m_in_veh_queue.push_back (_veh);
         }
     }
+  std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
+                       m_origin_node->m_in_veh_queue.end ());
   return 0;
 }
 
