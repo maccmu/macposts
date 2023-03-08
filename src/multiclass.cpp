@@ -1914,8 +1914,8 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
               throw std::runtime_error ("invalid state");
             }
         }
-      random_shuffle (_out_link->m_incoming_array.begin (),
-                      _out_link->m_incoming_array.end ());
+      std::random_shuffle (_out_link->m_incoming_array.begin (),
+                           _out_link->m_incoming_array.end ());
     }
 
   return 0;
@@ -2232,8 +2232,8 @@ MNM_Origin_Multiclass::release_one_interval (TInt current_interval,
           m_origin_node->m_in_veh_queue.push_back (_veh);
         }
     }
-  random_shuffle (m_origin_node->m_in_veh_queue.begin (),
-                  m_origin_node->m_in_veh_queue.end ());
+  std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
+                       m_origin_node->m_in_veh_queue.end ());
   return 0;
 }
 
@@ -2330,8 +2330,8 @@ MNM_Origin_Multiclass::release_one_interval_biclass (
           m_origin_node->m_in_veh_queue.push_back (_veh);
         }
     }
-  random_shuffle (m_origin_node->m_in_veh_queue.begin (),
-                  m_origin_node->m_in_veh_queue.end ());
+  std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
+                       m_origin_node->m_in_veh_queue.end ());
   return 0;
 }
 

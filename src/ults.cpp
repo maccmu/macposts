@@ -8,7 +8,7 @@
 namespace MNM_Ults
 {
 void
-srand (unsigned int s)
+set_random_state (unsigned int s)
 {
   std::srand (s);
 }
@@ -63,7 +63,7 @@ mod (TInt a, TInt b)
 TFlt
 rand_flt ()
 {
-  return TFlt ((double) rand () / (RAND_MAX));
+  return TFlt ((double) std::rand () / (RAND_MAX));
 }
 
 TFlt

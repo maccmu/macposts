@@ -54,8 +54,8 @@ MNM_Routing_Random::update_routing (TInt timestamp)
            _veh_it != _origin_node->m_in_veh_queue.end (); _veh_it++)
         {
           _node_I = m_graph->GetNI (_node_ID);
-          _out_ID
-            = _node_I.GetOutNId (MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+          _out_ID = _node_I.GetOutNId (
+            MNM_Ults::mod (std::rand (), _node_I.GetOutDeg ()));
           _next_link = m_link_factory->get_link (
             m_graph->GetEI (_node_ID, _out_ID).GetId ());
           (*_veh_it)->set_next_link (_next_link);
@@ -76,7 +76,7 @@ MNM_Routing_Random::update_routing (TInt timestamp)
           if (_node_I.GetOutDeg () > 0)
             {
               _link_ID = _node_I.GetOutEId (
-                MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+                MNM_Ults::mod (std::rand (), _node_I.GetOutDeg ()));
               _next_link = m_link_factory->get_link (_link_ID);
               (*_veh_it)->set_next_link (_next_link);
             }
@@ -242,7 +242,7 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
                         {
                           printf ("Assign randomly!\n");
                           _next_link_ID = _node_I.GetOutEId (
-                            MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+                            MNM_Ults::mod (std::rand (), _node_I.GetOutDeg ()));
                         }
                       else
                         {

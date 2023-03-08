@@ -325,7 +325,7 @@ MNM_Dnode_Inout::round_flow_to_vehicle ()
       // -> get_link_supply());
       while (TFlt (_to_move) > (_out_link->get_link_supply () * m_flow_scalar))
         {
-          _rand_idx = rand () % m_in_link_array.size ();
+          _rand_idx = std::rand () % m_in_link_array.size ();
           if (m_veh_tomove[_rand_idx * _offset + j] >= 1)
             {
               m_veh_tomove[_rand_idx * _offset + j] -= 1;
@@ -452,8 +452,8 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
         }
       // TODO: make the queue randomly perturbed, may not be true in signal
       // controlled intersection
-      random_shuffle (_out_link->m_incoming_array.begin (),
-                      _out_link->m_incoming_array.end ());
+      std::random_shuffle (_out_link->m_incoming_array.begin (),
+                           _out_link->m_incoming_array.end ());
     }
   return 0;
 }

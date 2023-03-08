@@ -1641,7 +1641,8 @@ Mcdta::get_truck_dar_matrix (py::array_t<int> start_intervals,
 
 PYBIND11_MODULE (_macposts_ext, m)
 {
-  m.def ("set_random_state", &MNM_Ults::srand, R"pbdoc(Set the random state.
+  m.def ("set_random_state", &MNM_Ults::set_random_state,
+         R"pbdoc(Set the random state.
 
 Note that this only affects the random number generator used during network
 simulation.
