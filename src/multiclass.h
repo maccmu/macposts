@@ -213,7 +213,7 @@ public:
   TFlt virtual get_link_flow () override;
   TFlt virtual get_link_tt () override;
 
-  std::unordered_map<MNM_Veh *, TInt> m_veh_pool;
+  std::deque<std::pair<MNM_Veh *, TInt>> m_veh_pool;
   TInt m_volume_car;   // vehicle number, without the flow scalar
   TInt m_volume_truck; // vehicle number, without the flow scalar
   TFlt m_lane_hold_cap;

@@ -1339,7 +1339,7 @@ MNM_Dlink_Pq_Multiclass::MNM_Dlink_Pq_Multiclass (
   m_hold_cap = m_lane_hold_cap * TFlt (number_of_lane) * m_length;
   m_max_stamp = MNM_Ults::round (m_length / (ffs_car * unit_time));
   // printf("m_max_stamp = %d\n", m_max_stamp);
-  m_veh_pool = std::unordered_map<MNM_Veh *, TInt> ();
+  m_veh_pool = std::deque<std::pair<MNM_Veh *, TInt>> ();
   m_volume_car = TInt (0);
   m_volume_truck = TInt (0);
   m_unit_time = unit_time;
@@ -1366,7 +1366,7 @@ MNM_Dlink_Pq_Multiclass::clear_incoming_array ()
         {
           _veh = dynamic_cast<MNM_Veh_Multiclass *> (m_incoming_array.front ());
           m_incoming_array.pop_front ();
-          m_veh_pool.insert ({ _veh, TInt (0) });
+          m_veh_pool.push_back ({ _veh, TInt (0) });
           if (_veh->m_class == 0)
             {
               // printf("car\n");
@@ -1403,7 +1403,7 @@ MNM_Dlink_Pq_Multiclass::print_info ()
 int
 MNM_Dlink_Pq_Multiclass::evolve (TInt timestamp)
 {
-  std::unordered_map<MNM_Veh *, TInt>::iterator _que_it = m_veh_pool.begin ();
+  auto _que_it = m_veh_pool.begin ();
   MNM_Veh_Multiclass *_veh;
   TInt _num_car = 0, _num_truck = 0;
   while (_que_it != m_veh_pool.end ())

@@ -4,9 +4,6 @@
 #include "ults.h"
 #include "vehicle.h"
 
-// #include "g3log/g3log.hpp"
-// #include "g3log/logworker.hpp"
-
 #include <deque>
 #include <unordered_map>
 #include <vector>
@@ -153,7 +150,7 @@ public:
   TFlt virtual get_link_flow () override;
   TFlt virtual get_link_tt () override;
   // private:
-  std::unordered_map<MNM_Veh *, TInt> m_veh_queue;
+  std::deque<std::pair<MNM_Veh *, TInt>> m_veh_queue;
   TInt m_volume; // vehicle number, without the flow scalar
   TFlt m_lane_hold_cap;
   TFlt m_lane_flow_cap;

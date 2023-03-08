@@ -1,6 +1,28 @@
 import macposts
 import numpy as np
+import pytest
 from .conftest import SEED
+
+
+@pytest.mark.parametrize(
+    "network,links",
+    [("network_3link", [2, 3, 4]), ("network_7link", list(range(1, 8)))],
+)
+def test_reproducibility(network, links, request):
+    in_ccs, out_ccs = None, None
+    network = request.getfixturevalue(network)
+    for _ in range(10):
+        macposts.set_random_state(SEED)
+        dta = macposts.Dta.from_files(network)
+        dta.register_links(links)
+        dta.install_cc()
+        dta.run_whole()
+        in_ccs_ = dta.get_in_ccs()[1]
+        out_ccs_ = dta.get_out_ccs()[1]
+        if in_ccs is not None:
+            assert np.allclose(in_ccs, in_ccs_)
+            assert np.allclose(out_ccs, out_ccs_)
+        in_ccs, out_ccs = in_ccs_, out_ccs_
 
 
 def test_3link(network_3link):

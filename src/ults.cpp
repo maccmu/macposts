@@ -11,6 +11,9 @@ void
 set_random_state (unsigned int s)
 {
   std::srand (s);
+  TInt::Rnd.PutSeed (s);
+  TUInt::Rnd.PutSeed (s);
+  TFlt::Rnd.PutSeed (s);
 }
 
 TInt

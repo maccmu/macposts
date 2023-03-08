@@ -429,7 +429,7 @@ MNM_Dlink_Pq::MNM_Dlink_Pq (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
   m_flow_scalar = flow_scalar;
   m_hold_cap = m_lane_hold_cap * TFlt (number_of_lane) * m_length;
   m_max_stamp = MNM_Ults::round (m_length / (m_ffs * unit_time));
-  m_veh_queue = std::unordered_map<MNM_Veh *, TInt> ();
+  m_veh_queue = std::deque<std::pair<MNM_Veh *, TInt>> ();
   m_volume = TInt (0);
   m_unit_time = unit_time;
 }
@@ -452,7 +452,7 @@ MNM_Dlink_Pq::clear_incoming_array ()
     {
       _veh = m_incoming_array.front ();
       m_incoming_array.pop_front ();
-      m_veh_queue.insert (std::pair<MNM_Veh *, TInt> (_veh, TInt (0)));
+      m_veh_queue.push_back (std::pair<MNM_Veh *, TInt> (_veh, TInt (0)));
     }
   m_volume = TInt (m_finished_array.size () + m_veh_queue.size ());
   // move_veh_queue(&m_incoming_array, , m_incoming_array.size());
@@ -474,7 +474,7 @@ MNM_Dlink_Pq::print_info ()
 int
 MNM_Dlink_Pq::evolve (TInt timestamp)
 {
-  std::unordered_map<MNM_Veh *, TInt>::iterator _que_it = m_veh_queue.begin ();
+  auto _que_it = m_veh_queue.begin ();
   while (_que_it != m_veh_queue.end ())
     {
       if (_que_it->second >= m_max_stamp)

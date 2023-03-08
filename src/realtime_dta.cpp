@@ -1005,7 +1005,7 @@ make_screenshot (std::string file_folder, MNM_ConfReader *config,
               _new_veh
                 = _new_veh_factory->make_veh (_veh->m_start_time, _veh->m_type);
               copy_veh (_veh, _new_veh, _shot);
-              _new_pq->m_veh_queue.insert (
+              _new_pq->m_veh_queue.push_back (
                 std::pair<MNM_Veh *, TInt> (_new_veh, _veh_it->second));
               _shot->m_routing
                 ->add_veh_path (_new_veh,
