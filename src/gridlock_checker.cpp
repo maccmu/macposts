@@ -1,8 +1,5 @@
 #include "gridlock_checker.h"
 
-#include <deque>
-#include <set>
-
 MNM_Gridlock_Checker::MNM_Gridlock_Checker (PNEGraph graph,
                                             MNM_Link_Factory *link_factory)
 {
@@ -84,4 +81,63 @@ bool
 MNM_Gridlock_Checker::is_gridlocked ()
 {
   return false;
+}
+
+MNM_Gridlock_Link_Recorder::MNM_Gridlock_Link_Recorder (
+  const std::string &file_folder, MNM_ConfReader *record_config)
+{
+  m_config = record_config;
+  if (m_record_file.is_open ())
+    m_record_file.close ();
+  m_record_file.open (file_folder + "/"
+                        + record_config->get_string ("rec_folder")
+                        + "/possible_gridlocked_links",
+                      std::ofstream::out);
+  if (!m_record_file.is_open ())
+    {
+      printf ("Error happens when open m_record_file\n");
+      exit (-1);
+    }
+}
+
+MNM_Gridlock_Link_Recorder::~MNM_Gridlock_Link_Recorder () { delete m_config; }
+
+int
+MNM_Gridlock_Link_Recorder::init_record ()
+{
+  std::string _str
+    = "loading_interval link_ID flow incoming_flow finished_flow\n";
+  m_record_file << _str;
+  return 0;
+}
+
+int
+MNM_Gridlock_Link_Recorder::save_one_link (TInt loading_interval,
+                                           MNM_Dlink *link)
+{
+  if (link->get_link_flow () > 0)
+    {
+      std::string _str
+        = std::to_string (loading_interval ()) + " "
+          + std::to_string (link->m_link_ID ()) + " "
+          + std::to_string (link->get_link_flow ()) + " "
+          + std::to_string ((int) link->m_incoming_array.size ()) + " "
+          + std::to_string ((int) link->m_finished_array.size ()) + "\n";
+      m_record_file << _str;
+
+      printf ("Current Link %d:, traffic flow %.4f, incoming %d, finished %d\n",
+              link->m_link_ID (), link->get_link_flow () (),
+              (int) link->m_incoming_array.size (),
+              (int) link->m_finished_array.size ());
+      link->print_info ();
+    }
+  return 0;
+}
+
+int
+MNM_Gridlock_Link_Recorder::post_record ()
+{
+  if (m_record_file.is_open ())
+    m_record_file.close ();
+  return 0;
 }

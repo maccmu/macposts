@@ -1,4 +1,5 @@
 #include "routing.h"
+#include <omp.h>
 
 MNM_Routing::MNM_Routing (PNEGraph &graph, MNM_OD_Factory *od_factory,
                           MNM_Node_Factory *node_factory,
@@ -10,7 +11,7 @@ MNM_Routing::MNM_Routing (PNEGraph &graph, MNM_OD_Factory *od_factory,
   m_link_factory = link_factory;
 }
 
-MNM_Routing::~MNM_Routing () {}
+MNM_Routing::~MNM_Routing () { ; }
 
 /**************************************************************************
                           Random routing
@@ -54,11 +55,12 @@ MNM_Routing_Random::update_routing (TInt timestamp)
            _veh_it != _origin_node->m_in_veh_queue.end (); _veh_it++)
         {
           _node_I = m_graph->GetNI (_node_ID);
-          _out_ID = _node_I.GetOutNId (
-            MNM_Ults::mod (std::rand (), _node_I.GetOutDeg ()));
+          _out_ID
+            = _node_I.GetOutNId (MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
           _next_link = m_link_factory->get_link (
             m_graph->GetEI (_node_ID, _out_ID).GetId ());
           (*_veh_it)->set_next_link (_next_link);
+          // note that it neither initializes nor updates _veh -> m_path
         }
     }
   // printf("MNM_Routing: route the link vehciles.\n");
@@ -76,7 +78,7 @@ MNM_Routing_Random::update_routing (TInt timestamp)
           if (_node_I.GetOutDeg () > 0)
             {
               _link_ID = _node_I.GetOutEId (
-                MNM_Ults::mod (std::rand (), _node_I.GetOutDeg ()));
+                MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
               _next_link = m_link_factory->get_link (_link_ID);
               (*_veh_it)->set_next_link (_next_link);
             }
@@ -93,7 +95,7 @@ MNM_Routing_Random::update_routing (TInt timestamp)
 /**************************************************************************
                           Adaptive routing
 **************************************************************************/
-MNM_Routing_Adaptive::MNM_Routing_Adaptive (std::string file_folder,
+MNM_Routing_Adaptive::MNM_Routing_Adaptive (const std::string &file_folder,
                                             PNEGraph &graph,
                                             MNM_Statistics *statistics,
                                             MNM_OD_Factory *od_factory,
@@ -104,7 +106,23 @@ MNM_Routing_Adaptive::MNM_Routing_Adaptive (std::string file_folder,
   m_statistics = statistics;
   m_self_config = new MNM_ConfReader (file_folder + "/config.conf", "ADAPTIVE");
   m_routing_freq = m_self_config->get_int ("route_frq");
+
+  // the unit of m_vot here is different from that of m_vot in DUE (money /
+  // interval)
+  try
+    {
+      m_vot = m_self_config->get_float ("vot")
+              / 3600.; // money / hour -> money / second
+    }
+  catch (const std::invalid_argument &ia)
+    {
+      std::cout << "vot does not exist in config.conf/ADAPTIVE, use default "
+                   "value 20 usd/hour instead\n";
+      m_vot = 20. / 3600.; // money / second
+    }
+
   m_table = new Routing_Table ();
+  m_link_cost = std::unordered_map<TInt, TFlt> ();
 }
 
 MNM_Routing_Adaptive::~MNM_Routing_Adaptive ()
@@ -112,11 +130,15 @@ MNM_Routing_Adaptive::~MNM_Routing_Adaptive ()
   for (auto _it = m_od_factory->m_destination_map.begin ();
        _it != m_od_factory->m_destination_map.end (); _it++)
     {
-      m_table->find (_it->second)->second->clear ();
-      delete m_table->find (_it->second)->second;
+      if (m_table->find (_it->second) != m_table->end ())
+        {
+          m_table->find (_it->second)->second->clear ();
+          delete m_table->find (_it->second)->second;
+        }
     }
   m_table->clear ();
   delete m_table;
+  m_link_cost.clear ();
   delete m_self_config;
 }
 
@@ -132,11 +154,28 @@ MNM_Routing_Adaptive::init_routing (Path_Table *path_table)
         std::pair<MNM_Destination *,
                   std::unordered_map<TInt, TInt> *> (_it->second,
                                                      _shortest_path_tree));
-      // for (auto _node_it = m_node_factory -> m_node_map.begin();
-      // _node_it != m_node_factory -> m_node_map.end(); _node_it++){
-      //   _shortest_path_tree -> insert(std::pair<TInt, TInt>(_node_it
-      //   -> first, -1));
+      // for (auto _node_it = m_node_factory -> m_node_map.begin(); _node_it !=
+      // m_node_factory -> m_node_map.end(); _node_it++){
+      //   _shortest_path_tree -> insert(std::pair<TInt, TInt>(_node_it ->
+      //   first, -1));
       // }
+    }
+  for (auto _link_it : m_link_factory->m_link_map)
+    {
+      m_link_cost.insert (std::pair<TInt, TFlt> (_link_it.first, -1));
+    }
+  return 0;
+}
+
+int
+MNM_Routing_Adaptive::update_link_cost ()
+{
+  for (auto _it : m_statistics->m_record_interval_tt)
+    { // seconds
+      // for multiclass, m_toll is for car, see
+      // MNM_IO_Multiclass::build_link_toll_multiclass
+      m_link_cost[_it.first]
+        = _it.second * m_vot + m_link_factory->get_link (_it.first)->m_toll;
     }
   return 0;
 }
@@ -144,27 +183,32 @@ MNM_Routing_Adaptive::init_routing (Path_Table *path_table)
 int
 MNM_Routing_Adaptive::update_routing (TInt timestamp)
 {
+  // relying on m_statistics -> m_record_interval_tt, which is obtained in
+  // simulation, not after simulation link::get_link_tt(), based on density
   MNM_Destination *_dest;
   TInt _dest_node_ID;
   std::unordered_map<TInt, TInt> *_shortest_path_tree;
+  // update m_table
   if ((timestamp) % m_routing_freq == 0 || timestamp == 0)
     {
       // printf("Calculating the shortest path trees!\n");
+      update_link_cost ();
       for (auto _it = m_od_factory->m_destination_map.begin ();
            _it != m_od_factory->m_destination_map.end (); _it++)
         {
+          // #pragma omp task firstprivate(_it)
           // {
           _dest = _it->second;
           _dest_node_ID = _dest->m_dest_node->m_node_ID;
           // printf("Destination ID: %d\n", (int) _dest_node_ID);
           _shortest_path_tree = m_table->find (_dest)->second;
-          // MNM_Shortest_Path::all_to_one_FIFO(_dest_node_ID,
-          // m_graph, m_statistics -> m_record_interval_tt,
-          // *_shortest_path_tree);
-          MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, m_graph,
-                                                  m_statistics
-                                                    ->m_record_interval_tt,
-                                                  *_shortest_path_tree);
+          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
+                                              m_link_cost,
+                                              *_shortest_path_tree);
+          // MNM_Shortest_Path::all_to_one_FIFO(_dest_node_ID, m_graph,
+          // m_statistics -> m_record_interval_tt, *_shortest_path_tree);
+          // MNM_Shortest_Path::all_to_one_Dijkstra(_dest_node_ID, m_graph,
+          // m_statistics -> m_record_interval_tt, *_shortest_path_tree);
           // }
         }
     }
@@ -193,10 +237,23 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
                                 ->second;
               if (_next_link_ID < 0)
                 {
-                  throw std::runtime_error ("invalid next link");
+                  printf (
+                    "Something wrong in adaptive routing, wrong next link 1\n");
+                  // printf("%d\n", _veh -> get_destination() -> m_Dest_ID);
+                  // _shortest_path_tree = m_table -> find(_veh ->
+                  // get_destination()) -> second; printf("%d\n",
+                  // _shortest_path_tree -> size()); for (auto it :
+                  // (*_shortest_path_tree)) printf("%d, %d\n", it.first,
+                  // it.second);
+                  exit (-1);
                 }
+              // printf("From origin, The next link ID will be %d\n",
+              // _next_link_ID());
               _next_link = m_link_factory->get_link (_next_link_ID);
               _veh->set_next_link (_next_link);
+              // printf("The next link now it's %d\n", _veh -> get_next_link()
+              // -> m_link_ID()); note that it neither initializes nor updates
+              // _veh -> m_path
             }
         }
     }
@@ -216,12 +273,26 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
             {
               if (_link != _veh->get_current_link ())
                 {
-                  throw std::runtime_error ("invalid current link");
+                  printf ("Wrong current link!\n");
+                  exit (-1);
                 }
+              // if (_link != _veh -> get_next_link()){
+              //   printf("Wrong node allocation!\n");
+              //   printf("The next link should be %d, but now it's %d, current
+              //   link is %d\n",_link -> m_link_ID(),
+              //                 _veh -> get_next_link() -> m_link_ID(), _veh ->
+              //                 get_current_link() -> m_link_ID());
+              //   _next_link_ID = m_table -> find(_veh -> get_destination()) ->
+              //   second -> find(_node_ID) -> second; _node_ID = m_table ->
+              //   find(_veh -> get_destination()) -> second -> find(1) ->
+              //   second; printf("The next link ID will be %d\n",
+              //   _next_link_ID()); printf("From origin, The next link ID will
+              //   be %d\n", _node_ID()); exit(-1);
+              // }
               _veh_dest = _veh->get_destination ();
               if (_veh_dest->m_dest_node->m_node_ID == _node_ID)
                 {
-                  _veh->set_next_link (NULL);
+                  _veh->set_next_link (nullptr);
                 }
               else
                 {
@@ -230,57 +301,55 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
                                     ->second;
                   if (_next_link_ID == -1)
                     {
-                      printf ("Something wrong in routing, "
-                              "wrong next link 2\n");
-                      printf ("The node is %d, the vehicle "
-                              "should head to %d\n",
+                      printf (
+                        "Something wrong in routing, wrong next link 2\n");
+                      printf ("The node is %d, the vehicle should head to %d\n",
                               (int) _node_ID,
                               (int) _veh_dest->m_dest_node->m_node_ID);
-
+                      // exit(-1);
                       auto _node_I = m_graph->GetNI (_node_ID);
                       if (_node_I.GetOutDeg () > 0)
                         {
                           printf ("Assign randomly!\n");
                           _next_link_ID = _node_I.GetOutEId (
-                            MNM_Ults::mod (std::rand (), _node_I.GetOutDeg ()));
+                            MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
                         }
                       else
                         {
-                          printf ("Can't do "
-                                  "anything!\n");
+                          printf ("Can't do anything!\n");
                         }
                     }
                   _next_link = m_link_factory->get_link (_next_link_ID);
-                  if (_next_link != NULL)
+                  if (_next_link != nullptr)
                     {
+                      // printf("Checking future\n");
                       TInt _next_node_ID = _next_link->m_to_node->m_node_ID;
                       if (_next_node_ID
                           != _veh->get_destination ()->m_dest_node->m_node_ID)
                         {
+                          // printf("Destination node is %d\n", _veh ->
+                          // get_destination() -> m_dest_node -> m_node_ID());
                           if (m_table->find (_veh->get_destination ())
                               == m_table->end ())
                             {
-                              printf ("Cant'f find "
-                                      "Destination"
-                                      "\n");
+                              printf ("Cannot find Destination\n");
                             }
                           if (m_table->find (_veh->get_destination ())
                                 ->second->find (_next_node_ID)
                               == m_table->find (_veh->get_destination ())
                                    ->second->end ())
                             {
-                              printf ("can't find "
-                                      "_next_node_"
-                                      "ID\n");
+                              printf ("Cannot find _next_node_ID\n");
                             }
                           if (m_table->find (_veh->get_destination ())
                                 ->second->find (_next_node_ID)
                                 ->second
                               == -1)
                             {
-                              throw std::runtime_error (
-                                "errors for future nodes");
+                              printf ("Something wrong for the future node!\n");
+                              exit (-1);
                             }
+                          // printf("Pass checking\n");
                         }
                     }
                   _veh->set_next_link (_next_link);
@@ -317,6 +386,7 @@ MNM_Routing_Fixed::MNM_Routing_Fixed (PNEGraph &graph,
       m_buffer_length = buffer_len;
       // m_cur_routing_interval = 0;
     }
+  m_path_table = nullptr;
 }
 
 MNM_Routing_Fixed::~MNM_Routing_Fixed ()
@@ -328,7 +398,7 @@ MNM_Routing_Fixed::~MNM_Routing_Fixed ()
     }
   m_tracker.clear ();
 
-  if ((m_path_table != NULL) && (m_path_table->size () > 0))
+  if ((m_path_table != nullptr) && (!m_path_table->empty ()))
     {
       // printf("Address of m_path_table is %p\n", (void *)m_path_table);
       // printf("%d\n", m_path_table -> size());
@@ -349,14 +419,16 @@ MNM_Routing_Fixed::~MNM_Routing_Fixed ()
 int
 MNM_Routing_Fixed::init_routing (Path_Table *path_table)
 {
-  if (path_table == NULL && m_path_table == NULL)
+  if (path_table == nullptr && m_path_table == nullptr)
     {
-      throw std::runtime_error ("no path table");
+      printf (
+        "Path table not set, probably it needs to be set in Fixed routing.\n");
+      // exit(-1);
     }
-  if (path_table != NULL)
+  if (path_table != nullptr)
     {
       set_path_table (path_table);
-      // printf("path_table set seccessfully.\n");
+      // printf("path_table set successfully.\n");
     }
 
   return 0;
@@ -412,15 +484,26 @@ MNM_Routing_Fixed::update_routing (TInt timestamp)
           if (_veh->m_type == MNM_TYPE_STATIC)
             {
               if (m_tracker.find (_veh) == m_tracker.end ())
-                {
+                { // vehicle not in tracker
                   // printf("Registering!\n");
-                  register_veh (_veh);
+                  register_veh (_veh, true);
                   // printf("1.3\n");
                   _next_link_ID = m_tracker.find (_veh)->second->front ();
                   _next_link = m_link_factory->get_link (_next_link_ID);
                   _veh->set_next_link (_next_link);
-                  m_tracker.find (_veh)->second->pop_front ();
+                  m_tracker.find (_veh)
+                    ->second->pop_front (); // adjust links left
                 }
+            }
+          // according to Dr. Wei Ma, add a nominal path to adaptive users for
+          // DAR extraction, not rigorous, but will do the DODE job
+          else if (_veh->m_type == MNM_TYPE_ADAPTIVE)
+            {
+              if (_veh->m_path == nullptr)
+                {
+                  register_veh (_veh, false); // adpative user not in m_tracker
+                }
+              IAssert (_veh->m_path != nullptr);
             }
         }
     }
@@ -445,27 +528,37 @@ MNM_Routing_Fixed::update_routing (TInt timestamp)
               _veh_dest = _veh->get_destination ();
               // printf("2.2\n");
               if (_veh_dest->m_dest_node->m_node_ID == _node_ID)
-                {
+                { // vehicles reaching destination
                   if (m_tracker.find (_veh)->second->size () != 0)
-                    {
-                      throw std::runtime_error ("errors in fixed routing");
+                    { // check if any links left in the route
+                      printf ("Something wrong in fixed routing!\n");
+                      exit (-1);
                     }
-                  _veh->set_next_link (NULL);
+                  _veh->set_next_link (nullptr);
                   // m_tracker.erase(m_tracker.find(_veh));
                 }
               else
-                {
+                { // vehicles enroute, adjust _next_link_ID, which is changed by
+                  // node->evolve() in simulation dta.cpp
                   // printf("2.3\n");
                   if (m_tracker.find (_veh) == m_tracker.end ())
-                    {
-                      throw std::runtime_error ("vehicle unregistered in link");
+                    { // check if vehicle is registered in m_tracker, which
+                      // should be done in releasing from origin
+                      printf ("Vehicle not registered in link, impossible!\n");
+                      exit (-1);
                     }
                   if (_veh->get_current_link () == _veh->get_next_link ())
                     {
                       _next_link_ID = m_tracker.find (_veh)->second->front ();
                       if (_next_link_ID == -1)
                         {
-                          throw std::runtime_error ("invalid next link");
+                          printf (
+                            "Something wrong in routing, wrong next link 2\n");
+                          printf ("The node is %d, the vehicle should head to "
+                                  "%d\n",
+                                  (int) _node_ID,
+                                  (int) _veh_dest->m_dest_node->m_node_ID);
+                          exit (-1);
                         }
                       _next_link = m_link_factory->get_link (_next_link_ID);
                       _veh->set_next_link (_next_link);
@@ -479,8 +572,9 @@ MNM_Routing_Fixed::update_routing (TInt timestamp)
   return 0;
 }
 
+// register each vehicle with a route based on the portion of path flow
 int
-MNM_Routing_Fixed::register_veh (MNM_Veh *veh)
+MNM_Routing_Fixed::register_veh (MNM_Veh *veh, bool track)
 {
   TFlt _r = MNM_Ults::rand_flt ();
   // printf("%d\n", veh -> get_origin() -> m_origin_node  -> m_node_ID);
@@ -489,8 +583,9 @@ MNM_Routing_Fixed::register_veh (MNM_Veh *veh)
     = m_path_table->find (veh->get_origin ()->m_origin_node->m_node_ID)
         ->second->find (veh->get_destination ()->m_dest_node->m_node_ID)
         ->second;
-  MNM_Path *_route_path = NULL;
+  MNM_Path *_route_path = nullptr;
   // printf("1\n");
+  // note m_path_vec is an ordered vector, not unordered
   for (MNM_Path *_path : _pathset->m_path_vec)
     {
       // printf("2\n");
@@ -505,22 +600,48 @@ MNM_Routing_Fixed::register_veh (MNM_Veh *veh)
         }
     }
   // printf("3\n");
-  if (_route_path == NULL)
+  if (_route_path == nullptr)
     {
-      throw std::runtime_error ("no route");
+      printf ("Wrong probability!\n");
+      exit (-1);
     }
-  std::deque<TInt> *_link_queue = new std::deque<TInt> ();
-  std::copy (_route_path->m_link_vec.begin (), _route_path->m_link_vec.end (),
-             std::back_inserter (*_link_queue));
-  m_tracker.insert (
-    std::pair<MNM_Veh *, std::deque<TInt> *> (veh, _link_queue));
+  if (track)
+    {
+      std::deque<TInt> *_link_queue = new std::deque<TInt> ();
+      std::copy (
+        _route_path->m_link_vec.begin (), _route_path->m_link_vec.end (),
+        std::back_inserter (
+          *_link_queue)); // copy links in the route to _link_queue
+                          // https://www.cplusplus.com/reference/iterator/back_inserter/
+      // printf("old link q is %d, New link queue is %d\n", _route_path ->
+      // m_link_vec.size(), _link_queue -> size());
+      m_tracker.insert (
+        std::pair<MNM_Veh *, std::deque<TInt> *> (veh, _link_queue));
+    }
   veh->m_path = _route_path;
+  return 0;
+}
+
+int
+MNM_Routing_Fixed::remove_finished (MNM_Veh *veh, bool del)
+{
+  IAssert (veh->m_finish_time > 0 && veh->m_finish_time > veh->m_start_time);
+  if (m_tracker.find (veh) != m_tracker.end () && del)
+    {
+      IAssert (veh->m_type
+               == MNM_TYPE_STATIC); // adaptive user not in m_tracker
+      m_tracker.find (veh)->second->clear ();
+      delete m_tracker.find (veh)->second;
+      m_tracker.erase (veh);
+    }
   return 0;
 }
 
 int
 MNM_Routing_Fixed::set_path_table (Path_Table *path_table)
 {
+  if (m_path_table != nullptr)
+    delete m_path_table;
   m_path_table = path_table;
   return 0;
 }
@@ -540,17 +661,21 @@ MNM_Routing_Fixed::add_veh_path (MNM_Veh *veh, std::deque<TInt> *link_que)
                           Hybrid (Adaptive+Fixed) routing
 **************************************************************************/
 MNM_Routing_Hybrid::MNM_Routing_Hybrid (
-  std::string file_folder, PNEGraph &graph, MNM_Statistics *statistics,
+  const std::string &file_folder, PNEGraph &graph, MNM_Statistics *statistics,
   MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
   MNM_Link_Factory *link_factory, TInt route_frq_fixed, TInt buffer_len)
     : MNM_Routing::MNM_Routing (graph, od_factory, node_factory, link_factory)
 {
-  m_routing_adaptive
-    = new MNM_Routing_Adaptive (file_folder, graph, statistics, od_factory,
-                                node_factory, link_factory);
   m_routing_fixed
     = new MNM_Routing_Fixed (graph, od_factory, node_factory, link_factory,
                              route_frq_fixed, buffer_len);
+
+  m_routing_adaptive
+    = new MNM_Routing_Adaptive (file_folder, graph, statistics, od_factory,
+                                node_factory, link_factory);
+  auto *_tmp_config = new MNM_ConfReader (file_folder + "/config.conf", "DTA");
+  m_routing_adaptive->m_working = _tmp_config->get_float ("adaptive_ratio") > 0;
+  delete _tmp_config;
 }
 
 MNM_Routing_Hybrid::~MNM_Routing_Hybrid ()
@@ -562,7 +687,8 @@ MNM_Routing_Hybrid::~MNM_Routing_Hybrid ()
 int
 MNM_Routing_Hybrid::init_routing (Path_Table *path_table)
 {
-  m_routing_adaptive->init_routing ();
+  if (m_routing_adaptive->m_working)
+    m_routing_adaptive->init_routing ();
   m_routing_fixed->init_routing (path_table);
   return 0;
 }
@@ -570,8 +696,16 @@ MNM_Routing_Hybrid::init_routing (Path_Table *path_table)
 int
 MNM_Routing_Hybrid::update_routing (TInt timestamp)
 {
-  m_routing_adaptive->update_routing (timestamp);
+  if (m_routing_adaptive->m_working)
+    m_routing_adaptive->update_routing (timestamp);
   m_routing_fixed->update_routing (timestamp);
+  return 0;
+}
+
+int
+MNM_Routing_Hybrid::remove_finished (MNM_Veh *veh, bool del)
+{
+  m_routing_fixed->remove_finished (veh, del);
   return 0;
 }
 
@@ -579,14 +713,11 @@ MNM_Routing_Hybrid::update_routing (TInt timestamp)
                           Bi-class Hybrid routing
 **************************************************************************/
 MNM_Routing_Biclass_Hybrid::MNM_Routing_Biclass_Hybrid (
-  std::string file_folder, PNEGraph &graph, MNM_Statistics *statistics,
+  const std::string &file_folder, PNEGraph &graph, MNM_Statistics *statistics,
   MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
   MNM_Link_Factory *link_factory, TInt route_frq_fixed, TInt buffer_length)
     : MNM_Routing::MNM_Routing (graph, od_factory, node_factory, link_factory)
 {
-  m_routing_adaptive
-    = new MNM_Routing_Adaptive (file_folder, graph, statistics, od_factory,
-                                node_factory, link_factory);
   m_routing_fixed_car
     = new MNM_Routing_Biclass_Fixed (graph, od_factory, node_factory,
                                      link_factory, route_frq_fixed,
@@ -595,6 +726,15 @@ MNM_Routing_Biclass_Hybrid::MNM_Routing_Biclass_Hybrid (
     = new MNM_Routing_Biclass_Fixed (graph, od_factory, node_factory,
                                      link_factory, route_frq_fixed,
                                      buffer_length, TInt (1));
+
+  m_routing_adaptive
+    = new MNM_Routing_Adaptive (file_folder, graph, statistics, od_factory,
+                                node_factory, link_factory);
+  auto *_tmp_config = new MNM_ConfReader (file_folder + "/config.conf", "DTA");
+  m_routing_adaptive->m_working
+    = _tmp_config->get_float ("adaptive_ratio_car") > 0
+      || _tmp_config->get_float ("adaptive_ratio_truck") > 0;
+  delete _tmp_config;
 }
 
 MNM_Routing_Biclass_Hybrid::~MNM_Routing_Biclass_Hybrid ()
@@ -610,7 +750,8 @@ MNM_Routing_Biclass_Hybrid::~MNM_Routing_Biclass_Hybrid ()
 int
 MNM_Routing_Biclass_Hybrid::init_routing (Path_Table *path_table)
 {
-  m_routing_adaptive->init_routing ();
+  if (m_routing_adaptive->m_working)
+    m_routing_adaptive->init_routing ();
   // printf("Finished init all ADAPTIVE vehicles routing\n");
   m_routing_fixed_car->init_routing (path_table);
   // printf("Finished init STATIC cars routing\n");
@@ -622,12 +763,21 @@ MNM_Routing_Biclass_Hybrid::init_routing (Path_Table *path_table)
 int
 MNM_Routing_Biclass_Hybrid::update_routing (TInt timestamp)
 {
-  m_routing_adaptive->update_routing (timestamp);
+  if (m_routing_adaptive->m_working)
+    m_routing_adaptive->update_routing (timestamp);
   // printf("Finished update all ADAPTIVE vehicles routing\n");
   m_routing_fixed_car->update_routing (timestamp);
   // printf("Finished update STATIC cars routing\n");
   m_routing_fixed_truck->update_routing (timestamp);
   // printf("Finished update STATIC trucks routing\n");
+  return 0;
+}
+
+int
+MNM_Routing_Biclass_Hybrid::remove_finished (MNM_Veh *veh, bool del)
+{
+  m_routing_fixed_car->remove_finished (veh, del);
+  m_routing_fixed_truck->remove_finished (veh, del);
   return 0;
 }
 
@@ -651,8 +801,10 @@ MNM_Routing_Biclass_Fixed::~MNM_Routing_Biclass_Fixed () { ; }
 int
 MNM_Routing_Biclass_Fixed::change_choice_portion (TInt routing_interval)
 {
+  // m_veh_class starts from 0 (car) to 1 (truck)
   MNM::copy_buffer_to_p (m_path_table,
-                         routing_interval + m_veh_class * m_buffer_length);
+                         routing_interval
+                           + m_veh_class * TInt (m_buffer_length / 2));
   MNM::normalize_path_table_p (m_path_table);
   return 0;
 }
@@ -667,15 +819,14 @@ MNM_Routing_Biclass_Fixed::update_routing (TInt timestamp)
   MNM_Veh *_veh;
   TInt _cur_ass_int;
 
-  // printf("my bufffer lenght %d, %d\n", m_buffer_length(),
-  // m_routing_freq());
+  // printf("my buffer length %d, %d\n", m_buffer_length(), m_routing_freq());
   if (m_buffer_as_p)
     {
       // if (timestamp % m_routing_freq  == 0 || timestamp == 0) {
       // printf("11\n");
       _cur_ass_int = TInt (timestamp / m_routing_freq);
-      if (_cur_ass_int < m_buffer_length)
-        {
+      if (_cur_ass_int < TInt (m_buffer_length / 2))
+        { // first half for car, last half for truck
           // printf("Changing biclass fixed\n");
           change_choice_portion (_cur_ass_int);
         }
@@ -694,21 +845,40 @@ MNM_Routing_Biclass_Fixed::update_routing (TInt timestamp)
           _veh = *_veh_it;
 
           // Here is the difference from single-class fixed routing
+          //      TInt tmp = _veh -> m_class; // m_class of base veh
+          //      TInt tmp2 = _veh -> get_class(); // virtual getter of derived
+          //      veh_multiclass TInt tmp3 = _veh -> m_bus_route_ID; TInt tmp4 =
+          //      _veh -> get_bus_route_ID();
+
           if ((_veh->m_type == MNM_TYPE_STATIC)
-              && (_veh->m_class == m_veh_class))
+              && (_veh->get_class () == m_veh_class)
+              && (_veh->get_bus_route_ID () == TInt (-1))
+              && (!_veh->get_ispnr ()))
             {
-              // Here is the difference from single-class fixed
-              // routing
+              // Here is the difference from single-class fixed routing
 
               if (m_tracker.find (_veh) == m_tracker.end ())
                 {
                   // printf("Registering!\n");
-                  register_veh (_veh);
+                  register_veh (_veh, true);
                   _next_link_ID = m_tracker.find (_veh)->second->front ();
                   _next_link = m_link_factory->get_link (_next_link_ID);
                   _veh->set_next_link (_next_link);
                   m_tracker.find (_veh)->second->pop_front ();
                 }
+            }
+          // according to Dr. Wei Ma, add a nominal path to adaptive users for
+          // DAR extraction, not rigorous, but will do the DODE job
+          else if ((_veh->m_type == MNM_TYPE_ADAPTIVE)
+                   && (_veh->get_class () == m_veh_class)
+                   && (_veh->get_bus_route_ID () == TInt (-1))
+                   && (!_veh->get_ispnr ()))
+            {
+              if (_veh->m_path == nullptr)
+                {
+                  register_veh (_veh, false);
+                }
+              IAssert (_veh->m_path != nullptr);
             }
         }
     }
@@ -728,32 +898,41 @@ MNM_Routing_Biclass_Fixed::update_routing (TInt timestamp)
 
           // Here is the difference from single-class fixed routing
           if ((_veh->m_type == MNM_TYPE_STATIC)
-              && (_veh->m_class == m_veh_class))
+              && (_veh->get_class () == m_veh_class)
+              && (_veh->get_bus_route_ID () == TInt (-1))
+              && (!_veh->get_ispnr ()))
             {
-              // Here is the difference from single-class fixed
-              // routing
+              // Here is the difference from single-class fixed routing
 
               _veh_dest = _veh->get_destination ();
               if (_veh_dest->m_dest_node->m_node_ID == _node_ID)
                 {
                   if (m_tracker.find (_veh)->second->size () != 0)
                     {
-                      throw std::runtime_error ("errors in fixed routing");
+                      printf ("Something wrong in fixed routing!\n");
+                      exit (-1);
                     }
-                  _veh->set_next_link (NULL);
+                  _veh->set_next_link (nullptr);
                 }
               else
                 {
                   if (m_tracker.find (_veh) == m_tracker.end ())
                     {
-                      throw std::runtime_error ("vehicle unregistered in link");
+                      printf ("Vehicle not registered in link, impossible!\n");
+                      exit (-1);
                     }
                   if (_veh->get_current_link () == _veh->get_next_link ())
                     {
                       _next_link_ID = m_tracker.find (_veh)->second->front ();
                       if (_next_link_ID == -1)
                         {
-                          throw std::runtime_error ("invalid next link");
+                          printf (
+                            "Something wrong in routing, wrong next link 2\n");
+                          printf ("The node is %d, the vehicle should head to "
+                                  "%d\n",
+                                  (int) _node_ID,
+                                  (int) _veh_dest->m_dest_node->m_node_ID);
+                          exit (-1);
                         }
                       _next_link = m_link_factory->get_link (_next_link_ID);
                       _veh->set_next_link (_next_link);
@@ -764,5 +943,15 @@ MNM_Routing_Biclass_Fixed::update_routing (TInt timestamp)
         }         // end for veh_it
     }             // end for link_it
 
+  return 0;
+}
+
+int
+MNM_Routing_Biclass_Fixed::remove_finished (MNM_Veh *veh, bool del)
+{
+  if (veh->get_class () == m_veh_class)
+    {
+      MNM_Routing_Fixed::remove_finished (veh, del);
+    }
   return 0;
 }

@@ -1,7 +1,4 @@
 #include "dlink.h"
-#include "limits.h"
-
-#include <algorithm>
 
 MNM_Dlink::MNM_Dlink (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs)
 {
@@ -29,24 +26,30 @@ MNM_Dlink::MNM_Dlink (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs)
 
   m_finished_array = std::deque<MNM_Veh *> ();
   m_incoming_array = std::deque<MNM_Veh *> ();
-  m_N_in = NULL;
-  m_N_out = NULL;
-  m_N_in_tree = NULL;
-  m_N_out_tree = NULL;
+  m_N_in = nullptr;
+  m_N_out = nullptr;
+  m_N_in_tree = nullptr;
+  m_N_out_tree = nullptr;
 }
 
 MNM_Dlink::~MNM_Dlink ()
 {
   m_finished_array.clear ();
   m_incoming_array.clear ();
-  if (m_N_out != NULL)
+  if (m_N_out != nullptr)
     delete m_N_out;
-  if (m_N_in != NULL)
+  if (m_N_in != nullptr)
     delete m_N_in;
-  if (m_N_in_tree != NULL)
+  if (m_N_in_tree != nullptr)
     delete m_N_in_tree;
-  if (m_N_out_tree != NULL)
+  if (m_N_out_tree != nullptr)
     delete m_N_out_tree;
+}
+
+TFlt
+MNM_Dlink::get_link_freeflow_tt ()
+{
+  return m_length / m_ffs; // seconds
 }
 
 int
@@ -60,11 +63,11 @@ MNM_Dlink::hook_up_node (MNM_Dnode *from, MNM_Dnode *to)
 int
 MNM_Dlink::install_cumulative_curve ()
 {
-  if (m_N_out != NULL)
+  if (m_N_out != nullptr)
     {
       delete m_N_out;
     }
-  if (m_N_in != NULL)
+  if (m_N_in != nullptr)
     {
       delete m_N_in;
     }
@@ -78,11 +81,11 @@ MNM_Dlink::install_cumulative_curve ()
 int
 MNM_Dlink::install_cumulative_curve_tree ()
 {
-  if (m_N_in_tree != NULL)
+  if (m_N_in_tree != nullptr)
     {
       delete m_N_in_tree;
     }
-  if (m_N_out_tree != NULL)
+  if (m_N_out_tree != nullptr)
     {
       delete m_N_out_tree;
     }
@@ -110,6 +113,7 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
                               TFlt unit_time, TFlt flow_scalar)
     : MNM_Dlink::MNM_Dlink (ID, number_of_lane, length, ffs)
 {
+  m_link_type = MNM_TYPE_CTM;
   if (lane_hold_cap < 0)
     {
       throw std::runtime_error ("negative lane_hold_cap for link "
@@ -117,8 +121,8 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
     }
   if (lane_hold_cap > TFlt (300) / TFlt (1600))
     {
-      // printf("lane_hold_cap is too large, we will replace it to 300
-      // veh/mile, current link ID is %d\n", m_link_ID());
+      // printf("lane_hold_cap is too large, we will replace it to 300 veh/mile,
+      // current link ID is %d\n", m_link_ID());
       lane_hold_cap = TFlt (300) / TFlt (1600);
     }
   m_lane_hold_cap = lane_hold_cap;
@@ -185,7 +189,7 @@ int
 MNM_Dlink_Ctm::init_cell_array (TFlt unit_time, TFlt std_cell_length,
                                 TFlt lane_hold_cap_last_cell)
 {
-  Ctm_Cell *aCell = NULL;
+  Ctm_Cell *aCell = nullptr;
   for (int i = 0; i < m_num_cells - 1; ++i)
     {
       aCell
@@ -193,12 +197,12 @@ MNM_Dlink_Ctm::init_cell_array (TFlt unit_time, TFlt std_cell_length,
                           * m_lane_hold_cap,
                         TFlt (m_number_of_lane) * m_lane_flow_cap * unit_time,
                         m_flow_scalar, m_wave_ratio);
-      if (aCell == NULL)
+      if (aCell == nullptr)
         {
           throw std::runtime_error ("failed to initialize cell");
         };
       m_cell_array.push_back (aCell);
-      aCell = NULL;
+      aCell = nullptr;
     }
 
   // since the last cell is a non-standard cell
@@ -225,8 +229,8 @@ MNM_Dlink_Ctm::init_cell_array (TFlt unit_time, TFlt std_cell_length,
 void
 MNM_Dlink_Ctm::print_info ()
 {
-  printf ("Total number of cell: \t%d\t Standard wave ratio: \t%.4f\nLast "
-          "cell wave ratio: \t%.4f\n",
+  printf ("Total number of cell: \t%d\t Standard wave ratio: \t%.4f\nLast cell "
+          "wave ratio: \t%.4f\n",
           int (m_num_cells), double (m_wave_ratio), double (m_last_wave_ratio));
   printf ("Volume for each cell is:\n");
   for (int i = 0; i < m_num_cells; ++i)
@@ -261,7 +265,7 @@ MNM_Dlink_Ctm::evolve (TInt timestamp)
   // printf("update_out_veh\n");
   update_out_veh ();
   TInt _num_veh_tomove;
-  // printf("move previou cells\n");
+  // printf("move previous cells\n");
   /* previous cells */
   if (m_num_cells > 1)
     {
@@ -298,7 +302,7 @@ MNM_Dlink_Ctm::get_link_supply ()
 }
 
 int
-MNM_Dlink_Ctm::clear_incoming_array ()
+MNM_Dlink_Ctm::clear_incoming_array (TInt timestamp)
 {
   // printf("link ID: %d, in comming: %d, supply : %d\n", (int
   // )m_link_ID,(int)m_incoming_array.size(), (int) (get_link_supply() *
@@ -384,12 +388,48 @@ MNM_Dlink_Ctm::get_link_flow ()
     {
       _total_volume += m_cell_array[i]->m_volume;
     }
+  _total_volume += m_finished_array.size ();
   return TFlt (_total_volume) / m_flow_scalar;
+}
+
+std::vector<TFlt>
+MNM_Dlink_Ctm::get_link_flow_emission (TInt ev_label)
+{
+  TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+  for (int i = 0; i < m_num_cells; ++i)
+    {
+      for (auto veh : m_cell_array[i]->m_veh_queue)
+        {
+          if (veh->m_label == ev_label)
+            {
+              _total_volume_ev += 1;
+            }
+          else
+            {
+              _total_volume_nonev += 1;
+            }
+        }
+    }
+  for (auto veh : m_finished_array)
+    {
+      if (veh->m_label == ev_label)
+        {
+          _total_volume_ev += 1;
+        }
+      else
+        {
+          _total_volume_nonev += 1;
+        }
+    }
+  std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                           TFlt (_total_volume_ev) / m_flow_scalar };
+  return _r;
 }
 
 TFlt
 MNM_Dlink_Ctm::get_link_tt ()
-{
+{ // in seconds, not in unit time interval, can only be called in simulation,
+  // not after simulation
   TFlt _cost, _spd;
   TFlt _rho = get_link_flow () / m_number_of_lane
               / m_length;               // get the density in veh/mile
@@ -398,8 +438,8 @@ MNM_Dlink_Ctm::get_link_tt ()
   //  if (abs(rho - rhok) <= 0.0001) cost = POS_INF_INT;
   if (_rho >= _rhoj)
     {
-      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use
-                                          // rhoj, not rhok
+      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use rhoj,
+                                          // not rhok
     }
   else
     {
@@ -417,19 +457,58 @@ MNM_Dlink_Ctm::get_link_tt ()
   return _cost;
 }
 
+TFlt
+MNM_Dlink_Ctm::get_link_tt_from_flow (TFlt flow)
+{
+  TFlt _cost, _spd;
+  TFlt _rho = flow / m_number_of_lane / m_length; // get the density in veh/mile
+  TFlt _rhoj = m_lane_hold_cap;                   // get the jam density
+  TFlt _rhok = m_lane_flow_cap / m_ffs;           // get the critical density
+  //  if (abs(rho - rhok) <= 0.0001) cost = POS_INF_INT;
+  if (_rho >= _rhoj)
+    {
+      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use rhoj,
+                                          // not rhok
+    }
+  else
+    {
+      if (_rho <= _rhok)
+        {
+          _spd = m_ffs;
+        }
+      else
+        {
+          _spd = MNM_Ults::max (0.001 * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                                 / ((_rhoj - _rhok) * _rho));
+        }
+      _cost = m_length / _spd;
+    }
+  return _cost;
+}
+
+TInt
+MNM_Dlink_Ctm::get_link_freeflow_tt_loading ()
+{
+  return m_num_cells;
+}
+
 /**************************************************************************
-                          Poing Queue
+                          Point Queue
 **************************************************************************/
 MNM_Dlink_Pq::MNM_Dlink_Pq (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
                             TInt number_of_lane, TFlt length, TFlt ffs,
                             TFlt unit_time, TFlt flow_scalar)
     : MNM_Dlink::MNM_Dlink (ID, number_of_lane, length, ffs)
 {
+  m_link_type = MNM_TYPE_PQ;
   m_lane_hold_cap = lane_hold_cap;
   m_lane_flow_cap = lane_flow_cap;
   m_flow_scalar = flow_scalar;
   m_hold_cap = m_lane_hold_cap * TFlt (number_of_lane) * m_length;
-  m_max_stamp = MNM_Ults::round (m_length / (m_ffs * unit_time));
+  // MNM_Ults::round() can randomly round up or down the input
+  // m_max_stamp = MNM_Ults::round(m_length / (m_ffs * unit_time));
+  // round down time, but ensures m_max_stamp >= 1
+  m_max_stamp = MNM_Ults::round_down_time (m_length / (m_ffs * unit_time));
   m_veh_queue = std::deque<std::pair<MNM_Veh *, TInt>> ();
   m_volume = TInt (0);
   m_unit_time = unit_time;
@@ -444,7 +523,7 @@ MNM_Dlink_Pq::get_link_supply ()
 }
 
 int
-MNM_Dlink_Pq::clear_incoming_array ()
+MNM_Dlink_Pq::clear_incoming_array (TInt timestamp)
 {
   TInt _num_veh_tomove = std::min (TInt (m_incoming_array.size ()),
                                    TInt (get_link_supply () * m_flow_scalar));
@@ -453,6 +532,12 @@ MNM_Dlink_Pq::clear_incoming_array ()
     {
       _veh = m_incoming_array.front ();
       m_incoming_array.pop_front ();
+      // node -> evolve first, then link -> clear_incoming_array(), then link ->
+      // evolve() this actually leads to vehicle spending m_max_stamp + 1 in
+      // this link
+      // so we use m_max_stamp - 1 in link -> evolve() to ensure vehicle spends
+      // m_max_stamp in this link when m_max_stamp > 1 and 1 when m_max_stamp =
+      // 0
       m_veh_queue.push_back (std::pair<MNM_Veh *, TInt> (_veh, TInt (0)));
     }
   m_volume = TInt (m_finished_array.size () + m_veh_queue.size ());
@@ -478,7 +563,7 @@ MNM_Dlink_Pq::evolve (TInt timestamp)
   auto _que_it = m_veh_queue.begin ();
   while (_que_it != m_veh_queue.end ())
     {
-      if (_que_it->second >= m_max_stamp)
+      if (_que_it->second >= MNM_Ults::max (0, m_max_stamp - 1))
         {
           m_finished_array.push_back (_que_it->first);
           _que_it = m_veh_queue.erase (_que_it); // c++ 11
@@ -502,6 +587,39 @@ MNM_Dlink_Pq::get_link_flow ()
   return TFlt (m_volume) / m_flow_scalar;
 }
 
+std::vector<TFlt>
+MNM_Dlink_Pq::get_link_flow_emission (TInt ev_label)
+{
+  TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+
+  for (auto veh_it : m_veh_queue)
+    {
+      if (veh_it.first->m_label == ev_label)
+        {
+          _total_volume_ev += 1;
+        }
+      else
+        {
+          _total_volume_nonev += 1;
+        }
+    }
+
+  for (auto veh : m_finished_array)
+    {
+      if (veh->m_label == ev_label)
+        {
+          _total_volume_ev += 1;
+        }
+      else
+        {
+          _total_volume_nonev += 1;
+        }
+    }
+  std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                           TFlt (_total_volume_ev) / m_flow_scalar };
+  return _r;
+}
+
 TFlt
 MNM_Dlink_Pq::get_link_tt ()
 {
@@ -513,8 +631,8 @@ MNM_Dlink_Pq::get_link_tt ()
   //  if (abs(rho - rhok) <= 0.0001) cost = POS_INF_INT;
   if (_rho >= _rhoj)
     {
-      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use
-                                          // rhoj, not rhok
+      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use rhoj,
+                                          // not rhok
     }
   else
     {
@@ -533,6 +651,42 @@ MNM_Dlink_Pq::get_link_tt ()
   return _cost;
 }
 
+TFlt
+MNM_Dlink_Pq::get_link_tt_from_flow (TFlt flow)
+{
+  TFlt _cost, _spd;
+  TFlt _rho = flow / m_number_of_lane / m_length; // get the density in veh/mile
+  TFlt _rhoj = m_lane_hold_cap;                   // get the jam density
+  TFlt _rhok = m_lane_flow_cap / m_ffs;           // get the critical density
+  //  if (abs(rho - rhok) <= 0.0001) cost = POS_INF_INT;
+  if (_rho >= _rhoj)
+    {
+      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use rhoj,
+                                          // not rhok
+    }
+  else
+    {
+      if (_rho <= _rhok)
+        {
+          _spd = m_ffs;
+        }
+      else
+        {
+          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
+                                m_lane_flow_cap * (_rhoj - _rho)
+                                  / ((_rhoj - _rhok) * _rho));
+        }
+      _cost = m_length / _spd;
+    }
+  return _cost;
+}
+
+TInt
+MNM_Dlink_Pq::get_link_freeflow_tt_loading ()
+{
+  return m_max_stamp; // ensure this >= 1 in constructor
+}
+
 /**************************************************************************
                           Link Queue
 **************************************************************************/
@@ -541,6 +695,7 @@ MNM_Dlink_Lq::MNM_Dlink_Lq (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
                             TFlt unit_time, TFlt flow_scalar)
     : MNM_Dlink::MNM_Dlink (ID, number_of_lane, length, ffs)
 {
+  m_link_type = MNM_TYPE_LQ;
   m_lane_hold_cap = lane_hold_cap;
   m_lane_flow_cap = lane_flow_cap;
   m_flow_scalar = flow_scalar;
@@ -564,7 +719,7 @@ MNM_Dlink_Lq::get_link_supply ()
 }
 
 int
-MNM_Dlink_Lq::clear_incoming_array ()
+MNM_Dlink_Lq::clear_incoming_array (TInt timestamp)
 {
   if (TInt (m_incoming_array.size ())
       > TInt (get_link_supply () * m_flow_scalar))
@@ -600,8 +755,8 @@ MNM_Dlink_Lq::evolve (TInt timestamp)
         = TInt (m_finished_array.size ()) - TInt (_demand * m_flow_scalar);
       _veh_to_reduce
         = std::min (_veh_to_reduce, TInt (m_finished_array.size ()));
-      // printf("_veh_to_reduce %d, finished size is %d\n",
-      // _veh_to_reduce(), (int)m_finished_array.size());
+      // printf("_veh_to_reduce %d, finished size is %d\n", _veh_to_reduce(),
+      // (int)m_finished_array.size());
       for (int i = 0; i < _veh_to_reduce; ++i)
         {
           _veh = m_finished_array.back ();
@@ -614,8 +769,8 @@ MNM_Dlink_Lq::evolve (TInt timestamp)
       // printf("3\n");
       TInt _veh_to_move = MNM_Ults::round (_demand * m_flow_scalar)
                           - TInt (m_finished_array.size ());
-      // printf("demand %f, Veh queue size %d, finished size %d, to move
-      // %d \n", (float) _demand(), (int) m_veh_queue.size(),
+      // printf("demand %f, Veh queue size %d, finished size %d, to move %d \n",
+      // (float) _demand(), (int) m_veh_queue.size(),
       // (int)m_finished_array.size(), _veh_to_move());
 
       _veh_to_move = std::min (_veh_to_move, TInt (m_veh_queue.size ()));
@@ -636,6 +791,39 @@ MNM_Dlink_Lq::get_link_flow ()
   return TFlt (m_volume) / m_flow_scalar;
 }
 
+std::vector<TFlt>
+MNM_Dlink_Lq::get_link_flow_emission (TInt ev_label)
+{
+  TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+
+  for (auto veh : m_veh_queue)
+    {
+      if (veh->m_label == ev_label)
+        {
+          _total_volume_ev += 1;
+        }
+      else
+        {
+          _total_volume_nonev += 1;
+        }
+    }
+
+  for (auto veh : m_finished_array)
+    {
+      if (veh->m_label == ev_label)
+        {
+          _total_volume_ev += 1;
+        }
+      else
+        {
+          _total_volume_nonev += 1;
+        }
+    }
+  std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                           TFlt (_total_volume_ev) / m_flow_scalar };
+  return _r;
+}
+
 TFlt
 MNM_Dlink_Lq::get_link_tt ()
 {
@@ -647,8 +835,38 @@ MNM_Dlink_Lq::get_link_tt ()
   //  if (abs(rho - rhok) <= 0.0001) cost = POS_INF_INT;
   if (_rho >= _rhoj)
     {
-      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use
-                                          // rhoj, not rhok
+      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use rhoj,
+                                          // not rhok
+    }
+  else
+    {
+      if (_rho <= _rhok)
+        {
+          _spd = m_ffs;
+        }
+      else
+        {
+          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
+                                m_lane_flow_cap * (_rhoj - _rho)
+                                  / ((_rhoj - _rhok) * _rho));
+        }
+      _cost = m_length / _spd;
+    }
+  return _cost;
+}
+
+TFlt
+MNM_Dlink_Lq::get_link_tt_from_flow (TFlt flow)
+{
+  TFlt _cost, _spd;
+  TFlt _rho = flow / m_number_of_lane / m_length; // get the density in veh/mile
+  TFlt _rhoj = m_lane_hold_cap;                   // get the jam density
+  TFlt _rhok = m_lane_flow_cap / m_ffs;           // get the critical density
+  //  if (abs(rho - rhok) <= 0.0001) cost = POS_INF_INT;
+  if (_rho >= _rhoj)
+    {
+      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use rhoj,
+                                          // not rhok
     }
   else
     {
@@ -702,12 +920,30 @@ MNM_Dlink_Lq::get_demand ()
   return _demand * m_unit_time;
 }
 
+TInt
+MNM_Dlink_Lq::get_link_freeflow_tt_loading ()
+{
+  // throw std::runtime_error("Error, MNM_Dlink_Lq::get_link_freeflow_tt_loading
+  // NOT implemented");
+  return MNM_Ults::round_up_time (m_length / m_ffs);
+}
+
 /**************************************************************************
                           Cumulative curve
 **************************************************************************/
 
 MNM_Cumulative_Curve::MNM_Cumulative_Curve ()
 {
+  // the implementation of CC here actually means at the beginning of interval
+  // m_recorder[i].first, a total of m_recorder[i].second vehicles have passed
+  // and counted the vehicles arriving at the beginning of interval
+  // m_recorder[i].first will be counted and reflected at the end of interval
+  // m_recorder[i].first, or equivalently, at the beginning of interval
+  // m_recorder[i].first + 1 so when using CC to compute the link travel time
+  // for vehicles arriving at the beginning of interval m_recorder[i].first, we
+  // should use m_recorder[i].first + 1 as the start_time this also means the
+  // maximum allowable m_recorder[i].first == m_total_loading_interval, not
+  // m_total_loading_interval - 1
   m_recorder = std::deque<std::pair<TFlt, TFlt>> ();
 }
 
@@ -719,11 +955,19 @@ pair_compare (std::pair<TFlt, TFlt> i, std::pair<TFlt, TFlt> j)
   return (i.first < j.first);
 }
 
+// bool pair_compare(std::pair<TInt, TFlt> i, std::pair<TInt, TFlt> j) {
+//     return (i.first < j.first);
+// }
+
 bool
 pair_compare2 (std::pair<TFlt, TFlt> i, std::pair<TFlt, TFlt> j)
 {
   return (i.second < j.second);
 }
+
+// bool pair_compare2(std::pair<TInt, TFlt> i, std::pair<TInt, TFlt> j) {
+//     return (i.second < j.second);
+// }
 
 int
 MNM_Cumulative_Curve::arrange ()
@@ -763,8 +1007,8 @@ MNM_Cumulative_Curve::shrink (TInt number)
 int
 MNM_Cumulative_Curve::add_increment (std::pair<TFlt, TFlt> r)
 {
-  // printf("Add increment time %f with flow %f\n", r.first, r.second);
-  if (m_recorder.size () == 0)
+  // printf("Add increment time %d with flow %f\n", r.first, r.second);
+  if (m_recorder.empty ())
     {
       add_record (r);
       return 0;
@@ -772,13 +1016,12 @@ MNM_Cumulative_Curve::add_increment (std::pair<TFlt, TFlt> r)
   // std::pair <TFlt, TFlt> _best = *std::max_element(m_recorder.begin(),
   // m_recorder.end(), pair_compare);
   std::pair<TFlt, TFlt> _best = m_recorder[m_recorder.size () - 1];
-  if (r.first < _best.first)
+  if (MNM_Ults::approximate_less_than (r.first, _best.first))
     {
       throw std::runtime_error (
-        "Error, MNM_Cumulative_Curve::add_increment, early time "
-        "index");
+        "Error, MNM_Cumulative_Curve::add_increment, early time index");
     }
-  if (r.first == _best.first)
+  if (MNM_Ults::approximate_equal (r.first, _best.first))
     {
       // printf("Incrementing\n");
       m_recorder[m_recorder.size () - 1].second += r.second;
@@ -787,7 +1030,7 @@ MNM_Cumulative_Curve::add_increment (std::pair<TFlt, TFlt> r)
     {
       // printf("Pushing\n");
       r.second += _best.second;
-      // printf("New r is <%lf, %lf>\n", r.first(), r.second());
+      // printf("New r is <%f, %lf>\n", r.first(), r.second());
       m_recorder.push_back (r);
     }
 
@@ -798,7 +1041,7 @@ TFlt
 MNM_Cumulative_Curve::get_approximated_result (TFlt time)
 {
   // arrange();
-  if (m_recorder.size () == 0)
+  if (m_recorder.empty ())
     {
       return TFlt (0);
     }
@@ -827,7 +1070,7 @@ TFlt
 MNM_Cumulative_Curve::get_result (TFlt time)
 {
   // arrange();
-  if (m_recorder.size () == 0)
+  if (m_recorder.empty ())
     {
       return TFlt (0);
     }
@@ -839,19 +1082,91 @@ MNM_Cumulative_Curve::get_result (TFlt time)
     {
       return m_recorder[0].second;
     }
-  for (size_t i = 1; i < m_recorder.size (); ++i)
+
+  // considering non-decreasing cc record
+  // Search for first element x such that result ≤ x
+  int j = -1;
+  auto _lower_j
+    = std::lower_bound (m_recorder.begin (), m_recorder.end (), time,
+                        [] (const std::pair<TFlt, TFlt> &r, TFlt v) {
+                          return MNM_Ults::approximate_less_than (r.first, v);
+                        });
+  j = std::distance (m_recorder.begin (), _lower_j);
+  IAssert (j >= 1);
+  if (_lower_j != m_recorder.end ())
     {
-      if (m_recorder[i].first > time)
+      if (MNM_Ults::approximate_equal (m_recorder[j].first, time))
         {
-          return m_recorder[i - 1].second;
+          // printf("index j-1 %d, time %f, flow %f\n", j-1,
+          // m_recorder[j-1].first(), m_recorder[j-1].second()); printf("index j
+          // %d, time %f, flow %f\n", j, m_recorder[j].first(),
+          // m_recorder[j].second()); if (j+1 < (int)m_recorder.size()) {
+          //     printf("index j+1 %d, time %f, flow %f\n", j+1,
+          //     m_recorder[j+1].first(), m_recorder[j+1].second());
+          // }
+          return m_recorder[j].second;
         }
-      else if (m_recorder[i].first == time)
+      else if (m_recorder[j].first > time)
         {
-          return m_recorder[i].second;
+          // if (j-2 >= 0) {
+          //     printf("index j-2 %d, time %f, flow %f\n", j-2,
+          //     m_recorder[j-2].first(), m_recorder[j-2].second());
+          // }
+          // printf("index j-1 %d, time %f, flow %f\n", j-1,
+          // m_recorder[j-1].first(), m_recorder[j-1].second()); printf("index j
+          // %d, time %f, flow %f\n", j, m_recorder[j].first(),
+          // m_recorder[j].second());
+
+          return m_recorder[j - 1].second; // rounding down
         }
     }
+
+  // // original, loop over
+  // for (size_t i = 1; i < m_recorder.size(); ++i) {
+  //     if (MNM_Ults::approximate_equal(m_recorder[j].first, time)) { //
+  //         return m_recorder[i].second;
+  //     } else if (m_recorder[i].first > time) {
+  //         return m_recorder[i - 1].second;  // rounding down
+  //     }
+
+  //     // if (m_recorder[i].first >= time) {
+  //     //     return m_recorder[i].second;  // rounding up
+  //     // }
+  // }
   return m_recorder.back ().second;
 }
+
+// TFlt MNM_Cumulative_Curve::get_result(TInt time) {
+//     // arrange();
+//     if (m_recorder.empty()) {
+//         return TFlt(0);
+//     }
+//     if (m_recorder.size() == 1) {
+//         return m_recorder[0].second;
+//     }
+//     if (0 >= time) {
+//         return m_recorder[0].second;
+//     }
+//     if (time >= m_recorder.size()) {
+//         return m_recorder.back().second;
+//     }
+//     // find first occurrence >= time
+//     auto _ind = std::lower_bound(m_recorder.begin(), m_recorder.end(), time,
+//                                  [](const std::pair<TInt, TFlt> &r, TInt
+//                                  v){return
+//                                  MNM_Ults::approximate_less_than(r.first,
+//                                  v);});
+//     if (_ind != m_recorder.end()) {
+//         int j = std::distance(m_recorder.begin(), _ind);
+//         IAssert(j >= 1);
+//         if (std::abs(m_recorder[j].first == time)) { //
+//             return m_recorder[j].second;
+//         }
+//         else {
+//             return m_recorder[j - 1].second;
+//         }
+//     }
+// }
 
 // TFlt MNM_Cumulative_Curve::get_time(TFlt result)
 // {
@@ -878,10 +1193,10 @@ MNM_Cumulative_Curve::get_result (TFlt time)
 // }
 
 TFlt
-MNM_Cumulative_Curve::get_time (TFlt result)
+MNM_Cumulative_Curve::get_time (TFlt result, bool rounding_up)
 {
   // arrange2();
-  if (m_recorder.size () == 0)
+  if (m_recorder.empty ())
     {
       return TFlt (-1);
     }
@@ -893,17 +1208,76 @@ MNM_Cumulative_Curve::get_time (TFlt result)
     {
       return TFlt (-1);
     }
-  for (size_t i = 1; i < m_recorder.size (); ++i)
+
+  // considering non-decreasing cc record
+  // Search for first element x such that result ≤ x
+  int i = -1;
+  int j = -1;
+  auto _lower_j
+    = std::lower_bound (m_recorder.begin (), m_recorder.end (), result,
+                        [] (const std::pair<TFlt, TFlt> &r, TFlt v) {
+                          return MNM_Ults::approximate_less_than (r.second, v);
+                        });
+  j = std::distance (m_recorder.begin (), _lower_j);
+  IAssert (j >= 1);
+  if (rounding_up)
     {
-      if (m_recorder[i].second > result)
+      return m_recorder[j].first;
+    }
+  if (_lower_j != m_recorder.end ())
+    {
+      if (MNM_Ults::approximate_equal (m_recorder[j].second, result))
         {
-          return m_recorder[i - 1].first;
+          // printf("index j-1 %d, time %f, flow %f\n", j-1,
+          // m_recorder[j-1].first(), m_recorder[j-1].second()); printf("index j
+          // %d, time %f, flow %f\n", j, m_recorder[j].first(),
+          // m_recorder[j].second()); if (j+1 < (int)m_recorder.size()) {
+          //     printf("index j+1 %d, time %f, flow %f\n", j+1,
+          //     m_recorder[j+1].first(), m_recorder[j+1].second());
+          // }
+          return m_recorder[j].first;
         }
-      else if (m_recorder[i].second == result)
+      else if (m_recorder[j].second > result)
         {
-          return m_recorder[i].first;
+          auto _lower_i = std::
+            lower_bound (m_recorder.begin (), _lower_j,
+                         m_recorder[j - 1].second,
+                         [] (const std::pair<TFlt, TFlt> &r, TFlt v) {
+                           return MNM_Ults::approximate_less_than (r.second, v);
+                         });
+          i = std::distance (m_recorder.begin (), _lower_i);
+          IAssert (i < j);
+          // if (i-1 >= 0) {
+          //     printf("index i-1 %d, time %f, flow %f\n", i-1,
+          //     m_recorder[i-1].first(), m_recorder[i-1].second());
+          // }
+          // printf("index i %d, time %f, flow %f\n", i, m_recorder[i].first(),
+          // m_recorder[i].second()); printf("index i+1 %d, time %f, flow %f\n",
+          // i+1, m_recorder[i+1].first(), m_recorder[i+1].second());
+          // printf("index j-1 %d, time %f, flow %f\n", j-1,
+          // m_recorder[j-1].first(), m_recorder[j-1].second()); printf("index j
+          // %d, time %f, flow %f\n", j, m_recorder[j].first(),
+          // m_recorder[j].second()); if (j+1 < (int)m_recorder.size()) {
+          //     printf("index j+1 %d, time %f, flow %f\n", j+1,
+          //     m_recorder[j+1].first(), m_recorder[j+1].second());
+          // }
+          return m_recorder[i].first; // rounding down
         }
     }
+
+  // // original, loop over
+  // for (size_t i = 1; i < m_recorder.size(); ++i) {
+  //     if (MNM_Ults::approximate_equal(m_recorder[j].second, result)) { //
+  //         return m_recorder[i].first;
+  //     } else if (m_recorder[i].second > result) {
+  //         return m_recorder[i - 1].first;  // rounding down
+  //     }
+
+  //     // if (m_recorder[i].second >= result) {
+  //     //     return m_recorder[i].first;  // rounding up
+  //     // }
+  // }
+
   return TFlt (-1);
 }
 
@@ -954,6 +1328,39 @@ MNM_Dlink_Ltm::get_link_flow ()
   return TFlt (m_volume) / m_flow_scalar;
 }
 
+std::vector<TFlt>
+MNM_Dlink_Ltm::get_link_flow_emission (TInt ev_label)
+{
+  TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+
+  for (auto veh : m_veh_queue)
+    {
+      if (veh->m_label == ev_label)
+        {
+          _total_volume_ev += 1;
+        }
+      else
+        {
+          _total_volume_nonev += 1;
+        }
+    }
+
+  for (auto veh : m_finished_array)
+    {
+      if (veh->m_label == ev_label)
+        {
+          _total_volume_ev += 1;
+        }
+      else
+        {
+          _total_volume_nonev += 1;
+        }
+    }
+  std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                           TFlt (_total_volume_ev) / m_flow_scalar };
+  return _r;
+}
+
 TFlt
 MNM_Dlink_Ltm::get_link_tt ()
 {
@@ -965,8 +1372,8 @@ MNM_Dlink_Ltm::get_link_tt ()
   //  if (abs(rho - rhok) <= 0.0001) cost = POS_INF_INT;
   if (_rho >= _rhoj)
     {
-      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use
-                                          // rhoj, not rhok
+      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use rhoj,
+                                          // not rhok
     }
   else
     {
@@ -985,6 +1392,44 @@ MNM_Dlink_Ltm::get_link_tt ()
   return _cost;
 }
 
+TFlt
+MNM_Dlink_Ltm::get_link_tt_from_flow (TFlt flow)
+{
+  TFlt _cost, _spd;
+  TFlt _rho = flow / m_number_of_lane / m_length; // get the density in veh/mile
+  TFlt _rhoj = m_lane_hold_cap;                   // get the jam density
+  TFlt _rhok = m_lane_flow_cap / m_ffs;           // get the critical density
+  //  if (abs(rho - rhok) <= 0.0001) cost = POS_INF_INT;
+  if (_rho >= _rhoj)
+    {
+      _cost = MNM_Ults::max_link_cost (); // sean: i think we should use rhoj,
+                                          // not rhok
+    }
+  else
+    {
+      if (_rho <= _rhok)
+        {
+          _spd = m_ffs;
+        }
+      else
+        {
+          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
+                                m_lane_flow_cap * (_rhoj - _rho)
+                                  / ((_rhoj - _rhok) * _rho));
+        }
+      _cost = m_length / _spd;
+    }
+  return _cost;
+}
+
+TInt
+MNM_Dlink_Ltm::get_link_freeflow_tt_loading ()
+{
+  throw std::runtime_error (
+    "Error, MNM_Dlink_Ltm::get_link_freeflow_tt_loading NOT implemented");
+  return 0;
+}
+
 void
 MNM_Dlink_Ltm::print_info ()
 {
@@ -996,7 +1441,7 @@ MNM_Dlink_Ltm::print_info ()
 }
 
 int
-MNM_Dlink_Ltm::clear_incoming_array ()
+MNM_Dlink_Ltm::clear_incoming_array (TInt timestamp)
 {
   // printf("MNM_Dlink_Ltm::clear_incoming_array\n");
   if (TInt (m_incoming_array.size ())
@@ -1058,8 +1503,8 @@ MNM_Dlink_Ltm::evolve (TInt timestamp)
     {
       TInt _veh_to_move = MNM_Ults::round (_demand * m_flow_scalar)
                           - TInt (m_finished_array.size ());
-      // printf("demand %f, Veh queue size %d, finished size %d, to move
-      // %d \n", (float) _demand(), (int) m_veh_queue.size(),
+      // printf("demand %f, Veh queue size %d, finished size %d, to move %d \n",
+      // (float) _demand(), (int) m_veh_queue.size(),
       // (int)m_finished_array.size(), _veh_to_move());
 
       _veh_to_move = std::min (_veh_to_move, TInt (m_veh_queue.size ()));

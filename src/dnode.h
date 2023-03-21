@@ -7,7 +7,9 @@
 #include "ults.h"
 #include "vehicle.h"
 
+#include <algorithm>
 #include <deque>
+#include <random>
 #include <unordered_map>
 #include <vector>
 
@@ -22,23 +24,21 @@ public:
   MNM_Dnode (TInt ID, TFlt flow_scalar);
   virtual ~MNM_Dnode ();
   TInt m_node_ID;
-  int virtual evolve (TInt timestamp) { return 0; };
-  void virtual print_info (){};
-  int virtual prepare_loading () { return 0; };
-  int virtual add_out_link (MNM_Dlink *out_link)
+  virtual int evolve (TInt timestamp) { return 0; };
+  virtual void print_info (){};
+  virtual int prepare_loading () { return 0; };
+  virtual int add_out_link (MNM_Dlink *out_link)
   {
     printf ("Error!\n");
     return 0;
   };
-  int virtual add_in_link (MNM_Dlink *in_link)
+  virtual int add_in_link (MNM_Dlink *in_link)
   {
     printf ("Error!\n");
     return 0;
   };
   std::vector<MNM_Dlink *> m_out_link_array;
   std::vector<MNM_Dlink *> m_in_link_array;
-
-protected:
   TFlt m_flow_scalar;
 };
 
@@ -46,10 +46,10 @@ class MNM_DMOND : public MNM_Dnode
 {
 public:
   MNM_DMOND (TInt ID, TFlt flow_scalar);
-  virtual ~MNM_DMOND ();
-  int virtual evolve (TInt timestamp) override;
-  void virtual print_info () override;
-  int virtual add_out_link (MNM_Dlink *out_link) override;
+  virtual ~MNM_DMOND () override;
+  virtual int evolve (TInt timestamp) override;
+  virtual void print_info () override;
+  virtual int add_out_link (MNM_Dlink *out_link) override;
   int hook_up_origin (MNM_Origin *origin);
   std::deque<MNM_Veh *> m_in_veh_queue;
   // private:
@@ -61,10 +61,10 @@ class MNM_DMDND : public MNM_Dnode
 {
 public:
   MNM_DMDND (TInt ID, TFlt flow_scalar);
-  virtual ~MNM_DMDND ();
-  int virtual evolve (TInt timestamp) override;
-  void virtual print_info () override;
-  int virtual add_in_link (MNM_Dlink *link) override;
+  virtual ~MNM_DMDND () override;
+  virtual int evolve (TInt timestamp) override;
+  virtual void print_info () override;
+  virtual int add_in_link (MNM_Dlink *link) override;
   int hook_up_destination (MNM_Destination *dest);
   std::deque<MNM_Veh *> m_out_veh_queue;
   // private:
@@ -79,16 +79,16 @@ class MNM_Dnode_Inout : public MNM_Dnode
 {
 public:
   MNM_Dnode_Inout (TInt ID, TFlt flow_scalar);
-  ~MNM_Dnode_Inout ();
-  int virtual evolve (TInt timestamp) override;
-  void virtual print_info () override;
-  int virtual prepare_loading () override;
-  int virtual add_out_link (MNM_Dlink *out_link) override;
-  int virtual add_in_link (MNM_Dlink *in_link) override;
+  virtual ~MNM_Dnode_Inout () override;
+  virtual int evolve (TInt timestamp) override;
+  virtual void print_info () override;
+  virtual int prepare_loading () override;
+  virtual int add_out_link (MNM_Dlink *out_link) override;
+  virtual int add_in_link (MNM_Dlink *in_link) override;
 
 protected:
   int prepare_supplyANDdemand ();
-  int virtual compute_flow () { return 0; };
+  virtual int compute_flow () { return 0; };
   int round_flow_to_vehicle ();
   int move_vehicle (TInt timestamp);
   int record_cumulative_curve (TInt timestamp);
@@ -105,9 +105,9 @@ class MNM_Dnode_FWJ : public MNM_Dnode_Inout
 {
 public:
   MNM_Dnode_FWJ (TInt ID, TFlt flow_scalar);
-  ~MNM_Dnode_FWJ ();
-  void virtual print_info () override;
-  int virtual compute_flow () override;
+  virtual ~MNM_Dnode_FWJ () override;
+  virtual void print_info () override;
+  virtual int compute_flow () override;
 };
 
 /**************************************************************************
@@ -117,10 +117,10 @@ class MNM_Dnode_GRJ : public MNM_Dnode_Inout
 {
 public:
   MNM_Dnode_GRJ (TInt ID, TFlt flow_scalar);
-  ~MNM_Dnode_GRJ ();
-  void virtual print_info () override;
-  int virtual compute_flow () override;
-  int virtual prepare_loading () override;
+  virtual ~MNM_Dnode_GRJ () override;
+  virtual void print_info () override;
+  virtual int compute_flow () override;
+  virtual int prepare_loading () override;
 
 private:
   std::vector<std::vector<MNM_Dlink *>> m_pow;

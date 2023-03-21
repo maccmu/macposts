@@ -9,16 +9,87 @@ MNM_Path::MNM_Path ()
   m_node_vec = std::deque<TInt> ();
   m_buffer_length = 0;
   m_p = 0;
-  m_buffer = NULL;
+  m_buffer = nullptr;
   m_path_ID = -1;
+  m_link_set = std::set<TInt> ();
+
+  m_travel_time_vec = std::vector<TFlt> ();
+  m_travel_cost_vec = std::vector<TFlt> ();
+  m_travel_disutility_vec = std::vector<TFlt> ();
 }
 
 MNM_Path::~MNM_Path ()
 {
   m_link_vec.clear ();
   m_node_vec.clear ();
-  if (m_buffer != NULL)
+  if (m_buffer != nullptr)
     free (m_buffer);
+  m_link_set.clear ();
+
+  m_travel_time_vec.clear ();
+  m_travel_cost_vec.clear ();
+  m_travel_disutility_vec.clear ();
+}
+
+bool
+MNM_Path::is_link_in (TInt link_ID)
+{
+  if (m_link_set.empty ())
+    {
+      m_link_set = std::set<TInt> (m_link_vec.begin (), m_link_vec.end ());
+    }
+  IAssert (!m_link_set.empty ());
+  if (m_link_set.find (link_ID) != m_link_set.end ())
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+TFlt
+MNM_Path::get_path_tt (MNM_Link_Factory *link_factory)
+{
+  // only used in DNL
+  // MNM_Dlink *_link;
+
+  TFlt _total_time = 0.0;
+  for (TInt _link_ID : m_link_vec)
+    {
+      _total_time += link_factory->get_link (_link_ID)->get_link_tt ();
+    }
+  // printf("%lf\n", _total_time());
+  return _total_time;
+}
+
+TFlt
+MNM_Path::get_path_fftt (MNM_Link_Factory *link_factory)
+{
+  MNM_Dlink *_link;
+  TFlt _total_time = 0.0;
+  for (TInt _link_ID : m_link_vec)
+    {
+      _link = link_factory->get_link (_link_ID);
+      _total_time += _link->m_length / _link->m_ffs; // in seconds
+    }
+  // printf("%lf\n", _total_time());
+  return _total_time;
+}
+
+TFlt
+MNM_Path::get_path_length (MNM_Link_Factory *link_factory)
+{
+  // MNM_Dlink *_link;
+
+  TFlt _total_length = 0.0;
+  for (TInt _link_ID : m_link_vec)
+    {
+      _total_length += link_factory->get_link (_link_ID)->m_length;
+    }
+  // printf("%lf\n", _total_length());
+  return _total_length;
 }
 
 std::string
@@ -48,6 +119,45 @@ MNM_Path::link_vec_to_string ()
 }
 
 std::string
+MNM_Path::time_vec_to_string ()
+{
+  std::string _s;
+  for (TFlt _v : m_travel_time_vec)
+    {
+      _s += std::to_string (_v) + " ";
+    }
+  _s.pop_back ();
+  _s += "\n";
+  return _s;
+}
+
+std::string
+MNM_Path::cost_vec_to_string ()
+{
+  std::string _s;
+  for (TFlt _v : m_travel_cost_vec)
+    {
+      _s += std::to_string (_v) + " ";
+    }
+  _s.pop_back ();
+  _s += "\n";
+  return _s;
+}
+
+std::string
+MNM_Path::disutility_vec_to_string ()
+{
+  std::string _s;
+  for (TFlt _v : m_travel_disutility_vec)
+    {
+      _s += std::to_string (_v) + " ";
+    }
+  _s.pop_back ();
+  _s += "\n";
+  return _s;
+}
+
+std::string
 MNM_Path::buffer_to_string ()
 {
   std::string _s;
@@ -67,17 +177,100 @@ MNM_Path::buffer_to_string ()
 int
 MNM_Path::allocate_buffer (TInt length)
 {
-  if ((m_buffer_length > 0) || (m_buffer != NULL))
+  if ((m_buffer_length > 0) || (m_buffer != nullptr))
     {
       throw std::runtime_error (
         "Error: MNM_Path::allocate_buffer, double allocation.");
     }
   m_buffer_length = length;
+  // malloc returns void*, static_cast<TFlt*> casts void* into TFlt*
+  // https://embeddedartistry.com/blog/2017/03/15/c-casting-or-oh-no-they-broke-malloc/
   m_buffer = static_cast<TFlt *> (std::malloc (sizeof (TFlt) * length));
   for (int i = 0; i < length; ++i)
     {
       m_buffer[i] = 0.0;
     }
+  return 0;
+}
+
+int
+MNM_Path::eliminate_cycles ()
+{
+  bool _flg = false;
+  TInt _node_ID;
+  std::vector<bool> _node_reserved = std::vector<bool> ();
+  std::vector<bool> _link_reserved = std::vector<bool> ();
+  IAssert (m_node_vec.size () == m_link_vec.size () + 1);
+
+  for (size_t i = 0; i < m_node_vec.size (); ++i)
+    {
+      _node_reserved.push_back (true);
+      if (i < m_node_vec.size () - 1)
+        {
+          _link_reserved.push_back (true);
+        }
+    }
+
+  for (size_t i = 0; i < m_node_vec.size () - 1; ++i)
+    {
+      if (!_node_reserved[i])
+        {
+          IAssert (i > 0 && !_link_reserved[i - 1]);
+          continue;
+        }
+      _node_ID = m_node_vec[i];
+      // find the position of the last occurrence,
+      // https://stackoverflow.com/questions/35822606/remove-last-occurrence-of-an-element-in-a-vector-stl
+      auto _foundIt
+        = std::find (m_node_vec.rbegin (), m_node_vec.rend (), _node_ID);
+      auto _toRemove = --(_foundIt.base ());
+      int j = (int) std::distance (m_node_vec.begin (), _toRemove);
+      if ((int) i + 1 <= j)
+        {
+          _flg = true;
+          for (int k = (int) i + 1; k < j + 1; ++k)
+            {
+              _node_reserved[k] = false;
+              _link_reserved[k - 1] = false;
+            }
+        }
+    }
+  IAssert (_node_reserved.size () == _link_reserved.size () + 1);
+
+  if (_flg)
+    {
+      std::deque<TInt> _node_vec = m_node_vec;
+      std::deque<TInt> _link_vec = m_link_vec;
+      m_node_vec.clear ();
+      m_link_vec.clear ();
+      for (size_t i = 0; i < _node_vec.size (); ++i)
+        {
+          if (_node_reserved[i])
+            {
+              m_node_vec.push_back (_node_vec[i]);
+            }
+          if (i < _node_vec.size () - 1)
+            {
+              if (_link_reserved[i])
+                {
+                  m_link_vec.push_back (_link_vec[i]);
+                }
+            }
+        }
+
+      if (m_node_vec.size () < _node_vec.size ())
+        {
+          printf ("cycles eliminated\n");
+          printf ("modified node_vec is: \n");
+          std::cout << node_vec_to_string ();
+        }
+      _node_vec.clear ();
+      _link_vec.clear ();
+    }
+  IAssert (m_node_vec.size () == m_link_vec.size () + 1);
+  _node_reserved.clear ();
+  _link_reserved.clear ();
+
   return 0;
 }
 
@@ -152,25 +345,28 @@ MNM_Pathset::normalize_p ()
 namespace MNM
 {
 MNM_Path *
-extract_path (TInt origin_ID, TInt dest_ID,
+extract_path (TInt origin_node_ID, TInt dest_node_ID,
               std::unordered_map<TInt, TInt> &output_map, PNEGraph &graph)
 {
+  // output_map[node_ID][edge_ID], tdsp tree
   // printf("Entering extract_path\n");
-  TInt _current_node_ID = origin_ID;
+  TInt _current_node_ID = origin_node_ID;
   TInt _current_link_ID = -1;
   MNM_Path *_path = new MNM_Path ();
-  while (_current_node_ID != dest_ID)
+  while (_current_node_ID != dest_node_ID)
     {
       if (output_map.find (_current_node_ID) == output_map.end ())
         {
           // printf("Cannot extract path\n");
-          return NULL;
+          return nullptr;
         }
       _current_link_ID = output_map[_current_node_ID];
       if (_current_link_ID == -1)
         {
-          printf ("Cannot extract path\n");
-          return NULL;
+          printf ("Cannot extract path from origin node %d to destination node "
+                  "%d\n",
+                  origin_node_ID (), dest_node_ID ());
+          return nullptr;
         }
       _path->m_node_vec.push_back (_current_node_ID);
       _path->m_link_vec.push_back (_current_link_ID);
@@ -185,6 +381,8 @@ Path_Table *
 build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
                         MNM_Link_Factory *link_factory)
 {
+  // this build for each OD pair, no matter this OD pair exists in demand file
+  // or not
   Path_Table *_path_table = new Path_Table ();
   for (auto _o_it = od_factory->m_origin_map.begin ();
        _o_it != od_factory->m_origin_map.end (); _o_it++)
@@ -229,7 +427,7 @@ build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
           _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
           _path = MNM::extract_path (_origin_node_ID, _dest_node_ID,
                                      _free_shortest_path_tree, graph);
-          if (_path != NULL)
+          if (_path != nullptr)
             {
               // printf("Adding to path table\n");
               // std::cout << _path -> node_vec_to_string();
@@ -238,6 +436,13 @@ build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
                 ->second->find (_dest_node_ID)
                 ->second->m_path_vec.push_back (_path);
             }
+          else
+            {
+              printf ("No driving path found to connect origin node ID %d and "
+                      "destination node ID %d\n",
+                      _origin_node_ID (), _dest_node_ID ());
+              exit (-1);
+            }
         }
     }
   return _path_table;
@@ -245,56 +450,65 @@ build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
 
 Path_Table *
 build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
-               MNM_Link_Factory *link_factory)
+               MNM_Link_Factory *link_factory, TFlt min_path_length,
+               size_t MaxIter, TFlt vot, TFlt Mid_Scale, TFlt Heavy_Scale,
+               TInt buffer_length)
 {
-  /* setting */
-  size_t MaxIter = 10;
-  TFlt Mid_Scale = 3;
-  TFlt Heavy_Scale = 6;
   // printf("11\n");
+  // MaxIter: maximum iteration to find alternative shortest path, when MaxIter
+  // = 0, just shortest path Mid_Scale and Heavy_Scale are different penalties
+  // to the travel cost of links in existing paths
+  IAssert (vot > 0);
   /* initialize data structure */
+  TInt _dest_node_ID, _origin_node_ID;
   Path_Table *_path_table = new Path_Table ();
   for (auto _o_it = od_factory->m_origin_map.begin ();
        _o_it != od_factory->m_origin_map.end (); _o_it++)
     {
+      _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
       std::unordered_map<TInt, MNM_Pathset *> *_new_map
         = new std::unordered_map<TInt, MNM_Pathset *> ();
       _path_table->insert (
-        std::pair<TInt, std::unordered_map<TInt, MNM_Pathset *>
-                          *> (_o_it->second->m_origin_node->m_node_ID,
-                              _new_map));
+        std::pair<TInt,
+                  std::unordered_map<TInt, MNM_Pathset *> *> (_origin_node_ID,
+                                                              _new_map));
       for (auto _d_it = od_factory->m_destination_map.begin ();
            _d_it != od_factory->m_destination_map.end (); _d_it++)
         {
-          MNM_Pathset *_pathset = new MNM_Pathset ();
-          _new_map->insert (
-            std::pair<TInt, MNM_Pathset *> (_d_it->second->m_dest_node
-                                              ->m_node_ID,
-                                            _pathset));
+          // assume build_demand is called before this function
+          if (_o_it->second->m_demand.find (_d_it->second)
+              != _o_it->second->m_demand.end ())
+            {
+              _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+              MNM_Pathset *_pathset = new MNM_Pathset ();
+              _new_map->insert (
+                std::pair<TInt, MNM_Pathset *> (_dest_node_ID, _pathset));
+            }
         }
     }
 
   // printf("111\n");
   std::unordered_map<TInt, TInt> _mid_shortest_path_tree
     = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _mid_cost_map
+    = std::unordered_map<TInt, TFlt> ();
   std::unordered_map<TInt, TInt> _heavy_shortest_path_tree
     = std::unordered_map<TInt, TInt> ();
   std::unordered_map<TInt, TFlt> _heavy_cost_map
     = std::unordered_map<TInt, TFlt> ();
-  std::unordered_map<TInt, TFlt> _mid_cost_map
-    = std::unordered_map<TInt, TFlt> ();
 
-  TInt _dest_node_ID, _origin_node_ID;
   std::unordered_map<TInt, TFlt> _free_cost_map
     = std::unordered_map<TInt, TFlt> ();
-  std::unordered_map<TInt, TInt> _free_shortest_path_tree;
+  std::unordered_map<TInt, TInt> _free_shortest_path_tree
+    = std::unordered_map<TInt, TInt> ();
   MNM_Path *_path;
   for (auto _link_it = link_factory->m_link_map.begin ();
        _link_it != link_factory->m_link_map.end (); _link_it++)
     {
       _free_cost_map.insert (
         std::pair<TInt, TFlt> (_link_it->first,
-                               _link_it->second->get_link_tt ()));
+                               vot * _link_it->second->get_link_tt ()
+                                 + _link_it->second->m_toll));
     }
   // printf("1111\n");
   for (auto _d_it = od_factory->m_destination_map.begin ();
@@ -306,14 +520,33 @@ build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
       for (auto _o_it = od_factory->m_origin_map.begin ();
            _o_it != od_factory->m_origin_map.end (); _o_it++)
         {
+          if (_o_it->second->m_demand.find (_d_it->second)
+              == _o_it->second->m_demand.end ())
+            {
+              continue;
+            }
           _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
           _path = MNM::extract_path (_origin_node_ID, _dest_node_ID,
                                      _free_shortest_path_tree, graph);
-          if (_path != NULL)
+          if (_path != nullptr)
             {
-              _path_table->find (_origin_node_ID)
-                ->second->find (_dest_node_ID)
-                ->second->m_path_vec.push_back (_path);
+              if (_path->get_path_length (link_factory) > min_path_length)
+                {
+                  if (buffer_length > 0)
+                    {
+                      _path->allocate_buffer (buffer_length);
+                    }
+                  _path_table->find (_origin_node_ID)
+                    ->second->find (_dest_node_ID)
+                    ->second->m_path_vec.push_back (_path);
+                }
+            }
+          else
+            {
+              printf ("No driving path found to connect origin node ID %d and "
+                      "destination node ID %d\n",
+                      _origin_node_ID (), _dest_node_ID ());
+              exit (-1);
             }
         }
     }
@@ -322,37 +555,31 @@ build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
   _heavy_cost_map.insert (_free_cost_map.begin (), _free_cost_map.end ());
 
   MNM_Dlink *_link;
+  MNM_Path *_path_mid, *_path_heavy;
   size_t _CurIter = 0;
   while (_CurIter < MaxIter)
     {
-      printf ("Current interval %d\n", (int) _CurIter);
-      for (auto _d_it = od_factory->m_destination_map.begin ();
-           _d_it != od_factory->m_destination_map.end (); _d_it++)
+      printf ("Current trial %d\n", (int) _CurIter);
+      for (auto _o_it : *_path_table)
         {
-          _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                              _free_cost_map,
-                                              _free_shortest_path_tree);
-          for (auto _o_it = od_factory->m_origin_map.begin ();
-               _o_it != od_factory->m_origin_map.end (); _o_it++)
+          for (auto _d_it : *_o_it.second)
             {
-              _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
-              for (auto &_path : _path_table->find (_origin_node_ID)
-                                   ->second->find (_dest_node_ID)
-                                   ->second->m_path_vec)
+              for (auto &_path : _d_it.second->m_path_vec)
                 {
                   for (auto &_link_ID : _path->m_link_vec)
                     {
                       _link = link_factory->get_link (_link_ID);
-                      _mid_cost_map.find (_link->m_link_ID)->second
-                        = _link->get_link_tt () * Mid_Scale;
-                      _heavy_cost_map.find (_link->m_link_ID)->second
-                        = _link->get_link_tt () * Heavy_Scale;
+                      _mid_cost_map.find (_link_ID)->second
+                        = vot * _link->get_link_tt () * Mid_Scale
+                          + _link->m_toll;
+                      _heavy_cost_map.find (_link_ID)->second
+                        = vot * _link->get_link_tt () * Heavy_Scale
+                          + _link->m_toll;
                     }
                 }
             }
         }
-      MNM_Path *_path_mid, *_path_heavy;
+
       for (auto _d_it = od_factory->m_destination_map.begin ();
            _d_it != od_factory->m_destination_map.end (); _d_it++)
         {
@@ -366,50 +593,88 @@ build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
           for (auto _o_it = od_factory->m_origin_map.begin ();
                _o_it != od_factory->m_origin_map.end (); _o_it++)
             {
+              if (_o_it->second->m_demand.find (_d_it->second)
+                  == _o_it->second->m_demand.end ())
+                {
+                  continue;
+                }
               _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
               _path_mid = MNM::extract_path (_origin_node_ID, _dest_node_ID,
                                              _mid_shortest_path_tree, graph);
               _path_heavy
                 = MNM::extract_path (_origin_node_ID, _dest_node_ID,
                                      _heavy_shortest_path_tree, graph);
-              if (_path_mid != NULL)
+              if (_path_mid != nullptr)
                 {
                   if (!_path_table->find (_origin_node_ID)
                          ->second->find (_dest_node_ID)
                          ->second->is_in (_path_mid))
                     {
-                      _path_table->find (_origin_node_ID)
-                        ->second->find (_dest_node_ID)
-                        ->second->m_path_vec.push_back (_path_mid);
+                      if (_path_mid->get_path_length (link_factory)
+                          > min_path_length)
+                        {
+                          if (buffer_length > 0)
+                            {
+                              _path_mid->allocate_buffer (buffer_length);
+                            }
+                          _path_table->find (_origin_node_ID)
+                            ->second->find (_dest_node_ID)
+                            ->second->m_path_vec.push_back (_path_mid);
+                        }
+                    }
+                  else
+                    {
+                      delete _path_mid;
                     }
                 }
-              if (_path_heavy != NULL)
+              if (_path_heavy != nullptr)
                 {
                   if (!_path_table->find (_origin_node_ID)
                          ->second->find (_dest_node_ID)
                          ->second->is_in (_path_heavy))
                     {
-                      _path_table->find (_origin_node_ID)
-                        ->second->find (_dest_node_ID)
-                        ->second->m_path_vec.push_back (_path_heavy);
+                      if (_path_heavy->get_path_length (link_factory)
+                          > min_path_length)
+                        {
+                          if (buffer_length > 0)
+                            {
+                              _path_heavy->allocate_buffer (buffer_length);
+                            }
+                          _path_table->find (_origin_node_ID)
+                            ->second->find (_dest_node_ID)
+                            ->second->m_path_vec.push_back (_path_heavy);
+                        }
+                    }
+                  else
+                    {
+                      delete _path_heavy;
                     }
                 }
             }
         }
       _CurIter += 1;
     }
+
+  _mid_shortest_path_tree.clear ();
+  _mid_cost_map.clear ();
+  _heavy_shortest_path_tree.clear ();
+  _heavy_cost_map.clear ();
+
+  _free_cost_map.clear ();
+  _free_shortest_path_tree.clear ();
+
   return _path_table;
 }
 
 int
-save_path_table (Path_Table *path_table, MNM_OD_Factory *od_factory,
-                 bool w_buffer)
+save_path_table (const std::string &file_folder, Path_Table *path_table,
+                 MNM_OD_Factory *od_factory, bool w_buffer, bool w_cost)
 {
-  std::string _file_name = "path_table";
+  std::string _path_file_name = file_folder + "/path_table";
   std::ofstream _path_buffer_file;
   if (w_buffer)
     {
-      std::string _data_file_name = "path_table_buffer";
+      std::string _data_file_name = file_folder + "/path_table_buffer";
       _path_buffer_file.open (_data_file_name, std::ofstream::out);
       if (!_path_buffer_file.is_open ())
         {
@@ -417,34 +682,57 @@ save_path_table (Path_Table *path_table, MNM_OD_Factory *od_factory,
         }
     }
   std::ofstream _path_table_file;
-  _path_table_file.open (_file_name, std::ofstream::out);
+  _path_table_file.open (_path_file_name, std::ofstream::out);
   if (!_path_table_file.is_open ())
     {
-      throw std::runtime_error ("failed to open file: " + _file_name);
+      throw std::runtime_error ("failed to open file: " + _path_file_name);
     }
-  TInt _dest_node_ID, _origin_node_ID;
-  for (auto _d_it = od_factory->m_destination_map.begin ();
-       _d_it != od_factory->m_destination_map.end (); _d_it++)
+
+  std::ofstream _path_time_file;
+  // std::ofstream _path_cost_file;
+  std::ofstream _path_disutility_file;
+  if (w_cost)
     {
-      // printf("---\n");
-      _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-      for (auto _o_it = od_factory->m_origin_map.begin ();
-           _o_it != od_factory->m_origin_map.end (); _o_it++)
+      std::string _path_time_file_name = _path_file_name + "_time";
+      _path_time_file.open (_path_time_file_name, std::ofstream::out);
+      if (!_path_time_file.is_open ())
         {
-          _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
-          // printf("----\n");
-          // printf("o node %d, d node %d\n", _origin_node_ID(),
-          // _dest_node_ID());
-          for (auto &_path : path_table->find (_origin_node_ID)
-                               ->second->find (_dest_node_ID)
-                               ->second->m_path_vec)
+          printf ("Error happens when open _path_time_file\n");
+          exit (-1);
+        }
+      // std::string _path_cost_file_name = _path_file_name + "_cost";
+      // _path_cost_file.open(_path_cost_file_name, std::ofstream::out);
+      // if (!_path_cost_file.is_open()){
+      //     printf("Error happens when open _path_cost_file\n");
+      //     exit(-1);
+      // }
+      std::string _path_disutility_file_name = _path_file_name + "_disutility";
+      _path_disutility_file.open (_path_disutility_file_name,
+                                  std::ofstream::out);
+      if (!_path_disutility_file.is_open ())
+        {
+          printf ("Error happens when open _path_disutility_file\n");
+          exit (-1);
+        }
+    }
+
+  for (auto _o_it : *path_table)
+    {
+      for (auto _d_it : *_o_it.second)
+        {
+          for (auto &_path : _d_it.second->m_path_vec)
             {
-              // printf("test\n");
               _path_table_file << _path->node_vec_to_string ();
               // printf("test2\n");
               if (w_buffer)
                 {
                   _path_buffer_file << _path->buffer_to_string ();
+                }
+              if (w_cost)
+                {
+                  _path_time_file << _path->time_vec_to_string ();
+                  // _path_cost_file << _path -> cost_vec_to_string();
+                  _path_disutility_file << _path->disutility_vec_to_string ();
                 }
             }
         }
@@ -454,78 +742,67 @@ save_path_table (Path_Table *path_table, MNM_OD_Factory *od_factory,
     {
       _path_buffer_file.close ();
     }
+  if (w_cost)
+    {
+      _path_time_file.close ();
+      // _path_cost_file.close();
+      _path_disutility_file.close ();
+    }
   return 0;
 }
 
 int
 print_path_table (Path_Table *path_table, MNM_OD_Factory *od_factory,
-                  bool w_buffer)
+                  bool w_buffer, bool w_cost)
 {
-  TInt _dest_node_ID, _origin_node_ID;
-  // printf("ssssssma\n");
-  for (auto _d_it = od_factory->m_destination_map.begin ();
-       _d_it != od_factory->m_destination_map.end (); _d_it++)
+  // TInt _dest_node_ID, _origin_node_ID;
+  // // printf("ssssssma\n");
+  // for (auto _d_it = od_factory->m_destination_map.begin();
+  //      _d_it != od_factory->m_destination_map.end(); _d_it++) {
+  //     // printf("---\n");
+  //     _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+  //     for (auto _o_it = od_factory->m_origin_map.begin(); _o_it !=
+  //     od_factory->m_origin_map.end(); _o_it++) {
+  //         _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+  //         // printf("----\n");
+  //         // printf("o node %d, d node %d\n", _origin_node_ID(),
+  //         _dest_node_ID()); for (auto &_path :
+  //         path_table->find(_origin_node_ID)->second->find(_dest_node_ID)->second->m_path_vec)
+  //         {
+  //             // printf("test\n");
+  //             std::cout << "path: " << _path->node_vec_to_string();
+  //             // printf("test2\n");
+  //             if (w_buffer) {
+  //                 std::cout << "buffer: " << _path->buffer_to_string();
+  //             }
+  //         }
+  //     }
+  // }
+  for (auto _o_it : *path_table)
     {
-      // printf("---\n");
-      _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-      for (auto _o_it = od_factory->m_origin_map.begin ();
-           _o_it != od_factory->m_origin_map.end (); _o_it++)
+      for (auto _d_it : *_o_it.second)
         {
-          _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
-          // printf("----\n");
-          // printf("o node %d, d node %d\n", _origin_node_ID(),
-          // _dest_node_ID());
-          for (auto &_path : path_table->find (_origin_node_ID)
-                               ->second->find (_dest_node_ID)
-                               ->second->m_path_vec)
+          for (auto &_path : _d_it.second->m_path_vec)
             {
-              // printf("test\n");
-              std::cout << "path" << _path->node_vec_to_string ();
+              std::cout << "path: " << _path->node_vec_to_string ();
               // printf("test2\n");
               if (w_buffer)
                 {
-                  std::cout << "buffer" << _path->buffer_to_string ();
+                  std::cout << "buffer: " << _path->buffer_to_string ();
+                }
+              if (w_cost)
+                {
+                  std::cout << "travel time: " << _path->time_vec_to_string ();
+                  // std::cout << "travel cost: " << _path ->
+                  // cost_vec_to_string();
+                  std::cout << "travel disutility: "
+                            << _path->disutility_vec_to_string ();
                 }
             }
         }
     }
   return 0;
 }
-
-// int save_path_table_w_buffer(Path_Table *path_table, MNM_OD_Factory
-// *od_factory)
-// {
-//   std::string _file_name = "path_table";
-//   std::string _data_file_name = "path_buffer";
-//   std::ofstream _path_table_file, _path_buffer_file;
-//   _path_table_file.open(_file_name, std::ofstream::out);
-//   if (!_path_table_file.is_open()){
-//     printf("Error happens when open _path_table_file\n");
-//     exit(-1);
-//   }
-//   _path_buffer_file.open(_data_file_name, std::ofstream::out);
-//   if (!_path_buffer_file.is_open()){
-//     printf("Error happens when open _path_buffer_file\n");
-//     exit(-1);
-//   }
-//   TInt _dest_node_ID, _origin_node_ID;
-//   for (auto _d_it = od_factory -> m_destination_map.begin(); _d_it !=
-//   od_factory -> m_destination_map.end(); _d_it++){
-//     _dest_node_ID = _d_it -> second -> m_dest_node -> m_node_ID;
-//     for (auto _o_it = od_factory -> m_origin_map.begin(); _o_it !=
-//     od_factory -> m_origin_map.end(); _o_it++){
-//       _origin_node_ID = _o_it -> second -> m_origin_node -> m_node_ID;
-//       for (auto &_path : path_table -> find(_origin_node_ID) -> second ->
-//       find(_dest_node_ID) -> second -> m_path_vec){
-//         _path_table_file << _path -> node_vec_to_string();
-//         _path_buffer_file << _path -> buffer_to_string();
-//       }
-//     }
-//   }
-//   _path_table_file.close();
-//   _path_buffer_file.close();
-//   return 0;
-// }
 
 int
 allocate_path_table_buffer (Path_Table *path_table, TInt num)
@@ -596,13 +873,16 @@ int
 get_ID_path_mapping (std::unordered_map<TInt, MNM_Path *> &dict,
                      Path_Table *path_table)
 {
-  for (auto _it : *path_table)
+  if (path_table != nullptr && !path_table->empty ())
     {
-      for (auto _it_it : *(_it.second))
+      for (auto _it : *path_table)
         {
-          for (MNM_Path *_path : _it_it.second->m_path_vec)
+          for (auto _it_it : *(_it.second))
             {
-              dict[_path->m_path_ID] = _path;
+              for (MNM_Path *_path : _it_it.second->m_path_vec)
+                {
+                  dict[_path->m_path_ID] = _path;
+                }
             }
         }
     }

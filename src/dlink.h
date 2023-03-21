@@ -1,9 +1,12 @@
 #ifndef DLINK_H
 #define DLINK_H
 
+#include "enum.h"
+#include "limits.h"
 #include "ults.h"
 #include "vehicle.h"
 
+#include <algorithm>
 #include <deque>
 #include <unordered_map>
 #include <vector>
@@ -20,12 +23,13 @@ class MNM_Cumulative_Curve
 public:
   MNM_Cumulative_Curve ();
   ~MNM_Cumulative_Curve ();
+  // <timestamp, flow>
   std::deque<std::pair<TFlt, TFlt>> m_recorder;
   int add_record (std::pair<TFlt, TFlt> r);
   int add_increment (std::pair<TFlt, TFlt> r);
   TFlt get_result (TFlt time);
   TFlt get_approximated_result (TFlt time);
-  TFlt get_time (TFlt result);
+  TFlt get_time (TFlt result, bool rounding_up = false);
   std::string to_string ();
   int shrink (TInt number);
 
@@ -56,17 +60,31 @@ class MNM_Dlink
 public:
   MNM_Dlink (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs);
   virtual ~MNM_Dlink ();
-  int virtual evolve (TInt timestamp) { return 0; };
-  TFlt virtual get_link_supply () { return TFlt (0); };
-  int virtual clear_incoming_array () { return 0; };
-  void virtual print_info (){};
+
+  virtual int evolve (TInt timestamp) { return 0; };
+  virtual TFlt get_link_supply () { return TFlt (0); };
+  virtual int clear_incoming_array (TInt timestamp) { return 0; };
+  virtual void print_info (){};
   int hook_up_node (MNM_Dnode *from, MNM_Dnode *to);
-  TFlt virtual get_link_flow () { return TFlt (0); };
-  TFlt virtual get_link_tt () { return TFlt (0); };
+  virtual TFlt get_link_flow () { return TFlt (0); };
+  virtual std::vector<TFlt> get_link_flow_emission (TInt ev_label)
+  {
+    std::vector<TFlt> _r = { TFlt (0), TFlt (0) };
+    return _r;
+  };
+  virtual TFlt get_link_tt () { return TFlt (0); };
+  virtual TFlt get_link_tt_from_flow (TFlt flow) { return TFlt (0); };
+  virtual TFlt get_link_freeflow_tt (); // seconds
+  virtual TInt get_link_freeflow_tt_loading ()
+  {
+    return TInt (-1);
+  }; // intervals
 
   int install_cumulative_curve ();
   int install_cumulative_curve_tree ();
+
   // protected:
+  DLink_type m_link_type;
   TInt m_link_ID;
   MNM_Dnode *m_from_node;
   MNM_Dnode *m_to_node;
@@ -78,11 +96,14 @@ public:
 
   MNM_Cumulative_Curve *m_N_in;
   MNM_Cumulative_Curve *m_N_out;
+  TFlt m_last_valid_time = TFlt (-1);
   MNM_Tree_Cumulative_Curve *m_N_in_tree;
   MNM_Tree_Cumulative_Curve *m_N_out_tree;
 
+  TFlt m_toll = 0.;
+
   // protected:
-  int virtual move_veh_queue (std::deque<MNM_Veh *> *from_queue,
+  virtual int move_veh_queue (std::deque<MNM_Veh *> *from_queue,
                               std::deque<MNM_Veh *> *to_queue,
                               TInt number_tomove);
 };
@@ -93,13 +114,16 @@ public:
   MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
                  TInt number_of_lane, TFlt length, TFlt ffs, TFlt unit_time,
                  TFlt flow_scalar);
-  ~MNM_Dlink_Ctm ();
-  int virtual evolve (TInt timestamp) override;
-  TFlt virtual get_link_supply () override;
-  int virtual clear_incoming_array () override;
-  void virtual print_info () override;
-  TFlt virtual get_link_flow () override;
-  TFlt virtual get_link_tt () override;
+  virtual ~MNM_Dlink_Ctm () override;
+  virtual int evolve (TInt timestamp) override;
+  virtual TFlt get_link_supply () override;
+  virtual int clear_incoming_array (TInt timestamp) override;
+  virtual void print_info () override;
+  virtual TFlt get_link_flow () override;
+  virtual std::vector<TFlt> get_link_flow_emission (TInt ev_label) override;
+  virtual TFlt get_link_tt () override;
+  virtual TFlt get_link_tt_from_flow (TFlt flow) override;
+  virtual TInt get_link_freeflow_tt_loading () override; // intervals
 
   // private:
   class Ctm_Cell;
@@ -134,7 +158,7 @@ public:
 };
 
 /**************************************************************************
-                          Poing Queue
+                          Point Queue
 **************************************************************************/
 class MNM_Dlink_Pq : public MNM_Dlink
 {
@@ -142,13 +166,17 @@ public:
   MNM_Dlink_Pq (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
                 TInt number_of_lane, TFlt length, TFlt ffs, TFlt unit_time,
                 TFlt flow_scalar);
-  ~MNM_Dlink_Pq ();
-  int virtual evolve (TInt timestamp) override;
-  TFlt virtual get_link_supply () override;
-  int virtual clear_incoming_array () override;
-  void virtual print_info () override;
-  TFlt virtual get_link_flow () override;
-  TFlt virtual get_link_tt () override;
+  virtual ~MNM_Dlink_Pq () override;
+  virtual int evolve (TInt timestamp) override;
+  virtual TFlt get_link_supply () override;
+  virtual int clear_incoming_array (TInt timestamp) override;
+  virtual void print_info () override;
+  virtual TFlt get_link_flow () override;
+  virtual std::vector<TFlt> get_link_flow_emission (TInt ev_label) override;
+  virtual TFlt get_link_tt () override;
+  virtual TFlt get_link_tt_from_flow (TFlt flow) override;
+  virtual TInt get_link_freeflow_tt_loading () override; // intervals
+
   // private:
   std::deque<std::pair<MNM_Veh *, TInt>> m_veh_queue;
   TInt m_volume; // vehicle number, without the flow scalar
@@ -169,13 +197,17 @@ public:
   MNM_Dlink_Lq (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
                 TInt number_of_lane, TFlt length, TFlt ffs, TFlt unit_time,
                 TFlt flow_scalar);
-  ~MNM_Dlink_Lq ();
-  int virtual evolve (TInt timestamp) override;
-  TFlt virtual get_link_supply () override;
-  int virtual clear_incoming_array () override;
-  void virtual print_info () override;
-  TFlt virtual get_link_flow () override;
-  TFlt virtual get_link_tt () override;
+  virtual ~MNM_Dlink_Lq () override;
+  virtual int evolve (TInt timestamp) override;
+  virtual TFlt get_link_supply () override;
+  virtual int clear_incoming_array (TInt timestamp) override;
+  virtual void print_info () override;
+  virtual TFlt get_link_flow () override;
+  virtual std::vector<TFlt> get_link_flow_emission (TInt ev_label) override;
+  virtual TFlt get_link_tt () override;
+  virtual TFlt get_link_tt_from_flow (TFlt flow) override;
+  virtual TInt get_link_freeflow_tt_loading () override; // intervals
+
   // private:
   std::deque<MNM_Veh *> m_veh_queue;
   TInt m_volume; // vehicle number, without the flow scalar
@@ -201,13 +233,17 @@ public:
   MNM_Dlink_Ltm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
                  TInt number_of_lane, TFlt length, TFlt ffs, TFlt unit_time,
                  TFlt flow_scalar);
-  ~MNM_Dlink_Ltm ();
-  int virtual evolve (TInt timestamp) override;
-  TFlt virtual get_link_supply () override;
-  int virtual clear_incoming_array () override;
-  void virtual print_info () override;
-  TFlt virtual get_link_flow () override;
-  TFlt virtual get_link_tt () override;
+  virtual ~MNM_Dlink_Ltm () override;
+  virtual int evolve (TInt timestamp) override;
+  virtual TFlt get_link_supply () override;
+  virtual int clear_incoming_array (TInt timestamp) override;
+  virtual void print_info () override;
+  virtual TFlt get_link_flow () override;
+  virtual std::vector<TFlt> get_link_flow_emission (TInt ev_label) override;
+  virtual TFlt get_link_tt () override;
+  virtual TFlt get_link_tt_from_flow (TFlt flow) override;
+  virtual TInt get_link_freeflow_tt_loading () override; // intervals
+
   // private:
   std::deque<MNM_Veh *> m_veh_queue;
   MNM_Cumulative_Curve m_N_in2;

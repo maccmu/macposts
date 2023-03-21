@@ -6,6 +6,7 @@
 #include "dnode.h"
 #include "emission.h"
 #include "factory.h"
+#include "gridlock_checker.h"
 #include "io.h"
 #include "od.h"
 #include "pre_routing.h"
@@ -13,30 +14,30 @@
 #include "shortest_path.h"
 #include "statistics.h"
 #include "ults.h"
-
 #include <string>
 
 class MNM_Dta
 {
 public:
-  MNM_Dta (std::string file_folder);
+  explicit MNM_Dta (const std::string &file_folder);
   virtual ~MNM_Dta ();
-  int virtual initialize ();
-  int virtual build_from_files ();
-  bool is_ok ();
+  virtual int initialize ();
+  virtual int build_from_files ();
+  virtual bool is_ok ();
   int hook_up_node_and_link ();
-  int loading (bool verbose);
-  int load_once (bool verbose, TInt load_int, TInt assign_int);
+  virtual int loading (bool verbose);
+  virtual int load_once (bool verbose, TInt load_int, TInt assign_int);
   int test ();
   // private:
-  bool finished_loading (int cur_int);
-  int set_statistics ();
-  int set_routing ();
+  virtual bool finished_loading (int cur_int);
+  virtual int set_statistics ();
+  virtual int set_gridlock_recorder ();
+  virtual int set_routing ();
   int build_workzone ();
   int check_origin_destination_connectivity ();
-  int virtual pre_loading ();
+  virtual int pre_loading ();
 
-  int record_queue_vehicles ();
+  virtual int record_queue_vehicles ();
   int record_enroute_vehicles ();
 
   TInt m_start_assign_interval;
@@ -44,6 +45,7 @@ public:
   TFlt m_unit_time;
   TFlt m_flow_scalar;
   TInt m_assign_freq;
+  TInt m_init_demand_split;
   std::string m_file_folder;
   MNM_ConfReader *m_config;
   MNM_Veh_Factory *m_veh_factory;
@@ -52,6 +54,7 @@ public:
   MNM_OD_Factory *m_od_factory;
   PNEGraph m_graph;
   MNM_Statistics *m_statistics;
+  MNM_Gridlock_Link_Recorder *m_gridlock_recorder;
   MNM_Routing *m_routing;
   MNM_Workzone *m_workzone;
   TInt m_current_loading_interval;
@@ -68,6 +71,7 @@ namespace MNM
 int print_vehicle_statistics (MNM_Veh_Factory *veh_factory);
 int print_vehicle_info (MNM_Veh_Factory *veh_factory);
 bool has_running_vehicle (MNM_Veh_Factory *veh_factory);
+// int round_time(int start_time_stamp, TFlt travel_time, TInt max_interval);
 }
 
 #endif

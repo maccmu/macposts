@@ -21,10 +21,10 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
 
   // for (auto _ops = _path_table -> begin();_ops != _path_table ->end();
   // _ops++){ 	_oid = _ops -> first; 	for (auto _dps = _ops -> second ->
-  // begin(); _dps != _ops -> second -> end(); _dps++){ 		_did =
-  // _dps
-  // -> first; 		_pset = _dps -> second; 		if (_pset ->
-  // m_path_vec.size() ==0) 			continue; 		else{
+  // begin();
+  // _dps != _ops -> second -> end(); _dps++){ 		_did = _dps -> first;
+  // _pset = _dps -> second; 		if (_pset -> m_path_vec.size() ==0)
+  // continue; 		else{
 
   for (auto _d_it = od_factory->m_destination_map.begin ();
        _d_it != od_factory->m_destination_map.end (); _d_it++)
@@ -42,11 +42,9 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
           if (demand_it != _o_it->second->m_demand.end ())
             {
               TFlt *demand = demand_it->second;
-              // int size_demand =
-              // sizeof(demand)/sizeof(demand[0]);
+              // int size_demand = sizeof(demand)/sizeof(demand[0]);
 
-              // std::cout<< "length of demand " <<size_demand
-              // <<std::endl;
+              // std::cout<< "length of demand " <<size_demand <<std::endl;
               TFlt *demand_copy = new TFlt[size_demand];
               for (int demand_it = 0; demand_it < size_demand; demand_it++)
                 {
@@ -66,8 +64,7 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
                   int _path_size = path_table->at (_origin_node_ID)
                                      ->at (_dest_node_ID)
                                      ->m_path_vec.size ();
-                  // std::cout<<"Path Set Size:" <<
-                  // _path_size <<std::endl;
+                  // std::cout<<"Path Set Size:" << _path_size <<std::endl;
 
                   for (int _k = 1; _k < _path_size; _k++)
                     {
@@ -97,8 +94,7 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
                   int _path_size = path_table->at (_origin_node_ID)
                                      ->at (_dest_node_ID)
                                      ->m_path_vec.size ();
-                  // std::cout<<"Path Set Size:" <<
-                  // _path_size <<std::endl;
+                  // std::cout<<"Path Set Size:" << _path_size <<std::endl;
 
                   for (int _k = 1; _k < _path_size; _k++)
                     {
@@ -168,15 +164,14 @@ MNM_Pre_Routing::reassign_routing (TInt oid, TInt did, TInt pid, TInt interval,
           _path_demand->second[interval]
             = (1 - lambda) * _path_demand->second[interval]
               + lambda * _total_demand;
-          // std::cout <<  _path_demand -> first << "path : "
-          // <<(1-lambda) * _path_demand -> second[interval] + lambda
-          // * _total_demand << std::endl;
+          // std::cout <<  _path_demand -> first << "path : " <<(1-lambda) *
+          // _path_demand -> second[interval] + lambda * _total_demand <<
+          // std::endl;
         }
       else
         {
-          // std::cout <<_path_demand -> first << "low path : " <<
-          // (1-lambda) * _path_demand -> second[interval]<<
-          // std::endl;
+          // std::cout <<_path_demand -> first << "low path : " << (1-lambda) *
+          // _path_demand -> second[interval]<< std::endl;
           _path_demand->second[interval]
             = (1 - lambda) * _path_demand->second[interval];
         }
@@ -233,6 +228,7 @@ MNM_Pre_Routing::update_routing_table_MSA (MNM_PMC_Table pmc_table,
 {
   // TODO, not only need to update the routing table, but also the demand of OD
   // when no departure time choice
+  // MNM::routing_table_multiply(routing_table,1-lambda);
   return 0;
 }
 
@@ -266,3 +262,37 @@ MNM_Pre_Routing::test_function ()
 {
   return 0;
 }
+
+/**************************************************************************
+                          help functions
+**************************************************************************/
+#if 0
+int
+routing_table_multiply (
+  std::unordered_map<TInt,
+                     std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>>
+    *routing_table,
+  float lambda)
+{
+  for (auto _rt_it = routing_table->begin (); _rt_it != routing_table->end ();
+       _rt_it++)
+    {
+      for (auto _rt_dit = _rt_it->second.begin ();
+           _rt_dit != _rt_it->second.end (); _rt_dit++)
+        {
+          for (auto _demand_it = _rt_dit->second.begin ();
+               _demand_it != _rt_dit->second.end (); _demand_it++)
+            {
+              TFlt *this_demand = _demand_it->second;
+              // FIXME: We should probably use a vector here.
+              int demand_size = sizeof (this_demand) / sizeof (this_demand[0]);
+              for (int d_it = 0; d_it < demand_size; d_it++)
+                {
+                  this_demand[d_it] *= lambda;
+                }
+            }
+        }
+    }
+  return 0;
+}
+#endif

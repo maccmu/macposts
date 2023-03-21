@@ -47,8 +47,7 @@ MNM_Link_Vms::hook_path (Path_Table *path_table)
             {
               for (TInt _link_ID : m_out_link_vec)
                 {
-                  // printf("Current link is %d\n",
-                  // _link_ID);
+                  // printf("Current link is %d\n", _link_ID);
                   if (std::find (_path->m_link_vec.begin (),
                                  _path->m_link_vec.end (), _link_ID)
                       != _path->m_link_vec.end ())
@@ -172,8 +171,8 @@ generate_vms_instructions (std::string file_name, MNM_Vms_Factory *vms_factory,
         {
           _info = std::string ("Congestion ahead, take next exit to link ")
                   + std::to_string (_vms->m_detour_link_ID)
-                  + "(The suggestion should be paired with DMS on "
-                    "the arterials guiding drivers).\n";
+                  + "(The suggestion should be paired with DMS on the "
+                    "arterials guiding drivers).\n";
         }
       else
         {

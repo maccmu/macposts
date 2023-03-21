@@ -1,10 +1,13 @@
 #ifndef ULTS_H
 #define ULTS_H
 
-#include <map>
-#include <string>
-
 #include <Snap.h>
+
+#include <cstdlib>
+#include <fstream>
+#include <map>
+#include <sstream>
+#include <string>
 
 template <> struct std::hash<TInt>
 {
@@ -27,6 +30,14 @@ TFlt rand_flt ();
 TFlt max_link_cost ();
 int copy_file (const char *srce_file, const char *dest_file);
 int copy_file (std::string srce_file, std::string dest_file);
+
+float roundoff (float value, unsigned char prec);
+bool approximate_equal (TFlt a, TFlt b, float p = 1e-4);
+bool approximate_less_than (TFlt a, TFlt b, float p = 1e-4);
+
+int round_up_time (TFlt time, float p = 1e-4);
+int round_down_time (TFlt time);
+PNEGraph reverse_graph (const PNEGraph &graph);
 }
 
 class Chameleon
@@ -73,12 +84,12 @@ public:
 class MNM_ConfReader
 {
 public:
-  MNM_ConfReader (std::string, std::string);
+  MNM_ConfReader (const std::string &, std::string);
   ~MNM_ConfReader ();
 
-  TInt get_int (std::string);
-  std::string get_string (std::string);
-  TFlt get_float (std::string);
+  TInt get_int (const std::string &);
+  std::string get_string (const std::string &);
+  TFlt get_float (const std::string &);
 
   /* data */
   ConfigFile *m_configFile;

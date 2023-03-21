@@ -7,6 +7,11 @@ MNM_Veh_Factory::MNM_Veh_Factory ()
 {
   m_veh_map = std::unordered_map<TInt, MNM_Veh *> ();
   m_num_veh = TInt (0);
+
+  m_enroute = TInt (0);
+  m_finished = TInt (0);
+
+  m_total_time = TFlt (0);
 }
 
 MNM_Veh_Factory::~MNM_Veh_Factory ()
@@ -29,7 +34,37 @@ MNM_Veh_Factory::make_veh (TInt timestamp, Vehicle_type veh_type)
   _veh->m_type = veh_type;
   m_veh_map.insert (std::pair<TInt, MNM_Veh *> (m_num_veh + 1, _veh));
   m_num_veh += 1;
+  m_enroute += 1;
   return _veh;
+}
+
+int
+MNM_Veh_Factory::remove_finished_veh (MNM_Veh *veh, bool del)
+{
+  if (m_veh_map.find (veh->m_veh_ID) == m_veh_map.end ()
+      || m_veh_map.find (veh->m_veh_ID)->second != veh)
+    {
+      printf ("veh not in factory!\n");
+      exit (-1);
+    }
+
+  if (del)
+    {
+      m_veh_map.erase (veh->m_veh_ID);
+    }
+
+  IAssert (veh->m_finish_time > veh->m_start_time);
+  m_total_time += (veh->m_finish_time - veh->m_start_time);
+
+  if (del)
+    {
+      delete veh;
+    }
+
+  m_finished += 1;
+  m_enroute -= 1;
+  IAssert (m_num_veh == m_finished + m_enroute);
+  return 0;
 }
 
 /**************************************************************************
@@ -84,7 +119,7 @@ MNM_Node_Factory::get_node (TInt ID)
     {
       printf ("No such node ID %d\n", (int) ID);
       throw std::runtime_error (
-        "Error, MNM_Node_Factory::get_node, node not exists");
+        "Error, MNM_Node_Factory::get_node, node does not exist");
     }
   return _node_it->second;
 }
@@ -150,7 +185,7 @@ MNM_Link_Factory::get_link (TInt ID)
   if (_link_it == m_link_map.end ())
     {
       throw std::runtime_error (
-        "Error, MNM_Link_Factory::get_link, link not exists");
+        "Error, MNM_Link_Factory::get_link, link does not exist");
     }
   return _link_it->second;
 }
@@ -217,8 +252,7 @@ MNM_OD_Factory::get_destination (TInt ID)
   if (_d_it == m_destination_map.end ())
     {
       throw std::runtime_error (
-        "Error, MNM_OD_Factory::get_destination, destination not "
-        "exists");
+        "Error, MNM_OD_Factory::get_destination, destination does not exist");
     }
   return _d_it->second;
 }
@@ -230,7 +264,34 @@ MNM_OD_Factory::get_origin (TInt ID)
   if (_o_it == m_origin_map.end ())
     {
       throw std::runtime_error (
-        "Error, MNM_OD_Factory::get_origin, origin not exists");
+        "Error, MNM_OD_Factory::get_origin, origin does not exist");
     }
   return _o_it->second;
+}
+
+std::pair<MNM_Origin *, MNM_Destination *>
+MNM_OD_Factory::get_random_od_pair ()
+{
+  MNM_Origin *_origin;
+  MNM_Destination *_dest;
+
+  auto _origin_it = m_origin_map.begin ();
+  int random_index = rand () % m_origin_map.size ();
+  std::advance (_origin_it, random_index);
+
+  _origin = _origin_it->second;
+  while (_origin->m_demand.empty ())
+    {
+      _origin_it = m_origin_map.begin ();
+      random_index = rand () % m_origin_map.size ();
+      std::advance (_origin_it, random_index);
+      _origin = _origin_it->second;
+    }
+
+  auto _dest_it = _origin->m_demand.begin ();
+  random_index = rand () % _origin->m_demand.size ();
+  std::advance (_dest_it, random_index);
+  _dest = _dest_it->first;
+
+  return std::pair<MNM_Origin *, MNM_Destination *> (_origin, _dest);
 }

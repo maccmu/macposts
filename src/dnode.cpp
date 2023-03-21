@@ -1,8 +1,5 @@
 #include "dnode.h"
-
 #include "path.h"
-
-#include <algorithm>
 
 MNM_Dnode::MNM_Dnode (TInt ID, TFlt flow_scalar)
 {
@@ -25,7 +22,7 @@ MNM_Dnode::~MNM_Dnode ()
 MNM_DMOND::MNM_DMOND (TInt ID, TFlt flow_scalar)
     : MNM_Dnode::MNM_Dnode (ID, flow_scalar)
 {
-  m_origin = NULL;
+  m_origin = nullptr;
   m_out_volume = std::unordered_map<MNM_Dlink *, TInt> ();
   m_in_veh_queue = std::deque<MNM_Veh *> ();
 }
@@ -56,7 +53,7 @@ MNM_DMOND::evolve (TInt timestamp)
       m_out_volume.find (_link)->second += 1;
       _que_it++;
     }
-
+  /* compare outflow with the capacity */
   for (unsigned i = 0; i < m_out_link_array.size (); ++i)
     {
       _link = m_out_link_array[i];
@@ -72,19 +69,18 @@ MNM_DMOND::evolve (TInt timestamp)
   for (unsigned i = 0; i < m_out_link_array.size (); ++i)
     {
       _link = m_out_link_array[i];
-      if (_link->m_N_in != NULL)
+      if (_link->m_N_in != nullptr && m_out_volume.find (_link)->second > 0)
         {
           _link->m_N_in->add_increment (
             std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
                                    TFlt (m_out_volume.find (_link)->second)
                                      / m_flow_scalar));
         }
-      if (m_in_veh_queue.size () != 0)
-        {
-          // printf("In node %d, %d veh to move to link %d, total veh
-          // %d \n", m_node_ID, m_out_volume.find(_link) -> second,
-          // _link -> m_link_ID, m_in_veh_queue.size());
-        }
+      //    if (!m_in_veh_queue.empty()){
+      //        printf("In node %d, %d veh to move to link %d, total veh %d \n",
+      //        m_node_ID, m_out_volume.find(_link) -> second, _link ->
+      //        m_link_ID, m_in_veh_queue.size());
+      //    }
       _que_it = m_in_veh_queue.begin ();
       while (_que_it != m_in_veh_queue.end ())
         {
@@ -96,7 +92,9 @@ MNM_DMOND::evolve (TInt timestamp)
                 {
                   _to_link->m_incoming_array.push_back (_veh);
                   (_veh)->set_current_link (_to_link);
-                  _que_it = m_in_veh_queue.erase (_que_it); // c++ 11
+                  _que_it = m_in_veh_queue.erase (
+                    _que_it); // c++ 11, erase during loop,
+                              // https://en.cppreference.com/w/cpp/container/deque/erase
                   m_out_volume.find (_to_link)->second -= 1;
                 }
               else
@@ -111,6 +109,15 @@ MNM_DMOND::evolve (TInt timestamp)
         }
     }
 
+  // for (unsigned i=0; i<m_out_link_array.size(); ++i){
+  //   _link = m_out_link_array[i];
+  //   if (m_out_volume.find(_link) -> second != 0){
+  //     printf("Something wrong in moving vehicles on DMOND\n");
+  //     printf("Remaining out volume in link %d is %d\n", (int)_link ->
+  //     m_link_ID, (int)m_out_volume.find(_link) -> second); exit(-1);
+  //   }
+  // }
+  // printf("Finish MNM_DMOND evolve\n");
   return 0;
 }
 
@@ -142,7 +149,7 @@ MNM_DMOND::hook_up_origin (MNM_Origin *origin)
 MNM_DMDND::MNM_DMDND (TInt ID, TFlt flow_scalar)
     : MNM_Dnode::MNM_Dnode (ID, flow_scalar)
 {
-  m_dest = NULL;
+  m_dest = nullptr;
 }
 
 MNM_DMDND::~MNM_DMDND () { m_out_veh_queue.clear (); }
@@ -166,7 +173,7 @@ MNM_DMDND::evolve (TInt timestamp)
     {
       _link = m_in_link_array[i];
       _size = _link->m_finished_array.size ();
-      if (_link->m_N_out != NULL)
+      if (_link->m_N_out != nullptr && _size > 0)
         {
           _link->m_N_out->add_increment (
             std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
@@ -175,12 +182,12 @@ MNM_DMDND::evolve (TInt timestamp)
       for (size_t j = 0; j < _size; ++j)
         {
           _veh = _link->m_finished_array.front ();
-          if (_veh->get_next_link () != NULL)
+          if (_veh->get_next_link () != nullptr)
             {
               throw std::runtime_error ("invalid vehicle state");
             }
           m_out_veh_queue.push_back (_veh);
-          _veh->set_current_link (NULL);
+          _veh->set_current_link (nullptr);
           _link->m_finished_array.pop_front ();
         }
     }
@@ -206,21 +213,21 @@ MNM_DMDND::hook_up_destination (MNM_Destination *dest)
 MNM_Dnode_Inout::MNM_Dnode_Inout (TInt ID, TFlt flow_scalar)
     : MNM_Dnode::MNM_Dnode (ID, flow_scalar)
 {
-  m_demand = NULL;
-  m_supply = NULL;
-  m_veh_flow = NULL;
-  m_veh_tomove = NULL;
+  m_demand = nullptr;
+  m_supply = nullptr;
+  m_veh_flow = nullptr;
+  m_veh_tomove = nullptr;
 }
 
 MNM_Dnode_Inout::~MNM_Dnode_Inout ()
 {
-  if (m_demand != NULL)
+  if (m_demand != nullptr)
     free (m_demand);
-  if (m_supply != NULL)
+  if (m_supply != nullptr)
     free (m_supply);
-  if (m_veh_flow != NULL)
+  if (m_veh_flow != nullptr)
     free (m_veh_flow);
-  if (m_veh_tomove != NULL)
+  if (m_veh_tomove != nullptr)
     free (m_veh_tomove);
 }
 
@@ -231,8 +238,11 @@ MNM_Dnode_Inout::prepare_loading ()
   TInt _num_out = m_out_link_array.size ();
   // printf("node id %d, num_in: %d, num_out: %d\n",m_node_ID(), _num_in(),
   // _num_out());
-  m_demand = (TFlt *) malloc (sizeof (TFlt) * _num_in * _num_out);
-  memset (m_demand, 0x0, sizeof (TFlt) * _num_in * _num_out);
+  m_demand = (TFlt *) malloc (
+    sizeof (TFlt) * _num_in
+    * _num_out); // create m_demand, maybe use static_cast<TFlt*>
+  memset (m_demand, 0x0,
+          sizeof (TFlt) * _num_in * _num_out); // initialize m_demand
   m_supply = (TFlt *) malloc (sizeof (TFlt) * _num_out);
   memset (m_supply, 0x0, sizeof (TFlt) * _num_out);
   m_veh_flow = (TFlt *) malloc (sizeof (TFlt) * _num_in * _num_out);
@@ -268,8 +278,7 @@ MNM_Dnode_Inout::prepare_supplyANDdemand ()
       for (size_t j = 0; j < m_out_link_array.size (); ++j)
         {
           _out_link = m_out_link_array[j];
-          // printf("Current out link is %d\n", _out_link ->
-          // m_link_ID);
+          // printf("Current out link is %d\n", _out_link -> m_link_ID);
           _count = 0;
 
           for (_veh_it = _in_link->m_finished_array.begin ();
@@ -302,8 +311,8 @@ MNM_Dnode_Inout::round_flow_to_vehicle ()
 {
   // printf("MNM_Dnode_Inout::round_flow_to_vehicle\n");
   // the rounding mechanism may cause the lack of vehicle in m_finished_array
-  // but demand is always a integer and only supply can be float, so don't
-  // need to worry about it
+  // but demand is always a integer and only supply can be float, so don't need
+  // to worry about it
   size_t _offset = m_out_link_array.size ();
   MNM_Dlink *_out_link;
   TInt _to_move;
@@ -317,24 +326,22 @@ MNM_Dnode_Inout::round_flow_to_vehicle ()
           m_veh_tomove[i * _offset + j]
             = MNM_Ults::round (m_veh_flow[i * _offset + j] * m_flow_scalar);
           _to_move += m_veh_tomove[i * _offset + j];
-          // printf("Rounding %d, %d the value %f to %d\n", i, j,
-          // m_veh_flow[i * _offset + j] * m_flow_scalar,
-          // m_veh_tomove[i * _offset + j]);
+          // printf("Rounding %d, %d the value %f to %d\n", i, j, m_veh_flow[i *
+          // _offset + j] * m_flow_scalar, m_veh_tomove[i * _offset + j]);
         }
-      // printf("Going to loop %d vs supply %lf\n", _to_move, _out_link
-      // -> get_link_supply());
+      // printf("Going to loop %d vs supply %lf\n", _to_move, _out_link ->
+      // get_link_supply());
       while (TFlt (_to_move) > (_out_link->get_link_supply () * m_flow_scalar))
         {
-          _rand_idx = std::rand () % m_in_link_array.size ();
+          _rand_idx = rand () % m_in_link_array.size ();
           if (m_veh_tomove[_rand_idx * _offset + j] >= 1)
             {
               m_veh_tomove[_rand_idx * _offset + j] -= 1;
               _to_move -= 1;
             }
         }
-      // printf("Rounding %d, %d the value %f to %d\n", i, j,
-      // m_veh_flow[i * _offset + j] * m_flow_scalar, m_veh_tomove[i *
-      // _offset + j]);
+      // printf("Rounding %d, %d the value %f to %d\n", i, j, m_veh_flow[i *
+      // _offset + j] * m_flow_scalar, m_veh_tomove[i * _offset + j]);
     }
   return 0;
 }
@@ -357,10 +364,10 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
           _num_to_move = m_veh_tomove[i * _offset + j];
           _temp_sum += _num_to_move;
         }
-      if (_out_link->m_N_out != NULL)
+      if (_out_link->m_N_out != nullptr && _temp_sum > 0)
         {
-          // printf("record out link cc: link ID %d, time %d, value
-          // %f\n", _out_link -> m_link_ID(), timestamp()+1, (float)
+          // printf("record out link cc: link ID %d, time %d, value %f\n",
+          // _out_link -> m_link_ID(), timestamp()+1, (float)
           // TFlt(_temp_sum)/m_flow_scalar);
           _out_link->m_N_in->add_increment (
             std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
@@ -378,10 +385,10 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
           _num_to_move = m_veh_tomove[i * _offset + j];
           _temp_sum += _num_to_move;
         }
-      if (_in_link->m_N_in != NULL)
+      if (_in_link->m_N_in != nullptr && _temp_sum > 0)
         {
-          // printf("record in link cc: link ID %d, time %d, value
-          // %f\n", _in_link -> m_link_ID(), timestamp()+1, (float)
+          // printf("record in link cc: link ID %d, time %d, value %f\n",
+          // _in_link -> m_link_ID(), timestamp()+1, (float)
           // TFlt(_temp_sum)/m_flow_scalar);
           _in_link->m_N_out->add_increment (
             std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
@@ -400,13 +407,42 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
   size_t _offset = m_out_link_array.size ();
   TInt _num_to_move;
 
+  std::vector<size_t> _in_link_ind_array = std::vector<size_t> ();
+  for (size_t i = 0; i < m_in_link_array.size (); ++i)
+    {
+      _in_link_ind_array.push_back (i);
+    }
+
   for (size_t j = 0; j < m_out_link_array.size (); ++j)
     {
       _out_link = m_out_link_array[j];
-      for (size_t i = 0; i < m_in_link_array.size (); ++i)
+
+      // shuffle the in links, reserve the FIFO
+      std::random_device rng; // random sequence
+      std::shuffle (_in_link_ind_array.begin (), _in_link_ind_array.end (),
+                    rng);
+      for (size_t i : _in_link_ind_array)
         {
+          // for (size_t i=0; i<m_in_link_array.size(); ++i) {
           _in_link = m_in_link_array[i];
           _num_to_move = m_veh_tomove[i * _offset + j];
+          // printf("In node %d, from link %d to link %d, %d to move\n",
+          // m_node_ID, _in_link ->m_link_ID, _out_link->m_link_ID,
+          // _num_to_move); for (size_t k=0; k<_size; ++k){
+          //   if (_num_to_move > 0){
+          //     _veh = _in_link->m_finished_array[k];
+          //     if (_veh -> get_next_link() == _out_link){
+          //       _out_link ->m_incoming_array.push_back(_veh);
+          //       _veh -> set_current_link(_out_link);
+          //       // _in_link -> m_finished_array.pop_front();
+
+          //       _num_to_move -= 1;
+          //     }
+          //   }
+          //   else{
+          //     break; // break the inner most structure
+          //   }
+          // }
           auto _veh_it = _in_link->m_finished_array.begin ();
           while (_veh_it != _in_link->m_finished_array.end ())
             {
@@ -420,14 +456,14 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
                       _veh_it
                         = _in_link->m_finished_array.erase (_veh_it); // c++ 11
                       _num_to_move -= 1;
-                      if (_out_link->m_N_in_tree != NULL)
+                      if (_out_link->m_N_in_tree != nullptr)
                         {
                           _out_link->m_N_in_tree
                             ->add_flow (TFlt (timestamp + 1),
                                         TFlt (1) / m_flow_scalar, _veh->m_path,
                                         _veh->m_assign_interval);
                         }
-                      if (_in_link->m_N_out_tree != NULL)
+                      if (_in_link->m_N_out_tree != nullptr)
                         {
                           _in_link->m_N_out_tree
                             ->add_flow (TFlt (timestamp + 1),
@@ -450,11 +486,11 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
               throw std::runtime_error ("invalid state when moving vehicles");
             }
         }
-      // TODO: make the queue randomly perturbed, may not be true in signal
-      // controlled intersection
-      std::random_shuffle (_out_link->m_incoming_array.begin (),
-                           _out_link->m_incoming_array.end ());
+      // make the queue randomly perturbed, may not be true in signal controlled
+      // intersection, violate FIFO random_shuffle(_out_link ->
+      // m_incoming_array.begin(), _out_link -> m_incoming_array.end());
     }
+  _in_link_ind_array.clear ();
   return 0;
 }
 
@@ -504,7 +540,7 @@ MNM_Dnode_FWJ::MNM_Dnode_FWJ (TInt ID, TFlt flow_scalar)
 {
 }
 
-MNM_Dnode_FWJ::~MNM_Dnode_FWJ () {}
+MNM_Dnode_FWJ::~MNM_Dnode_FWJ () { ; }
 
 void
 MNM_Dnode_FWJ::print_info ()
@@ -528,14 +564,12 @@ MNM_Dnode_FWJ::compute_flow ()
       for (size_t i = 0; i < m_in_link_array.size (); ++i)
         {
           _portion = MNM_Ults::divide (m_demand[i * _offset + j], _sum_in_flow);
-          // printf("Portion is %.4f, sum in flow is %.4f, demand is
-          // %.4f\n", _portion, _sum_in_flow, m_demand[i * _offset +
-          // j]);
+          // printf("Portion is %.4f, sum in flow is %.4f, demand is %.4f\n",
+          // _portion, _sum_in_flow, m_demand[i * _offset + j]);
           m_veh_flow[i * _offset + j]
             = MNM_Ults::min (m_demand[i * _offset + j], _portion * m_supply[j]);
-          // printf("to link %d the flow is %.4f\n",
-          // m_out_link_array[j] -> m_link_ID, m_veh_flow[i * _offset
-          // + j]);
+          // printf("to link %d the flow is %.4f\n", m_out_link_array[j] ->
+          // m_link_ID, m_veh_flow[i * _offset + j]);
         }
     }
   return 0;
@@ -597,9 +631,8 @@ MNM_Dnode_GRJ::compute_flow ()
         {
           m_veh_flow[i * _offset + j]
             = _f_a * MNM_Ults::divide (m_demand[i * _offset + j], m_supply[j]);
-          // printf("to link %d the flow is %.4f\n",
-          // m_out_link_array[j] -> m_link_ID, m_veh_flow[i * _offset
-          // + j]);
+          // printf("to link %d the flow is %.4f\n", m_out_link_array[j] ->
+          // m_link_ID, m_veh_flow[i * _offset + j]);
         }
     }
   // printf("return\n");
@@ -707,9 +740,9 @@ MNM_Dnode_GRJ::get_theta ()
                                              m_supply[j]);
                 }
             }
-          // printf("for j is %d, the value of cal is %lf, s is %lf,
-          // up is %lf, down is %lf\n", j, (m_supply[j] - _up)/_down
-          // ,m_supply[j](), _up(), _down());
+          // printf("for j is %d, the value of cal is %lf, s is %lf, up is %lf,
+          // down is %lf\n", j, (m_supply[j] - _up)/_down ,m_supply[j](), _up(),
+          // _down());
           _temp3.push_back ((m_supply[j] - _up) / _down);
         }
       _temp2.push_back (*max_element (_temp3.begin (), _temp3.end ()));

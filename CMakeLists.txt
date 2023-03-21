@@ -23,28 +23,30 @@ set_property(TARGET snap PROPERTY POSITION_INDEPENDENT_CODE ON)
 # guide at the top of this file.
 add_library(macposts STATIC
   src/cc_tree.cpp
-  src/due.cpp
-  src/pre_routing.cpp
-  src/statistics.cpp
   src/dlink.cpp
-  src/emission.cpp
-  src/marginal_cost.cpp
-  src/realtime_dta.cpp
-  src/ults.cpp
   src/dnode.cpp
-  src/factory.cpp
-  src/multiclass.cpp
-  src/routing.cpp
-  src/vehicle.cpp
+  src/dso.cpp
   src/dta.cpp
-  src/gridlock_checker.cpp
-  src/od.cpp
-  src/shortest_path.cpp
-  src/vms.cpp
   src/dta_gradient_utls.cpp
+  src/due.cpp
+  src/emission.cpp
+  src/factory.cpp
+  src/gridlock_checker.cpp
   src/io.cpp
+  src/marginal_cost.cpp
+  src/multiclass.cpp
+  src/multimodal.cpp
+  src/od.cpp
   src/path.cpp
+  src/pre_routing.cpp
+  src/realtime_dta.cpp
+  src/routing.cpp
+  src/shortest_path.cpp
   src/so_routing.cpp
+  src/statistics.cpp
+  src/ults.cpp
+  src/vehicle.cpp
+  src/vms.cpp
   src/workzone.cpp
   )
 target_link_libraries(macposts

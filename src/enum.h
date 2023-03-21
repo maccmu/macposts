@@ -44,4 +44,49 @@ enum DLink_type_multiclass
   MNM_TYPE_PQ_MULTICLASS
 };
 
+enum DNode_type_multimodal
+{
+  MNM_TYPE_ORIGIN_MULTIMODAL,
+  MNM_TYPE_DEST_MULTIMODAL,
+  MNM_TYPE_FWJ_MULTIMODAL
+};
+enum DLink_type_multimodal
+{
+  MNM_TYPE_CTM_MULTIMODAL,
+  MNM_TYPE_PQ_MULTIMODAL,
+  MNM_TYPE_BUS_MULTIMODAL,
+  MNM_TYPE_WALKING_MULTIMODAL
+};
+
+enum MMDue_mode
+{
+  driving,
+  transit,
+  pnr,
+  rnd,
+  rh,
+  bus_route
+};
+enum MMDue_mode_driving
+{
+  solo,
+  cp2
+};
+enum MMDue_mode_transit
+{
+  bus,
+  metro
+};
+enum MMDue_mode_pnr
+{
+  p1,
+  p2,
+  p3
+};
+enum MMDue_mode_rh
+{
+  rh_only,
+  rh_metro
+};
+
 #endif

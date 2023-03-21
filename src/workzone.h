@@ -4,6 +4,7 @@
 #include "Snap.h"
 #include "dlink.h"
 #include "factory.h"
+#include <algorithm>
 
 struct Link_Workzone
 {

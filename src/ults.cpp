@@ -1,8 +1,3 @@
-#include <fstream>
-#include <sstream>
-#include <stdlib.h>
-#include <string>
-
 #include "ults.h"
 
 namespace MNM_Ults
@@ -88,6 +83,97 @@ int
 copy_file (std::string srce_file, std::string dest_file)
 {
   return MNM_Ults::copy_file (srce_file.c_str (), dest_file.c_str ());
+}
+
+float
+roundoff (float value, unsigned char prec)
+{
+  float pow_10 = pow (10.0f, (float) prec);
+  return round (value * pow_10) / pow_10;
+}
+
+bool
+approximate_equal (TFlt a, TFlt b, float p)
+{
+  // approximately equal,
+  // https://stackoverflow.com/questions/17333/what-is-the-most-effective-way-for-float-and-double-comparison
+  if (fabs (a - b) <= p * max (fabs (a), fabs (b)))
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+bool
+approximate_less_than (TFlt a, TFlt b, float p)
+{
+  return a + p * max (abs (a), abs (b)) < b;
+}
+
+int
+round_up_time (TFlt time, float p)
+{
+  if (time < 1)
+    {
+      return 1;
+    }
+  else
+    {
+      IAssert (int (time) >= 1);
+      if (approximate_equal (time, TFlt (int (time)), p))
+        {
+          return int (time);
+        }
+      else
+        {
+          IAssert (int (time) + 1 > time);
+          return int (time) + 1;
+        }
+    }
+}
+
+int
+round_down_time (TFlt time)
+{
+  if (time < 1)
+    {
+      return 1;
+    }
+  else
+    {
+      IAssert (int (time) >= 1);
+      return int (time);
+    }
+}
+
+PNEGraph
+reverse_graph (const PNEGraph &graph)
+{
+  PNEGraph reversed_graph = PNEGraph::TObj::New ();
+  if (graph->GetEdges () > 0)
+    {
+      int _link_ID, _from_node_ID, _to_node_ID;
+      for (auto _edge_it = graph->BegEI (); _edge_it < graph->EndEI ();
+           _edge_it++)
+        {
+          _link_ID = _edge_it.GetId ();
+          _from_node_ID = _edge_it.GetSrcNId ();
+          _to_node_ID = _edge_it.GetDstNId ();
+          if (!reversed_graph->IsNode (_from_node_ID))
+            {
+              reversed_graph->AddNode (_from_node_ID);
+            }
+          if (!reversed_graph->IsNode (_to_node_ID))
+            {
+              reversed_graph->AddNode (_to_node_ID);
+            }
+          reversed_graph->AddEdge (_to_node_ID, _from_node_ID, _link_ID);
+        }
+    }
+  return reversed_graph;
 }
 }
 
@@ -186,7 +272,7 @@ ConfigFile::Value (std::string const &section, std::string const &entry) const
     = content_.find (section + '/' + entry);
 
   if (ci == content_.end ())
-    throw "does not exist";
+    throw std::invalid_argument ("does not exist");
 
   return ci->second;
 }
@@ -223,7 +309,8 @@ ConfigFile::Value (std::string const &section, std::string const &entry,
     }
 }
 
-MNM_ConfReader::MNM_ConfReader (std::string filename, std::string confKey)
+MNM_ConfReader::MNM_ConfReader (const std::string &filename,
+                                std::string confKey)
 {
   m_configFile = new ConfigFile (filename);
   m_confKey = confKey;
@@ -238,21 +325,21 @@ MNM_ConfReader::~MNM_ConfReader ()
 }
 
 TInt
-MNM_ConfReader::get_int (std::string key)
+MNM_ConfReader::get_int (const std::string &key)
 {
   int val = m_configFile->Value (m_confKey, key);
   return TInt (val);
 }
 
 TFlt
-MNM_ConfReader::get_float (std::string key)
+MNM_ConfReader::get_float (const std::string &key)
 {
   double val = m_configFile->Value (m_confKey, key);
   return TFlt (val);
 }
 
 std::string
-MNM_ConfReader::get_string (std::string key)
+MNM_ConfReader::get_string (const std::string &key)
 {
   std::string val = m_configFile->Value (m_confKey, key);
   return val;

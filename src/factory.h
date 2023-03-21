@@ -25,6 +25,11 @@ public:
   MNM_Veh *make_veh (TInt timestamp, Vehicle_type veh_type);
   TInt m_num_veh;
   std::unordered_map<TInt, MNM_Veh *> m_veh_map;
+
+  TInt m_enroute;
+  TInt m_finished;
+  TFlt m_total_time; // intervals
+  virtual int remove_finished_veh (MNM_Veh *veh, bool del = true);
 };
 
 class MNM_Node_Factory
@@ -60,6 +65,7 @@ public:
                                    TInt frequency);
   virtual MNM_Destination *get_destination (TInt ID);
   virtual MNM_Origin *get_origin (TInt ID);
+  virtual std::pair<MNM_Origin *, MNM_Destination *> get_random_od_pair ();
   std::unordered_map<TInt, MNM_Origin *> m_origin_map;
   std::unordered_map<TInt, MNM_Destination *> m_destination_map;
 };

@@ -1,7 +1,5 @@
 #include "workzone.h"
 
-#include <algorithm>
-
 MNM_Workzone::MNM_Workzone (MNM_Node_Factory *node_factory,
                             MNM_Link_Factory *link_factory, PNEGraph graph)
 {

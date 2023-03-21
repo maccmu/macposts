@@ -1,15 +1,13 @@
 #include "io.h"
 
-#include <fstream>
-#include <iostream>
-
 int
-MNM_IO::build_node_factory (std::string file_folder,
+MNM_IO::build_node_factory (const std::string &file_folder,
                             MNM_ConfReader *conf_reader,
-                            MNM_Node_Factory *node_factory)
+                            MNM_Node_Factory *node_factory,
+                            const std::string &file_name)
 {
   /* find file */
-  std::string _node_file_name = file_folder + "/MNM_input_node";
+  std::string _node_file_name = file_folder + "/" + file_name;
   std::ifstream _node_file;
   _node_file.open (_node_file_name, std::ios::in);
 
@@ -78,10 +76,10 @@ MNM_IO::build_node_factory (std::string file_folder,
 }
 
 int
-MNM_IO::build_link_factory (std::string file_folder,
+MNM_IO::build_link_factory (const std::string &file_folder,
                             MNM_ConfReader *conf_reader,
                             MNM_Link_Factory *link_factory,
-                            std::string file_name)
+                            const std::string &file_name)
 {
   /* find file */
   std::string _link_file_name = file_folder + "/" + file_name;
@@ -180,12 +178,14 @@ MNM_IO::build_link_factory (std::string file_folder,
 }
 
 int
-MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
+MNM_IO::build_od_factory (const std::string &file_folder,
+                          MNM_ConfReader *conf_reader,
                           MNM_OD_Factory *od_factory,
-                          MNM_Node_Factory *node_factory)
+                          MNM_Node_Factory *node_factory,
+                          const std::string &file_name)
 {
   /* find file */
-  std::string _od_file_name = file_folder + "/MNM_input_od";
+  std::string _od_file_name = file_folder + "/" + file_name;
   std::ifstream _od_file;
   _od_file.open (_od_file_name, std::ios::in);
 
@@ -246,7 +246,7 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
               _dest_ID = TInt (std::stoi (_words[0]));
               _node_ID = TInt (std::stoi (_words[1]));
               _dest = od_factory->make_destination (_dest_ID);
-
+              _dest->m_flow_scalar = _flow_scalar;
               /* hook up */
               _dest->m_dest_node
                 = (MNM_DMDND *) node_factory->get_node (_node_ID);
@@ -260,12 +260,14 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
 }
 
 int
-MNM_IO::hook_up_od_node (std::string file_folder, MNM_ConfReader *conf_reader,
+MNM_IO::hook_up_od_node (const std::string &file_folder,
+                         MNM_ConfReader *conf_reader,
                          MNM_OD_Factory *od_factory,
-                         MNM_Node_Factory *node_factory)
+                         MNM_Node_Factory *node_factory,
+                         const std::string &file_name)
 {
   /* find file */
-  std::string _od_file_name = file_folder + "/MNM_input_od";
+  std::string _od_file_name = file_folder + "/" + file_name;
   std::ifstream _od_file;
   _od_file.open (_od_file_name, std::ios::in);
 
@@ -336,11 +338,13 @@ MNM_IO::hook_up_od_node (std::string file_folder, MNM_ConfReader *conf_reader,
 }
 
 int
-MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
-                          MNM_OD_Factory *od_factory)
+MNM_IO::build_od_factory (const std::string &file_folder,
+                          MNM_ConfReader *conf_reader,
+                          MNM_OD_Factory *od_factory,
+                          const std::string &file_name)
 {
   /* find file */
-  std::string _od_file_name = file_folder + "/MNM_input_od";
+  std::string _od_file_name = file_folder + "/" + file_name;
   std::ifstream _od_file;
   _od_file.open (_od_file_name, std::ios::in);
 
@@ -400,8 +404,66 @@ MNM_IO::build_od_factory (std::string file_folder, MNM_ConfReader *conf_reader,
   return 0;
 }
 
+int
+MNM_IO::read_origin_vehicle_label_ratio (const std::string &file_folder,
+                                         MNM_ConfReader *conf_reader,
+                                         MNM_OD_Factory *od_factory,
+                                         const std::string &file_name)
+{
+  /* find file */
+  std::string _file_name = file_folder + "/" + file_name;
+  std::ifstream _file;
+  _file.open (_file_name, std::ios::in);
+
+  /* build */
+  MNM_Origin *_origin;
+  TInt _origin_ID;
+  std::string _line;
+  std::vector<std::string> _words;
+  if (_file.is_open ())
+    {
+      /* read config */
+      TInt _num_of_O = conf_reader->get_int ("num_of_O");
+      TInt _num_of_vehicle_labels
+        = conf_reader->get_int ("num_of_vehicle_labels");
+
+      if (_num_of_vehicle_labels <= 0)
+        {
+          return 0;
+        }
+
+      // printf("Start build Origin-Destination factory.\n");
+      std::getline (_file, _line); // skip the first line
+      // printf("Processing Origin node.\n");
+      for (int i = 0; i < _num_of_O; ++i)
+        {
+          std::getline (_file, _line);
+          _words = split (_line, ' ');
+          if ((int) _words.size () == 1 + _num_of_vehicle_labels)
+            { // check
+              // std::cout << "Processing: " << _line << "\n";
+              _origin_ID = TInt (std::stoi (_words[0]));
+
+              _origin = od_factory->get_origin (_origin_ID);
+              for (int j = 0; j < _num_of_vehicle_labels; ++j)
+                {
+                  _origin->m_vehicle_label_ratio.push_back (
+                    TFlt (std::stof (_words[1 + j])));
+                }
+            }
+        }
+    }
+  else
+    {
+      printf ("No vehicle registration data\n");
+    }
+  _file.close ();
+  return 0;
+}
+
 PNEGraph
-MNM_IO::build_graph (std::string file_folder, MNM_ConfReader *conf_reader)
+MNM_IO::build_graph (const std::string &file_folder,
+                     MNM_ConfReader *conf_reader)
 {
   /* find file */
   std::string _network_name = conf_reader->get_string ("network_name");
@@ -445,15 +507,17 @@ MNM_IO::build_graph (std::string file_folder, MNM_ConfReader *conf_reader)
         }
     }
   _graph->Defrag ();
+  IAssert (_graph->GetEdges () == _num_of_link);
   return _graph;
 }
 
 int
-MNM_IO::build_demand (std::string file_folder, MNM_ConfReader *conf_reader,
-                      MNM_OD_Factory *od_factory)
+MNM_IO::build_demand (const std::string &file_folder,
+                      MNM_ConfReader *conf_reader, MNM_OD_Factory *od_factory,
+                      const std::string &file_name)
 {
   /* find file */
-  std::string _demand_file_name = file_folder + "/MNM_input_demand";
+  std::string _demand_file_name = file_folder + "/" + file_name;
   std::ifstream _demand_file;
   _demand_file.open (_demand_file_name, std::ios::in);
 
@@ -509,17 +573,23 @@ MNM_IO::build_demand (std::string file_folder, MNM_ConfReader *conf_reader,
 }
 
 Path_Table *
-MNM_IO::load_path_table (std::string file_name, PNEGraph graph, TInt num_path,
-                         bool w_buffer, bool w_ID)
+MNM_IO::load_path_table (const std::string &file_name, const PNEGraph &graph,
+                         TInt num_path, bool w_buffer, bool w_ID)
 {
   if (w_ID)
     {
-      throw std::runtime_error ("Error, MNM_IO::load_path_table, with "
-                                "ID loading not implemented");
+      throw std::runtime_error (
+        "Error, MNM_IO::load_path_table, with ID loading not implemented");
     }
-  printf ("Loading Path Table!\n");
+  printf ("Loading Path Table for Driving!\n");
   TInt Num_Path = num_path;
   printf ("Number of path %d\n", Num_Path ());
+
+  if (Num_Path <= 0)
+    {
+      printf ("Finish Loading Path Table for Driving, which is nullptr!\n");
+      return nullptr;
+    }
 
   std::ifstream _path_table_file, _buffer_file;
   std::string _buffer_file_name;
@@ -594,24 +664,24 @@ MNM_IO::load_path_table (std::string file_name, PNEGraph graph, TInt num_path,
                   _node_ID = TInt (std::stoi (_s_node_ID));
                   _path->m_node_vec.push_back (_node_ID);
                 }
-              for (size_t i = 0; i < _path->m_node_vec.size () - 1; ++i)
+              for (size_t j = 0; j < _path->m_node_vec.size () - 1; ++j)
                 {
-                  _from_ID = _path->m_node_vec[i];
-                  _to_ID = _path->m_node_vec[i + 1];
-                  _link_ID = graph->GetEI (_from_ID, _to_ID).GetId ();
+                  _from_ID = _path->m_node_vec[j];
+                  _to_ID = _path->m_node_vec[j + 1];
+                  _link_ID = graph->GetEI (_from_ID, _to_ID)
+                               .GetId (); // assume this is not a MultiGraph
                   _path->m_link_vec.push_back (_link_ID);
                 }
 
               if (w_buffer && (_buffer_words.size () > 0))
                 {
                   TInt _buffer_len = TInt (_buffer_words.size ());
-                  // printf("Buffer len %d\n",
-                  // _buffer_len());
+                  // printf("Buffer len %d\n", _buffer_len());
                   _path->allocate_buffer (_buffer_len);
-                  for (int i = 0; i < _buffer_len (); ++i)
+                  for (int j = 0; j < _buffer_len (); ++j)
                     {
-                      _path->m_buffer[i]
-                        = TFlt (std::stof (trim (_buffer_words[i])));
+                      _path->m_buffer[j]
+                        = TFlt (std::stof (trim (_buffer_words[j])));
                     }
                 }
 
@@ -630,16 +700,21 @@ MNM_IO::load_path_table (std::string file_name, PNEGraph graph, TInt num_path,
     {
       throw std::runtime_error ("failed to open path table file");
     }
-  printf ("Finish Loading Path Table!\n");
+  printf ("Finish Loading Path Table for Driving!\n");
+  // printf("path table %p\n", _path_table);
+  // printf("path table %s\n", _path_table -> find(100283) -> second ->
+  // find(150153) -> second
+  //                           -> m_path_vec.front() -> node_vec_to_string());
   return _path_table;
 }
 
 int
-MNM_IO::build_vms_facotory (std::string file_folder, PNEGraph graph,
-                            TInt num_vms, MNM_Vms_Factory *vms_factory)
+MNM_IO::build_vms_facotory (const std::string &file_folder, PNEGraph graph,
+                            TInt num_vms, MNM_Vms_Factory *vms_factory,
+                            const std::string &file_name)
 {
   /* find file */
-  std::string _vms_file_name = file_folder + "/MNM_input_vms";
+  std::string _vms_file_name = file_folder + "/" + file_name;
   std::ifstream _vms_file;
   _vms_file.open (_vms_file_name, std::ios::in);
 
@@ -676,7 +751,7 @@ MNM_IO::build_vms_facotory (std::string file_folder, PNEGraph graph,
 }
 
 int
-MNM_IO::read_int_float (std::string file_name,
+MNM_IO::read_int_float (const std::string &file_name,
                         std::unordered_map<TInt, TFlt> *reader)
 {
   /* find file */
@@ -716,7 +791,7 @@ MNM_IO::read_int_float (std::string file_name,
 }
 
 int
-MNM_IO::read_int (std::string file_name, std::vector<TInt> *reader)
+MNM_IO::read_int (const std::string &file_name, std::vector<TInt> *reader)
 {
   /* find file */
   std::ifstream _file;
@@ -744,7 +819,7 @@ MNM_IO::read_int (std::string file_name, std::vector<TInt> *reader)
 }
 
 int
-MNM_IO::read_float (std::string file_name, std::vector<TFlt *> *reader)
+MNM_IO::read_float (const std::string &file_name, std::vector<TFlt *> *reader)
 {
   /* find file */
   std::ifstream _file;
@@ -782,10 +857,12 @@ MNM_IO::read_float (std::string file_name, std::vector<TFlt *> *reader)
 }
 
 int
-MNM_IO::build_workzone_list (std::string file_folder, MNM_Workzone *workzone)
+MNM_IO::build_workzone_list (const std::string &file_folder,
+                             MNM_Workzone *workzone,
+                             const std::string &file_name)
 {
   /* find file */
-  std::string _workzone_file_name = file_folder + "/MNM_input_workzone";
+  std::string _workzone_file_name = file_folder + "/" + file_name;
   std::ifstream _workzone_file;
   _workzone_file.open (_workzone_file_name, std::ios::in);
 
@@ -821,11 +898,12 @@ MNM_IO::build_workzone_list (std::string file_folder, MNM_Workzone *workzone)
 }
 
 int
-MNM_IO::dump_cumulative_curve (std::string file_folder,
-                               MNM_Link_Factory *link_factory)
+MNM_IO::dump_cumulative_curve (const std::string &file_folder,
+                               MNM_Link_Factory *link_factory,
+                               const std::string &file_name)
 {
   /* find file */
-  std::string _cc_file_name = file_folder + "/cc_record";
+  std::string _cc_file_name = file_folder + "/" + file_name;
   std::ofstream _cc_file;
   _cc_file.open (_cc_file_name, std::ios::out);
 
@@ -835,13 +913,13 @@ MNM_IO::dump_cumulative_curve (std::string file_folder,
     {
       _link = _link_it->second;
       std::string _temp_s = std::to_string (_link->m_link_ID) + ",";
-      if (_link->m_N_in != NULL)
+      if (_link->m_N_in != nullptr)
         {
           std::string _temp_s_in
             = _temp_s + "in," + _link->m_N_in->to_string () + "\n";
           _cc_file << _temp_s_in;
         }
-      if (_link->m_N_out != NULL)
+      if (_link->m_N_out != nullptr)
         {
           std::string _temp_s_out
             = _temp_s + "out," + _link->m_N_out->to_string () + "\n";
@@ -849,6 +927,61 @@ MNM_IO::dump_cumulative_curve (std::string file_folder,
         }
     }
   _cc_file.close ();
+  return 0;
+}
+
+int
+MNM_IO::build_link_toll (const std::string &file_folder,
+                         MNM_ConfReader *conf_reader,
+                         MNM_Link_Factory *link_factory,
+                         const std::string &file_name)
+{
+  /* find file */
+  std::string _file_name = file_folder + "/" + file_name;
+  std::ifstream _file;
+  _file.open (_file_name, std::ios::in);
+
+  std::string _line;
+  std::vector<std::string> _words;
+  TInt _link_ID;
+
+  if (_file.is_open ())
+    {
+      TInt _num_of_tolled_link = conf_reader->get_int ("num_of_tolled_link");
+      if (_num_of_tolled_link <= 0)
+        {
+          _file.close ();
+          printf ("No tolled links.\n");
+          return 0;
+        }
+
+      printf ("Start build link toll.\n");
+      std::getline (_file, _line); // #link_ID toll
+      for (int i = 0; i < _num_of_tolled_link; ++i)
+        {
+          std::getline (_file, _line);
+          // std::cout << "Processing: " << _line << "\n";
+
+          _words = split (_line, ' ');
+          if (TInt (_words.size ()) == 2)
+            {
+              _link_ID = TInt (std::stoi (trim (_words[0])));
+              link_factory->get_link (_link_ID)->m_toll
+                = TFlt (std::stof (trim (_words[1])));
+            }
+          else
+            {
+              printf ("Something wrong in build_link_toll!\n");
+              exit (-1);
+            }
+        }
+      _file.close ();
+      printf ("Finish build link toll.\n");
+    }
+  else
+    {
+      printf ("No tolled links.\n");
+    }
   return 0;
 }
 
@@ -868,4 +1001,156 @@ MNM_IO::split (const std::string &text, char sep)
   if (start < text.size ())
     tokens.push_back (text.substr (start));
   return tokens;
+}
+
+int
+MNM_IO::read_td_link_cost (const std::string &file_folder,
+                           std::unordered_map<TInt, TFlt *> &td_link_cost,
+                           const TInt num_rows, const TInt num_timestamps,
+                           const std::string &file_name)
+{
+  if (!td_link_cost.empty ())
+    {
+      for (auto _it : td_link_cost)
+        {
+          memset (_it.second, 0x0, sizeof (TFlt) * num_timestamps);
+        }
+    }
+
+  /* find file */
+  std::string _file_name = file_folder + "/" + file_name;
+  std::ifstream _file;
+  _file.open (_file_name, std::ios::in);
+
+  std::string _line;
+  std::vector<std::string> _words;
+  TInt _link_ID;
+  TFlt _cost;
+  TFlt *_cost_vector;
+
+  if (_file.is_open ())
+    {
+      std::cout << "Start reading " << file_name << "\n";
+      std::getline (_file, _line); // skip the header
+      for (int i = 0; i < num_rows; ++i)
+        {
+          std::getline (_file, _line);
+          // std::cout << "Processing: " << _line << "\n";
+          _words = split (_line, ' ');
+          if (TInt (_words.size ()) == num_timestamps + 1)
+            {
+              _link_ID = TInt (std::stoi (trim (_words[0])));
+              if (td_link_cost.find (_link_ID) == td_link_cost.end ())
+                {
+                  TFlt *_cost_vector_tmp
+                    = (TFlt *) malloc (sizeof (TFlt) * num_timestamps);
+                  td_link_cost.insert (
+                    std::pair<TInt, TFlt *> (_link_ID, _cost_vector_tmp));
+                }
+              _cost_vector = td_link_cost.find (_link_ID)->second;
+              for (int j = 0; j < num_timestamps; ++j)
+                {
+                  _cost = TFlt (std::stof (trim (_words[1 + j])));
+                  _cost_vector[j] = _cost;
+                }
+            }
+          else
+            {
+              printf ("Something wrong in input file for "
+                      "MNM_IO::read_td_link_cost!\n");
+              exit (-1);
+            }
+        }
+      _file.close ();
+    }
+  else
+    {
+      printf ("Something wrong in input file for MNM_IO::read_td_link_cost!\n");
+      exit (-1);
+    }
+  return 0;
+}
+
+int
+MNM_IO::read_td_node_cost (
+  const std::string &file_folder,
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>> &td_node_cost,
+  const TInt num_rows, const TInt num_timestamps, const std::string &file_name)
+{
+  if (!td_node_cost.empty ())
+    {
+      for (auto _it : td_node_cost)
+        {
+          for (auto _it_it : _it.second)
+            {
+              memset (_it_it.second, 0x0, sizeof (TFlt) * num_timestamps);
+            }
+        }
+    }
+
+  /* find file */
+  std::string _file_name = file_folder + "/" + file_name;
+  std::ifstream _file;
+  _file.open (_file_name, std::ios::in);
+
+  std::string _line;
+  std::vector<std::string> _words;
+  TInt _in_link_ID, _out_link_ID;
+  TFlt _cost;
+  TFlt *_cost_vector;
+
+  if (_file.is_open ())
+    {
+      std::cout << "Start reading " << file_name << "\n";
+      std::getline (_file, _line); // skip the header
+      for (int i = 0; i < num_rows; ++i)
+        {
+          std::getline (_file, _line);
+          // std::cout << "Processing: " << _line << "\n";
+          _words = split (_line, ' ');
+          if (TInt (_words.size ()) == num_timestamps + 3)
+            {
+              _in_link_ID = TInt (std::stoi (trim (_words[1])));
+              _out_link_ID = TInt (std::stoi (trim (_words[2])));
+              if (td_node_cost.find (_in_link_ID) == td_node_cost.end ())
+                {
+                  td_node_cost.insert (
+                    std::pair<TInt, std::unordered_map<
+                                      TInt, TFlt *>> (_in_link_ID,
+                                                      std::unordered_map<
+                                                        TInt, TFlt *> ()));
+                }
+              if (td_node_cost.find (_in_link_ID)->second.find (_out_link_ID)
+                  == td_node_cost.find (_in_link_ID)->second.end ())
+                {
+                  TFlt *_cost_vector_tmp
+                    = (TFlt *) malloc (sizeof (TFlt) * num_timestamps);
+                  td_node_cost.find (_in_link_ID)
+                    ->second.insert (
+                      std::pair<TInt, TFlt *> (_out_link_ID, _cost_vector_tmp));
+                }
+              _cost_vector = td_node_cost.find (_in_link_ID)
+                               ->second.find (_out_link_ID)
+                               ->second;
+              for (int j = 0; j < num_timestamps; ++j)
+                {
+                  _cost = TFlt (std::stof (trim (_words[3 + j])));
+                  _cost_vector[j] = _cost;
+                }
+            }
+          else
+            {
+              printf ("Something wrong in input file for "
+                      "MNM_IO::read_td_node_cost!\n");
+              exit (-1);
+            }
+        }
+      _file.close ();
+    }
+  else
+    {
+      printf ("Something wrong in input file for MNM_IO::read_td_node_cost!\n");
+      exit (-1);
+    }
+  return 0;
 }

@@ -17,7 +17,7 @@ class MNM_Dta_Screenshot;
 class MNM_Realtime_Dta
 {
 public:
-  MNM_Realtime_Dta (std::string file_folder);
+  explicit MNM_Realtime_Dta (const std::string &file_folder);
   ~MNM_Realtime_Dta ();
   int initialize ();
   int build_path_table ();
@@ -47,8 +47,8 @@ public:
   TFlt m_optimization_step_size;
 
   std::unordered_map<TInt, TFlt> m_average_link_tt;
-  std::unordered_map<TInt, TFlt>
-    m_link_tt_difference; // only used in estimation
+  std::unordered_map<TInt, TFlt> m_link_tt_difference; // only used in
+                                                       // estimation
   std::string m_file_folder;
   PNEGraph m_graph;
   MNM_OD_Factory *m_od_factory;
@@ -63,7 +63,7 @@ public:
 class MNM_Dta_Screenshot
 {
 public:
-  MNM_Dta_Screenshot (std::string file_folder, MNM_ConfReader *config,
+  MNM_Dta_Screenshot (const std::string &file_folder, MNM_ConfReader *config,
                       PNEGraph graph, MNM_OD_Factory *od_factory);
   ~MNM_Dta_Screenshot ();
   int build_static_network ();
@@ -83,14 +83,15 @@ namespace MNM
 int run_from_screenshot (MNM_Dta_Screenshot *screenshot,
                          MNM_ConfReader *data_config, TInt max_inter,
                          TInt assign_inter, Path_Table *path_table,
-                         MNM_OD_Factory *od_factory, std::string file_folder);
+                         MNM_OD_Factory *od_factory,
+                         const std::string &file_folder);
 MNM_Dta_Screenshot *
-make_screenshot (std::string file_folder, MNM_ConfReader *config,
+make_screenshot (const std::string &file_folder, MNM_ConfReader *config,
                  MNM_OD_Factory *od_factory, MNM_Link_Factory *link_factory,
-                 MNM_Node_Factory *node_factory, PNEGraph graph,
+                 MNM_Node_Factory *node_factory, const PNEGraph &graph,
                  MNM_Routing_Fixed *old_routing);
 MNM_Dta_Screenshot *make_screenshot (MNM_Dta_Screenshot *screenshot);
-MNM_Dta_Screenshot *make_empty_screenshot (std::string file_folder,
+MNM_Dta_Screenshot *make_empty_screenshot (const std::string &file_folder,
                                            MNM_ConfReader *config,
                                            MNM_OD_Factory *od_factory,
                                            PNEGraph graph);
@@ -98,8 +99,8 @@ MNM_Dta_Screenshot *make_empty_screenshot (std::string file_folder,
 int update_path_p (Path_Table *path_table, TInt col, TFlt step_size);
 }
 
-static inline void
-copy_veh (MNM_Veh *_veh, MNM_Veh *_new_veh, MNM_Dta_Screenshot *_shot)
+void static inline copy_veh (MNM_Veh *_veh, MNM_Veh *_new_veh,
+                             MNM_Dta_Screenshot *_shot)
 {
   _new_veh->m_current_link
     = _shot->m_link_factory->get_link (_veh->m_current_link->m_link_ID);
