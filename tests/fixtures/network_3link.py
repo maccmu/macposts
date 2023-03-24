@@ -22,6 +22,8 @@ OD_pair = 1
 
 routing_type = Adaptive
 
+init_demand_split = 0
+
 [STAT]
 rec_mode = LRn
 rec_mode_para = 5
@@ -96,6 +98,8 @@ num_of_D = 1
 OD_pair = 1
 
 routing_type = Adaptive
+
+init_demand_split = 0
 
 [STAT]
 rec_mode = LRn

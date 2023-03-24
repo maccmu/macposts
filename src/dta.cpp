@@ -1,5 +1,4 @@
 #include "dta.h"
-#include "omp.h"
 
 MNM_Dta::MNM_Dta (const std::string &file_folder)
 {
@@ -547,11 +546,6 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   // step 1: Origin release vehicle
   if (verbose)
     printf ("Releasing!\n");
-  // for (auto _origin_it = m_od_factory -> m_origin_map.begin(); _origin_it !=
-  // m_od_factory -> m_origin_map.end(); _origin_it++){
-  //   _origin = _origin_it -> second;
-  //   _origin -> release(m_veh_factory, _cur_int);
-  // }
   if (load_int % m_assign_freq == 0 || load_int == 0)
     {
       for (auto _origin_it = m_od_factory->m_origin_map.begin ();
@@ -643,13 +637,6 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
        _link_it != m_link_factory->m_link_map.end (); _link_it++)
     {
       _link = _link_it->second;
-      // if (_link -> get_link_flow() > 0){
-      //   printf("Current Link %d:, traffic flow %.4f, incomming %d, finished
-      //   %d\n",
-      //       _link -> m_link_ID(), _link -> get_link_flow()(), (int)_link ->
-      //       m_incoming_array.size(),  (int)_link -> m_finished_array.size());
-      //   _link -> print_info();
-      // }
       if ((m_gridlock_recorder != nullptr)
           && ((m_config->get_int ("total_interval") <= 0
                && load_int >= 1.5 * m_total_assign_inter * m_assign_freq)
@@ -697,8 +684,7 @@ MNM_Dta::loading (bool verbose)
   MNM_Destination *_dest;
   TInt _assign_inter = m_start_assign_interval;
 
-  // pre_loading();
-  while (!finished_loading (_cur_int) || _assign_inter <= m_total_assign_inter)
+  while (!finished_loading (_cur_int) || _assign_inter < m_total_assign_inter)
     {
       if (_cur_int == 0)
         m_statistics->update_record (_cur_int);
@@ -710,12 +696,7 @@ MNM_Dta::loading (bool verbose)
       // current assignment interval and put them in m_in_veh_queue)
       if (verbose)
         printf ("Releasing!\n");
-      // for (auto _origin_it = m_od_factory -> m_origin_map.begin(); _origin_it
-      // != m_od_factory -> m_origin_map.end(); _origin_it++){
-      //   _origin = _origin_it -> second;
-      //   _origin -> release(m_veh_factory, _cur_int);
-      // }
-      if (_cur_int % m_assign_freq == 0 || _cur_int == 0)
+      if (_cur_int % m_assign_freq == 0)
         {
           for (auto _origin_it = m_od_factory->m_origin_map.begin ();
                _origin_it != m_od_factory->m_origin_map.end (); _origin_it++)
@@ -780,9 +761,6 @@ MNM_Dta::loading (bool verbose)
                       printf ("WARNING:No assignment!\n");
                     }
                 }
-              // _assign_inter = _assign_inter % m_total_assign_inter;
-              // _origin -> release_one_interval(_cur_int, m_veh_factory,
-              // _assign_inter, TFlt(0));
             }
           _assign_inter += 1;
         }
@@ -801,7 +779,6 @@ MNM_Dta::loading (bool verbose)
            _node_it != m_node_factory->m_node_map.end (); _node_it++)
         {
           _node = _node_it->second;
-          // printf("node ID is %d\n", _node -> m_node_ID());
           _node->evolve (_cur_int); // update link cumulative count curve
         }
 
@@ -832,7 +809,6 @@ MNM_Dta::loading (bool verbose)
           _link->evolve (_cur_int);
           // _link -> print_info();
         }
-      // printf("m_emission update\n");
       // only use in multiclass vehicle cases
       if (m_emission != nullptr)
         m_emission->update (m_veh_factory);
@@ -844,7 +820,6 @@ MNM_Dta::loading (bool verbose)
            _dest_it != m_od_factory->m_destination_map.end (); _dest_it++)
         {
           _dest = _dest_it->second;
-          // _dest -> receive(_cur_int);
           _dest->receive (_cur_int, m_routing, m_veh_factory, true);
         }
 

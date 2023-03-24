@@ -19,8 +19,8 @@ def test_reproducibility(network, request):
         dta.register_links()
         dta.install_cc()
         dta.run_whole()
-        in_ccs_ = dta.get_in_ccs()[1]
-        out_ccs_ = dta.get_out_ccs()[1]
+        in_ccs_ = dta.get_in_ccs()
+        out_ccs_ = dta.get_out_ccs()
         if in_ccs is not None:
             assert np.allclose(in_ccs, in_ccs_)
             assert np.allclose(out_ccs, out_ccs_)
@@ -39,13 +39,14 @@ def test_3link(network_3link):
     dta.install_cc()
     dta.run_whole()
 
-    _, in_cc = dta.get_in_ccs([links[0]])
-    in_cc_ = dta.get_link_in_cc(links[0])[:, 1::2]
-    assert np.all(in_cc == in_cc_)
+    in_cc = dta.get_in_ccs([links[0]])
+    in_cc_ = dta.get_link_in_cc(links[0])
+    ticks = in_cc_[:, 0].astype(int)
+    in_cc_ = in_cc_[:, 1]
+    assert np.all(in_cc[ticks, 0] == in_cc_)
 
-    ticks, in_ccs = dta.get_in_ccs()
-    ticks_, out_ccs = dta.get_out_ccs(links)
-    assert np.all(ticks == ticks_)
+    in_ccs = dta.get_in_ccs()
+    out_ccs = dta.get_out_ccs(links)
     assert in_ccs.shape == (201, 3)
     assert out_ccs.shape == in_ccs.shape
     assert np.isclose(in_ccs[-1, 0], 500)
@@ -66,13 +67,14 @@ def test_7link(network_7link):
     dta.install_cc()
     dta.run_whole()
 
-    _, in_cc = dta.get_in_ccs([links[0]])
-    in_cc_ = dta.get_link_in_cc(links[0])[:, 1::2]
-    assert np.all(in_cc == in_cc_)
+    in_cc = dta.get_in_ccs([links[0]])
+    in_cc_ = dta.get_link_in_cc(links[0])
+    ticks = in_cc_[:, 0].astype(int)
+    in_cc_ = in_cc_[:, 1]
+    assert np.all(in_cc[ticks, 0] == in_cc_)
 
-    ticks, in_ccs = dta.get_in_ccs(links)
-    ticks_, out_ccs = dta.get_out_ccs()
-    assert np.all(ticks == ticks_)
+    in_ccs = dta.get_in_ccs(links)
+    out_ccs = dta.get_out_ccs()
     assert in_ccs.shape[1] == 7
     assert out_ccs.shape == in_ccs.shape
     assert np.isclose(out_ccs[0, 0], 0)

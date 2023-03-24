@@ -3442,11 +3442,14 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
       TFlt _demand_car;
       TFlt _demand_truck;
 
-      std::getline (_demand_file, _line); // skip the first line
-      for (int i = 0; i < _num_OD; ++i)
+      for (int i = 0; i < _num_OD;)
         {
           std::getline (_demand_file, _line);
-          _words = split (trim (_line), ' ');
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            continue;
+          ++i;
+          _words = split (_line, ' ');
           if (TInt (_words.size ()) == (_max_interval * 2 + 2))
             {
               _O_ID = TInt (std::stoi (_words[0]));
@@ -3459,15 +3462,6 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
               // disaggregate 15-min demand into 1-min demand
               for (int j = 0; j < _max_interval; ++j)
                 {
-                  // _demand_car = TFlt(std::stod(_words[j + 2])) /
-                  // TFlt(_num_of_minute); _demand_truck =
-                  // TFlt(std::stod(_words[j + _max_interval + 2])) /
-                  // TFlt(_num_of_minute); for (int k = 0; k < _num_of_minute;
-                  // ++k){ 	_demand_vector_car[j * _num_of_minute + k] =
-                  // _demand_car; 	_demand_vector_truck[j * _num_of_minute
-                  // + k] = _demand_truck;
-                  // }
-
                   if (_init_demand_split == 0)
                     {
                       _demand_car = TFlt (std::stod (_words[j + 2]));

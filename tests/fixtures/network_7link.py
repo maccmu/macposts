@@ -23,6 +23,8 @@ OD_pair = 1
 adaptive_ratio = 0.5
 routing_type = Hybrid
 
+init_demand_split = 0
+
 [STAT]
 rec_mode = LRn
 rec_mode_para = 12
@@ -127,6 +129,8 @@ OD_pair = 1
 adaptive_ratio_car = 0.5
 adaptive_ratio_truck = 0.5
 routing_type = Biclass_Hybrid
+
+init_demand_split = 0
 
 [STAT]
 rec_mode = LRn

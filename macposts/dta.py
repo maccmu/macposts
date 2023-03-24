@@ -41,10 +41,19 @@ class _CommonMixin:
     def _get_ccs(self, link_func, links):
         if links is None:
             links = self.registered_links
-        ccs = np.hstack([link_func(link) for link in links])
-        ticks = ccs[:, 0].astype(np.int_)
-        ccs = ccs[:, 1::2]
-        return ticks, ccs
+        ccs = np.empty((self.get_cur_loading_interval() + 1, len(links)))
+        ccs[:] = np.nan
+        for col, link in enumerate(links):
+            cc = link_func(link)
+            ticks = cc[:, 0].astype(int)
+            ccs[ticks, col] = cc[:, 1]
+        # Forward fill NaNs
+        # Ref: https://stackoverflow.com/a/41191127
+        mask = np.isnan(ccs)
+        idxs = np.where(~mask, np.arange(mask.shape[0])[:, None], 0)
+        np.maximum.accumulate(idxs, axis=0, out=idxs)
+        ccs[mask] = ccs[idxs[mask], np.nonzero(mask)[1]]
+        return ccs
 
 
 class Dta(_CommonMixin, _ext.Dta):
@@ -60,8 +69,7 @@ class Dta(_CommonMixin, _ext.Dta):
         it will be treated as a list of one element. However, that is not
         recommended.
 
-        Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
-        Numpy arrays.
+        Return a Numpy array of shape (CURRENT-INTERVAL, NUM-LINKS).
 
         """
         return self._get_ccs(self.get_link_in_cc, links)
@@ -76,8 +84,7 @@ class Dta(_CommonMixin, _ext.Dta):
         it will be treated as a list of one element. However, that is not
         recommended.
 
-        Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
-        Numpy arrays.
+        Return a Numpy array of shape (CURRENT-INTERVAL, NUM-LINKS).
 
         """
         return self._get_ccs(self.get_link_out_cc, links)
@@ -94,8 +101,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
         retrieved. It could also be None, in which case all registered links
         will be used.
 
-        Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
-        Numpy arrays.
+        Return a Numpy array of shape (CURRENT-INTERVAL, NUM-LINKS).
 
         """
         return self._get_ccs(self.get_car_link_in_cc, links)
@@ -108,8 +114,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
         retrieved. It could also be None, in which case all registered links
         will be used.
 
-        Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
-        Numpy arrays.
+        Return a Numpy array of shape (CURRENT-INTERVAL, NUM-LINKS).
 
         """
         return self._get_ccs(self.get_car_link_out_cc, links)
@@ -122,8 +127,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
         retrieved. It could also be None, in which case all registered links
         will be used.
 
-        Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
-        Numpy arrays.
+        Return a Numpy array of shape (CURRENT-INTERVAL, NUM-LINKS).
 
         """
         return self._get_ccs(self.get_truck_link_in_cc, links)
@@ -136,8 +140,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
         retrieved. It could also be None, in which case all registered links
         will be used.
 
-        Return a tuple of (TICKS, CUMULATIVE-CURVES), and both elements are
-        Numpy arrays.
+        Return a Numpy array of shape (CURRENT-INTERVAL, NUM-LINKS).
 
         """
         return self._get_ccs(self.get_truck_link_out_cc, links)

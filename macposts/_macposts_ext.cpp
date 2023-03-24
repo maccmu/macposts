@@ -2563,7 +2563,8 @@ Mcdta::initialize (const std::string &folder)
   IAssert (m_mcdta->m_config->get_string ("routing_type") == "Biclass_Hybrid"
            || m_mcdta->m_config->get_string ("routing_type")
                 == "Biclass_Hybrid_ColumnGeneration"
-           || m_mcdta->m_config->get_string ("routing_type") == "Hybrid");
+           || m_mcdta->m_config->get_string ("routing_type") == "Hybrid"
+           || m_mcdta->m_config->get_string ("routing_type") == "Adaptive");
   if (MNM_Routing_Fixed *_routing
       = dynamic_cast<MNM_Routing_Fixed *> (m_mcdta->m_routing))
     {
@@ -15575,7 +15576,7 @@ simulation.
     .def (py::init<> ())
     .def ("initialize", &Dta::initialize)
     .def ("check_input_files", &Dta::check_input_files)
-    .def ("run_whole", &Dta::run_whole, py::arg("verbose") = false)
+    .def ("run_whole", &Dta::run_whole, py::arg ("verbose") = false)
     .def ("run_due", &Dta::run_due)
     .def ("run_dso", &Dta::run_dso)
     .def ("install_cc", &Dta::install_cc)
@@ -15615,7 +15616,7 @@ simulation.
     .def ("initialize", &Mcdta::initialize)
     .def ("check_input_files", &Mcdta::check_input_files)
     .def ("generate_shortest_pathsets", &Mcdta::generate_shortest_pathsets)
-    .def ("run_whole", &Mcdta::run_whole, py::arg("verbose") = false)
+    .def ("run_whole", &Mcdta::run_whole, py::arg ("verbose") = false)
     .def ("install_cc", &Mcdta::install_cc)
     .def ("install_cc_tree", &Mcdta::install_cc_tree)
     .def ("get_travel_stats", &Mcdta::get_travel_stats)
@@ -15648,6 +15649,8 @@ simulation.
     .def ("get_truck_link_tt_robust", &Mcdta::get_truck_link_tt_robust)
     .def ("get_car_link_out_num", &Mcdta::get_car_link_out_num)
     .def ("get_truck_link_out_num", &Mcdta::get_truck_link_out_num)
+    .def ("get_car_link_in_cc", &Mcdta::get_car_link_in_cc)
+    .def ("get_truck_link_in_cc", &Mcdta::get_truck_link_in_cc)
     .def ("get_car_link_out_cc", &Mcdta::get_car_link_out_cc)
     .def ("get_truck_link_out_cc", &Mcdta::get_truck_link_out_cc)
     .def ("get_car_link_speed", &Mcdta::get_car_link_speed)
@@ -15696,7 +15699,7 @@ simulation.
   py::class_<Mmdta> (m, "Mmdta")
     .def (py::init<> ())
     .def ("initialize", &Mmdta::initialize)
-    .def ("run_whole", &Mmdta::run_whole, py::arg("verbose") = false)
+    .def ("run_whole", &Mmdta::run_whole, py::arg ("verbose") = false)
     .def ("initialize_mmdue", &Mmdta::initialize_mmdue)
     .def ("generate_shortest_pathsets", &Mmdta::generate_shortest_pathsets)
     .def ("check_input_files", &Mmdta::check_input_files)
