@@ -76,11 +76,6 @@ MNM_DMOND::evolve (TInt timestamp)
                                    TFlt (m_out_volume.find (_link)->second)
                                      / m_flow_scalar));
         }
-      //    if (!m_in_veh_queue.empty()){
-      //        printf("In node %d, %d veh to move to link %d, total veh %d \n",
-      //        m_node_ID, m_out_volume.find(_link) -> second, _link ->
-      //        m_link_ID, m_in_veh_queue.size());
-      //    }
       _que_it = m_in_veh_queue.begin ();
       while (_que_it != m_in_veh_queue.end ())
         {
@@ -109,15 +104,6 @@ MNM_DMOND::evolve (TInt timestamp)
         }
     }
 
-  // for (unsigned i=0; i<m_out_link_array.size(); ++i){
-  //   _link = m_out_link_array[i];
-  //   if (m_out_volume.find(_link) -> second != 0){
-  //     printf("Something wrong in moving vehicles on DMOND\n");
-  //     printf("Remaining out volume in link %d is %d\n", (int)_link ->
-  //     m_link_ID, (int)m_out_volume.find(_link) -> second); exit(-1);
-  //   }
-  // }
-  // printf("Finish MNM_DMOND evolve\n");
   return 0;
 }
 
@@ -418,31 +404,12 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
       _out_link = m_out_link_array[j];
 
       // shuffle the in links, reserve the FIFO
-      std::random_device rng; // random sequence
-      std::shuffle (_in_link_ind_array.begin (), _in_link_ind_array.end (),
-                    rng);
+      std::random_shuffle (_in_link_ind_array.begin (),
+                           _in_link_ind_array.end ());
       for (size_t i : _in_link_ind_array)
         {
-          // for (size_t i=0; i<m_in_link_array.size(); ++i) {
           _in_link = m_in_link_array[i];
           _num_to_move = m_veh_tomove[i * _offset + j];
-          // printf("In node %d, from link %d to link %d, %d to move\n",
-          // m_node_ID, _in_link ->m_link_ID, _out_link->m_link_ID,
-          // _num_to_move); for (size_t k=0; k<_size; ++k){
-          //   if (_num_to_move > 0){
-          //     _veh = _in_link->m_finished_array[k];
-          //     if (_veh -> get_next_link() == _out_link){
-          //       _out_link ->m_incoming_array.push_back(_veh);
-          //       _veh -> set_current_link(_out_link);
-          //       // _in_link -> m_finished_array.pop_front();
-
-          //       _num_to_move -= 1;
-          //     }
-          //   }
-          //   else{
-          //     break; // break the inner most structure
-          //   }
-          // }
           auto _veh_it = _in_link->m_finished_array.begin ();
           while (_veh_it != _in_link->m_finished_array.end ())
             {
@@ -531,6 +498,7 @@ MNM_Dnode_Inout::evolve (TInt timestamp)
   // printf("5\n");
   return 0;
 }
+
 /**************************************************************************
                               FWJ node
 **************************************************************************/

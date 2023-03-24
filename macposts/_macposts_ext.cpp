@@ -1424,7 +1424,6 @@ Dta::generate_paths_to_cover_registered_links ()
   MNM_Origin *_origin;
   MNM_Destination *_dest;
   MNM_Path *_path_1, *_path_2, *_path;
-  std::random_device rng; // random sequence
   std::vector<std::pair<TInt, MNM_Origin *>> pair_ptrs_1
     = std::vector<std::pair<TInt, MNM_Origin *>> ();
   std::vector<std::pair<MNM_Destination *, TFlt *>> pair_ptrs_2
@@ -1490,7 +1489,8 @@ Dta::generate_paths_to_cover_registered_links ()
             {
               pair_ptrs_1.emplace_back (p);
             }
-          std::shuffle (std::begin (pair_ptrs_1), std::end (pair_ptrs_1), rng);
+          std::random_shuffle (std::begin (pair_ptrs_1),
+                               std::end (pair_ptrs_1));
           for (auto _it : pair_ptrs_1)
             {
               _origin = _it.second;
@@ -1507,8 +1507,8 @@ Dta::generate_paths_to_cover_registered_links ()
                 {
                   pair_ptrs_2.emplace_back (p);
                 }
-              std::shuffle (std::begin (pair_ptrs_2), std::end (pair_ptrs_2),
-                            rng);
+              std::random_shuffle (std::begin (pair_ptrs_2),
+                                   std::end (pair_ptrs_2));
               for (auto _it_it : pair_ptrs_2)
                 {
                   _dest = _it_it.first;
@@ -4599,7 +4599,6 @@ Mcdta::generate_paths_to_cover_registered_links ()
   MNM_Origin_Multiclass *_origin;
   MNM_Destination_Multiclass *_dest;
   MNM_Path *_path_1, *_path_2, *_path;
-  std::random_device rng; // random sequence
   std::vector<std::pair<TInt, MNM_Origin *>> pair_ptrs_1
     = std::vector<std::pair<TInt, MNM_Origin *>> ();
   std::vector<std::pair<MNM_Destination *, TFlt *>> pair_ptrs_2
@@ -4665,7 +4664,8 @@ Mcdta::generate_paths_to_cover_registered_links ()
             {
               pair_ptrs_1.emplace_back (p);
             }
-          std::shuffle (std::begin (pair_ptrs_1), std::end (pair_ptrs_1), rng);
+          std::random_shuffle (std::begin (pair_ptrs_1),
+                               std::end (pair_ptrs_1));
           for (auto _it : pair_ptrs_1)
             {
               _origin = dynamic_cast<MNM_Origin_Multiclass *> (_it.second);
@@ -4682,8 +4682,8 @@ Mcdta::generate_paths_to_cover_registered_links ()
                 {
                   pair_ptrs_2.emplace_back (p);
                 }
-              std::shuffle (std::begin (pair_ptrs_2), std::end (pair_ptrs_2),
-                            rng);
+              std::random_shuffle (std::begin (pair_ptrs_2),
+                                   std::end (pair_ptrs_2));
               for (auto _it_it : pair_ptrs_2)
                 {
                   _dest
@@ -9148,7 +9148,6 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
   MNM_Origin_Multimodal *_origin;
   MNM_Destination_Multimodal *_dest;
   MNM_Path *_path_1, *_path_2, *_path;
-  std::random_device rng; // random sequence
   std::vector<std::pair<TInt, MNM_Origin *>> pair_ptrs_1
     = std::vector<std::pair<TInt, MNM_Origin *>> ();
   std::vector<std::pair<MNM_Destination *, TFlt *>> pair_ptrs_2
@@ -9216,7 +9215,8 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
             {
               pair_ptrs_1.emplace_back (p);
             }
-          std::shuffle (std::begin (pair_ptrs_1), std::end (pair_ptrs_1), rng);
+          std::random_shuffle (std::begin (pair_ptrs_1),
+                               std::end (pair_ptrs_1));
           for (auto _it : pair_ptrs_1)
             {
               _origin = dynamic_cast<MNM_Origin_Multimodal *> (_it.second);
@@ -9233,8 +9233,8 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
                 {
                   pair_ptrs_2.emplace_back (p);
                 }
-              std::shuffle (std::begin (pair_ptrs_2), std::end (pair_ptrs_2),
-                            rng);
+              std::random_shuffle (std::begin (pair_ptrs_2),
+                                   std::end (pair_ptrs_2));
               for (auto _it_it : pair_ptrs_2)
                 {
                   _dest
@@ -9431,7 +9431,6 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
   TInt _mid_parking_lot_ID = -1;
   TInt _mid_dest_node_ID = -1;
   bool _is_bustransit, _is_pnr;
-  std::random_device rng; // random sequence
   std::vector<std::pair<TInt, MNM_Origin *>> pair_ptrs_1
     = std::vector<std::pair<TInt, MNM_Origin *>> ();
   std::vector<std::pair<MNM_Destination *, TFlt *>> pair_ptrs_2
@@ -9501,7 +9500,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               pair_ptrs_1.emplace_back (p);
             }
-          std::shuffle (std::begin (pair_ptrs_1), std::end (pair_ptrs_1), rng);
+          std::random_shuffle (std::begin (pair_ptrs_1),
+                               std::end (pair_ptrs_1));
           for (auto _it : pair_ptrs_1)
             {
               _origin = dynamic_cast<MNM_Origin_Multimodal *> (_it.second);
@@ -9518,8 +9518,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
                 {
                   pair_ptrs_2.emplace_back (p);
                 }
-              std::shuffle (std::begin (pair_ptrs_2), std::end (pair_ptrs_2),
-                            rng);
+              std::random_shuffle (std::begin (pair_ptrs_2),
+                                   std::end (pair_ptrs_2));
               for (auto _it_it : pair_ptrs_2)
                 {
                   _dest
@@ -9564,8 +9564,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
                     {
                       pair_ptrs_2.emplace_back (p);
                     }
-                  std::shuffle (std::begin (pair_ptrs_2),
-                                std::end (pair_ptrs_2), rng);
+                  std::random_shuffle (std::begin (pair_ptrs_2),
+                                       std::end (pair_ptrs_2));
                   for (auto _it_it : pair_ptrs_2)
                     {
                       _dest = dynamic_cast<MNM_Destination_Multimodal *> (
@@ -9835,7 +9835,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               pair_ptrs_1.emplace_back (p);
             }
-          std::shuffle (std::begin (pair_ptrs_1), std::end (pair_ptrs_1), rng);
+          std::random_shuffle (std::begin (pair_ptrs_1),
+                               std::end (pair_ptrs_1));
           for (auto _it : pair_ptrs_1)
             {
               _origin = dynamic_cast<MNM_Origin_Multimodal *> (_it.second);
@@ -9852,8 +9853,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
                 {
                   pair_ptrs_2.emplace_back (p);
                 }
-              std::shuffle (std::begin (pair_ptrs_2), std::end (pair_ptrs_2),
-                            rng);
+              std::random_shuffle (std::begin (pair_ptrs_2),
+                                   std::end (pair_ptrs_2));
               for (auto _it_it : pair_ptrs_2)
                 {
                   _dest
@@ -9898,8 +9899,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
                     {
                       pair_ptrs_2.emplace_back (p);
                     }
-                  std::shuffle (std::begin (pair_ptrs_2),
-                                std::end (pair_ptrs_2), rng);
+                  std::random_shuffle (std::begin (pair_ptrs_2),
+                                       std::end (pair_ptrs_2));
                   for (auto _it_it : pair_ptrs_2)
                     {
                       _dest = dynamic_cast<MNM_Destination_Multimodal *> (

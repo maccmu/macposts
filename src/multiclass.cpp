@@ -2266,9 +2266,8 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
       _out_link = m_out_link_array[j];
 
       // shuffle the in links, reserve the FIFO
-      std::random_device rng; // random sequence
-      std::shuffle (_in_link_ind_array.begin (), _in_link_ind_array.end (),
-                    rng);
+      std::random_shuffle (_in_link_ind_array.begin (),
+                           _in_link_ind_array.end ());
       for (size_t i : _in_link_ind_array)
         {
           _in_link = m_in_link_array[i];

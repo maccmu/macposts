@@ -2137,9 +2137,7 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
     }
 
   // https://stackoverflow.com/questions/6926433/how-to-shuffle-a-stdvector
-  // auto rng = std::default_random_engine {}; // same sequence every time
-  std::random_device rng; // random sequence
-  std::shuffle (m_passenger_pool.begin (), m_passenger_pool.end (), rng);
+  std::random_shuffle (m_passenger_pool.begin (), m_passenger_pool.end ());
 
   return 0;
 }
@@ -2850,10 +2848,8 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
         }
     }
   // https://stackoverflow.com/questions/6926433/how-to-shuffle-a-stdvector
-  // auto rng = std::default_random_engine {}; // same sequence every time
-  std::random_device rng; // random sequence
-  std::shuffle (m_origin_node->m_in_veh_queue.begin (),
-                m_origin_node->m_in_veh_queue.end (), rng);
+  std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
+                       m_origin_node->m_in_veh_queue.end ());
 
   return 0;
 }
@@ -3051,10 +3047,8 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
         }
     }
   // https://stackoverflow.com/questions/6926433/how-to-shuffle-a-stdvector
-  // auto rng = std::default_random_engine {}; // same sequence every time
-  std::random_device rng; // random sequence
-  std::shuffle (m_origin_node->m_in_veh_queue.begin (),
-                m_origin_node->m_in_veh_queue.end (), rng);
+  std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
+                       m_origin_node->m_in_veh_queue.end ());
   return 0;
 }
 
@@ -3121,9 +3115,8 @@ MNM_Origin_Multimodal::release_one_interval_passenger (
           m_in_passenger_queue.push_back (_passenger);
         }
     }
-  std::random_device rng; // random sequence
-  std::shuffle (m_in_passenger_queue.begin (), m_in_passenger_queue.end (),
-                rng);
+  std::random_shuffle (m_in_passenger_queue.begin (),
+                       m_in_passenger_queue.end ());
   return 0;
 }
 
