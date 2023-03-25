@@ -2,7 +2,6 @@
 
 #include "Snap.h"
 #include "factory.h"
-#include "path.h"
 #include "shortest_path.h"
 
 #include <deque>

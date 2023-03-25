@@ -1,5 +1,4 @@
 #include "routing.h"
-#include <omp.h>
 
 MNM_Routing::MNM_Routing (PNEGraph &graph, MNM_OD_Factory *od_factory,
                           MNM_Node_Factory *node_factory,
