@@ -1,5 +1,4 @@
-#ifndef DTA_GRADIENT_UTLS_H
-#define DTA_GRADIENT_UTLS_H
+#pragma once
 
 #include "Snap.h"
 #include "dlink.h"
@@ -77,4 +76,3 @@ int add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
 
 TFlt get_departure_cc_slope (MNM_Dlink *link, TFlt start_time, TFlt end_time);
 };
-#endif

@@ -1,5 +1,4 @@
-#ifndef MULTICLASS_H
-#define MULTICLASS_H
+#pragma once
 
 #include "dlink.h"
 #include "dnode.h"
@@ -721,5 +720,3 @@ public:
   std::unordered_set<MNM_Veh *> m_car_set;
   std::unordered_set<MNM_Veh *> m_truck_set;
 };
-
-#endif

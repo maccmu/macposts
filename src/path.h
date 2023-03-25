@@ -1,5 +1,4 @@
-#ifndef PATH_H
-#define PATH_H
+#pragma once
 
 #include "Snap.h"
 #include "factory.h"
@@ -109,5 +108,3 @@ int get_ID_path_mapping (std::unordered_map<TInt, MNM_Path *> &map,
 MNM_Pathset *get_pathset (Path_Table *path_table, TInt origin_node_ID,
                           TInt dest_node_ID);
 }
-
-#endif

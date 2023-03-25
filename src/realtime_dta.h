@@ -1,5 +1,4 @@
-#ifndef REALTIME_DTA_H
-#define REALTIME_DTA_H
+#pragma once
 
 #include "Snap.h"
 #include "io.h"
@@ -112,4 +111,3 @@ void static inline copy_veh (MNM_Veh *_veh, MNM_Veh *_new_veh,
   _new_veh->set_origin (
     _shot->m_od_factory->get_origin (_veh->get_origin ()->m_Origin_ID));
 }
-#endif

@@ -1,5 +1,4 @@
-#ifndef ENUM_H
-#define ENUM_H
+#pragma once
 
 enum DNode_type
 {
@@ -88,5 +87,3 @@ enum MMDue_mode_rh
   rh_only,
   rh_metro
 };
-
-#endif

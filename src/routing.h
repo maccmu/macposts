@@ -1,5 +1,4 @@
-#ifndef ROUTING_H
-#define ROUTING_H
+#pragma once
 
 #include "Snap.h"
 #include "path.h"
@@ -174,5 +173,3 @@ public:
   MNM_Pre_Routing *m_pre_routing;
   std::unordered_map<MNM_Veh *, std::deque<TInt> *> m_tracker;
 };
-
-#endif

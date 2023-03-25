@@ -1,5 +1,4 @@
-#ifndef MARGINAL_COST_H
-#define MARGINAL_COST_H
+#pragma once
 
 #include "Snap.h"
 #include "factory.h"
@@ -36,4 +35,3 @@ namespace MNM
 {
 TFlt calculate_link_mc (MNM_Dlink *link, TFlt link_tt);
 }
-#endif

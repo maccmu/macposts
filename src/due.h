@@ -1,5 +1,4 @@
-#ifndef DUE_H
-#define DUE_H
+#pragma once
 
 #include "dta.h"
 #include "dta_gradient_utls.h"
@@ -104,5 +103,3 @@ public:
 
   MNM_Dta *m_base_dta;
 };
-
-#endif

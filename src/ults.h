@@ -1,5 +1,4 @@
-#ifndef ULTS_H
-#define ULTS_H
+#pragma once
 
 #include <Snap.h>
 
@@ -95,5 +94,3 @@ public:
   ConfigFile *m_configFile;
   std::string m_confKey;
 };
-
-#endif

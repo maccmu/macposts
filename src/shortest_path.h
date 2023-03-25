@@ -1,5 +1,4 @@
-#ifndef SHORTEST_PATH_H
-#define SHORTEST_PATH_H
+#pragma once
 
 #include "Snap.h"
 #include "limits.h"
@@ -172,5 +171,3 @@ struct LessThanByCost
 };
 
 bool CompareCostDecendSort (MNM_Cost *lhs, MNM_Cost *rhs);
-
-#endif

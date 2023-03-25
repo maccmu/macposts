@@ -1,6 +1,5 @@
 // implement a class pre_routing
-#ifndef PRE_ROUTING_H
-#define PRE_ROUTING_H
+#pragma once
 
 #include "Snap.h"
 #include "factory.h"
@@ -57,4 +56,3 @@ public:
 // routing_table_multiply(std::unordered_map<TInt,std::unordered_map<TInt,std::unordered_map<TInt,TFlt*>>>
 // *routing_table, 		float lambda);
 // }
-#endif

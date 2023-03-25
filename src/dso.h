@@ -1,5 +1,4 @@
-#ifndef DSO_H
-#define DSO_H
+#pragma once
 
 #include "due.h"
 
@@ -21,5 +20,3 @@ public:
   // time-varying queue dissipated time
   std::unordered_map<TInt, int *> m_queue_dissipated_time;
 };
-
-#endif

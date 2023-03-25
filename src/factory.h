@@ -1,5 +1,4 @@
-#ifndef FACTORY_H
-#define FACTORY_H
+#pragma once
 
 #include "Snap.h"
 #include "dlink.h"
@@ -69,5 +68,3 @@ public:
   std::unordered_map<TInt, MNM_Origin *> m_origin_map;
   std::unordered_map<TInt, MNM_Destination *> m_destination_map;
 };
-
-#endif

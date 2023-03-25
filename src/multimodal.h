@@ -2,8 +2,7 @@
 // Created by qiling on 2/18/21.
 //
 
-#ifndef MINAMI_MULTIMODAL_H
-#define MINAMI_MULTIMODAL_H
+#pragma once
 
 #include "due.h"
 #include "multiclass.h"
@@ -1876,5 +1875,3 @@ public:
     TInt, std::unordered_map<TInt, std::unordered_map<int, std::vector<TFlt>>>>
     m_od_demand_by_mode;
 };
-
-#endif // MINAMI_MULTIMODAL_H

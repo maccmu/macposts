@@ -1,5 +1,4 @@
-#ifndef STATISTICS_H
-#define STATISTICS_H
+#pragma once
 
 #include "Snap.h"
 #include "dlink.h"
@@ -75,4 +74,3 @@ private:
   std::unordered_map<TInt, TFlt> m_to_be_volume;
   std::unordered_map<TInt, TFlt> m_to_be_tt;
 };
-#endif

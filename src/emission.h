@@ -1,5 +1,4 @@
-#ifndef EMISSION_H
-#define EMISSION_H
+#pragma once
 
 #include "dlink.h"
 #include "ults.h"
@@ -42,5 +41,3 @@ public:
   TFlt m_VMT_ev;
   TInt m_ev_label;
 };
-
-#endif

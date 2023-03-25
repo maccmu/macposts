@@ -1,5 +1,4 @@
-#ifndef IO_H
-#define IO_H
+#pragma once
 
 #include "Snap.h"
 #include "enum.h"
@@ -110,5 +109,3 @@ public:
   // trim from both ends
   static std::string inline &trim (std::string &s) { return ltrim (rtrim (s)); }
 };
-
-#endif

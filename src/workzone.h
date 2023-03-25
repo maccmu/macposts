@@ -1,5 +1,4 @@
-#ifndef WORKZONE_H
-#define WORKZONE_H
+#pragma once
 
 #include "Snap.h"
 #include "dlink.h"
@@ -30,5 +29,3 @@ public:
   std::vector<MNM_Dlink *> m_disabled_link;
   std::vector<Link_Workzone> m_workzone_list;
 };
-
-#endif

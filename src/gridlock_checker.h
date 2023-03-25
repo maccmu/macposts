@@ -1,3 +1,5 @@
+#pragma once
+
 #include "factory.h"
 #include "vehicle.h"
 #include <deque>

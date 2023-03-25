@@ -1,5 +1,4 @@
-#ifndef OD_H
-#define OD_H
+#pragma once
 
 #include "Snap.h"
 #include "dnode.h"
@@ -69,4 +68,3 @@ namespace MNM
 TFlt get_demand_bynode (TInt O_node, TInt D_node, TInt assign_inter,
                         MNM_Node_Factory *node_factory);
 }
-#endif

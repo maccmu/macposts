@@ -1,5 +1,4 @@
-#ifndef VEHICLE_H
-#define VEHICLE_H
+#pragma once
 
 #include "Snap.h"
 #include "dlink.h"
@@ -83,4 +82,3 @@ public:
 //   MNM_Veh_Adp(TInt ID, TInt start_time);
 //   ~MNM_Veh_Adp();
 // };
-#endif

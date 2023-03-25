@@ -1,5 +1,4 @@
-#ifndef PMC_H
-#define PMC_H
+#pragma once
 
 #include "path.h"
 #include <unordered_map>
@@ -15,5 +14,3 @@ public:
     *m_pmc_table;
   // <O id, <D id, <path id, pmc values>>>
 };
-
-#endif

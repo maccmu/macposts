@@ -1,5 +1,4 @@
-#ifndef DTA_H
-#define DTA_H
+#pragma once
 
 #include "Snap.h"
 #include "dlink.h"
@@ -73,5 +72,3 @@ int print_vehicle_info (MNM_Veh_Factory *veh_factory);
 bool has_running_vehicle (MNM_Veh_Factory *veh_factory);
 // int round_time(int start_time_stamp, TFlt travel_time, TInt max_interval);
 }
-
-#endif

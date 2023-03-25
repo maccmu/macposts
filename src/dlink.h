@@ -1,5 +1,4 @@
-#ifndef DLINK_H
-#define DLINK_H
+#pragma once
 
 #include "enum.h"
 #include "limits.h"
@@ -261,5 +260,3 @@ public:
 
   TFlt get_demand ();
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef DNODE_H
-#define DNODE_H
+#pragma once
 
 #include "Snap.h"
 #include "dlink.h"
@@ -132,4 +131,3 @@ private:
   std::vector<std::vector<T>> powerSet (const std::vector<T> &set);
   std::vector<int> getOnLocations (int a);
 };
-#endif
