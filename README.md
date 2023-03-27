@@ -1,8 +1,18 @@
 # macposts
 
+## Help wanted
+
+- MSVC is not supported now and we appreciate any help on the Windows build.
+- macOS support is stopped temporarily due to [an issue in SNAP][snap issue]. We
+  are considering to remove the SNAP dependency completely, which needs a
+  substantial amount of work and we appreciate any help on this.
+
+[snap issue]: https://github.com/snap-stanford/snap/issues/70
+
+-----
+
 A toolkit for transportation network modeling. To install from the repository,
-first ensure a working C++ toolchain (note that MSVC is not supported now and we
-appreciate any help on the Windows build) and CMake ≥ 3.10. Then clone this
+first ensure a working C++ toolchain and CMake ≥ 3.10. Then clone this
 repository, initialize and clone all submodules, and run at the project root:
 
 ```sh
@@ -72,11 +82,20 @@ still want to use it, you may check the ‘examples’ directory in this reposit
 
 ## Contributors
 
-- Wei Ma: author and former maintainer
-- Xidong Pi: co-author and former maintainer
-- Pengji Zhang: current maintainer
-- Pinchao Zhang: contributor
-- Sean Qian: advisor
+### Maintainers
+
+- Qiling Zou: project maintainer;
+- Pengji Zhang: project co-maintainer.
+
+### Previous maintainers
+
+- Wei Ma: author and former maintainer;
+- Xidong Pi: co-author and former maintainer.
+
+### Contributors
+
+- Pinchao Zhang: contributor;
+- Sean Qian: advisor.
 
 ## License
 
