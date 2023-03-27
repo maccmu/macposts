@@ -144,3 +144,7 @@ class Mcdta(_CommonMixin, _ext.Mcdta):
 
         """
         return self._get_ccs(self.get_truck_link_out_cc, links)
+
+
+class Mmdta(_CommonMixin, _ext.Mmdta):
+    """Multi-modal DTA."""
