@@ -39,7 +39,7 @@ jobs:
     - uses: pypa/cibuildwheel@v2.11.2
       env:
         CIBW_ARCHS: native
-        # We do not support PyPy (for now) and Snap does not build for musl.
+        # We do not support PyPy (for now) and SNAP does not build for musl.
         CIBW_SKIP: "pp* *-musllinux_*"
 
     - uses: actions/upload-artifact@v3

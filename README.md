@@ -87,7 +87,7 @@ want to check their licenses as well:
 
 - pybind11: lib/pybinb11/LICENSE
 - Eigen: lib/eigen/COPYING.* (multiple licenses)
-- Snap: lib/snap/License.txt
+- SNAP: lib/snap/License.txt
 
 ## Acknowledgment
 

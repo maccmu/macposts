@@ -53,7 +53,7 @@ target_link_libraries(macposts
   # TODO: Some header files in src expose Eigen. Check if they can be eliminated
   # and maybe make this private.
   PUBLIC Eigen3::Eigen
-  # We expose many Snap data structures and functions in the interface so this
+  # We expose many SNAP data structures and functions in the interface so this
   # needs to be public.
   PUBLIC snap
   )

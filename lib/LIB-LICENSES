@@ -35,7 +35,7 @@ external contributions to this project including patches, pull requests, etc.
 * Eigen is has multiple licenses for different files. Please see check their
 website (https://eigen.tuxfamily.org/) for details.
 
-* Snap is BSD licensed:
+* SNAP is BSD licensed:
 
 --------------------------------------------------------------------------------
 * Copyright (c) 2007-2019, Jure Leskovec

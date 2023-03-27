@@ -16,7 +16,7 @@ graft lib/eigen/cmake
 include lib/eigen/CMakeLists.txt
 include lib/eigen/COPYING.*
 
-# Snap
+# SNAP
 graft lib/snap/snap-core
 graft lib/snap/glib-core
 include lib/snap/CMakeLists.txt
