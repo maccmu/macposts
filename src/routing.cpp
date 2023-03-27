@@ -236,15 +236,7 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
                                 ->second;
               if (_next_link_ID < 0)
                 {
-                  printf (
-                    "Something wrong in adaptive routing, wrong next link 1\n");
-                  // printf("%d\n", _veh -> get_destination() -> m_Dest_ID);
-                  // _shortest_path_tree = m_table -> find(_veh ->
-                  // get_destination()) -> second; printf("%d\n",
-                  // _shortest_path_tree -> size()); for (auto it :
-                  // (*_shortest_path_tree)) printf("%d, %d\n", it.first,
-                  // it.second);
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                 }
               // printf("From origin, The next link ID will be %d\n",
               // _next_link_ID());
@@ -272,22 +264,8 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
             {
               if (_link != _veh->get_current_link ())
                 {
-                  printf ("Wrong current link!\n");
-                  exit (-1);
+                  throw std::runtime_error ("wrong current link");
                 }
-              // if (_link != _veh -> get_next_link()){
-              //   printf("Wrong node allocation!\n");
-              //   printf("The next link should be %d, but now it's %d, current
-              //   link is %d\n",_link -> m_link_ID(),
-              //                 _veh -> get_next_link() -> m_link_ID(), _veh ->
-              //                 get_current_link() -> m_link_ID());
-              //   _next_link_ID = m_table -> find(_veh -> get_destination()) ->
-              //   second -> find(_node_ID) -> second; _node_ID = m_table ->
-              //   find(_veh -> get_destination()) -> second -> find(1) ->
-              //   second; printf("The next link ID will be %d\n",
-              //   _next_link_ID()); printf("From origin, The next link ID will
-              //   be %d\n", _node_ID()); exit(-1);
-              // }
               _veh_dest = _veh->get_destination ();
               if (_veh_dest->m_dest_node->m_node_ID == _node_ID)
                 {
@@ -345,10 +323,8 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
                                 ->second
                               == -1)
                             {
-                              printf ("Something wrong for the future node!\n");
-                              exit (-1);
+                              throw std::runtime_error ("invalid state");
                             }
-                          // printf("Pass checking\n");
                         }
                     }
                   _veh->set_next_link (_next_link);
@@ -530,8 +506,7 @@ MNM_Routing_Fixed::update_routing (TInt timestamp)
                 { // vehicles reaching destination
                   if (m_tracker.find (_veh)->second->size () != 0)
                     { // check if any links left in the route
-                      printf ("Something wrong in fixed routing!\n");
-                      exit (-1);
+                      throw std::runtime_error ("invalid state");
                     }
                   _veh->set_next_link (nullptr);
                   // m_tracker.erase(m_tracker.find(_veh));
@@ -543,21 +518,15 @@ MNM_Routing_Fixed::update_routing (TInt timestamp)
                   if (m_tracker.find (_veh) == m_tracker.end ())
                     { // check if vehicle is registered in m_tracker, which
                       // should be done in releasing from origin
-                      printf ("Vehicle not registered in link, impossible!\n");
-                      exit (-1);
+                      throw std::runtime_error (
+                        "invalid state: vehicle unregistered for link");
                     }
                   if (_veh->get_current_link () == _veh->get_next_link ())
                     {
                       _next_link_ID = m_tracker.find (_veh)->second->front ();
                       if (_next_link_ID == -1)
                         {
-                          printf (
-                            "Something wrong in routing, wrong next link 2\n");
-                          printf ("The node is %d, the vehicle should head to "
-                                  "%d\n",
-                                  (int) _node_ID,
-                                  (int) _veh_dest->m_dest_node->m_node_ID);
-                          exit (-1);
+                          throw std::runtime_error ("invalid state");
                         }
                       _next_link = m_link_factory->get_link (_next_link_ID);
                       _veh->set_next_link (_next_link);
@@ -601,8 +570,7 @@ MNM_Routing_Fixed::register_veh (MNM_Veh *veh, bool track)
   // printf("3\n");
   if (_route_path == nullptr)
     {
-      printf ("Wrong probability!\n");
-      exit (-1);
+      throw std::runtime_error ("wrong probability");
     }
   if (track)
     {
@@ -908,8 +876,7 @@ MNM_Routing_Biclass_Fixed::update_routing (TInt timestamp)
                 {
                   if (m_tracker.find (_veh)->second->size () != 0)
                     {
-                      printf ("Something wrong in fixed routing!\n");
-                      exit (-1);
+                      throw std::runtime_error ("invalid state");
                     }
                   _veh->set_next_link (nullptr);
                 }
@@ -917,21 +884,15 @@ MNM_Routing_Biclass_Fixed::update_routing (TInt timestamp)
                 {
                   if (m_tracker.find (_veh) == m_tracker.end ())
                     {
-                      printf ("Vehicle not registered in link, impossible!\n");
-                      exit (-1);
+                      throw std::runtime_error (
+                        "invalid state: vehicle unregistered for link");
                     }
                   if (_veh->get_current_link () == _veh->get_next_link ())
                     {
                       _next_link_ID = m_tracker.find (_veh)->second->front ();
                       if (_next_link_ID == -1)
                         {
-                          printf (
-                            "Something wrong in routing, wrong next link 2\n");
-                          printf ("The node is %d, the vehicle should head to "
-                                  "%d\n",
-                                  (int) _node_ID,
-                                  (int) _veh_dest->m_dest_node->m_node_ID);
-                          exit (-1);
+                          throw std::runtime_error ("invalid state");
                         }
                       _next_link = m_link_factory->get_link (_next_link_ID);
                       _veh->set_next_link (_next_link);

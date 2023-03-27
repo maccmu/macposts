@@ -95,8 +95,7 @@ MNM_Gridlock_Link_Recorder::MNM_Gridlock_Link_Recorder (
                       std::ofstream::out);
   if (!m_record_file.is_open ())
     {
-      printf ("Error happens when open m_record_file\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open m_record_file");
     }
 }
 

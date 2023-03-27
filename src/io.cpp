@@ -971,8 +971,7 @@ MNM_IO::build_link_toll (const std::string &file_folder,
             }
           else
             {
-              printf ("Something wrong in build_link_toll!\n");
-              exit (-1);
+              throw std::runtime_error ("failed to build link toll");
             }
         }
       _file.close ();
@@ -1056,17 +1055,14 @@ MNM_IO::read_td_link_cost (const std::string &file_folder,
             }
           else
             {
-              printf ("Something wrong in input file for "
-                      "MNM_IO::read_td_link_cost!\n");
-              exit (-1);
+              throw std::runtime_error ("failed to read line: " + _line);
             }
         }
       _file.close ();
     }
   else
     {
-      printf ("Something wrong in input file for MNM_IO::read_td_link_cost!\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + _file_name);
     }
   return 0;
 }
@@ -1140,17 +1136,14 @@ MNM_IO::read_td_node_cost (
             }
           else
             {
-              printf ("Something wrong in input file for "
-                      "MNM_IO::read_td_node_cost!\n");
-              exit (-1);
+              throw std::runtime_error ("failed to read line: " + _line);
             }
         }
       _file.close ();
     }
   else
     {
-      printf ("Something wrong in input file for MNM_IO::read_td_node_cost!\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + _file_name);
     }
   return 0;
 }

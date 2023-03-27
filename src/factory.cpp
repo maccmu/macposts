@@ -44,8 +44,7 @@ MNM_Veh_Factory::remove_finished_veh (MNM_Veh *veh, bool del)
   if (m_veh_map.find (veh->m_veh_ID) == m_veh_map.end ()
       || m_veh_map.find (veh->m_veh_ID)->second != veh)
     {
-      printf ("veh not in factory!\n");
-      exit (-1);
+      throw std::runtime_error ("vehicle not found");
     }
 
   if (del)

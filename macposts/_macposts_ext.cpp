@@ -636,8 +636,7 @@ Dta::run_due (int max_iter, const std::string &folder, bool verbose,
   _gap_file.open (_gap_file_name, std::ofstream::out);
   if (!_gap_file.is_open ())
     {
-      printf ("Dta::run_due, Error happens when open gap_file\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + _gap_file_name);
     }
 
   TFlt _gap, _total_tt;
@@ -700,8 +699,7 @@ Dta::run_due (int max_iter, const std::string &folder, bool verbose,
             }
           else
             {
-              printf ("Dta::run_due, method undefined\n");
-              exit (-1);
+              throw std::runtime_error ("unsupported method");
             }
         }
 
@@ -739,8 +737,7 @@ Dta::run_dso (int max_iter, const std::string &folder, bool verbose,
   _gap_file.open (_gap_file_name, std::ofstream::out);
   if (!_gap_file.is_open ())
     {
-      printf ("Dta::run_dso, Error happens when open gap_file\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + _gap_file_name);
     }
 
   TFlt _gap, _total_tt;
@@ -806,8 +803,7 @@ Dta::run_dso (int max_iter, const std::string &folder, bool verbose,
             }
           else
             {
-              printf ("Dta::run_dso, method undefined\n");
-              exit (-1);
+              throw std::runtime_error ("unsupported method");
             }
         }
 
@@ -919,8 +915,7 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
                        std::ofstream::out);
       if (!_vis_file2.is_open ())
         {
-          printf ("Error happens when open _vis_file2\n");
-          exit (-1);
+          throw std::runtime_error ("failed to open _vis_file2");
         }
 
       _str1 = "timestamp (intervals), driving_link_ID, vehicle_inflow, "
@@ -1021,9 +1016,7 @@ Dta::build_link_cost_map (bool with_congestion_indicator)
     }
   else
     {
-      printf ("Set routing_type = Due or Hybrid in config.conf and valid vot "
-              "value\n");
-      exit (-1);
+      throw std::runtime_error ("unsupported routing type");
     }
 
   for (auto _link_it : m_dta->m_link_factory->m_link_map)
@@ -1603,9 +1596,8 @@ Dta::generate_paths_to_cover_registered_links ()
     }
   else
     {
-      printf ("Something wrong in "
-              "Dta::generate_paths_to_cover_registered_links\n");
-      exit (-1);
+      throw std::runtime_error (
+        "failed when generate paths to cover registered links");
     }
 
   MNM::save_path_table (m_dta->m_file_folder,
@@ -1646,9 +1638,7 @@ Dta::save_path_table (const std::string &folder)
     }
   else
     {
-      printf ("Dta::save_path_table, wrong routing type, no valid path "
-              "table to save\n");
-      exit (-1);
+      throw std::runtime_error ("invalid routing type");
     }
   MNM::save_path_table (folder, _path_table, m_dta->m_od_factory, true, false);
   return 0;
@@ -2146,8 +2136,7 @@ Dta::save_dar_matrix (py::array_t<int> start_intervals,
   _file.open (file_name, std::ofstream::out);
   if (!_file.is_open ())
     {
-      printf ("Error happens when open dar_matrix.txt\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + file_name);
     }
 
   int _num_path = m_path_map.size ();
@@ -2775,8 +2764,7 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                        std::ofstream::out);
       if (!_vis_file2.is_open ())
         {
-          printf ("Error happens when open _vis_file2\n");
-          exit (-1);
+          throw std::runtime_error ("failed to open _vis_file2");
         }
 
       _str1 = "timestamp (intervals), driving_link_ID, car_inflow, "
@@ -5240,8 +5228,7 @@ Mcdta::save_car_dar_matrix (py::array_t<int> start_intervals,
   _file.open (file_name, std::ofstream::out);
   if (!_file.is_open ())
     {
-      printf ("Error happens when open car_dar_matrix.txt\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + file_name);
     }
 
   int _num_path = m_path_vec.size ();
@@ -5355,8 +5342,7 @@ Mcdta::save_truck_dar_matrix (py::array_t<int> start_intervals,
   _file.open (file_name, std::ofstream::out);
   if (!_file.is_open ())
     {
-      printf ("Error happens when open truck_dar_matrix.txt\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + file_name);
     }
 
   int _num_path = m_path_vec.size ();
@@ -5807,9 +5793,7 @@ Mcdta::get_car_ltg_matrix (py::array_t<int> start_intervals,
 
               if (_t_depart_lift_up < _t_depart_prime)
                 {
-                  printf ("Error, Mcdta::get_car_ltg_matrix_driving, "
-                          "something is wrong");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                   // _t_depart_lift_up can be equal to _t_depart_prime, when the
                   // arrival curve is horizontal
                 }
@@ -5908,7 +5892,7 @@ Mcdta::get_car_ltg_matrix (py::array_t<int> start_intervals,
                             << "\n";
                           std::cout << "get_cur_loading_interval(): "
                                     << get_cur_loading_interval () << "\n";
-                          exit (-1);
+                          throw std::runtime_error ("invalid state");
                         }
                       if (_t_depart_prime < _t_depart_lift_up_valid)
                         {
@@ -6127,9 +6111,7 @@ Mcdta::get_truck_ltg_matrix (py::array_t<int> start_intervals,
 
               if (_t_depart_lift_up < _t_depart_prime)
                 {
-                  printf ("Error, Mcdta::get_truck_ltg_matrix, something "
-                          "is wrong");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                   // _t_depart_lift_up can be equal to _t_depart_prime, when the
                   // arrival curve is horizontal
                 }
@@ -6228,7 +6210,7 @@ Mcdta::get_truck_ltg_matrix (py::array_t<int> start_intervals,
                             << "\n";
                           std::cout << "get_cur_loading_interval(): "
                                     << get_cur_loading_interval () << "\n";
-                          exit (-1);
+                          throw std::runtime_error ("invalid state");
                         }
                       if (_t_depart_prime < _t_depart_lift_up_valid)
                         {
@@ -6455,9 +6437,7 @@ Mcdta::get_complete_car_ltg_matrix (py::array_t<int> start_intervals,
 
               if (_t_depart_lift_up < _t_depart_prime)
                 {
-                  printf ("Error, Mcdta::get_complete_truck_ltg_matrix, "
-                          "something is wrong");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                   // _t_depart_lift_up can be equal to _t_depart_prime, when the
                   // arrival curve is horizontal
                 }
@@ -6558,7 +6538,7 @@ Mcdta::get_complete_car_ltg_matrix (py::array_t<int> start_intervals,
                             << "\n";
                           std::cout << "get_cur_loading_interval(): "
                                     << get_cur_loading_interval () << "\n";
-                          exit (-1);
+                          throw std::runtime_error ("invalid state");
                         }
                       if (_t_depart_prime < _t_depart_lift_up_valid)
                         {
@@ -6792,9 +6772,7 @@ Mcdta::get_complete_truck_ltg_matrix (py::array_t<int> start_intervals,
 
               if (_t_depart_lift_up < _t_depart_prime)
                 {
-                  printf ("Error, Mcdta::get_complete_truck_ltg_matrix, "
-                          "something is wrong");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                   // _t_depart_lift_up can be equal to _t_depart_prime, when the
                   // arrival curve is horizontal
                 }
@@ -6895,7 +6873,7 @@ Mcdta::get_complete_truck_ltg_matrix (py::array_t<int> start_intervals,
                             << "\n";
                           std::cout << "get_cur_loading_interval(): "
                                     << get_cur_loading_interval () << "\n";
-                          exit (-1);
+                          throw std::runtime_error ("invalid state");
                         }
                       if (_t_depart_prime < _t_depart_lift_up_valid)
                         {
@@ -7693,8 +7671,7 @@ Mmdta::run_mmdue (const std::string &folder, bool verbose)
   gap_file.open (gap_file_name, std::ofstream::out);
   if (!gap_file.is_open ())
     {
-      printf ("Error happens when open gap_file\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + gap_file_name);
     }
 
   std::string emission_file_name = folder + "/" + rec_folder + "/emission";
@@ -7702,8 +7679,7 @@ Mmdta::run_mmdue (const std::string &folder, bool verbose)
   emission_file.open (emission_file_name, std::ofstream::out);
   if (!emission_file.is_open ())
     {
-      printf ("Error happens when open emission_file\n");
-      exit (-1);
+      throw std::runtime_error ("failed to open file: " + emission_file_name);
     }
 
   TFlt gap;
@@ -7853,8 +7829,7 @@ Mmdta::run_mmdta_adaptive (const std::string &folder, int cong_frequency,
                        std::ofstream::out);
       if (!_vis_file4.is_open ())
         {
-          printf ("Error happens when open _vis_file4\n");
-          exit (-1);
+          throw std::runtime_error ("failed to open_vis_file4");
         }
       _str = "driving, bus_transit, pnr\n";
       if (m_mmdue->m_mode_share.find (driving) != m_mmdue->m_mode_share.end ())
@@ -8032,9 +8007,7 @@ Mmdta::get_links_overlapped_bus_driving ()
 {
   if (m_link_vec_bus.empty ())
     {
-      printf ("Warning, Mmdta::get_links_overlapped_bus_driving, bus links "
-              "do not exist\n");
-      exit (-1);
+      throw std::runtime_error ("bus links do not exist");
     }
   struct _record
   {
@@ -8166,15 +8139,13 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                        std::ofstream::out);
       if (!_vis_file2.is_open ())
         {
-          printf ("Error happens when open _vis_file2\n");
-          exit (-1);
+          throw std::runtime_error ("failed to open _vis_file2");
         }
       _vis_file3.open (folder + "/transit_link_cong_raw.txt",
                        std::ofstream::out);
       if (!_vis_file3.is_open ())
         {
-          printf ("Error happens when open _vis_file3\n");
-          exit (-1);
+          throw std::runtime_error ("failed to open _vis_file3");
         }
 
       _str1 = "timestamp (intervals), driving_link_ID, car_inflow, "
@@ -8642,8 +8613,7 @@ Mmdta::register_paths (py::array_t<int> paths)
            != m_num_path_driving + m_num_path_bustransit + m_num_path_pnr
                 + m_num_path_bus)
     {
-      printf ("repeated paths\n");
-      exit (-1);
+      throw std::runtime_error ("repeated paths");
     }
   return 0;
 }
@@ -8692,8 +8662,7 @@ Mmdta::register_paths_driving (py::array_t<int> paths)
       || m_pathID_set_driving.size () != m_path_vec_driving.size ()
       || int (m_path_vec_driving.size ()) != m_num_path_driving)
     {
-      printf ("repeated driving paths\n");
-      exit (-1);
+      throw std::runtime_error ("repeated driving paths");
     }
   return 0;
 }
@@ -8742,8 +8711,7 @@ Mmdta::register_paths_bustransit (py::array_t<int> paths)
       || m_pathID_set_bustransit.size () != m_path_vec_bustransit.size ()
       || int (m_path_vec_bustransit.size ()) != m_num_path_bustransit)
     {
-      printf ("repeated bustransit paths\n");
-      exit (-1);
+      throw std::runtime_error ("repeated bus transit paths");
     }
   return 0;
 }
@@ -8791,8 +8759,7 @@ Mmdta::register_paths_pnr (py::array_t<int> paths)
       || m_pathID_set_pnr.size () != m_path_vec_pnr.size ()
       || int (m_path_vec_pnr.size ()) != m_num_path_pnr)
     {
-      printf ("repeated pnr paths\n");
-      exit (-1);
+      throw std::runtime_error ("repeated pnr paths");
     }
   return 0;
 }
@@ -8840,8 +8807,7 @@ Mmdta::register_paths_bus (py::array_t<int> paths)
       || m_pathID_set_bus.size () != m_path_vec_bus.size ()
       || int (m_path_vec_bus.size ()) != m_num_path_bus)
     {
-      printf ("repeated bus paths\n");
-      exit (-1);
+      throw std::runtime_error ("repeated bus paths");
     }
   return 0;
 }
@@ -11351,8 +11317,7 @@ Mmdta::get_lowest_cost_path (int start_interval, int o_node_ID, int d_node_ID)
     }
   else
     {
-      printf ("Mode not implemented!\n");
-      exit (-1);
+      throw std::runtime_error ("unsupported mode");
     }
   IAssert (_path != nullptr);
 
@@ -11483,8 +11448,7 @@ Mmdta::get_lowest_cost_path_snapshot (int start_interval, int o_node_ID,
     }
   else
     {
-      printf ("Mode not implemented!\n");
-      exit (-1);
+      throw std::runtime_error ("unsupported mode");
     }
   IAssert (_path != nullptr);
 
@@ -14886,9 +14850,7 @@ Mmdta::get_car_ltg_matrix_driving (py::array_t<int> start_intervals,
 
               if (_t_depart_lift_up < _t_depart_prime)
                 {
-                  printf ("Error, Mmdta::get_car_ltg_matrix_driving, "
-                          "something is wrong");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                   // _t_depart_lift_up can be equal to _t_depart_prime, when the
                   // arrival curve is horizontal
                 }
@@ -14984,7 +14946,7 @@ Mmdta::get_car_ltg_matrix_driving (py::array_t<int> start_intervals,
                             << "\n";
                           std::cout << "get_cur_loading_interval(): "
                                     << get_cur_loading_interval () << "\n";
-                          exit (-1);
+                          throw std::runtime_error ("invalid state");
                         }
                       if (_t_depart_prime < _t_depart_lift_up_valid)
                         {
@@ -15261,9 +15223,7 @@ Mmdta::get_truck_ltg_matrix_driving (py::array_t<int> start_intervals,
 
               if (_t_depart_lift_up < _t_depart_prime)
                 {
-                  printf ("Error, Mmdta::get_truck_ltg_matrix_driving, "
-                          "something is wrong");
-                  exit (-1);
+                  throw std::runtime_error ("invalid state");
                   // _t_depart_lift_up can be equal to _t_depart_prime, when the
                   // arrival curve is horizontal
                 }
@@ -15359,7 +15319,7 @@ Mmdta::get_truck_ltg_matrix_driving (py::array_t<int> start_intervals,
                             << "\n";
                           std::cout << "get_cur_loading_interval(): "
                                     << get_cur_loading_interval () << "\n";
-                          exit (-1);
+                          throw std::runtime_error ("invalid state");
                         }
                       if (_t_depart_prime < _t_depart_lift_up_valid)
                         {

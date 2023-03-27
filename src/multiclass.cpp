@@ -2091,8 +2091,7 @@ MNM_DMDND_Multiclass::evolve (TInt timestamp)
             _link->m_finished_array.front ());
           if (_veh->get_next_link () != nullptr)
             {
-              printf ("Something wrong in DMDND evolve\n");
-              exit (-1);
+              throw std::runtime_error ("invalid state");
             }
           m_out_veh_queue.push_back (_veh);
           _veh->set_current_link (nullptr);
@@ -2662,8 +2661,7 @@ MNM_Origin_Multiclass::generate_label (TInt veh_class)
     }
   else
     {
-      printf ("MNM_Origin_Multiclass::generate_label, Wrong vehicle class!\n");
-      exit (-1);
+      throw std::runtime_error ("wrong vehicle class");
     }
   return -1;
 }
@@ -3507,8 +3505,7 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
                     }
                   else
                     {
-                      printf ("Wrong init_demand_split\n");
-                      exit (-1);
+                      throw std::runtime_error ("wrong init_demand_split");
                     }
                 }
               _origin = dynamic_cast<MNM_Origin_Multiclass *> (
@@ -3695,8 +3692,7 @@ MNM_IO_Multiclass::build_link_toll_multiclass (const std::string &file_folder,
             }
           else
             {
-              printf ("Something wrong in build_link_toll_multiclass!\n");
-              exit (-1);
+              throw std::runtime_error ("failed to parse line: " + _line);
             }
         }
       _file.close ();
@@ -4961,10 +4957,9 @@ build_pathset_multiclass (PNEGraph &graph, MNM_OD_Factory *od_factory,
             }
           else
             {
-              printf ("No driving path found to connect origin node ID %d and "
-                      "destination node ID %d\n",
-                      _origin_node_ID (), _dest_node_ID ());
-              exit (-1);
+              throw std::runtime_error (
+                "no path between origin " + std::to_string (_origin_node_ID ())
+                + " and destination " + std::to_string (_dest_node_ID ()));
             }
         }
     }

@@ -438,10 +438,9 @@ build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
             }
           else
             {
-              printf ("No driving path found to connect origin node ID %d and "
-                      "destination node ID %d\n",
-                      _origin_node_ID (), _dest_node_ID ());
-              exit (-1);
+              throw std::runtime_error (
+                "no path between origin " + std::to_string (_origin_node_ID ())
+                + " and destination " + std::to_string (_dest_node_ID ()));
             }
         }
     }
@@ -543,10 +542,9 @@ build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
             }
           else
             {
-              printf ("No driving path found to connect origin node ID %d and "
-                      "destination node ID %d\n",
-                      _origin_node_ID (), _dest_node_ID ());
-              exit (-1);
+              throw std::runtime_error (
+                "no path between origin " + std::to_string (_origin_node_ID ())
+                + " and destination " + std::to_string (_dest_node_ID ()));
             }
         }
     }
@@ -697,22 +695,16 @@ save_path_table (const std::string &file_folder, Path_Table *path_table,
       _path_time_file.open (_path_time_file_name, std::ofstream::out);
       if (!_path_time_file.is_open ())
         {
-          printf ("Error happens when open _path_time_file\n");
-          exit (-1);
+          throw std::runtime_error ("failed to open file: "
+                                    + _path_time_file_name);
         }
-      // std::string _path_cost_file_name = _path_file_name + "_cost";
-      // _path_cost_file.open(_path_cost_file_name, std::ofstream::out);
-      // if (!_path_cost_file.is_open()){
-      //     printf("Error happens when open _path_cost_file\n");
-      //     exit(-1);
-      // }
       std::string _path_disutility_file_name = _path_file_name + "_disutility";
       _path_disutility_file.open (_path_disutility_file_name,
                                   std::ofstream::out);
       if (!_path_disutility_file.is_open ())
         {
-          printf ("Error happens when open _path_disutility_file\n");
-          exit (-1);
+          throw std::runtime_error ("failed to open file: "
+                                    + _path_disutility_file_name);
         }
     }
 

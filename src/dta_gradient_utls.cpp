@@ -50,9 +50,8 @@ get_last_valid_time (MNM_Cumulative_Curve *N_in, MNM_Cumulative_Curve *N_out,
               N_out->m_recorder.back ().second ());
       printf ("diff: %lf\n", N_in->m_recorder.back ().second
                                - N_out->m_recorder.back ().second);
-      printf ("Cumulative Curve Count Error!\n");
       std::cout << s << std::endl;
-      exit (-1);
+      throw std::runtime_error ("invalid state of cumulative curve");
     }
   IAssert (end_loading_timestamp >= int (N_in->m_recorder.back ().first));
   IAssert (end_loading_timestamp >= int (N_out->m_recorder.back ().first));
@@ -103,9 +102,8 @@ get_last_valid_time_bus (MNM_Cumulative_Curve *N_in,
               N_out->m_recorder.back ().second ());
       printf ("diff: %lf\n", N_in->m_recorder.back ().second
                                - N_out->m_recorder.back ().second);
-      printf ("Cumulative Curve Count Error!\n");
       std::cout << s << std::endl;
-      exit (-1);
+      throw std::runtime_error ("invalid state of cumulative curve");
     }
   IAssert (end_loading_timestamp >= int (N_in->m_recorder.back ().first));
   IAssert (end_loading_timestamp >= int (N_out->m_recorder.back ().first));

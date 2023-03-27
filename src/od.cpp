@@ -202,8 +202,7 @@ MNM_Destination::receive (TInt current_interval, MNM_Routing *routing,
           printf ("The veh is heading to %d, but we are %d\n",
                   (int) _veh->get_destination ()->m_dest_node->m_node_ID,
                   (int) m_dest_node->m_node_ID);
-          printf ("MNM_Destination::receive: Something wrong!\n");
-          exit (-1);
+          throw std::runtime_error ("invalid state");
         }
       _veh->finish (current_interval);
       // printf("Receive Vehicle ID: %d, origin node is %d, destination node is
