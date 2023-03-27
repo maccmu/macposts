@@ -3,11 +3,8 @@
 ## Help wanted
 
 - MSVC is not supported now and we appreciate any help on the Windows build.
-- macOS support is stopped temporarily due to [an issue in SNAP][snap issue]. We
-  are considering to remove the SNAP dependency completely, which needs a
+- We are considering to remove the SNAP dependency completely, which needs a
   substantial amount of work and we appreciate any help on this.
-
-[snap issue]: https://github.com/snap-stanford/snap/issues/70
 
 -----
 
