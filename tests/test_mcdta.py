@@ -60,7 +60,7 @@ def test_3link_mc(network_3link_mc):
     car_out_ccs = mcdta.get_car_out_ccs(links)
     truck_in_ccs = mcdta.get_truck_in_ccs(links)
     truck_out_ccs = mcdta.get_truck_out_ccs()
-    assert car_in_ccs.shape == (201, 3)
+    assert car_in_ccs.shape == (241, 3)
     assert car_out_ccs.shape == car_in_ccs.shape
     assert truck_in_ccs.shape == car_in_ccs.shape
     assert truck_out_ccs.shape == truck_out_ccs.shape

@@ -8,9 +8,9 @@ def network_3link(tmp_path_factory):
     config = """\
 [DTA]
 network_name = Snap_graph
-total_interval = 200
+total_interval = 240
 unit_time = 5
-assign_frq = 20
+assign_frq = 24
 start_assign_interval = 0
 max_interval = 10
 flow_scalar = 1
@@ -85,9 +85,9 @@ def network_3link_mc(tmp_path_factory):
     config = """\
 [DTA]
 network_name = Snap_graph
-total_interval = 200
+total_interval = 240
 unit_time = 5
-assign_frq = 20
+assign_frq = 24
 start_assign_interval = 0
 max_interval = 10
 flow_scalar = 1

@@ -47,7 +47,7 @@ def test_3link(network_3link):
 
     in_ccs = dta.get_in_ccs()
     out_ccs = dta.get_out_ccs(links)
-    assert in_ccs.shape == (201, 3)
+    assert in_ccs.shape == (241, 3)
     assert out_ccs.shape == in_ccs.shape
     assert np.isclose(in_ccs[-1, 0], 500)
     assert np.isclose(out_ccs[0, 0], 0)
