@@ -9531,6 +9531,10 @@ MNM_Dta_Multimodal::initialize ()
     = new MNM_Cumulative_Emission_Multiclass (TFlt (m_unit_time), 0,
                                               _ev_label_car, _ev_label_truck);
 
+  // FIXME: The following lines may introduce issues related to rounding. So we
+  // need to keep 60 dividable by unit_time and m_config->get_int ("assign_frq")
+  // dividable by m_assign_freq.
+  //
   // the releasing strategy is assigning vehicles per 1 minute, so disaggregate
   // 15-min demand into 1-min demand change assign_freq to 12 (1 minute = 12 x 5
   // second / 60) and total_assign_interval to max_interval*_num_of_minute
