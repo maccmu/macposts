@@ -2,7 +2,7 @@ import macposts
 import numpy as np
 import platform
 import pytest
-from .conftest import SEED
+from .conftest import SEED, NUM_REPRO_RUNS
 
 
 @pytest.mark.xfail(
@@ -14,7 +14,7 @@ def test_reproducibility(network, request):
     car_in_ccs, car_out_ccs = None, None
     truck_in_ccs, truck_out_ccs = None, None
     network = request.getfixturevalue(network)
-    for _ in range(10):
+    for _ in range(NUM_REPRO_RUNS):
         macposts.set_random_state(SEED)
         mcdta = macposts.Mcdta.from_files(network)
         mcdta.register_links()

@@ -2,7 +2,7 @@ import macposts
 import numpy as np
 import platform
 import pytest
-from .conftest import SEED
+from .conftest import SEED, NUM_REPRO_RUNS
 
 
 @pytest.mark.xfail(
@@ -13,7 +13,7 @@ from .conftest import SEED
 def test_reproducibility(network, request):
     in_ccs, out_ccs = None, None
     network = request.getfixturevalue(network)
-    for _ in range(10):
+    for _ in range(NUM_REPRO_RUNS):
         macposts.set_random_state(SEED)
         dta = macposts.Dta.from_files(network)
         dta.register_links()

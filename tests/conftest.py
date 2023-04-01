@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 SEED = 0
+NUM_REPRO_RUNS = 10
 
 here = Path(__file__).resolve().parent
 fixtures_directories = [here / "fixtures"]
