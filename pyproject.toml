@@ -4,4 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 minversion = 6.0
-testpaths = ["tests"]
+required_plugins = ["nbval>=0.10.0"]
+testpaths = ["tests", "examples"]
+addopts = "--nbval"
