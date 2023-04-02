@@ -32,6 +32,10 @@ package, a C++ toolchain and CMake are required.
 Currently there is nothing that could be considered as the documentation. If you
 still want to use it, you may check the ‘examples’ directory in this repository.
 
+**CAVEAT:** *Do not run macposts on untrusted inputs. Currently it uses a rather
+crude data file reader/parser and may have some security vulnerabilities,
+including remote code execution (RCE).*
+
 ## Frequently asked questions
 
 * How is this project related to [MAC-POSTS]?
