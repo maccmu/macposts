@@ -1,14 +1,22 @@
-# macposts
+# MAC-POSTS
 
-A toolkit for transportation network modeling. To install from the repository,
-first ensure a working C++ toolchain and CMake ≥ 3.10. Then clone this
-repository, initialize and clone all submodules, and run at the project root:
+MAC-POSTS, the abbreviation of *Mobility data Analytics Center - Prediction, Optimization, and Simulation toolkit for Transportation Systems* is a toolkit for dynamic transportation network modeling developed by [Mobility data Analytics Center (MAC)](https://mac.heinz.cmu.edu/) at Carnegie Mellon University. 
+
+## Installation
+
+MAC-POSTS works as a Python library. It currently supports Linux and macOS operating systems. Windows is currently not supported due to some compilation issues with MSVC and we appreciate any help on the Windows build.
+
+To install from the repository, first ensure a working C++ toolchain and CMake ≥ 3.10. Then clone this repository, initialize and clone all submodules,
+
+```sh
+git clone --recurse-submodules https://github.com/maccmu/macposts.git 
+```
+
+Create a Python 3.x environment and run at the project root:
 
 ```sh
 pip install .
 ```
-
-*Note: MSVC is not supported and we appreciate any help on the Windows build.*
 
 For development, run
 
@@ -29,8 +37,9 @@ package, a C++ toolchain and CMake are required.
 
 ## Usage
 
-Currently there is nothing that could be considered as the documentation. If you
-still want to use it, you may check the ‘examples’ directory in this repository.
+Please refer to this [link](https://github.com/maccmu/macposts-documentations/blob/main/MAC_POSTS_users_manual.pdf) for the documentation. 
+
+You may check the ‘examples’ directory in this repository.
 
 **CAVEAT:** *Do not run macposts on untrusted inputs. Currently it uses a rather
 crude data file reader/parser and may have some security vulnerabilities,
@@ -38,39 +47,26 @@ including remote code execution (RCE).*
 
 ## Frequently asked questions
 
-* How is this project related to [MAC-POSTS]?
+* How is this project related to the previous [MAC-POSTS]?
 
   This project is the maintained fork of MAC-POSTS. We took over the maintenance
   work a few years ago. At that time, we found that the Git repository was very
   large due to the data files in tree, and the Git commit history was not very
   formally maintained. So we decided to start clean and made this new
-  repository.
+  repository. Moreover, we corrected many bugs and added more features.
 
-* Will this be compatible with MAC-POSTS?
+* Will this be compatible with the previous MAC-POSTS?
 
   Mostly yes. The Python API should be compatible (except that the library is
-  now named `macpsots` instead of `MNMAPI`) while breaking changes may have been
+  now named `macposts` instead of `MNMAPI`) while breaking changes may have been
   introduced to the underlying C++ library (we are unsure because we do not know
   which functions are internal). We will maintain the backward compatibility for
   the Python binding in the future. So it is recommended to only use the Python
   library and treat the whole C++ library as internal.
 
-* Where is the Git repository?
-
-  The Git repository is hosted on an internal server currently. However, we also
-  have a GitHub mirror for the repository, for which the main branch is
-  regularly updated (other branches may not be available).
-
-  This is because currently we still consider this project in the pre-alpha
-  stage and want to craft it a bit more before we can comfortably make it really
-  public.
-
 * How to report issues and send patches?
 
-  As said, we think this project is still in its infancy and are developing it
-  mainly internally. So the issues page on GitHub is closed. If you want to
-  report issues, please feel free to contact any of the committers in the Git
-  history. The pull requests page is still open and we will review and accept
+  If you want to report issues, please feel free to contact us via [macenter@andrew.cmu.edu](mailto:macenter@andrew.cmu.edu). The pull requests page is still open and we will review and accept
   patches there. You can also send patches via email as well.
 
 [MAC-POSTS]: https://github.com/Lemma1/MAC-POSTS
@@ -94,9 +90,9 @@ including remote code execution (RCE).*
 
 ## License
 
-macposts is licensed under MIT license. See also the LICENSE file.
+MAC-POSTS is licensed under MIT license. See also the LICENSE file.
 
-macposts depends on three external libraries under the lib directory. You may
+MAC-POSTS depends on three external libraries under the lib directory. You may
 want to check their licenses as well:
 
 - pybind11: lib/pybinb11/LICENSE
@@ -107,7 +103,7 @@ want to check their licenses as well:
 
 This project is funded in part by Traffic 21 Institute, Carnegie Mellon
 University's Mobility21, Technologies for Safe and Efficient Transportation
-(T-SET), US Department of Transportation (DOT), US Department of Energy (DOE).
+(T-SET), US Department of Transportation (DOT), and US Department of Energy (DOE).
 The contents of this project reflect the views of the authors, who are
 responsible for the facts and the accuracy of the information presented herein.
 The US Government assumes no liability for the contents or use thereof.
