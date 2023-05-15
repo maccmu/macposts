@@ -12626,44 +12626,6 @@ print_vehicle_statistics (MNM_Veh_Factory_Multimodal *veh_factory)
   return 0;
 }
 
-TFlt
-get_path_tt_snapshot (MNM_Path *path,
-                      const std::unordered_map<TInt, TFlt> &link_cost_map)
-{
-  TFlt _tt = TFlt (0);
-  for (auto _link_ID : path->m_link_vec)
-    {
-      if (link_cost_map.find (_link_ID) == link_cost_map.end ())
-        {
-          printf ("Wrong link in get_path_tt_snapshot()!\n");
-          exit (-1);
-        }
-      _tt += link_cost_map.find (_link_ID)->second;
-    }
-  return _tt;
-}
-
-TFlt
-get_path_tt (TFlt start_time, MNM_Path *path,
-             const std::unordered_map<TInt, TFlt *> &link_cost_map,
-             TInt max_interval)
-{
-  int _end_time = int (round (start_time));
-  for (auto _link_ID : path->m_link_vec)
-    {
-      if (link_cost_map.find (_link_ID) == link_cost_map.end ())
-        {
-          printf ("Wrong link in get_path_tt()!\n");
-          exit (-1);
-        }
-      _end_time
-        += link_cost_map.find (_link_ID)
-             ->second[_end_time < (int) max_interval ? _end_time
-                                                     : (int) max_interval - 1];
-    }
-  return TFlt (_end_time - start_time);
-}
-
 Passenger_Path_Table *
 build_shortest_passenger_pathset (
   std::vector<MMDue_mode> &mode_vec,

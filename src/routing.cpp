@@ -144,6 +144,10 @@ MNM_Routing_Adaptive::~MNM_Routing_Adaptive ()
 int
 MNM_Routing_Adaptive::init_routing (Path_Table *path_table)
 {
+  if (m_statistics -> m_self_config -> get_int("rec_tt") == 0) {
+    printf("MNM_Routing_Adaptive::init_routing, rec_tt should be set to 1 in config.conf to use adaptive routing\n");
+    exit(-1);
+  }
   std::unordered_map<TInt, TInt> *_shortest_path_tree;
   for (auto _it = m_od_factory->m_destination_map.begin ();
        _it != m_od_factory->m_destination_map.end (); _it++)
@@ -173,8 +177,8 @@ MNM_Routing_Adaptive::update_link_cost ()
     { // seconds
       // for multiclass, m_toll is for car, see
       // MNM_IO_Multiclass::build_link_toll_multiclass
-      m_link_cost[_it.first]
-        = _it.second * m_vot + m_link_factory->get_link (_it.first)->m_toll;
+      m_link_cost[_it.first] = _it.second * m_vot + m_link_factory->get_link (_it.first)->m_toll;
+      // printf("link %d, cost %f\n", _it.first(), m_link_cost[_it.first]());
     }
   return 0;
 }

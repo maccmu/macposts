@@ -644,6 +644,7 @@ Dta::run_due (int max_iter, const std::string &folder, bool verbose,
 
       // time-dependent link cost
       build_link_cost_map (false);
+      // TODO: whole map will be copied
       _due->m_link_tt_map = m_link_tt_map;
       _due->m_link_cost_map = m_link_cost_map;
       // _due -> build_link_cost_map(m_dta);
@@ -745,6 +746,7 @@ Dta::run_dso (int max_iter, const std::string &folder, bool verbose,
 
       // time-dependent link cost
       build_link_cost_map (true);
+      // TODO: whole map will be copied
       _dso->m_link_tt_map = m_link_tt_map;
       _dso->m_link_cost_map = m_link_cost_map;
       _dso->m_link_congested = m_link_congested;
@@ -2097,7 +2099,7 @@ Dta::save_dar_matrix (py::array_t<int> start_intervals,
                       const std::string &file_name)
 {
   // start_intervals and end_intervals are like [0, 180, 360, ...] and [180,
-  // 360, 720, ...] with increment of ass_freq
+  // 360, 540, ...] with increment of ass_freq
   auto f_buf = f.request ();
   if (f_buf.ndim != 1)
     {
