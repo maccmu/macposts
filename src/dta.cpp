@@ -559,7 +559,7 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
             }
           else
             {
-              if (m_config->get_string ("routing_type") == "Fixed")
+              if (m_config->get_string ("routing_type") == "Fixed" || m_config -> get_string("routing_type") == "Due")
                 {
                   // printf("Fixed Releasing.\n");
                   _origin->release_one_interval (load_int, m_veh_factory,
@@ -666,7 +666,7 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   m_statistics->update_record (load_int);
 
   record_enroute_vehicles ();
-  MNM::print_vehicle_statistics (m_veh_factory);
+  if (verbose) MNM::print_vehicle_statistics(m_veh_factory);
   // test();
   // consistent with loading()
   m_current_loading_interval = load_int + 1;
@@ -674,177 +674,30 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
 }
 
 // verbose: whether to print
-int
-MNM_Dta::loading (bool verbose)
+int MNM_Dta::loading(bool verbose)
 {
-  TInt _cur_int = 0;
-  MNM_Origin *_origin;
-  MNM_Dnode *_node;
-  MNM_Dlink *_link;
-  MNM_Destination *_dest;
+  TInt _current_inter = 0;
   TInt _assign_inter = m_start_assign_interval;
 
-  while (!finished_loading (_cur_int) || _assign_inter < m_total_assign_inter)
-    {
-      if (_cur_int == 0)
-        m_statistics->update_record (_cur_int);
-      if (verbose)
-        printf ("-------------------------------    Interval %d   "
-                "------------------------------ \n",
-                (int) _cur_int);
-      // step 1: Origin release vehicle (at origin node, generate vehicles for
-      // current assignment interval and put them in m_in_veh_queue)
-      if (verbose)
-        printf ("Releasing!\n");
-      if (_cur_int % m_assign_freq == 0)
-        {
-          for (auto _origin_it = m_od_factory->m_origin_map.begin ();
-               _origin_it != m_od_factory->m_origin_map.end (); _origin_it++)
-            {
-              _origin = _origin_it->second;
-              if (_assign_inter >= m_total_assign_inter)
-                { // keep m_total_assign_inter right, not 1 time more
-                  // (assing_interval = -1 returns 0)
-                  _origin->release_one_interval (_cur_int, m_veh_factory, -1,
-                                                 TFlt (0));
-                }
-              else
-                {
-                  if ((m_config->get_string ("routing_type") == "Fixed")
-                      || (m_config->get_string ("routing_type") == "Due"))
-                    {
-                      // printf("Fixed Releasing.\n");
-                      _origin->release_one_interval (_cur_int, m_veh_factory,
-                                                     _assign_inter, TFlt (0));
-                    }
-                  else if ((m_config->get_string ("routing_type")
-                            == "Adaptive"))
-                    {
-                      _origin->release_one_interval (_cur_int, m_veh_factory,
-                                                     _assign_inter, TFlt (1));
-                    }
-                  else if ((m_config->get_string ("routing_type") == "Hybrid"))
-                    {
-                      TFlt _ad_ratio = m_config->get_float ("adaptive_ratio");
-                      if (_ad_ratio > 1)
-                        _ad_ratio = 1;
-                      if (_ad_ratio < 0)
-                        _ad_ratio = 0;
-                      _origin->release_one_interval (_cur_int, m_veh_factory,
-                                                     _assign_inter, _ad_ratio);
-                    }
-                  else if ((m_config->get_string ("routing_type")
-                            == "Biclass_Hybrid"))
-                    {
-                      TFlt _ad_ratio_car
-                        = m_config->get_float ("adaptive_ratio_car");
-                      if (_ad_ratio_car > 1)
-                        _ad_ratio_car = 1;
-                      if (_ad_ratio_car < 0)
-                        _ad_ratio_car = 0;
-
-                      TFlt _ad_ratio_truck
-                        = m_config->get_float ("adaptive_ratio_truck");
-                      if (_ad_ratio_truck > 1)
-                        _ad_ratio_truck = 1;
-                      if (_ad_ratio_truck < 0)
-                        _ad_ratio_truck = 0;
-                      // NOTE: in this case the release function is different
-                      _origin->release_one_interval_biclass (_cur_int,
-                                                             m_veh_factory,
-                                                             _assign_inter,
-                                                             _ad_ratio_car,
-                                                             _ad_ratio_truck);
-                    }
-                  else
-                    {
-                      printf ("WARNING:No assignment!\n");
-                    }
-                }
-            }
-          _assign_inter += 1;
-        }
-
-      if (verbose)
-        printf ("Routing!\n");
-      // step 2: route the vehicle (assign route to each vehicle)
-      m_routing->update_routing (_cur_int);
-
-      if (verbose)
-        printf ("Moving through node!\n");
-      // step 3: move vehicles through node (for In-out node, move vehicles from
-      // current link's finished_array into next link's incoming_array, and
-      // set_current_link for vehicle)
-      for (auto _node_it = m_node_factory->m_node_map.begin ();
-           _node_it != m_node_factory->m_node_map.end (); _node_it++)
-        {
-          _node = _node_it->second;
-          _node->evolve (_cur_int); // update link cumulative count curve
-        }
-
-      // record queuing vehicles after node evolve, which is num of vehicles in
-      // finished array
-      record_queue_vehicles ();
-
-      if (verbose)
-        printf ("Moving through link\n");
-      // step 4: move vehicles through link
-      for (auto _link_it = m_link_factory->m_link_map.begin ();
-           _link_it != m_link_factory->m_link_map.end (); _link_it++)
-        {
-          _link = _link_it->second;
-
-          if ((m_gridlock_recorder != nullptr)
-              && ((m_config->get_int ("total_interval") <= 0
-                   && _cur_int >= 1.5 * m_total_assign_inter * m_assign_freq)
-                  || (m_config->get_int ("total_interval") > 0
-                      && _cur_int
-                           >= 0.95 * m_config->get_int ("total_interval"))))
-            {
-              m_gridlock_recorder->save_one_link (_cur_int, _link);
-            }
-
-          _link->clear_incoming_array (_cur_int);
-          // printf("finished clear link\n");
-          _link->evolve (_cur_int);
-          // _link -> print_info();
-        }
-      // only use in multiclass vehicle cases
-      if (m_emission != nullptr)
-        m_emission->update (m_veh_factory);
-
-      if (verbose)
-        printf ("Receiving!\n");
-      // step 5: Destination receive vehicle
-      for (auto _dest_it = m_od_factory->m_destination_map.begin ();
-           _dest_it != m_od_factory->m_destination_map.end (); _dest_it++)
-        {
-          _dest = _dest_it->second;
-          _dest->receive (_cur_int, m_routing, m_veh_factory, true);
-        }
-
-      if (verbose)
-        printf ("Update record!\n");
-      // step 5: update record
-      m_statistics->update_record (_cur_int);
-
-      if (verbose)
-        MNM::print_vehicle_statistics (m_veh_factory);
-
-      record_enroute_vehicles ();
-
-      // test();
-      _cur_int++;
-      // also in load_once()
-      m_current_loading_interval = _cur_int;
+  // pre_loading();
+  while (!finished_loading(_current_inter) || _assign_inter <= m_total_assign_inter){
+    if (verbose) {
+      printf("\nCurrent loading interval: %d, Current assignment interval: %d\n", _current_inter(), int(_current_inter/m_config -> get_int("assign_frq")));
     }
-  MNM::print_vehicle_statistics (m_veh_factory);
-  // MNM_IO::dump_cumulative_curve(m_file_folder, m_link_factory);
-  m_statistics->post_record ();
-  if (m_gridlock_recorder != nullptr)
-    m_gridlock_recorder->post_record ();
-  m_current_loading_interval = _cur_int;
-  return 0;
+    load_once(verbose, _current_inter, _assign_inter);
+    // link cc will be updated with the record at the end of this interval (i.e., _current_inter + 1)
+    if (_current_inter % m_assign_freq == 0 || _current_inter == 0) {
+      _assign_inter += 1;
+    }
+    _current_inter += 1;
+  }
+  if (verbose) {
+    MNM::print_vehicle_statistics(m_veh_factory);
+  }
+  m_statistics -> post_record();
+  if (m_gridlock_recorder != nullptr) m_gridlock_recorder -> post_record();
+  m_current_loading_interval = _current_inter;
+  return _current_inter;  // total number of actual loading intervals = _current_inter)
 }
 
 int
@@ -898,19 +751,6 @@ MNM_Dta::finished_loading (int cur_int)
       return !(MNM::has_running_vehicle (m_veh_factory) || cur_int == 0);
     }
 }
-
-// int MNM_Dta::test()
-// {
-//   auto output_map = std::unordered_map<TInt, TInt>();
-//   MNM_Shortest_Path::all_to_one_FIFO(6,
-//                         m_graph, m_statistics -> m_load_interval_tt,
-//                         output_map);
-//   for (auto _it = output_map.begin(); _it!=output_map.end(); _it++){
-//     printf("For node %d, it should head to %d\n", _it -> first, _it ->
-//     second);
-//   }
-//   return 0;
-// }
 
 namespace MNM
 {
