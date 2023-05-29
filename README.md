@@ -1,15 +1,21 @@
 # MAC-POSTS
 
-MAC-POSTS, the abbreviation of *Mobility data Analytics Center - Prediction, Optimization, and Simulation toolkit for Transportation Systems* is a toolkit for dynamic transportation network modeling developed by [Mobility data Analytics Center (MAC)](https://mac.heinz.cmu.edu/) at Carnegie Mellon University. 
+MAC-POSTS, the abbreviation of *Mobility data Analytics Center - Prediction,
+Optimization, and Simulation toolkit for Transportation Systems* is a toolkit
+for dynamic transportation network modeling developed by [Mobility data
+Analytics Center (MAC)][mac] at Carnegie Mellon University.
 
 ## Installation
 
-MAC-POSTS works as a Python library. It currently supports Linux and macOS operating systems. Windows is currently not supported due to some compilation issues with MSVC and we appreciate any help on the Windows build.
+MAC-POSTS works as a Python library. It currently supports Linux and macOS
+platforms. Windows is not supported due to some compilation issues with MSVC and
+we appreciate any help on the Windows build.
 
-To install from the repository, first ensure a working C++ toolchain and CMake ≥ 3.10. Then clone this repository, initialize and clone all submodules,
+To install from the repository, first ensure a working C++ toolchain and CMake ≥
+3.10. Then clone this repository, initialize and clone all submodules,
 
 ```sh
-git clone --recurse-submodules https://github.com/maccmu/macposts.git 
+git clone --recurse-submodules https://github.com/maccmu/macposts.git
 ```
 
 Create a Python 3.x environment and run at the project root:
@@ -33,13 +39,10 @@ for certain platforms and Python versions on the GitHub [releases] page. There
 are “sdist” packages on the [releases] page as well. To install an sdist
 package, a C++ toolchain and CMake are required.
 
-[releases]: https://github.com/kunhtkun/macposts/releases
-
 ## Usage
 
-Please refer to this [link](https://github.com/maccmu/macposts-documentations/blob/main/MAC_POSTS_users_manual.pdf) for the documentation. 
-
-You may check the ‘examples’ directory in this repository.
+Please refer to this [link][documentation] for the documentation. You may also
+check the ‘examples’ directory for some working examples in this repository.
 
 **CAVEAT:** *Do not run macposts on untrusted inputs. Currently it uses a rather
 crude data file reader/parser and may have some security vulnerabilities,
@@ -66,10 +69,10 @@ including remote code execution (RCE).*
 
 * How to report issues and send patches?
 
-  If you want to report issues, please feel free to contact us via [macenter@andrew.cmu.edu](mailto:macenter@andrew.cmu.edu). The pull requests page is still open and we will review and accept
-  patches there. You can also send patches via email as well.
-
-[MAC-POSTS]: https://github.com/Lemma1/MAC-POSTS
+  If you want to report issues, please feel free to contact us via
+  [macenter@andrew.cmu.edu][macenter]. The pull requests page is open and we
+  will review and accept patches there. You can also send patches via email as
+  well.
 
 ## Contributors
 
@@ -103,7 +106,13 @@ want to check their licenses as well:
 
 This project is funded in part by Traffic 21 Institute, Carnegie Mellon
 University's Mobility21, Technologies for Safe and Efficient Transportation
-(T-SET), US Department of Transportation (DOT), and US Department of Energy (DOE).
-The contents of this project reflect the views of the authors, who are
+(T-SET), US Department of Transportation (DOT), and US Department of Energy
+(DOE). The contents of this project reflect the views of the authors, who are
 responsible for the facts and the accuracy of the information presented herein.
 The US Government assumes no liability for the contents or use thereof.
+
+[mac]: https://mac.heinz.cmu.edu/
+[releases]: https://github.com/maccmu/macposts/releases
+[documentation]: https://github.com/maccmu/macposts-documentations/blob/main/MAC_POSTS_users_manual.pdf
+[MAC-POSTS]: https://github.com/Lemma1/MAC-POSTS
+[macenter]: mailto:macenter@andrew.cmu.edu
