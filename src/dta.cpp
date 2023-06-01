@@ -674,30 +674,41 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
 }
 
 // verbose: whether to print
-int MNM_Dta::loading(bool verbose)
+int
+MNM_Dta::loading (bool verbose)
 {
-  TInt _current_inter = 0;
-  TInt _assign_inter = m_start_assign_interval;
+  int _current_inter = 0;
+  int _assign_inter = m_start_assign_interval;
 
   // pre_loading();
-  while (!finished_loading(_current_inter) || _assign_inter < m_total_assign_inter){
-    if (verbose) {
-      printf("\nCurrent loading interval: %d, Current assignment interval: %d\n", _current_inter(), int(_current_inter/m_config -> get_int("assign_frq")));
+  while (!finished_loading (_current_inter)
+         || _assign_inter < m_total_assign_inter)
+    {
+      if (verbose)
+        {
+          std::cout << std::endl
+                    << "Current loading interval: " << _current_inter << ", "
+                    << "Current assignment interval: " << _assign_inter
+                    << std::endl;
+        }
+      load_once (verbose, _current_inter, _assign_inter);
+      // link cc will be updated with the record at the end of this interval
+      // (i.e., _current_inter + 1)
+      if (++_current_inter % m_assign_freq == 0)
+        {
+          ++_assign_inter;
+        }
     }
-    load_once(verbose, _current_inter, _assign_inter);
-    // link cc will be updated with the record at the end of this interval (i.e., _current_inter + 1)
-    _current_inter += 1;
-    if (_current_inter % m_assign_freq == 0 || _current_inter == 0) {
-      _assign_inter += 1;
+  if (verbose)
+    {
+      MNM::print_vehicle_statistics (m_veh_factory);
     }
-  }
-  if (verbose) {
-    MNM::print_vehicle_statistics(m_veh_factory);
-  }
-  m_statistics -> post_record();
-  if (m_gridlock_recorder != nullptr) m_gridlock_recorder -> post_record();
+  m_statistics->post_record ();
+  if (m_gridlock_recorder != nullptr)
+    m_gridlock_recorder->post_record ();
   m_current_loading_interval = _current_inter;
-  return _current_inter;  // total number of actual loading intervals = _current_inter)
+  return _current_inter; // total number of actual loading intervals =
+                         // _current_inter
 }
 
 int
