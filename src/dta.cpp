@@ -680,16 +680,16 @@ int MNM_Dta::loading(bool verbose)
   TInt _assign_inter = m_start_assign_interval;
 
   // pre_loading();
-  while (!finished_loading(_current_inter) || _assign_inter <= m_total_assign_inter){
+  while (!finished_loading(_current_inter) || _assign_inter < m_total_assign_inter){
     if (verbose) {
       printf("\nCurrent loading interval: %d, Current assignment interval: %d\n", _current_inter(), int(_current_inter/m_config -> get_int("assign_frq")));
     }
     load_once(verbose, _current_inter, _assign_inter);
     // link cc will be updated with the record at the end of this interval (i.e., _current_inter + 1)
+    _current_inter += 1;
     if (_current_inter % m_assign_freq == 0 || _current_inter == 0) {
       _assign_inter += 1;
     }
-    _current_inter += 1;
   }
   if (verbose) {
     MNM::print_vehicle_statistics(m_veh_factory);
