@@ -16,5 +16,5 @@ tags
 .ipynb_checkpoints/
 .dir-locals-2.el
 .DS_Store
-.vscode
-examples/local_examples
+/.vscode/
+/examples/local_examples/
