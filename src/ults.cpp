@@ -6,9 +6,11 @@ void
 set_random_state (unsigned int s)
 {
   std::srand (s);
-  TInt::Rnd.PutSeed (s);
-  TUInt::Rnd.PutSeed (s);
-  TFlt::Rnd.PutSeed (s);
+  // HACK: SNAP random number generators use a signed integer as seed, and
+  // require it to be non-negative.
+  TInt::Rnd.PutSeed (s >> 1);
+  TUInt::Rnd.PutSeed (s >> 1);
+  TFlt::Rnd.PutSeed (s >> 1);
 }
 
 TInt
