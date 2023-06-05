@@ -688,7 +688,7 @@ MNM_Dta::loading (bool verbose)
         {
           std::cout << std::endl
                     << "Current loading interval: " << _current_inter << ", "
-                    << "Current assignment interval: " << _assign_inter
+                    << "Current assignment interval: " << int(_current_inter/m_config -> get_int("assign_frq"))
                     << std::endl;
         }
       load_once (verbose, _current_inter, _assign_inter);
