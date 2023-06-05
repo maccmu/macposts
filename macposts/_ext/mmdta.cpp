@@ -844,30 +844,49 @@ Mmdta::check_input_files ()
 int
 Mmdta::install_cc ()
 {
-  // car and truck
-  for (size_t i = 0; i < m_link_vec_driving.size (); ++i)
-    {
-      m_link_vec_driving[i]->install_cumulative_curve_multiclass ();
-    }
-  // passenger
-  for (size_t i = 0; i < m_link_vec_walking.size (); ++i)
-    {
-      m_link_vec_walking[i]->install_cumulative_curve ();
-    }
-  // bus and passenger
-  for (size_t i = 0; i < m_link_vec_bus.size (); ++i)
-    {
+// // car and truck
+  // for (size_t i = 0; i < m_link_vec_driving.size (); ++i)
+  //   {
+  //     m_link_vec_driving[i]->install_cumulative_curve_multiclass ();
+  //   }
+  // // passenger
+  // for (size_t i = 0; i < m_link_vec_walking.size (); ++i)
+  //   {
+  //     m_link_vec_walking[i]->install_cumulative_curve ();
+  //   }
+  // // bus and passenger
+  // for (size_t i = 0; i < m_link_vec_bus.size (); ++i)
+  //   {
+  //     // passenger
+  //     m_link_vec_bus[i]->install_cumulative_curve ();
+  //     // bus
+  //     m_link_vec_bus[i]->m_from_busstop->install_cumulative_curve_multiclass ();
+  //     m_link_vec_bus[i]->m_to_busstop->install_cumulative_curve_multiclass ();
+  //   }
+  // // truck traversing bus links
+  // for (size_t i = 0; i < m_link_vec_bus_driving.size (); ++i)
+  //   {
+  //     m_link_vec_bus_driving[i]->install_cumulative_curve_multiclass ();
+  //   }
+
+  for (auto _link_it : m_mmdta -> m_link_factory -> m_link_map){
+    dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second) -> install_cumulative_curve_multiclass();
+  }
+  for (auto _link_it : m_mmdta -> m_transitlink_factory -> m_transit_link_map){
+    if (auto _bus_link = dynamic_cast<MNM_Bus_Link*>(_link_it.second)) {
       // passenger
-      m_link_vec_bus[i]->install_cumulative_curve ();
+      _bus_link->install_cumulative_curve ();
       // bus
-      m_link_vec_bus[i]->m_from_busstop->install_cumulative_curve_multiclass ();
-      m_link_vec_bus[i]->m_to_busstop->install_cumulative_curve_multiclass ();
+      _bus_link->m_from_busstop->install_cumulative_curve_multiclass ();
+      _bus_link->m_to_busstop->install_cumulative_curve_multiclass ();
     }
-  // truck traversing bus links
-  for (size_t i = 0; i < m_link_vec_bus_driving.size (); ++i)
-    {
-      m_link_vec_bus_driving[i]->install_cumulative_curve_multiclass ();
+    else if (auto _walking_link = dynamic_cast<MNM_Walking_Link*>(_link_it.second)) {
+      _walking_link->install_cumulative_curve ();
     }
+    else {
+      throw std::runtime_error ("Wrong transit link type");
+    }
+  }
   return 0;
 }
 

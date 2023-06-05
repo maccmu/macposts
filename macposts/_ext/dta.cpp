@@ -273,10 +273,13 @@ Dta::generate_shortest_pathsets (const std::string &folder, int max_iter,
 int
 Dta::install_cc ()
 {
-  for (size_t i = 0; i < m_link_vec.size (); ++i)
-    {
-      m_link_vec[i]->install_cumulative_curve ();
-    }
+  // for (size_t i = 0; i < m_link_vec.size (); ++i)
+  //   {
+  //     m_link_vec[i]->install_cumulative_curve ();
+  //   }
+  for (auto _link_it : m_dta -> m_link_factory -> m_link_map) {
+    _link_it.second -> install_cumulative_curve();
+  }
   return 0;
 }
 
