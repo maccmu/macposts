@@ -444,10 +444,13 @@ Mcdta::generate_shortest_pathsets (const std::string &folder, int max_iter,
 int
 Mcdta::install_cc ()
 {
-  for (size_t i = 0; i < m_link_vec.size (); ++i)
-    {
-      m_link_vec[i]->install_cumulative_curve_multiclass ();
-    }
+  // for (size_t i = 0; i < m_link_vec.size (); ++i)
+  //   {
+  //     m_link_vec[i]->install_cumulative_curve_multiclass ();
+  //   }
+  for (auto _link_it : m_mcdta -> m_link_factory -> m_link_map){
+    dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second) -> install_cumulative_curve_multiclass();
+  }
   return 0;
 }
 
