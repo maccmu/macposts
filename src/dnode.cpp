@@ -420,8 +420,10 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
                     {
                       _out_link->m_incoming_array.push_back (_veh);
                       _veh->set_current_link (_out_link);
-                      _veh_it
-                        = _in_link->m_finished_array.erase (_veh_it); // c++ 11
+                      // accumulated miles for non-Pq links
+                      _veh -> update_miles_traveled(_in_link);
+                      // c++ 11
+                      _veh_it = _in_link->m_finished_array.erase (_veh_it);
                       _num_to_move -= 1;
                       if (_out_link->m_N_in_tree != nullptr)
                         {
