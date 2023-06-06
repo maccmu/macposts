@@ -7,6 +7,7 @@ MNM_Veh::MNM_Veh (TInt ID, TInt start_time)
   m_next_link = nullptr;
   m_start_time = start_time;
   m_finish_time = -1;
+  m_miles_traveled = 0.;
   m_assign_interval = -1;
   m_path = nullptr;
   m_class = TInt (0);
@@ -83,5 +84,14 @@ int
 MNM_Veh::set_origin (MNM_Origin *origin)
 {
   m_origin = origin;
+  return 0;
+}
+
+int 
+MNM_Veh::update_miles_traveled(MNM_Dlink *link)
+{
+  if (dynamic_cast<MNM_Dlink_Pq*>(link) == nullptr) {
+    m_miles_traveled += link -> m_length / 1600.;  // meter -> mile
+  }
   return 0;
 }

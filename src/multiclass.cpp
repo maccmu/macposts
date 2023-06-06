@@ -2308,6 +2308,8 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                             {
                               _out_link->m_incoming_array.push_back (_veh);
                               _veh->set_current_link (_out_link);
+                              // accumulated miles for non-Pq links
+                              _veh -> update_miles_traveled(_in_link);
                               if (_veh->m_class == 0)
                                 {
                                   m_veh_moved_car[i * _offset + j] += 1;
@@ -2355,6 +2357,8 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                         {
                           _out_link->m_incoming_array.push_back (_veh);
                           _veh->set_current_link (_out_link);
+                          // accumulated miles for non-Pq links
+                          _veh -> update_miles_traveled(_in_link);
                           if (_veh->m_class == 0)
                             {
                               m_veh_moved_car[i * _offset + j] += 1;
