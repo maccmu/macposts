@@ -23,6 +23,7 @@ set_property(TARGET snap PROPERTY POSITION_INDEPENDENT_CODE ON)
 # guide at the top of this file.
 add_library(macposts STATIC
   src/cc_tree.cpp
+  src/delivery_traffic.cpp
   src/dlink.cpp
   src/dnode.cpp
   src/dso.cpp
