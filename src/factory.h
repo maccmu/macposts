@@ -46,9 +46,9 @@ class MNM_Link_Factory
 public:
   MNM_Link_Factory ();
   virtual ~MNM_Link_Factory ();
-  MNM_Dlink *make_link (TInt ID, DLink_type link_type, TFlt lane_hold_cap,
-                        TFlt lane_flow_cap, TInt number_of_lane, TFlt length,
-                        TFlt ffs, TFlt unit_time, TFlt flow_scalar);
+  virtual MNM_Dlink *make_link (TInt ID, DLink_type link_type, TFlt lane_hold_cap,
+                                TFlt lane_flow_cap, TInt number_of_lane, TFlt length,
+                                TFlt ffs, TFlt unit_time, TFlt flow_scalar);
   MNM_Dlink *get_link (TInt ID);
   int delete_link (TInt ID);
   std::unordered_map<TInt, MNM_Dlink *> m_link_map;
