@@ -377,28 +377,40 @@ extract_path (TInt origin_node_ID, TInt dest_node_ID,
   return _path;
 }
 
-TFlt get_path_tt_snapshot(MNM_Path* path, const std::unordered_map<TInt, TFlt> &link_cost_map) {
-    TFlt _tt = TFlt(0);
-    for (auto _link_ID : path -> m_link_vec) {
-        if (link_cost_map.find(_link_ID) == link_cost_map.end()) {
-            printf("Wrong link in get_path_tt_snapshot()!\n");
-            exit(-1);
+TFlt
+get_path_tt_snapshot (MNM_Path *path,
+                      const std::unordered_map<TInt, TFlt> &link_cost_map)
+{
+  TFlt _tt = TFlt (0);
+  for (auto _link_ID : path->m_link_vec)
+    {
+      if (link_cost_map.find (_link_ID) == link_cost_map.end ())
+        {
+          throw std::runtime_error ("Wrong link in get_path_tt_snapshot()");
         }
-        _tt += link_cost_map.find(_link_ID) -> second;
+      _tt += link_cost_map.find (_link_ID)->second;
     }
-    return _tt;
+  return _tt;
 }
 
-TFlt get_path_tt(TFlt start_time, MNM_Path* path, const std::unordered_map<TInt, TFlt*> &link_cost_map, TInt max_interval) {
-    int _end_time = int(round(start_time));
-    for (auto _link_ID : path -> m_link_vec) {
-        if (link_cost_map.find(_link_ID) == link_cost_map.end()) {
-            printf("Wrong link in get_path_tt()!\n");
-            exit(-1);
+TFlt
+get_path_tt (TFlt start_time, MNM_Path *path,
+             const std::unordered_map<TInt, TFlt *> &link_cost_map,
+             TInt max_interval)
+{
+  int _end_time = int (round (start_time));
+  for (auto _link_ID : path->m_link_vec)
+    {
+      if (link_cost_map.find (_link_ID) == link_cost_map.end ())
+        {
+          throw std::runtime_error ("Wrong link in get_path_tt()");
         }
-        _end_time += link_cost_map.find(_link_ID) -> second[_end_time < (int)max_interval ? _end_time : (int)max_interval - 1];
+      _end_time
+        += link_cost_map.find (_link_ID)
+             ->second[_end_time < (int) max_interval ? _end_time
+                                                     : (int) max_interval - 1];
     }
-    return TFlt(_end_time - start_time);
+  return TFlt (_end_time - start_time);
 }
 
 Path_Table *
