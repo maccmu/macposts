@@ -144,10 +144,12 @@ MNM_Routing_Adaptive::~MNM_Routing_Adaptive ()
 int
 MNM_Routing_Adaptive::init_routing (Path_Table *path_table)
 {
-  if (m_statistics -> m_self_config -> get_int("rec_tt") == 0) {
-    printf("MNM_Routing_Adaptive::init_routing, rec_tt should be set to 1 in config.conf to use adaptive routing\n");
-    exit(-1);
-  }
+  if (m_statistics->m_self_config->get_int ("rec_tt") == 0)
+    {
+      throw std::runtime_error (
+        "MNM_Routing_Adaptive::init_routing, rec_tt should be set to 1 in "
+        "config.conf to use adaptive routing");
+    }
   std::unordered_map<TInt, TInt> *_shortest_path_tree;
   for (auto _it = m_od_factory->m_destination_map.begin ();
        _it != m_od_factory->m_destination_map.end (); _it++)
