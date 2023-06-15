@@ -31,6 +31,7 @@ add_library(macposts STATIC
   src/dta_gradient_utls.cpp
   src/due.cpp
   src/emission.cpp
+  src/ev_traffic.cpp
   src/factory.cpp
   src/gridlock_checker.cpp
   src/io.cpp
