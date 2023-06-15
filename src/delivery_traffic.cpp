@@ -298,8 +298,8 @@ MNM_Destination_Delivery::receive(TInt current_interval)
     _veh = m_dest_node -> m_out_veh_queue.front();
     if (_veh -> get_destination() != this){
       printf("The veh is heading to %d, but we are %d\n", (int)_veh -> get_destination() -> m_dest_node -> m_node_ID, (int)m_dest_node -> m_node_ID);
-      printf("MNM_Destination::receive: Something wrong!\n");
-      exit(-1);
+      throw std::runtime_error (
+        "Error, MNM_Destination_Delivery::receive, vehicle reaches wrong destination!");
     }
     // printf("Receive Vehicle ID: %d, origin node is %d, destination node is %d\n", _veh -> m_veh_ID(), _veh -> get_origin() -> m_origin_node -> m_node_ID(), _veh -> get_destination() -> m_dest_node -> m_node_ID());
     m_dest_node -> m_out_veh_queue.pop_front();
@@ -337,8 +337,8 @@ MNM_Destination_Delivery::receive(TInt current_interval, MNM_Routing *routing, M
     _veh = m_dest_node -> m_out_veh_queue.front();
     if (_veh -> get_destination() != this){
       printf("The veh is heading to %d, but we are %d\n", (int)_veh -> get_destination() -> m_dest_node -> m_node_ID, (int)m_dest_node -> m_node_ID);
-      printf("MNM_Destination::receive: Something wrong!\n");
-      exit(-1);
+      throw std::runtime_error (
+        "Error, MNM_Destination_Delivery::receive, vehicle reaches wrong destination!");
     }
     // printf("Receive Vehicle ID: %d, origin node is %d, destination node is %d\n", _veh -> m_veh_ID(), _veh -> get_origin() -> m_origin_node -> m_node_ID(), _veh -> get_destination() -> m_dest_node -> m_node_ID());
     m_dest_node -> m_out_veh_queue.pop_front();
@@ -516,8 +516,8 @@ MNM_IO_Delivery::build_od_factory_delivery(const std::string& file_folder,
           _pickup_waiting_time = TFlt(std::stod(_words[2]));  // second
         }
         else if (_words.size() > 3) {
-          printf("Something is wrong in origin part in od input file\n");
-          exit(-1);
+          throw std::runtime_error (
+            "Error, MNM_IO_Delivery::build_od_factory_delivery, MNM_input_od contains wrong origin information");
         }
         _origin = _od_factory_delivery -> make_origin(_origin_ID, _max_interval, _flow_scalar, _frequency);
         dynamic_cast<MNM_Origin_Delivery*>(_origin) -> m_pickup_waiting_time = MNM_Ults::round(_pickup_waiting_time / _unit_time);  // intervals
@@ -542,8 +542,8 @@ MNM_IO_Delivery::build_od_factory_delivery(const std::string& file_folder,
         ((MNM_DMDND*)  node_factory -> get_node(_node_ID)) -> hook_up_destination(_dest);
       }
       else {
-        printf("Something is wrong in destination part in od input file\n");
-        exit(-1);
+        throw std::runtime_error (
+            "Error, MNM_IO_Delivery::build_od_factory_delivery, MNM_input_od contains wrong destination information");
       }
     }      
   }
@@ -693,9 +693,9 @@ MNM_IO_Delivery::build_demand_multi_OD_seq(const std::string& file_folder, MNM_C
         }
       }
       else{
-        printf("Something wrong in build_demand_multi_OD_seq!\n");
         free(_demand_vector);
-        exit(-1);
+        throw std::runtime_error (
+            "Error, MNM_IO_Delivery::build_demand_multi_OD_seq, multi-OD sequence demand's length is NOT equal to max_interval");
       }
       _origin -> add_multi_OD_seq_demand(_od_seq, _demand_vector);
     }
@@ -794,8 +794,8 @@ MNM_Dta_Delivery::set_routing()
         delete _tmp_conf;
     }
     else {
-        printf("MNM_Dta_Delivery::set_routing, routing_type must be Hybrid\n");
-        exit(-1);
+        throw std::runtime_error (
+            "Error, MNM_Dta_Delivery::set_routing, routing_type must be Hybrid");
     }
     return 0;
 }

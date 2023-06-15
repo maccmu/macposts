@@ -93,8 +93,7 @@ MNM_Busstop_Physical::evolve (TInt timestamp)
           if (_passenger->get_next_link ()->m_link_type
               != MNM_TYPE_WALKING_MULTIMODAL)
             {
-              printf ("Next link should be walking link\n");
-              exit (-1);
+              throw std::runtime_error("Next link should be walking link");
             }
           _out_walking_link
             = dynamic_cast<MNM_Walking_Link *> (_passenger->get_next_link ());
@@ -106,8 +105,7 @@ MNM_Busstop_Physical::evolve (TInt timestamp)
                             m_boarding_links_vec.end (), _out_walking_link)
                    == m_boarding_links_vec.end ())
             {
-              printf ("Something wrong in passenger routing");
-              exit (-1);
+              throw std::runtime_error("Something wrong in passenger routing");
             }
           if (_out_walking_link->m_walking_type == "boarding")
             {
@@ -196,8 +194,7 @@ MNM_Busstop_Physical::evolve (TInt timestamp)
           if (_passenger->get_next_link ()->m_link_type
               != MNM_TYPE_WALKING_MULTIMODAL)
             {
-              printf ("Next link should be walking link\n");
-              exit (-1);
+              throw std::runtime_error("Next link should be walking link");
             }
           _out_walking_link
             = dynamic_cast<MNM_Walking_Link *> (_passenger->get_next_link ());
@@ -209,8 +206,7 @@ MNM_Busstop_Physical::evolve (TInt timestamp)
                             m_boarding_links_vec.end (), _out_walking_link)
                    == m_boarding_links_vec.end ())
             {
-              printf ("Something wrong in passenger routing");
-              exit (-1);
+              throw std::runtime_error("Something wrong in passenger routing");
             }
           if (_out_walking_link->m_walking_type == "boarding")
             {
@@ -238,8 +234,7 @@ MNM_Busstop_Physical::evolve (TInt timestamp)
                                                      ->m_recorder.back ()
                                                      .second))
                 {
-                  printf ("Debug alighting link cc\n");
-                  exit (-1);
+                  throw std::runtime_error("Debug alighting link cc");
                 }
             }
           if (_out_walking_link->m_N_in != nullptr)
@@ -363,8 +358,7 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
   if (std::find (m_bus_queue.begin (), m_bus_queue.end (), veh_multimodal)
       == m_bus_queue.end ())
     {
-      printf ("Bus not captured in the m_bus_queue of the bus stop\n");
-      exit (-1);
+      throw std::runtime_error("Bus not captured in the m_bus_queue of the bus stop");
     }
   bool _held = false;
   TInt _num_boarding_passengers = 0;
@@ -377,9 +371,8 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
     {
       if (m_passed_bus_counter != flow_scalar)
         {
-          printf ("Something is wrong with m_passed_bus_counter or "
+          throw std::runtime_error("Something is wrong with m_passed_bus_counter or "
                   "veh_multimodal -> m_stopped_intervals\n");
-          exit (-1);
         }
     }
 
@@ -422,8 +415,7 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
           if (_passenger->get_next_link ()->m_link_ID
               != m_bus_out_link->m_link_ID)
             {
-              printf ("MNM_Busstop_Virtual::hold_bus, Debug");
-              exit (-1);
+              throw std::runtime_error("MNM_Busstop_Virtual::hold_bus, Debug");
             }
           continue;
         }
@@ -483,8 +475,7 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
       // IAssert(m_passed_bus_counter == flow_scalar - 1);
       if (m_passed_bus_counter != flow_scalar - 1)
         {
-          printf ("m_passed_bus_counter is wrong\n");
-          exit (-1);
+          throw std::runtime_error("m_passed_bus_counter is wrong");
         }
       m_passed_bus_counter += 1;
     }
@@ -494,8 +485,7 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
       // IAssert(m_passed_bus_counter == flow_scalar);
       if (m_passed_bus_counter != flow_scalar)
         {
-          printf ("m_passed_bus_counter is wrong\n");
-          exit (-1);
+          throw std::runtime_error("m_passed_bus_counter is wrong");
         }
     }
 
@@ -546,8 +536,7 @@ MNM_Busstop_Virtual::release_bus (TInt timestamp,
           if (_passenger->get_next_link ()->m_link_ID
               != m_bus_out_link->m_link_ID)
             {
-              printf ("Something is wrong\n");
-              exit (-1);
+              throw std::runtime_error("Passenger in wrong bus");
             }
           if (_passenger->get_current_link ()->m_link_ID
               != m_bus_out_link->m_link_ID)
@@ -638,8 +627,7 @@ MNM_Busstop_Virtual::release_bus (TInt timestamp,
           if (_passenger->get_current_link ()->m_link_ID
               != m_bus_out_link->m_link_ID)
             {
-              printf ("MNM_Busstop_Virtual::release_bus, Debug");
-              exit (-1);
+              throw std::runtime_error("MNM_Busstop_Virtual::release_bus, passenger in wrong bus");
             }
         }
     }
@@ -647,8 +635,7 @@ MNM_Busstop_Virtual::release_bus (TInt timestamp,
     {
       if (!veh_multimodal->m_passenger_pool.empty ())
         {
-          printf ("All passengers should get off bus at the last bus stop\n");
-          exit (-1);
+          throw std::runtime_error("Bus is NOT empty, all passengers should get off bus at the last bus stop");
         }
     }
 
@@ -690,8 +677,7 @@ MNM_Busstop_Virtual::release_bus (TInt timestamp,
     }
   if (!_flg)
     {
-      printf ("bus not in m_bus_queue!\n");
-      exit (-1);
+      throw std::runtime_error("Bus not in m_bus_queue!");
     }
   return 0;
 }
@@ -1085,9 +1071,8 @@ MNM_Busstop_Virtual::virtual_evolve (TInt timestamp)
             }
           else
             {
-              printf (
-                "MNM_Busstop_Virtual::virtual_evolve, wrong link type!\n");
-              exit (-1);
+              throw std::runtime_error(
+                "MNM_Busstop_Virtual::virtual_evolve, wrong link type!");
             }
         }
     }
@@ -1278,9 +1263,8 @@ MNM_Busstop_Virtual::virtual_evolve (TInt timestamp)
             }
           else
             {
-              printf (
-                "MNM_Busstop_Virtual::virtual_evolve, wrong link type!\n");
-              exit (-1);
+              throw std::runtime_error(
+                "MNM_Busstop_Virtual::virtual_evolve, wrong link type!");
             }
         }
     }
@@ -1323,8 +1307,7 @@ MNM_Busstop_Factory::make_busstop (TInt ID, TInt linkID, TFlt linkloc,
     }
   else
     {
-      printf ("Wrong bus stop type\n");
-      exit (-1);
+      throw std::runtime_error("Wrong bus stop type");
     }
   m_busstop_map.insert (std::pair<TInt, MNM_Busstop *> (ID, _busstop));
   return _busstop;
@@ -1406,8 +1389,7 @@ MNM_Parking_Lot::get_cruise_time (TInt timestamp)
     }
   else
     {
-      printf ("record does not exist in m_cruising_time_record!\n");
-      exit (-1);
+      throw std::runtime_error("MNM_Parking_Lot::get_cruise_time, record does not exist in m_cruising_time_record!");
     }
 }
 
@@ -1589,8 +1571,7 @@ MNM_Parking_Lot::evolve (TInt timestamp)
                      m_walking_out_links_vec.end (), _link)
           == m_walking_out_links_vec.end ())
         {
-          printf ("MNM_Parking_Lot::evolve, something is wrong\n");
-          exit (-1);
+          throw std::runtime_error("MNM_Parking_Lot::evolve, passenger cannot walk out parking lot");
         }
       _link->m_incoming_array.push_back (_passenger);
       _passenger->set_current_link (_link);
@@ -1828,8 +1809,7 @@ MNM_Passenger_Factory::remove_finished_passenger (MNM_Passenger *passenger,
   if (m_passenger_map.find (passenger->m_passenger_ID) == m_passenger_map.end ()
       || m_passenger_map.find (passenger->m_passenger_ID)->second != passenger)
     {
-      printf ("passenger not in factory!\n");
-      exit (-1);
+      throw std::runtime_error("Error, MNM_Passenger_Factory::remove_finished_passenger, passenger not in factory");
     }
   if (del)
     {
@@ -1897,8 +1877,7 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
   auto *_busstop_virtual = dynamic_cast<MNM_Busstop_Virtual *> (busstop);
   if (_busstop_virtual == nullptr)
     {
-      printf ("boarding and alighting only occur at virtual busstop\n");
-      exit (-1);
+      throw std::runtime_error("Boarding and alighting only occur at virtual busstop");
     }
   MNM_Passenger *_passenger;
   MNM_Walking_Link *_walking_link;
@@ -2051,8 +2030,7 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
                   || _bus_link != _busstop_virtual->m_bus_out_link
                   || _bus_link->m_route_ID != m_bus_route_ID)
                 {
-                  printf ("Something wrong in routing\n");
-                  exit (-1);
+                  throw std::runtime_error("Something wrong in passenger routing");
                 }
 
               if (_boarding_counter >= _remaining_capacity)
@@ -2323,9 +2301,7 @@ MNM_Destination_Multimodal::evolve (TInt timestamp)
                        == m_parking_lot->m_walking_out_links_vec.end ())
                 {
                   // just passing by this middle destination node
-                  printf ("MNM_Destination_Multimodal::evolve, something is "
-                          "wrong!\n");
-                  exit (-1);
+                  throw std::runtime_error ("MNM_Destination_Multimodal::evolve, passenger cannot walk out middle destination");
                 }
               _next_walking_link->m_incoming_array.push_back (_passenger);
               _passenger->set_current_link (_next_walking_link);
@@ -2387,8 +2363,7 @@ MNM_Destination_Multimodal::receive (TInt timestamp)
           printf ("The veh is heading to %d, but we are %d\n",
                   (int) _veh->get_destination ()->m_dest_node->m_node_ID,
                   (int) m_dest_node->m_node_ID);
-          printf ("MNM_Destination::receive: Something wrong!\n");
-          exit (-1);
+          throw std::runtime_error("MNM_Destination::receive, vehicle reaches wrong destination!");
         }
       _veh->finish (timestamp);
       // printf("Receive Vehicle ID: %d, origin node is %d, destination node is
@@ -2411,8 +2386,7 @@ MNM_Destination_Multimodal::receive (TInt timestamp)
           printf ("The passenger is heading to %d, but we are %d\n",
                   (int) _passenger->get_destination ()->m_dest_node->m_node_ID,
                   (int) m_dest_node->m_node_ID);
-          printf ("MNM_Destination::receive: Something wrong!\n");
-          exit (-1);
+          throw std::runtime_error ("MNM_Destination::receive, passenger reaches wrong destination!");
         }
       _passenger->finish (timestamp);
       // printf("Receive Passenger ID: %d, origin node is %d, destination node
@@ -2451,8 +2425,7 @@ MNM_Destination_Multimodal::receive (TInt timestamp,
           printf ("The veh is heading to %d, but we are %d\n",
                   (int) _veh->get_destination ()->m_dest_node->m_node_ID,
                   (int) m_dest_node->m_node_ID);
-          printf ("MNM_Destination::receive: Something wrong!\n");
-          exit (-1);
+          throw std::runtime_error("MNM_Destination::receive, vehicle reaches wrong destination!");
         }
       _veh->finish (timestamp);
       // printf("Receive Vehicle ID: %d, origin node is %d, destination node is
@@ -2478,8 +2451,7 @@ MNM_Destination_Multimodal::receive (TInt timestamp,
           printf ("The passenger is heading to %d, but we are %d\n",
                   (int) _passenger->get_destination ()->m_dest_node->m_node_ID,
                   (int) m_dest_node->m_node_ID);
-          printf ("MNM_Destination::receive: Something wrong!\n");
-          exit (-1);
+          throw std::runtime_error ("MNM_Destination::receive, passenger reaches wrong destination!");
         }
       _passenger->finish (timestamp);
       // printf("Receive Passenger ID: %d, origin node is %d, destination node
@@ -3267,8 +3239,7 @@ MNM_Node_Factory_Multimodal::make_node_multimodal (
       _node = new MNM_DMDND_Multiclass (ID, flow_scalar, veh_convert_factor);
       break;
     default:
-      printf ("Wrong node type.\n");
-      exit (-1);
+      throw std::runtime_error ("Wrong node type");
     }
   m_node_map.insert ({ ID, _node });
   return _node;
@@ -3870,9 +3841,8 @@ MNM_Dlink_Pq_Multimodal::clear_incoming_array (TInt timestamp)
                     {
                       if (_veh->m_stopped_intervals != 0)
                         {
-                          printf (
+                          throw std::runtime_error (
                             "vehicle's m_stopped_intervals is not reset\n");
-                          exit (-1);
                         }
                       _busstop->receive_bus (timestamp, _veh);
                       break;
@@ -4186,9 +4156,8 @@ MNM_Dlink_Ctm_Multimodal::clear_incoming_array (TInt timestamp)
                         {
                           if (_veh->m_stopped_intervals != 0)
                             {
-                              printf (
-                                "vehicle's m_stopped_intervals is not reset\n");
-                              exit (-1);
+                              throw std::runtime_error (
+                                "vehicle's m_stopped_intervals is not reset");
                             }
                           _busstop->receive_bus (timestamp, _veh);
                           break;
@@ -4402,9 +4371,7 @@ MNM_Dlink_Ctm_Multimodal::move_veh_queue_in_last_cell (TInt timestamp)
                 }
               else
                 {
-                  printf ("Dlink_CTM_Multimodal::Something wrong, CTM links "
-                          "are not OD connectors!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Dlink_CTM_Multimodal, car cannot move out CTM link");
                 }
               _car_moved_count += 1;
             }
@@ -4488,9 +4455,7 @@ MNM_Dlink_Ctm_Multimodal::move_veh_queue_in_last_cell (TInt timestamp)
                     }
                   else
                     {
-                      printf ("Dlink_CTM_Multimodal::Something wrong, CTM "
-                              "links are not OD connectors!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Dlink_CTM_Multimodal::Something wrong, truck cannot move out CTM link");
                     }
                   _truck_moved_count += 1;
                 }
@@ -4579,9 +4544,7 @@ MNM_Dlink_Ctm_Multimodal::move_veh_queue_in_last_cell (TInt timestamp)
                     }
                   else
                     {
-                      printf ("Dlink_CTM_Multimodal::Something wrong, CTM "
-                              "links are not OD connectors!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Dlink_CTM_Multimodal::Something wrong, truck cannot move out CTM link");
                     }
                   _truck_moved_count += 1;
                 }
@@ -4597,9 +4560,7 @@ MNM_Dlink_Ctm_Multimodal::move_veh_queue_in_last_cell (TInt timestamp)
                 }
               else
                 {
-                  printf ("Dlink_CTM_Multimodal::Something wrong, CTM links "
-                          "are not OD connectors!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Dlink_CTM_Multimodal::Something wrong, car cannot move out CTM link");
                 }
               _car_moved_count += 1;
             }
@@ -4757,8 +4718,7 @@ MNM_Transit_Link_Factory::make_transit_link (
                                 from_node_ID, to_node_ID, fftt, unit_time);
       break;
     default:
-      printf ("Wrong link type.\n");
-      exit (-1);
+      throw std::runtime_error ("Wrong link type");
     }
   if (m_transit_link_map.find (ID) == m_transit_link_map.end ())
     {
@@ -4820,8 +4780,7 @@ MNM_Link_Factory_Multimodal::make_link_multimodal (
                                        veh_convert_factor, flow_scalar);
       break;
     default:
-      printf ("Wrong link type.\n");
-      exit (-1);
+      throw std::runtime_error ("Wrong link type");
     }
   m_link_map.insert ({ ID, _link });
   return _link;
@@ -4936,9 +4895,8 @@ MNM_Statistics_Lrn_Multimodal::init_record ()
                                                         std::ofstream::out);
               if (!m_load_interval_tt_bus_transit_file.is_open ())
                 {
-                  printf ("Error happens when open "
-                          "m_load_interval_tt_bus_transit_file\n");
-                  exit (-1);
+                  throw std::runtime_error ("Error happens when open "
+                          "m_load_interval_tt_bus_transit_file");
                 }
               m_load_interval_tt_bus_transit_file << _str;
             }
@@ -4952,9 +4910,8 @@ MNM_Statistics_Lrn_Multimodal::init_record ()
                                                           std::ofstream::out);
               if (!m_record_interval_tt_bus_transit_file.is_open ())
                 {
-                  printf ("Error happens when open "
-                          "m_record_interval_tt_bus_transit_file\n");
-                  exit (-1);
+                  throw std::runtime_error ("Error happens when open "
+                          "m_record_interval_tt_bus_transit_file");
                 }
               m_record_interval_tt_bus_transit_file << _str;
             }
@@ -5122,15 +5079,13 @@ MNM_BusPath::get_busroute_fftt (MNM_Link_Factory *link_factory,
     = find (m_link_vec.begin (), m_link_vec.end (), end_busstop->m_link_ID);
   if (_start_it == m_link_vec.end ())
     {
-      printf ("Error, MNM_BusPath::get_busroute_fftt, start bus stop not on "
+      throw std::runtime_error ("Error, MNM_BusPath::get_busroute_fftt, start bus stop not on "
               "this route");
-      exit (-1);
     }
   if (_end_it == m_link_vec.end ())
     {
-      printf ("Error, MNM_BusPath::get_busroute_fftt, end bus stop not on this "
+      throw std::runtime_error ("Error, MNM_BusPath::get_busroute_fftt, end bus stop not on this "
               "route");
-      exit (-1);
     }
   fftt = first_interval + last_interval;
   if (_start_it - m_link_vec.begin () + 1 == _end_it - m_link_vec.begin ())
@@ -5387,8 +5342,7 @@ MNM_Routing_Bus::register_veh (MNM_Veh *veh, bool track)
   // printf("3\n");
   if (_route_path == nullptr)
     {
-      printf ("Wrong bus route in register_veh!\n");
-      exit (-1);
+      throw std::runtime_error ("Wrong bus route in register_veh!");
     }
   if (track)
     {
@@ -5476,8 +5430,7 @@ MNM_Routing_Bus::update_routing (TInt timestamp)
                 {
                   if (!m_tracker.find (_veh)->second->empty ())
                     {
-                      printf ("Something wrong in fixed bus routing!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Something wrong in fixed bus routing!");
                     }
                   _veh->set_next_link (nullptr);
                 }
@@ -5485,21 +5438,19 @@ MNM_Routing_Bus::update_routing (TInt timestamp)
                 {
                   if (m_tracker.find (_veh) == m_tracker.end ())
                     {
-                      printf ("Vehicle not registered in link, impossible!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Vehicle not registered in link, impossible!");
                     }
                   if (_veh->get_current_link () == _veh->get_next_link ())
                     {
                       _next_link_ID = m_tracker.find (_veh)->second->front ();
                       if (_next_link_ID == -1)
                         {
-                          printf (
-                            "Something wrong in routing, wrong next link 2\n");
                           printf ("The node is %d, the vehicle should head to "
                                   "%d\n",
                                   (int) _node_ID,
                                   (int) _veh_dest->m_dest_node->m_node_ID);
-                          exit (-1);
+                          throw std::runtime_error (
+                            "Something wrong in routing, wrong next link 2\n");
                         }
                       _next_link = m_link_factory->get_link (_next_link_ID);
                       _veh->set_next_link (_next_link);
@@ -5619,8 +5570,7 @@ MNM_Routing_PnR_Fixed::register_veh (MNM_Veh *veh, bool track)
   // printf("3\n");
   if (_route_path == nullptr)
     {
-      printf ("Wrong probability in register_veh!\n");
-      exit (-1);
+      throw std::runtime_error ("Wrong probability in register_veh!");
     }
   if (track)
     {
@@ -5744,8 +5694,7 @@ MNM_Routing_PnR_Fixed::update_routing (TInt timestamp)
                 { // vehicles reaching mid destination
                   if (!m_tracker.find (_veh)->second->empty ())
                     { // check if any links left in the route
-                      printf ("Something wrong in fixed pnr routing!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Something wrong in fixed pnr routing!");
                     }
                   _veh->set_next_link (nullptr);
                   // m_tracker.erase(m_tracker.find(_veh));
@@ -5757,20 +5706,18 @@ MNM_Routing_PnR_Fixed::update_routing (TInt timestamp)
                   if (m_tracker.find (_veh) == m_tracker.end ())
                     { // check if vehicle is registered in m_tracker, which
                       // should be done in releasing from origin
-                      printf ("Vehicle not registered in link, impossible!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Vehicle not registered in link, impossible!");
                     }
                   if (_veh->get_current_link () == _veh->get_next_link ())
                     {
                       _next_link_ID = m_tracker.find (_veh)->second->front ();
                       if (_next_link_ID == -1)
                         {
-                          printf ("Something wrong in fixed pnr routing, wrong "
-                                  "next link 2\n");
                           printf ("The node is %d, the vehicle should head to "
                                   "mid destination %d\n",
                                   (int) _node_ID, (int) _mid_dest_node_ID);
-                          exit (-1);
+                          throw std::runtime_error ("Something wrong in fixed pnr routing, wrong "
+                                  "next link 2\n");
                         }
                       _next_link = m_link_factory->get_link (_next_link_ID);
                       _veh->set_next_link (_next_link);
@@ -5931,8 +5878,7 @@ MNM_Routing_PassengerBusTransit_Fixed::register_passenger (
       // printf("3\n");
       if (_route_path == nullptr)
         {
-          printf ("Wrong probability!\n");
-          exit (-1);
+          throw std::runtime_error ("Wrong probability!");
         }
       passenger->m_transit_path = _route_path;
     }
@@ -6077,14 +6023,12 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_parkinglot (
                 {
                   if (_passenger->m_next_link == nullptr)
                     {
-                      printf ("Debug");
-                      exit (-1);
+                      throw std::runtime_error ("Passenger has no next link");
                     }
                 }
               if (_passenger->m_next_link == nullptr)
                 {
-                  printf ("Debug");
-                  exit (-1);
+                  throw std::runtime_error ("Passenger has no next link");
                 }
             }
         }
@@ -6119,9 +6063,8 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link (
                   IAssert (link->m_to_node_type == "destination");
                   if (!(m_tracker.find (_passenger)->second->empty ()))
                     { // check if any links left in the route
-                      printf ("Something wrong in passenger bus transit fixed "
-                              "routing!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Something wrong in passenger bus transit fixed "
+                              "routing!");
                     }
                   _passenger->set_next_link (nullptr);
                   // m_tracker.erase(m_tracker.find(_passenger));
@@ -6132,17 +6075,15 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link (
                   if (m_tracker.find (_passenger) == m_tracker.end ())
                     { // check if passenger is registered in m_tracker, which
                       // should be done in releasing from origin
-                      printf (
-                        "Passenger not registered in link, impossible!\n");
-                      exit (-1);
+                      throw std::runtime_error (
+                        "Passenger not registered in link, impossible!");
                     }
                   if (link->m_to_node_type != "bus_stop_physical"
                       && link->m_to_node_type != "bus_stop_virtual"
                       && link->m_to_node_type != "destination")
                     {
-                      printf ("Something wrong in passenger bus transit fixed "
-                              "routing!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Something wrong in passenger bus transit fixed "
+                              "routing!");
                     }
                   if (_passenger->get_current_link ()->m_link_ID
                       == _passenger->get_next_link ()->m_link_ID)
@@ -6151,13 +6092,12 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link (
                         = m_tracker.find (_passenger)->second->front ();
                       if (_next_link_ID == -1)
                         {
-                          printf (
-                            "Something wrong in routing, wrong next link 2\n");
                           printf ("The node is %d, the passenger should head "
                                   "to %d\n",
                                   (int) _node_ID,
                                   (int) _dest->m_dest_node->m_node_ID);
-                          exit (-1);
+                          throw std::runtime_error (
+                            "Something wrong in routing, wrong next link 2");
                         }
                       _next_link = m_transitlink_factory->get_transit_link (
                         _next_link_ID);
@@ -6180,9 +6120,8 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link (
               // printf("2.2\n");
               if (_dest->m_dest_node->m_node_ID == _node_ID)
                 { // passengers reaching destination
-                  printf ("Something wrong in passenger bus transit fixed "
-                          "routing!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Something wrong in passenger bus transit fixed "
+                          "routing!");
                 }
               else
                 { // passengers enroute, adjust _next_link_ID,
@@ -6190,16 +6129,14 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link (
                   if (m_tracker.find (_passenger) == m_tracker.end ())
                     { // check if passenger is registered in m_tracker, which
                       // should be done in releasing from origin
-                      printf (
-                        "Passenger not registered in link, impossible!\n");
-                      exit (-1);
+                      throw std::runtime_error (
+                        "Passenger not registered in link, impossible!");
                     }
                   if (link->m_from_node_type != "bus_stop"
                       || link->m_to_node_type != "bus_stop")
                     {
-                      printf ("Something wrong in passenger bus transit fixed "
-                              "routing!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Something wrong in passenger bus transit fixed "
+                              "routing!");
                     }
                   if (_passenger->get_current_link ()->m_link_ID
                       == _passenger->get_next_link ()->m_link_ID)
@@ -6208,13 +6145,12 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link (
                         = m_tracker.find (_passenger)->second->front ();
                       if (_next_link_ID == -1)
                         {
-                          printf (
-                            "Something wrong in routing, wrong next link 2\n");
                           printf ("The node is %d, the passenger should head "
                                   "to %d\n",
                                   (int) _node_ID,
                                   (int) _dest->m_dest_node->m_node_ID);
-                          exit (-1);
+                          throw std::runtime_error (
+                            "Something wrong in routing, wrong next link 2");
                         }
                       _next_link = m_transitlink_factory->get_transit_link (
                         _next_link_ID);
@@ -6227,9 +6163,8 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link (
     }
   else
     {
-      printf ("MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link, "
-              "wrong transit link type\n");
-      exit (-1);
+      throw std::runtime_error ("MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_link, "
+              "wrong transit link type");
     }
   return 0;
 }
@@ -6268,8 +6203,7 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing_one_busstop (
               if (m_tracker.find (_passenger) == m_tracker.end ())
                 { // check if passenger is registered in m_tracker, which should
                   // be done in releasing from origin
-                  printf ("Passenger on bus not registered, impossible!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Passenger on bus not registered, impossible!");
                 }
               // passenger already on board before this bus stop (i.e., continue
               // riding or alighting)
@@ -6532,15 +6466,14 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_origin (
                     ->second;
               if (_next_link_ID < 0)
                 {
-                  printf ("Something wrong in passenger adaptive routing, "
-                          "wrong next link 1\n");
                   // printf("%d\n", _veh -> get_destination() -> m_Dest_ID);
                   // _shortest_path_tree = m_table -> find(_veh ->
                   // get_destination()) -> second; printf("%d\n",
                   // _shortest_path_tree -> size()); for (auto it :
                   // (*_shortest_path_tree)) printf("%d, %d\n", it.first,
                   // it.second);
-                  exit (-1);
+                  throw std::runtime_error ("Something wrong in passenger adaptive routing, "
+                          "wrong next link 1");
                 }
               // printf("From origin, The next link ID will be %d\n",
               // _next_link_ID());
@@ -6578,10 +6511,9 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_parkinglot (
                     ->second;
               if (_next_link_ID < 0)
                 {
-                  printf (
+                  throw std::runtime_error (
                     "Something wrong in passenger adaptive routing, parking "
-                    "lot to final destination using transit is impossible\n");
-                  exit (-1);
+                    "lot to final destination using transit is impossible");
                 }
               // printf("From parking lot, The next link ID will be %d\n",
               // _next_link_ID());
@@ -6617,8 +6549,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
               if (_link->m_link_ID
                   != _passenger->get_current_link ()->m_link_ID)
                 {
-                  printf ("Wrong current link!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Wrong current link!");
                 }
 
               _dest = _passenger->get_destination ();
@@ -6661,8 +6592,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
                             }
                           else
                             {
-                              printf ("Can't do anything!\n");
-                              exit (-1);
+                              throw std::runtime_error ("passenger cannot walk to next link, can't do anything!");
                             }
                         }
                       _next_link = m_transitlink_factory->get_transit_link (
@@ -6693,8 +6623,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
                                 ->second
                               == -1)
                             {
-                              printf ("Something wrong for the future node!\n");
-                              exit (-1);
+                              throw std::runtime_error ("Something wrong for the future node!");
                             }
                           // printf("Pass checking\n");
                         }
@@ -6715,16 +6644,14 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
               if (_bus_link->m_link_ID
                   != _passenger->get_current_link ()->m_link_ID)
                 {
-                  printf ("Wrong current link!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Wrong current link!");
                 }
 
               _dest = _passenger->get_destination ();
               if (_dest->m_dest_node->m_node_ID == _node_ID)
                 {
-                  printf ("Something wrong in passenger adaptive routing, "
-                          "wrong current link\n");
-                  exit (-1);
+                  throw std::runtime_error ("Something wrong in passenger adaptive routing, "
+                          "wrong current link");
                 }
               else
                 {
@@ -6749,8 +6676,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
                         }
                       else
                         {
-                          printf ("Can't do anything!\n");
-                          exit (-1);
+                          throw std::runtime_error ("passenger cannot walk to next link, can't do anything!");
                         }
                     }
                   _next_link
@@ -6780,8 +6706,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
                                 ->second
                               == -1)
                             {
-                              printf ("Something wrong for the future node!\n");
-                              exit (-1);
+                              throw std::runtime_error ("Something wrong for the future node!");
                             }
                           // printf("Pass checking\n");
                         }
@@ -6793,9 +6718,8 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
     }
   else
     {
-      printf ("MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_"
-              "link, wrong transit link type\n");
-      exit (-1);
+      throw std::runtime_error ("MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_"
+              "link, wrong transit link type");
     }
   return 0;
 }
@@ -6885,8 +6809,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_busstop (
                             ->second
                           == -1)
                         {
-                          printf ("Something wrong for the future node!\n");
-                          exit (-1);
+                          throw std::runtime_error ("Something wrong for the future node!");
                         }
                       // printf("Pass checking\n");
                     }
@@ -6944,9 +6867,8 @@ MNM_Routing_Multimodal_Adaptive::find_mid_destination_for_pnr (
             ->m_parking_lot
           == nullptr)
         {
-          printf ("pnr vehicle already on OD connector but cannot find mid "
-                  "parking lot\n");
-          exit (-1);
+          throw std::runtime_error ("pnr vehicle already on OD connector but cannot find mid "
+                  "parking lot");
         }
       return ((MNM_DMDND *) m_node_factory->get_node (origin_node_ID))->m_dest;
     }
@@ -7092,7 +7014,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_vehicle (TInt timestamp)
                               (int) _node_ID,
                               (int) _veh->get_destination ()
                                 ->m_dest_node->m_node_ID);
-                      exit (-1);
+                      throw std::runtime_error ("PnR routing is wrong");
                     }
                 }
 
@@ -7101,15 +7023,14 @@ MNM_Routing_Multimodal_Adaptive::update_routing_vehicle (TInt timestamp)
                                 ->second;
               if (_next_link_ID < 0)
                 {
-                  printf (
-                    "Something wrong in adaptive routing, wrong next link 1\n");
                   // printf("%d\n", _veh -> get_destination() -> m_Dest_ID);
                   // _shortest_path_tree = m_table -> find(_veh ->
                   // get_destination()) -> second; printf("%d\n",
                   // _shortest_path_tree -> size()); for (auto it :
                   // (*_shortest_path_tree)) printf("%d, %d\n", it.first,
                   // it.second);
-                  exit (-1);
+                  throw std::runtime_error (
+                    "Something wrong in adaptive routing, wrong next link 1");
                 }
               // printf("From origin, The next link ID will be %d\n",
               // _next_link_ID());
@@ -7139,8 +7060,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_vehicle (TInt timestamp)
             {
               if (_link != _veh->get_current_link ())
                 {
-                  printf ("Wrong current link!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Wrong current link!");
                 }
 
               _final_dest = _veh->get_destination ();
@@ -7174,7 +7094,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_vehicle (TInt timestamp)
                                 ->m_origin_node->m_node_ID,
                               (int) _veh->get_destination ()
                                 ->m_dest_node->m_node_ID);
-                      exit (-1);
+                      throw std::runtime_error ("PnR routing is wrong");
                     }
                   IAssert (_final_dest != _veh->get_destination ());
                 }
@@ -7234,8 +7154,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing_vehicle (TInt timestamp)
                                 ->second
                               == -1)
                             {
-                              printf ("Something wrong for the future node!\n");
-                              exit (-1);
+                              throw std::runtime_error ("Something wrong for the future node!");
                             }
                           // printf("Pass checking\n");
                         }
@@ -7376,8 +7295,7 @@ MNM_Routing_Multimodal_Hybrid::remove_finished (MNM_Veh *veh, bool del)
     }
   else
     {
-      printf ("Wrong vehicle class\n");
-      exit (-1);
+      throw std::runtime_error ("Wrong vehicle class");
     }
   return 0;
 }
@@ -7520,8 +7438,7 @@ MNM_IO_Multimodal::build_node_factory_multimodal (
               if (_node_factory->m_node_map.find (_node_ID)
                   != _node_factory->m_node_map.end ())
                 {
-                  printf ("node already exists.");
-                  exit (-1);
+                  throw std::runtime_error ("node already exists");
                 }
               if (_type == "FWJ")
                 {
@@ -7531,7 +7448,7 @@ MNM_IO_Multimodal::build_node_factory_multimodal (
                                                        _veh_convert_factor);
                   continue;
                 }
-              if (_type == "DMOND")
+              else if (_type == "DMOND")
                 {
                   _node_factory
                     ->make_node_multimodal (_node_ID,
@@ -7539,7 +7456,7 @@ MNM_IO_Multimodal::build_node_factory_multimodal (
                                             _flow_scalar, _veh_convert_factor);
                   continue;
                 }
-              if (_type == "DMDND")
+              else if (_type == "DMDND")
                 {
                   _node_factory->make_node_multimodal (_node_ID,
                                                        MNM_TYPE_DEST_MULTIMODAL,
@@ -7547,14 +7464,14 @@ MNM_IO_Multimodal::build_node_factory_multimodal (
                                                        _veh_convert_factor);
                   continue;
                 }
-              printf ("Wrong node type, %s\n", _type.c_str ());
-              exit (-1);
+              else {
+                throw std::runtime_error ("Wrong node type");
+              }
             }
           else
             {
-              printf ("MNM_IO_Multimodal::build_node_factory_multimodal: Wrong "
-                      "length of line.\n");
-              exit (-1);
+              throw std::runtime_error ("MNM_IO_Multimodal::build_node_factory_multimodal: Wrong "
+                      "length of line");
             }
         }
       _node_file.close ();
@@ -7640,8 +7557,7 @@ MNM_IO_Multimodal::build_link_factory_multimodal (
               if (_link_factory->m_link_map.find (_link_ID)
                   != _link_factory->m_link_map.end ())
                 {
-                  printf ("link already exists.");
-                  exit (-1);
+                  throw std::runtime_error ("link already exists");
                 }
 
               /* build */
@@ -7660,7 +7576,7 @@ MNM_IO_Multimodal::build_link_factory_multimodal (
                                                        _flow_scalar);
                   continue;
                 }
-              if (_type == "CTM")
+              else if (_type == "CTM")
                 {
                   _link_factory->make_link_multimodal (_link_ID,
                                                        MNM_TYPE_CTM_MULTIMODAL,
@@ -7675,14 +7591,14 @@ MNM_IO_Multimodal::build_link_factory_multimodal (
                                                        _flow_scalar);
                   continue;
                 }
-              printf ("Wrong link type, %s\n", _type.c_str ());
-              exit (-1);
+              else {
+                throw std::runtime_error ("Wrong link type");
+              }
             }
           else
             {
-              printf ("MNM_IO_Multimodal::build_link_factory_multimodal::Wrong "
-                      "length of line.\n");
-              exit (-1);
+              throw std::runtime_error ("MNM_IO_Multimodal::build_link_factory_multimodal::Wrong "
+                      "length of line");
             }
         }
       _link_file.close ();
@@ -7741,8 +7657,7 @@ MNM_IO_Multimodal::build_busstop_factory (const std::string &file_folder,
               if (busstop_factory->m_busstop_map.find (_busstop_physical_ID)
                   != busstop_factory->m_busstop_map.end ())
                 {
-                  printf ("physical bus stop already exists.");
-                  exit (-1);
+                  throw std::runtime_error ("physical bus stop already exists.");
                 }
 
               /* make busstop factory */
@@ -7796,8 +7711,7 @@ MNM_IO_Multimodal::build_busstop_factory (const std::string &file_folder,
     }
   else
     {
-      printf ("Something wrong in build_busstop_physical!\n");
-      exit (-1);
+      throw std::runtime_error ("Something wrong in build_busstop_physical!");
     }
   _busstop_file.close ();
 
@@ -7824,8 +7738,7 @@ MNM_IO_Multimodal::build_busstop_factory (const std::string &file_folder,
               if (busstop_factory->m_busstop_map.find (_busstop_virtual_ID)
                   != busstop_factory->m_busstop_map.end ())
                 {
-                  printf ("virtual bus stop already exists.");
-                  exit (-1);
+                  throw std::runtime_error ("virtual bus stop already exists");
                 }
 
               /* make busstop factory */
@@ -7846,8 +7759,7 @@ MNM_IO_Multimodal::build_busstop_factory (const std::string &file_folder,
               _bus_stop_virtual->m_route_ID = _route_ID;
               if (_bus_stop_virtual->m_route_ID == TInt (-1))
                 {
-                  printf ("busstop has no bus route\n");
-                  exit (-1);
+                  throw std::runtime_error ("busstop has no bus route");
                 }
               _bus_stop_virtual->m_historical_waiting_time
                 = _historical_waiting_time;
@@ -7964,14 +7876,12 @@ MNM_IO_Multimodal::build_busstop_factory (const std::string &file_folder,
     }
   else
     {
-      printf ("Something wrong in build_busstop_virtual!\n");
-      exit (-1);
+      throw std::runtime_error ("Something wrong in build_busstop_virtual!");
     }
   _busstop_file.close ();
   if (_flg)
     {
-      printf ("some bus stops are too close, consider merging them\n");
-      exit (-1);
+      throw std::runtime_error ("some bus stops are too close, consider merging them");
     }
   IAssert (TInt (busstop_factory->m_busstop_map.size ())
            == _num_busstops_physical + _num_busstops_virtual);
@@ -8025,8 +7935,7 @@ MNM_IO_Multimodal::build_parkinglot_factory (
               if (parkinglot_factory->m_parking_lot_map.find (_parkinglot_ID)
                   != parkinglot_factory->m_parking_lot_map.end ())
                 {
-                  printf ("parking lot already exists.");
-                  exit (-1);
+                  throw std::runtime_error ("parking lot already exists");
                 }
 
               /* make parkinglot factory */
@@ -8056,8 +7965,7 @@ MNM_IO_Multimodal::build_parkinglot_factory (
     }
   else
     {
-      printf ("Something wrong in build_parkinglot!\n");
-      exit (-1);
+      throw std::runtime_error ("Something wrong in build_parkinglot");
     }
   _parkinglot_file.close ();
   IAssert (TInt (parkinglot_factory->m_parking_lot_map.size ())
@@ -8119,8 +8027,7 @@ MNM_IO_Multimodal::build_walkinglink_factory (
                     _walkinglink_ID)
                   != transit_link_factory->m_transit_link_map.end ())
                 {
-                  printf ("walking link already exists.");
-                  exit (-1);
+                  throw std::runtime_error ("walking link already exists");
                 }
 
               /* make walkinglink factory */
@@ -8223,8 +8130,7 @@ MNM_IO_Multimodal::build_walkinglink_factory (
     }
   else
     {
-      printf ("Something wrong in build_walkinglink!\n");
-      exit (-1);
+      throw std::runtime_error ("Something wrong in build_walkinglink");
     }
 
   _walkinglink_file.close ();
@@ -8289,8 +8195,7 @@ MNM_IO_Multimodal::build_buslink_factory (
               if (transit_link_factory->m_transit_link_map.find (_buslink_ID)
                   != transit_link_factory->m_transit_link_map.end ())
                 {
-                  printf ("bus link already exists.");
-                  exit (-1);
+                  throw std::runtime_error ("bus link already exists");
                 }
 
               /* make buslink factory */
@@ -8355,8 +8260,7 @@ MNM_IO_Multimodal::build_buslink_factory (
     }
   else
     {
-      printf ("Something wrong in build_buslink!\n");
-      exit (-1);
+      throw std::runtime_error ("Something wrong in build_buslink");
     }
 
   _buslink_file.close ();
@@ -8465,8 +8369,7 @@ MNM_IO_Multimodal::build_passenger_demand (
             }
           else
             {
-              printf ("Something wrong in build_demand_passenger!\n");
-              exit (-1);
+              throw std::runtime_error ("Something wrong in build_demand_passenger");
             }
         }
       _demand_file.close ();
@@ -8592,8 +8495,7 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
                     }
                   else
                     {
-                      printf ("Wrong init_demand_split\n");
-                      exit (-1);
+                      throw std::runtime_error ("Wrong init_demand_split");
                     }
                 }
               _origin = dynamic_cast<MNM_Origin_Multimodal *> (
@@ -8605,10 +8507,9 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
             }
           else
             {
-              printf ("Something wrong in build_vehicle_demand_multimodal!\n");
               free (_demand_vector_car);
               free (_demand_vector_truck);
-              exit (-1);
+              throw std::runtime_error ("Something wrong in build_vehicle_demand_multimodal");
             }
         }
       free (_demand_vector_car);
@@ -8681,8 +8582,7 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
                         }
                       else
                         {
-                          printf ("Wrong init_demand_split\n");
-                          exit (-1);
+                          throw std::runtime_error ("Wrong init_demand_split\n");
                         }
                     }
                 }
@@ -8695,9 +8595,8 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
             }
           else
             {
-              printf ("Something wrong in build_vehicle_demand_multimodal!\n");
               free (_demand_vector_bus);
-              exit (-1);
+              throw std::runtime_error ("Something wrong in build_vehicle_demand_multimodal");
             }
         }
       free (_demand_vector_bus);
@@ -8794,8 +8693,7 @@ MNM_IO_Multimodal::build_pnr_demand (const std::string &file_folder,
                     }
                   else
                     {
-                      printf ("Wrong init_demand_split\n");
-                      exit (-1);
+                      throw std::runtime_error ("Wrong init_demand_split");
                     }
                 }
               _origin = dynamic_cast<MNM_Origin_Multimodal *> (
@@ -8806,9 +8704,8 @@ MNM_IO_Multimodal::build_pnr_demand (const std::string &file_folder,
             }
           else
             {
-              printf ("Something wrong in build_pnr_demand!\n");
               free (_demand_vector);
-              exit (-1);
+              throw std::runtime_error ("Something wrong in build_pnr_demand");
             }
         }
       free (_demand_vector);
@@ -8909,8 +8806,7 @@ MNM_IO_Multimodal::build_bustransit_demand (const std::string &file_folder,
                     }
                   else
                     {
-                      printf ("Wrong init_demand_split\n");
-                      exit (-1);
+                      throw std::runtime_error ("Wrong init_demand_split");
                     }
                 }
               _origin = dynamic_cast<MNM_Origin_Multimodal *> (
@@ -8921,8 +8817,7 @@ MNM_IO_Multimodal::build_bustransit_demand (const std::string &file_folder,
             }
           else
             {
-              printf ("Something wrong in build_bustransit_demand!\n");
-              exit (-1);
+              throw std::runtime_error ("Something wrong in build_bustransit_demand");
             }
         }
       _demand_file.close ();
@@ -9106,8 +9001,7 @@ MNM_IO_Multimodal::load_bus_path_table (const PNEGraph &graph, TInt num_path,
     }
   else
     {
-      printf ("Can't open bus path table file!\n");
-      exit (-1);
+      throw std::runtime_error ("Can't open bus path table file");
     }
   printf ("Finish Loading Bus Path Table!\n");
   // printf("path table %p\n", _path_table);
@@ -9282,8 +9176,7 @@ MNM_IO_Multimodal::load_pnr_path_table (const PNEGraph &driving_graph,
     }
   else
     {
-      printf ("Can't open pnr path table file!\n");
-      exit (-1);
+      throw std::runtime_error ("Can't open pnr path table file");
     }
   printf ("Finish Loading Path Table for PnR!\n");
   return _path_table;
@@ -9417,8 +9310,7 @@ MNM_IO_Multimodal::load_bustransit_path_table (const PNEGraph &transit_graph,
     }
   else
     {
-      printf ("Can't open bus transit path table file!\n");
-      exit (-1);
+      throw std::runtime_error ("Can't open bus transit path table file");
     }
   printf ("Finish Loading Path Table for Bus Transit!\n");
   return _path_table;
@@ -9665,8 +9557,7 @@ MNM_Dta_Multimodal::set_routing ()
     }
   else
     {
-      printf ("Wrong routing type for MNM_Routing_Multimodal_Hybrid");
-      exit (111);
+      throw std::runtime_error ("Wrong routing type for MNM_Routing_Multimodal_Hybrid");
     }
 
   // used in MNM_Busstop_Virtual::receive_bus()
@@ -10520,8 +10411,7 @@ MNM_Dta_Multimodal::load_once (bool verbose, TInt load_int, TInt assign_int)
               // }
               else
                 {
-                  printf ("WARNING:No assignment!\n");
-                  exit (-1);
+                  throw std::runtime_error ("WARNING:No assignment!");
                 }
             }
         }
@@ -11805,8 +11695,7 @@ MNM_Passenger_Path_Bus::get_length (MNM_Dta_Multimodal *mmdta)
         }
       else
         {
-          printf ("Wrong type of transit link\n");
-          exit (-1);
+          throw std::runtime_error ("Wrong type of transit link");
         }
     }
   return _len; // meter
@@ -11857,8 +11746,7 @@ MNM_Passenger_Path_Bus::get_travel_time (TFlt start_time,
         }
       else
         {
-          printf ("Wrong type of transit link\n");
-          exit (-1);
+          throw std::runtime_error ("Wrong type of transit link");
         }
     }
   return TFlt (arrival_time - start_time); // intervals
@@ -12483,13 +12371,11 @@ MNM_Passenger_Pathset::is_in (MNM_Passenger_Path_Base *path)
     case rh:
       {
         throw std::runtime_error (
-          "ride hailing passenger path not implemented\n");
-        exit (-1);
+          "ride hailing passenger path not implemented");
       }
     default:
       {
-        throw std::runtime_error ("undefined passenger path!!\n");
-        exit (-1);
+        throw std::runtime_error ("undefined passenger path");
       }
     }
 }
@@ -13048,8 +12934,7 @@ build_existing_passenger_pathset (
                                 ->second->find (_dest_node_ID)
                                 ->second->end ())
                     {
-                      printf ("Wrong driving path\n");
-                      exit (-1);
+                      throw std::runtime_error ("Wrong driving path");
                     }
                   _dest = dynamic_cast<MNM_Destination_Multimodal *> (
                     ((MNM_DMDND *) mmdue->m_mmdta->m_node_factory->get_node (
@@ -13113,8 +12998,7 @@ build_existing_passenger_pathset (
                                 ->second->find (_dest_node_ID)
                                 ->second->end ())
                     {
-                      printf ("Wrong bustransit path\n");
-                      exit (-1);
+                      throw std::runtime_error ("Wrong bustransit path");
                     }
 
                   // MNM_Path *_tmp_path = new MNM_Path();
@@ -13178,8 +13062,7 @@ build_existing_passenger_pathset (
                                 ->second->find (_dest_node_ID)
                                 ->second->end ())
                     {
-                      printf ("Wrong pnr path\n");
-                      exit (-1);
+                      throw std::runtime_error ("Wrong pnr path");
                     }
 
                   // MNM_Path *_tmp_driving_path = new MNM_Path();
@@ -13348,7 +13231,7 @@ build_shortest_driving_pathset (
                   printf ("No driving path found to connect origin node ID %d "
                           "and destination node ID %d\n",
                           _origin_node_ID (), _dest_node_ID ());
-                  exit (-1);
+                  throw std::runtime_error ("No path connecting OD");
                 }
             }
         }
@@ -13623,7 +13506,7 @@ build_shortest_bustransit_pathset (
                   printf ("No bus transit path found to connect origin node ID "
                           "%d and destination node ID %d\n",
                           _origin_node_ID (), _dest_node_ID ());
-                  exit (-1);
+                  throw std::runtime_error ("No bus transit path connecting OD");
                 }
             }
         }
@@ -14012,7 +13895,7 @@ build_shortest_pnr_pathset (
                   printf ("No PnR path found to connect origin node ID %d and "
                           "destination node ID %d\n",
                           _origin_node_ID (), _dest_node_ID ());
-                  exit (-1);
+                  throw std::runtime_error ("No PnR path connecting OD");
                 }
             }
         }
@@ -14338,8 +14221,7 @@ generate_init_mode_demand_file (MNM_MM_Due *mmdue,
       _driving_demand_file.open (_driving_demand_file_name, std::ofstream::out);
       if (!_driving_demand_file.is_open ())
         {
-          printf ("Error happens when open _driving_demand_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _driving_demand_file");
         }
 
       _str = "#Origin_ID Destination_ID <car demand by interval> <truck demand "
@@ -14356,8 +14238,7 @@ generate_init_mode_demand_file (MNM_MM_Due *mmdue,
                                     std::ofstream::out);
       if (!_bustransit_demand_file.is_open ())
         {
-          printf ("Error happens when open _bustransit_demand_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _bustransit_demand_file");
         }
 
       _str = "#Origin_ID Destination_ID <passenger demand by interval>\n";
@@ -14372,8 +14253,7 @@ generate_init_mode_demand_file (MNM_MM_Due *mmdue,
       _pnr_demand_file.open (_pnr_demand_file_name, std::ofstream::out);
       if (!_pnr_demand_file.is_open ())
         {
-          printf ("Error happens when open _pnr_demand_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _pnr_demand_file");
         }
 
       _str = "#OriginID DestID <passenger demand by interval>\n";
@@ -14442,9 +14322,8 @@ generate_init_mode_demand_file (MNM_MM_Due *mmdue,
                 }
               else
                 {
-                  printf ("Error, MNM::generate_init_mode_demand_file(), mode "
-                          "not implemented\n");
-                  exit (-1);
+                  throw std::runtime_error ("Error, MNM::generate_init_mode_demand_file(), mode "
+                          "not implemented");
                 }
             }
         }
@@ -14484,8 +14363,7 @@ save_passenger_path_table (Passenger_Path_Table *passenger_path_table,
       _path_buffer_file.open (_path_buffer_file_name, std::ofstream::out);
       if (!_path_buffer_file.is_open ())
         {
-          printf ("Error happens when open _path_buffer_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _path_buffer_file");
         }
     }
 
@@ -14499,16 +14377,14 @@ save_passenger_path_table (Passenger_Path_Table *passenger_path_table,
       _path_time_file.open (_path_time_file_name, std::ofstream::out);
       if (!_path_time_file.is_open ())
         {
-          printf ("Error happens when open _path_time_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _path_time_file");
         }
       std::string _path_cost_file_name
         = file_folder + "/" + path_file_name + "_cost";
       _path_cost_file.open (_path_cost_file_name, std::ofstream::out);
       if (!_path_cost_file.is_open ())
         {
-          printf ("Error happens when open _path_cost_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _path_cost_file");
         }
       std::string _path_disutility_file_name
         = file_folder + "/" + path_file_name + "_disutility";
@@ -14516,8 +14392,7 @@ save_passenger_path_table (Passenger_Path_Table *passenger_path_table,
                                   std::ofstream::out);
       if (!_path_disutility_file.is_open ())
         {
-          printf ("Error happens when open _path_disutility_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _path_disutility_file");
         }
     }
 
@@ -14525,8 +14400,7 @@ save_passenger_path_table (Passenger_Path_Table *passenger_path_table,
   _path_table_file.open (_file_name, std::ofstream::out);
   if (!_path_table_file.is_open ())
     {
-      printf ("Error happens when open _path_table_file\n");
-      exit (-1);
+      throw std::runtime_error ("Error happens when open _path_table_file");
     }
 
   // path
@@ -14592,8 +14466,7 @@ save_driving_path_table (const std::string &file_folder, Path_Table *path_table,
       _path_buffer_file.open (_path_buffer_file_name, std::ofstream::out);
       if (!_path_buffer_file.is_open ())
         {
-          printf ("Error happens when open _path_buffer_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _path_buffer_file");
         }
     }
 
@@ -14601,8 +14474,7 @@ save_driving_path_table (const std::string &file_folder, Path_Table *path_table,
   _path_table_file.open (_path_table_file_name, std::ofstream::out);
   if (!_path_table_file.is_open ())
     {
-      printf ("Error happens when open _path_table_file\n");
-      exit (-1);
+      throw std::runtime_error ("Error happens when open _path_table_file");
     }
 
   // path
@@ -14644,8 +14516,7 @@ save_bustransit_path_table (const std::string &file_folder,
       _path_buffer_file.open (_path_buffer_file_name, std::ofstream::out);
       if (!_path_buffer_file.is_open ())
         {
-          printf ("Error happens when open _path_buffer_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _path_buffer_file");
         }
     }
 
@@ -14653,8 +14524,7 @@ save_bustransit_path_table (const std::string &file_folder,
   _path_table_file.open (_path_table_file_name, std::ofstream::out);
   if (!_path_table_file.is_open ())
     {
-      printf ("Error happens when open _path_table_file\n");
-      exit (-1);
+      throw std::runtime_error ("Error happens when open _path_table_file");
     }
 
   // path
@@ -14704,8 +14574,7 @@ save_pnr_path_table (const std::string &file_folder, PnR_Path_Table *path_table,
       _path_buffer_file.open (_path_buffer_file_name, std::ofstream::out);
       if (!_path_buffer_file.is_open ())
         {
-          printf ("Error happens when open _path_buffer_file\n");
-          exit (-1);
+          throw std::runtime_error ("Error happens when open _path_buffer_file");
         }
     }
 
@@ -14713,8 +14582,7 @@ save_pnr_path_table (const std::string &file_folder, PnR_Path_Table *path_table,
   _path_table_file.open (_path_table_file_name, std::ofstream::out);
   if (!_path_table_file.is_open ())
     {
-      printf ("Error happens when open _path_table_file\n");
-      exit (-1);
+      throw std::runtime_error ("Error happens when open _path_table_file");
     }
 
   // path
@@ -14918,8 +14786,7 @@ get_ID_path_mapping_all_mode (
   if (_path_count
       != num_path_driving + num_path_bustransit + num_path_pnr + num_path_bus)
     {
-      printf ("path count is wrong in MNM::get_ID_path_mapping_all_mode()!\n");
-      exit (-1);
+      throw std::runtime_error ("path count is wrong in MNM::get_ID_path_mapping_all_mode()");
     }
   return _path_count;
 }
@@ -15417,7 +15284,7 @@ MNM_MM_Due::check_od_mode_connectivity ()
                   printf ("No mode is available from origin node %d to "
                           "destination node %d!\n",
                           (int) _origin_node_ID, (int) _dest_node_ID);
-                  exit (-1);
+                  throw std::runtime_error ("No mode available for OD");
                 }
             }
         }
@@ -15445,8 +15312,7 @@ MNM_MM_Due::save_od_mode_connectivity (
   _connectivity_file.open (_connectivity_file_name, std::ofstream::out);
   if (!_connectivity_file.is_open ())
     {
-      printf ("Error happens when open _connectivity_file\n");
-      exit (-1);
+      throw std::runtime_error ("Error happens when open _connectivity_file");
     }
 
   _str = "#OriginNodeID DestNodeID Driving BusTransit PnR\n";
@@ -15563,8 +15429,7 @@ MNM_MM_Due::load_od_mode_connectivity (
             }
           else
             {
-              printf ("number of modes is not correct.\n");
-              exit (-1);
+              throw std::runtime_error ("number of modes is not correct");
             }
         }
     }
@@ -15721,7 +15586,7 @@ MNM_MM_Due::init_passenger_path_flow ()
               printf ("No available mode for origin node %d to destination "
                       "node %d\n",
                       (int) _o_node_ID, (int) _d_node_ID);
-              exit (-1);
+              throw std::runtime_error ("No mode available for OD");
             }
           for (auto _m_it : *(_d_it.second))
             {
@@ -15732,8 +15597,7 @@ MNM_MM_Due::init_passenger_path_flow ()
               _len = TFlt (_m_it.second->m_path_vec.size ());
               if (_len == TFlt (0))
                 {
-                  printf ("No available paths\n");
-                  exit (-1);
+                  throw std::runtime_error ("No available paths");
                 }
 
               // uniform
@@ -15786,8 +15650,7 @@ MNM_MM_Due::init_passenger_path_flow ()
                   _len = TFlt (_m_it.second->m_path_vec.size ());
                   if (_len == TFlt (0))
                     {
-                      printf ("No available paths\n");
-                      exit (-1);
+                      throw std::runtime_error ("No available paths");
                     }
                   for (MNM_Passenger_Path_Base *_path :
                        _m_it.second->m_path_vec)
@@ -15907,8 +15770,7 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
                         }
                       else
                         {
-                          printf ("Wrong init_demand_split\n");
-                          exit (-1);
+                          throw std::runtime_error ("Wrong init_demand_split");
                         }
                     }
                 }
@@ -15985,8 +15847,7 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
                         }
                       else
                         {
-                          printf ("Wrong init_demand_split\n");
-                          exit (-1);
+                          throw std::runtime_error ("Wrong init_demand_split");
                         }
                     }
                 }
@@ -16067,8 +15928,7 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
                         }
                       else
                         {
-                          printf ("Wrong init_demand_split\n");
-                          exit (-1);
+                          throw std::runtime_error ("Wrong init_demand_split");
                         }
                     }
                 }
@@ -16196,8 +16056,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                 }
               else
                 {
-                  printf ("Wrong init_demand_split\n");
-                  exit (-1);
+                  throw std::runtime_error ("Wrong init_demand_split");
                 }
             }
           else
@@ -16284,8 +16143,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                 }
               else
                 {
-                  printf ("Wrong init_demand_split\n");
-                  exit (-1);
+                  throw std::runtime_error ("Wrong init_demand_split");
                 }
             }
           else
@@ -16384,8 +16242,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                 }
               else
                 {
-                  printf ("Wrong init_demand_split\n");
-                  exit (-1);
+                  throw std::runtime_error ("Wrong init_demand_split");
                 }
             }
           else
@@ -16419,8 +16276,7 @@ MNM_MM_Due::save_od_demand_split (MNM_Dta_Multimodal *mmdta,
   _file.open (_file_name, std::ofstream::out);
   if (!_file.is_open ())
     {
-      printf ("Error happens when open _file\n");
-      exit (-1);
+      throw std::runtime_error ("Error happens when open _file");
     }
 
   std::string _str;
@@ -17015,8 +16871,7 @@ MNM_MM_Due::build_link_cost_map_snapshot (MNM_Dta_Multimodal *mmdta,
         }
       else
         {
-          printf ("Wrong transit link type!\n");
-          exit (-1);
+          throw std::runtime_error ("Wrong transit link type");
         }
       m_bustransit_link_tt_map_snapshot.insert (
         std::pair<TInt, TFlt> (_link_it.first, _tt));
@@ -17516,8 +17371,7 @@ MNM_MM_Due::get_lowest_cost_path_snapshot (int start_interval, int o_node_ID,
     }
   else
     {
-      printf ("Mode not implemented!\n");
-      exit (-1);
+      throw std::runtime_error ("Mode not implemented");
     }
   // IAssert(_path != nullptr);
 
@@ -18254,8 +18108,7 @@ MNM_MM_Due::build_link_cost_map (MNM_Dta_Multimodal *mmdta,
             }
           else
             {
-              printf ("Wrong transit link type!\n");
-              exit (-1);
+              throw std::runtime_error ("Wrong transit link type");
             }
           // std::cout << "interval: " << i << ", link: " << _link_it.first <<
           // ", tt: " << m_transitlink_tt_map[_link_it.first][i] << "\n";
@@ -18673,8 +18526,7 @@ MNM_MM_Due::compute_total_passenger_demand_for_one_mode (int mode,
                 ->second->find (dest_node_ID)
                 ->second->end ())
     {
-      printf ("No such combination of origin, destination, and mode\n");
-      exit (-1);
+      throw std::runtime_error ("No such combination of origin, destination, and mode");
     }
   TFlt _tot_dmd = 0;
   MNM_Passenger_Pathset *_pathset
@@ -19199,8 +19051,7 @@ MNM_MM_Due::get_best_existing_driving_path (TInt o_node_ID, TInt d_node_ID,
                 ->second->find (d_node_ID)
                 ->second->end ())
     {
-      printf ("MNM_MM_Due::get_best_existing_driving_path() no driving path\n");
-      exit (-1);
+      throw std::runtime_error ("MNM_MM_Due::get_best_existing_driving_path() no driving path");
     }
   MNM_Passenger_Pathset *_pathset = m_passenger_path_table->find (o_node_ID)
                                       ->second->find (d_node_ID)
@@ -19278,8 +19129,7 @@ MNM_MM_Due::get_best_existing_bus_path (TInt o_node_ID, TInt d_node_ID,
                 ->second->find (d_node_ID)
                 ->second->end ())
     {
-      printf ("MNM_MM_Due::get_best_existing_bus_path() no bustransit path\n");
-      exit (-1);
+      throw std::runtime_error ("MNM_MM_Due::get_best_existing_bus_path() no bustransit path");
     }
   MNM_Passenger_Pathset *_pathset = m_passenger_path_table->find (o_node_ID)
                                       ->second->find (d_node_ID)
@@ -19361,8 +19211,7 @@ MNM_MM_Due::get_best_existing_pnr_path (TInt o_node_ID, TInt d_node_ID,
                 ->second->find (d_node_ID)
                 ->second->end ())
     {
-      printf ("MNM_MM_Due::get_best_existing_pnr_path() no pnr path\n");
-      exit (-1);
+      throw std::runtime_error ("MNM_MM_Due::get_best_existing_pnr_path() no pnr path");
     }
   MNM_Passenger_Pathset *_pathset = m_passenger_path_table->find (o_node_ID)
                                       ->second->find (d_node_ID)
@@ -19965,9 +19814,8 @@ MNM_MM_Due::get_best_existing_driving_path_for_single_interval (
                 ->second->find (d_node_ID)
                 ->second->end ())
     {
-      printf ("MNM_MM_Due::get_best_existing_driving_path_for_single_interval()"
-              " no driving path\n");
-      exit (-1);
+      throw std::runtime_error ("MNM_MM_Due::get_best_existing_driving_path_for_single_interval()"
+              " no driving path");
     }
   MNM_Passenger_Pathset *_pathset = m_passenger_path_table->find (o_node_ID)
                                       ->second->find (d_node_ID)
@@ -20061,9 +19909,8 @@ MNM_MM_Due::get_best_existing_bus_path_for_single_interval (
                 ->second->find (d_node_ID)
                 ->second->end ())
     {
-      printf ("MNM_MM_Due::get_best_existing_bus_path_for_single_interval() no "
-              "bustransit path\n");
-      exit (-1);
+      throw std::runtime_error ("MNM_MM_Due::get_best_existing_bus_path_for_single_interval() no "
+              "bustransit path");
     }
   MNM_Passenger_Pathset *_pathset = m_passenger_path_table->find (o_node_ID)
                                       ->second->find (d_node_ID)
@@ -20160,9 +20007,8 @@ MNM_MM_Due::get_best_existing_pnr_path_for_single_interval (
                 ->second->find (d_node_ID)
                 ->second->end ())
     {
-      printf ("MNM_MM_Due::get_best_existing_pnr_path_for_single_interval() no "
-              "pnr path\n");
-      exit (-1);
+      throw std::runtime_error ("MNM_MM_Due::get_best_existing_pnr_path_for_single_interval() no "
+              "pnr path");
     }
   MNM_Passenger_Pathset *_pathset = m_passenger_path_table->find (o_node_ID)
                                       ->second->find (d_node_ID)
@@ -20549,8 +20395,7 @@ MNM_MM_Due::update_path_table (MNM_Dta_Multimodal *mmdta, int iter)
             }
           else
             {
-              printf ("Mode not implemented!\n");
-              exit (-1);
+              throw std::runtime_error ("Mode not implemented");
             }
 
           // TODO: other modes
@@ -20613,8 +20458,7 @@ MNM_MM_Due::update_path_table (MNM_Dta_Multimodal *mmdta, int iter)
                 }
               else
                 {
-                  printf ("Mode not implemented!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Mode not implemented");
                 }
             }
           else
@@ -20720,8 +20564,7 @@ MNM_MM_Due::update_path_table (MNM_Dta_Multimodal *mmdta, int iter)
                 }
               else
                 {
-                  printf ("Mode not implemented!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Mode not implemented");
                 }
               for (auto _path_set : _path_set_vec)
                 {
@@ -20940,8 +20783,7 @@ MNM_MM_Due::update_path_table_fixed_departure_time_choice (
                 }
               else
                 {
-                  printf ("Mode not implemented!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Mode not implemented");
                 }
 
               if (m_mmdta_config->get_string ("routing_type")
@@ -20962,8 +20804,7 @@ MNM_MM_Due::update_path_table_fixed_departure_time_choice (
                     }
                   else
                     {
-                      printf ("Mode not implemented!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Mode not implemented");
                     }
                 }
               else
@@ -21004,8 +20845,7 @@ MNM_MM_Due::update_path_table_fixed_departure_time_choice (
                     }
                   else
                     {
-                      printf ("Mode not implemented!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Mode not implemented");
                     }
                 }
 
@@ -21254,8 +21094,7 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
                 }
               else
                 {
-                  printf ("Mode not implemented!\n");
-                  exit (-1);
+                  throw std::runtime_error ("Mode not implemented");
                 }
 
               if (m_mmdta_config->get_string ("routing_type")
@@ -21276,8 +21115,7 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
                     }
                   else
                     {
-                      printf ("Mode not implemented!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Mode not implemented");
                     }
                 }
               else
@@ -21321,8 +21159,7 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
                     }
                   else
                     {
-                      printf ("Mode not implemented!\n");
-                      exit (-1);
+                      throw std::runtime_error ("Mode not implemented");
                     }
                 }
 
@@ -21437,8 +21274,7 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
                               _tmp_path->m_buffer[_col] -= _tau * _tmp_change;
                               if (_tmp_path->m_buffer[_col] < 0.)
                                 {
-                                  printf ("Something is wrong in GP method\n");
-                                  exit (-1);
+                                  throw std::runtime_error ("Something is wrong in GP method");
                                 }
                             }
                         }
@@ -21531,9 +21367,7 @@ MNM_MM_Due::run_mmdta_adaptive (bool verbose)
   MNM_Dta_Multimodal *mmdta = m_mmdta;
   if (!mmdta->m_statistics->m_self_config->get_int ("rec_tt"))
     {
-      std::cout << "rec_tt should set to 1 in input file config.conf."
-                << std::endl;
-      exit (-1);
+      throw std::runtime_error ("rec_tt should set to 1 in input file config.conf");
     }
 
   mmdta->pre_loading ();
