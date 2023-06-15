@@ -1,9 +1,8 @@
 #pragma once
 
 #include "dta.h"
-#include <string>
 
-class MNM_Veh_Delivery : public MNM_Veh
+class MNM_Veh_Delivery : virtual public MNM_Veh
 {
 public:
     MNM_Veh_Delivery(TInt ID, TInt start_time);
