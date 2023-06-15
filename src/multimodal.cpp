@@ -10707,32 +10707,34 @@ MNM_Dta_Multimodal::load_once (bool verbose, TInt load_int, TInt assign_int)
   // }
 
   // test();
+  m_current_loading_interval = load_int + 1;
   return 0;
 }
 
 int
 MNM_Dta_Multimodal::loading (bool verbose)
 {
-  TInt _current_inter = 0;
-  TInt _assign_inter = m_start_assign_interval;
+  int _current_inter = 0;
+  int _assign_inter = m_start_assign_interval;
 
   while (!finished_loading (_current_inter)
-         || _assign_inter <= m_total_assign_inter)
+         || _assign_inter < m_total_assign_inter)
     {
       if (verbose)
         {
-          printf ("\nCurrent loading interval: %d, Current assignment "
-                  "interval: %d\n",
-                  _current_inter (), _assign_inter ());
+          std::cout << std::endl
+                    << "Current loading interval: " << _current_inter << ", "
+                    << "Current assignment interval: " << int(_current_inter/m_config -> get_int("assign_frq"))
+                    << std::endl;
         }
       load_once (verbose, _current_inter, _assign_inter);
       // link cc will be updated with the record at the end of this interval
       // (i.e., _current_inter + 1)
-      if (_current_inter % m_assign_freq == 0 || _current_inter == 0)
+      if (++_current_inter % m_assign_freq == 0)
         {
-          _assign_inter += 1;
+          ++_assign_inter;
         }
-      _current_inter += 1;
+
     }
   if (verbose)
     {
@@ -12624,44 +12626,6 @@ print_vehicle_statistics (MNM_Veh_Factory_Multimodal *veh_factory)
     veh_factory->m_total_time_car (), veh_factory->m_total_time_truck (),
     veh_factory->m_total_time_bus ());
   return 0;
-}
-
-TFlt
-get_path_tt_snapshot (MNM_Path *path,
-                      const std::unordered_map<TInt, TFlt> &link_cost_map)
-{
-  TFlt _tt = TFlt (0);
-  for (auto _link_ID : path->m_link_vec)
-    {
-      if (link_cost_map.find (_link_ID) == link_cost_map.end ())
-        {
-          printf ("Wrong link in get_path_tt_snapshot()!\n");
-          exit (-1);
-        }
-      _tt += link_cost_map.find (_link_ID)->second;
-    }
-  return _tt;
-}
-
-TFlt
-get_path_tt (TFlt start_time, MNM_Path *path,
-             const std::unordered_map<TInt, TFlt *> &link_cost_map,
-             TInt max_interval)
-{
-  int _end_time = int (round (start_time));
-  for (auto _link_ID : path->m_link_vec)
-    {
-      if (link_cost_map.find (_link_ID) == link_cost_map.end ())
-        {
-          printf ("Wrong link in get_path_tt()!\n");
-          exit (-1);
-        }
-      _end_time
-        += link_cost_map.find (_link_ID)
-             ->second[_end_time < (int) max_interval ? _end_time
-                                                     : (int) max_interval - 1];
-    }
-  return TFlt (_end_time - start_time);
 }
 
 Passenger_Path_Table *
@@ -21574,15 +21538,14 @@ MNM_MM_Due::run_mmdta_adaptive (bool verbose)
 
   mmdta->pre_loading ();
 
-  TInt _current_inter = 0;
-  TInt _dta_assign_inter = mmdta->m_start_assign_interval;
-  TInt _due_assign_inter = mmdta->m_start_assign_interval;
+  int _current_inter = 0;
+  int _dta_assign_inter = mmdta->m_start_assign_interval;
+  int _due_assign_inter = mmdta->m_start_assign_interval;
 
   while (!mmdta->finished_loading (_current_inter)
-         || _dta_assign_inter <= mmdta->m_total_assign_inter)
+         || _dta_assign_inter < mmdta->m_total_assign_inter)
     {
-      if ((_current_inter % m_mmdta_config->get_int ("assign_frq") == 0
-           || _current_inter == 0)
+      if ((_current_inter % m_mmdta_config->get_int ("assign_frq") == 0)
           && (_due_assign_inter < m_total_assign_inter))
         {
           if (_current_inter == 0)
@@ -21600,21 +21563,19 @@ MNM_MM_Due::run_mmdta_adaptive (bool verbose)
 
       if (verbose)
         {
-          printf ("\nCurrent loading interval: %d, Current assignment "
-                  "interval: %d\n",
-                  _current_inter (),
-                  int (_current_inter
-                       / m_mmdta_config->get_int ("assign_frq")));
+          std::cout << std::endl
+                    << "Current loading interval: " << _current_inter << ", "
+                    << "Current assignment interval: " << int(_current_inter/m_mmdta_config -> get_int("assign_frq"))
+                    << std::endl;
         }
 
       mmdta->load_once (verbose, _current_inter, _dta_assign_inter);
       // link cc will be updated with the record at the end of this interval
       // (i.e., _current_inter + 1)
-      if (_current_inter % mmdta->m_assign_freq == 0 || _current_inter == 0)
+      if (++_current_inter % mmdta->m_assign_freq == 0)
         {
-          _dta_assign_inter += 1;
+          ++_dta_assign_inter;
         }
-      _current_inter += 1;
     }
   if (verbose)
     {

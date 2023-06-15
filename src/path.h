@@ -86,6 +86,10 @@ namespace MNM
 MNM_Path *extract_path (TInt origin_ID, TInt dest_ID,
                         std::unordered_map<TInt, TInt> &output_map,
                         PNEGraph &graph);
+// one-shot cost
+TFlt get_path_tt_snapshot(MNM_Path* path, const std::unordered_map<TInt, TFlt> &link_cost_map);
+// time-dependent cost
+TFlt get_path_tt(TFlt start_time, MNM_Path* path, const std::unordered_map<TInt, TFlt*> &link_cost_map, TInt max_interval);
 Path_Table *build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
                            MNM_Link_Factory *link_factory,
                            TFlt min_path_length = 0.0, size_t MaxIter = 10,

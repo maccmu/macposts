@@ -128,7 +128,7 @@ MNM_Cumulative_Emission::update (MNM_Veh_Factory *veh_factory)
       _v_converted = _v * TFlt (3600) / TFlt (1600); // mile / hour
       _v_converted = MNM_Ults::max (_v_converted, TFlt (5));
       _v_converted = MNM_Ults::min (_v_converted, TFlt (65));
-      _veh_ct = link->get_link_flow_emission (m_ev_label);
+      _veh_ct = link->get_link_flow_emission (m_ev_label);  // already divided by flow_scalar
       IAssert (_veh_ct.size () == 2);
       _nonev_ct = _veh_ct[0];
       _ev_ct = _veh_ct[1];

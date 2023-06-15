@@ -1508,13 +1508,6 @@ int print_passenger_statistics (MNM_Passenger_Factory *passenger_factory);
 
 int print_vehicle_statistics (MNM_Veh_Factory_Multimodal *veh_factory);
 
-TFlt get_path_tt_snapshot (MNM_Path *path,
-                           const std::unordered_map<TInt, TFlt> &link_cost_map);
-
-TFlt get_path_tt (TFlt start_time, MNM_Path *path,
-                  const std::unordered_map<TInt, TFlt *> &link_cost_map,
-                  TInt max_interval);
-
 Passenger_Path_Table *build_shortest_passenger_pathset (
   std::vector<MMDue_mode> &mode_vec,
   std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>> &passenger_demand,

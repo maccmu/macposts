@@ -50,7 +50,7 @@ public:
                         MNM_Link_Factory *link_factory);
   virtual ~MNM_Routing_Adaptive () override;
   virtual int init_routing (Path_Table *path_table = nullptr) override;
-  int update_link_cost ();
+  virtual int update_link_cost ();
   virtual int update_routing (TInt timestamp) override;
   // private:
   MNM_Statistics *m_statistics;
@@ -59,7 +59,7 @@ public:
   TInt m_routing_freq;
   TFlt m_vot;
   MNM_ConfReader *m_self_config;
-  bool m_working;
+  bool m_working=true;
 };
 
 class MNM_Routing_Fixed : public MNM_Routing

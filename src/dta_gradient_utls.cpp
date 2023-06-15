@@ -428,6 +428,36 @@ add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
   return 0;
 }
 
+TFlt 
+get_arrival_cc_slope(MNM_Dlink* link, TFlt start_time, TFlt end_time)
+{
+    if (link == nullptr){
+        throw std::runtime_error("Error, get_arrival_cc_slope link is null");
+    }
+    if (link -> m_N_in == nullptr){
+        throw std::runtime_error("Error, get_arrival_cc_slope link cumulative curve is not installed");
+    }
+    if (start_time > link -> m_N_in->m_recorder.back().first) {
+        return 0;
+    }
+    int _delta = int(end_time) - int(start_time);
+    IAssert(_delta > 0);
+    TFlt _cc1, _cc2, _slope = 0.;
+    for (int i = 0; i < _delta; i++) {
+        _cc1 = link -> m_N_in -> get_result(TFlt(start_time + i));
+        _cc2 = link -> m_N_in -> get_result(TFlt(start_time + i + 1));
+        _slope += (_cc2 -_cc1);
+    }
+    // if (_slope <= 0) {
+    // 	std::cout << "car in" << "\n";
+    // 	std::cout << link -> m_N_in -> to_string() << "\n";
+    // 	std::cout << "car out" << "\n";
+    // 	std::cout << link -> m_N_out -> to_string() << "\n";
+    // 	printf("debug");
+    // }
+    return _slope / _delta;  // flow per unit interval
+}
+
 TFlt
 get_departure_cc_slope (MNM_Dlink *link, TFlt start_time, TFlt end_time)
 {
