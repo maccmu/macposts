@@ -124,7 +124,7 @@ MNM_Veh_Factory_EV::make_veh_electrified(TInt timestamp, Vehicle_type veh_type, 
 }
 
 MNM_Veh_Electrified_Delivery* 
-MNM_Veh_Factory_EV::make_veh_electrified_delivery(TInt timestamp, Vehicle_type veh_type, TFlt starting_range, bool using_roadside_charging=false, TFlt full_range = 200.)
+MNM_Veh_Factory_EV::make_veh_electrified_delivery(TInt timestamp, Vehicle_type veh_type, TFlt starting_range, bool using_roadside_charging, TFlt full_range)
 {
     MNM_Veh_Electrified_Delivery *_veh = new MNM_Veh_Electrified_Delivery (m_num_veh + 1, timestamp, starting_range, using_roadside_charging, full_range);
     _veh->m_type = veh_type;
@@ -460,11 +460,11 @@ int MNM_Charging_Station::evolve(TInt timestamp)
             }
             auto _veh = dynamic_cast<MNM_Veh_Electrified*>(*_veh_it);
             if (_veh == nullptr || _veh -> m_type != MNM_TYPE_ADAPTIVE || _veh -> m_charging_station != this) {
-                // throw std::runtime_error("wrong routing for this vehicle");
+                throw std::runtime_error("wrong routing for this vehicle");
                 // TODO: actually non-EV or ev using other charging station should not be here
-                move_out_veh(timestamp, *_veh_it);
-                _veh_it = _in_link->m_finished_array.erase(_veh_it);
-                continue;
+                // move_out_veh(timestamp, *_veh_it);
+                // _veh_it = _in_link->m_finished_array.erase(_veh_it);
+                // continue;
             }
             // if (_veh -> need_charging() && _veh -> m_charging_station != this) {
             //     throw std::runtime_error("MNM_Charging_Station::evolve, electrified vehicle in the wrong charging station\n");
@@ -866,13 +866,19 @@ MNM_Routing_Adaptive_With_POIs::update_routing(TInt timestamp)
                 {
                     if (_veh_electrified -> need_charging())
                     {
-                        _poi_node = m_best_poi_table -> find(_origin) -> second -> find(_veh_dest) -> second;
-                        if (_poi_node != nullptr) {
-                            _veh_electrified -> m_charging_station = dynamic_cast<MNM_Charging_Station*>(_poi_node);
-                            set_shortest_path_tree(&_shortest_path_tree, _poi_node, nullptr);
+                        if (m_best_poi_table -> find(_origin) == m_best_poi_table -> end() || 
+                            m_best_poi_table -> find(_origin) -> second -> find(_veh_dest) == m_best_poi_table -> find(_origin) -> second -> end()) {
+                            set_shortest_path_tree(&_shortest_path_tree, nullptr, _veh_dest);
                         }
                         else {
-                            set_shortest_path_tree(&_shortest_path_tree, nullptr, _veh_dest);
+                            _poi_node = m_best_poi_table -> find(_origin) -> second -> find(_veh_dest) -> second;
+                            if (_poi_node != nullptr) {
+                                _veh_electrified -> m_charging_station = dynamic_cast<MNM_Charging_Station*>(_poi_node);
+                                set_shortest_path_tree(&_shortest_path_tree, _poi_node, nullptr);
+                            }
+                            else {
+                                set_shortest_path_tree(&_shortest_path_tree, nullptr, _veh_dest);
+                            }
                         }
                     }
                     else

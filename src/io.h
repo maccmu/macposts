@@ -84,7 +84,7 @@ public:
                                               MNM_ConfReader *conf_reader,
                                               MNM_OD_Factory *od_factory,
                                               const std::string &file_name
-                                              = "Origin_vehicle_label");
+                                              = "MNM_input_origin_vehicle_label");
 
   // private:
   static std::vector<std::string> split (const std::string &text, char sep);

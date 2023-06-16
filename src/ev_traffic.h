@@ -41,8 +41,10 @@ class MNM_Veh_Factory_EV : public MNM_Veh_Factory_Delivery
 public:
     MNM_Veh_Factory_EV();
     virtual ~MNM_Veh_Factory_EV();
+
     MNM_Veh_Electrified* make_veh_electrified(TInt timestamp, Vehicle_type veh_type, TFlt starting_range, bool using_roadside_charging=false, TFlt full_range = 200.);
     MNM_Veh_Electrified_Delivery* make_veh_electrified_delivery(TInt timestamp, Vehicle_type veh_type, TFlt starting_range, bool using_roadside_charging=false, TFlt full_range = 200.);
+    
     TInt m_veh_electrified;
 };
 
