@@ -20933,7 +20933,7 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
     _tmp_cost, _tau, _min_flow;
   int _best_time_col;
   int _best_assign_col;
-  bool _exist;
+  bool _exist, _flg;
 
   MNM_TDSP_Tree *_tdsp_tree;
   std::unordered_map<TInt, MNM_TDSP_Tree *> _tdsp_tree_map_driving
@@ -21048,6 +21048,7 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
               _tot_nonzero_path = 0;
               _tau = TFlt (std::numeric_limits<double>::infinity ());
               _min_flow = TFlt (std::numeric_limits<double>::infinity ());
+              _flg = false;
               if (m_mmdta_config->get_string ("routing_type")
                   == "Multimodal_DUE_ColumnGeneration")
                 {
@@ -21227,6 +21228,7 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
                                 {
                                   _tau = m_step_size * _tmp_path->m_buffer[_col]
                                          / _tmp_change;
+                                  _flg = true;
                                 }
                               //                                if ((_tmp_change
                               //                                > 0) && (_tau >
@@ -21251,7 +21253,10 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
                     }
                 }
               printf ("tau: %.2f\n", _tau ());
-
+              if (!_flg) {
+                  _tau = 0.;
+                  continue;
+              }
               // flow adjustment
               for (auto _path_set : _path_set_vec)
                 {
