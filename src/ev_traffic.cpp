@@ -252,7 +252,7 @@ MNM_Origin_EV::release_one_interval(TInt current_interval, MNM_Veh_Factory* veh_
                         MNM_Ults::rand_flt () <= adaptive_ratio ? MNM_TYPE_ADAPTIVE : MNM_TYPE_STATIC,
                         0.16,   // TODO: test
                         MNM_Ults::rand_flt () <= m_roadside_charging_ratio, 
-                        50);  // TODO: test
+                        200.);  // TODO: test
             }
             else {
                 // non-EV
@@ -508,9 +508,10 @@ int MNM_Charging_Station::evolve(TInt timestamp)
 int 
 MNM_Charging_Station::get_current_estimated_waiting_time() {
     std::deque<MNM_Veh*> _shortest_queue = *std::min_element(m_queue_pool.begin(), m_queue_pool.end(), 
-                                                             [](const std::deque<MNM_Veh*> &q1, const std::deque<MNM_Veh*> &q2){return q1.size() < q2.size();});
-    int _est_waiting_time = _shortest_queue.size() > 0 ? _shortest_queue.size() * m_charging_time : m_avg_waiting_time;
-    if (_est_waiting_time < m_avg_waiting_time) _est_waiting_time = m_avg_waiting_time;
+                                                             [](const std::deque<MNM_Veh*> &q1, const std::deque<MNM_Veh*> &q2){return q1.size() < q2.size();});                          
+    // int _est_waiting_time = _shortest_queue.size() > 0 ? _shortest_queue.size() * m_charging_time : m_avg_waiting_time;
+    // if (_est_waiting_time < m_avg_waiting_time) _est_waiting_time = m_avg_waiting_time;
+    int _est_waiting_time = _shortest_queue.size() * m_charging_time;
     return _est_waiting_time;  // intervals
 }
 
