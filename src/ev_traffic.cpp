@@ -1673,7 +1673,7 @@ MNM_Dta_EV::load_once(bool verbose, TInt load_int, TInt assign_int)
 
     // record queuing vehicles after node evolve, which is num of vehicles in finished array
     record_queue_vehicles();
-    if (verbose) printf("Moving through link\n");
+    if (verbose) printf("Moving through link!\n");
     // step 4: move vehicles through link
     for (auto _link_it = m_link_factory -> m_link_map.begin(); _link_it != m_link_factory -> m_link_map.end(); _link_it++){
         _link = _link_it -> second;
