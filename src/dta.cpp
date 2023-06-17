@@ -631,7 +631,7 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   // finished array
   record_queue_vehicles ();
   if (verbose)
-    printf ("Moving through link\n");
+    printf ("Moving through link!\n");
   // step 4: move vehicles through link
   for (auto _link_it = m_link_factory->m_link_map.begin ();
        _link_it != m_link_factory->m_link_map.end (); _link_it++)
