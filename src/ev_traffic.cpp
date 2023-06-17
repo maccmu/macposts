@@ -1691,6 +1691,8 @@ MNM_Dta_EV::load_once(bool verbose, TInt load_int, TInt assign_int)
         _link -> evolve(load_int);
     }
 
+    if (m_emission != nullptr) m_emission -> update(m_veh_factory);
+
     if (verbose) printf("Receiving!\n");
     // step 5: Destination receive vehicle  
     for (auto _dest_it = m_od_factory -> m_destination_map.begin(); _dest_it != m_od_factory -> m_destination_map.end(); _dest_it++){
