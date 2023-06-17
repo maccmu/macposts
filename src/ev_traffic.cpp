@@ -184,7 +184,7 @@ MNM_Origin_EV::release_one_interval(TInt current_interval, MNM_Veh_Factory* veh_
     if (assign_interval < 0)return 0;
     m_current_assign_interval = assign_interval;
     auto _veh_factory_ev = dynamic_cast<MNM_Veh_Factory_EV*>(veh_factory);
-    IAssert(_veh_factory_ev != nullptr);
+    Assert(_veh_factory_ev != nullptr);
     TInt _veh_to_release, _label;
     MNM_Veh *_veh;
     TFlt _r;
@@ -334,7 +334,7 @@ MNM_Charging_Station::MNM_Charging_Station(TInt ID, TFlt flow_scalar, int unit_t
     m_N_out = new MNM_Cumulative_Curve();
     m_N_out->add_record(std::pair<TFlt, TFlt>(TFlt(0), TFlt(0)));
     m_waiting_time_record = std::unordered_map<int, int>();
-    m_waiting_time_record.insert(std::pair<int, int>(0, avg_waiting_time));  // intervals
+    m_waiting_time_record.insert(std::pair<int, int>(0, 0));  // intervals
 }
 
 MNM_Charging_Station::~MNM_Charging_Station()
@@ -776,9 +776,10 @@ MNM_Routing_Adaptive_With_POIs::update_link_cost()
         // if it is charging station, add waiting time + charging time
         if (dynamic_cast<MNM_Dlink_Pq*>(_link) != nullptr) {
             if (auto _charging_station = dynamic_cast<MNM_Charging_Station*>(_link -> m_to_node)) {
-                m_link_cost[_it.first] += m_vot * (_charging_station -> get_current_estimated_waiting_time() + 
+                // this link cost is only for routing, it is amplified by a factor to discourage non-EV from using this link
+                m_link_cost[_it.first] += (m_vot * (_charging_station -> get_current_estimated_waiting_time() + 
                                                    _charging_station -> m_charging_time) * _charging_station -> m_unit_time + 
-                                          _charging_station -> m_price;
+                                          _charging_station -> m_price) * 10.;
             }
         }
     }
@@ -891,7 +892,7 @@ MNM_Routing_Adaptive_With_POIs::update_routing(TInt timestamp)
                 {
                     set_shortest_path_tree(&_shortest_path_tree, nullptr, _veh_dest);
                 }
-                IAssert(_shortest_path_tree != nullptr);
+                Assert(_shortest_path_tree != nullptr);
                 _next_link_ID = _shortest_path_tree->find (_node_ID)->second;
                 if (_next_link_ID < 0)
                 {
@@ -954,14 +955,14 @@ MNM_Routing_Adaptive_With_POIs::update_routing(TInt timestamp)
                         }
                         else
                         {
-                            IAssert(_veh_electrified -> m_charging_station == nullptr);
+                            Assert(_veh_electrified -> m_charging_station == nullptr);
                             set_shortest_path_tree(&_shortest_path_tree, nullptr, _veh_dest);
                         }
                     }
                     else {
                         set_shortest_path_tree(&_shortest_path_tree, nullptr, _veh_dest);
                     }
-                    IAssert(_shortest_path_tree != nullptr);
+                    Assert(_shortest_path_tree != nullptr);
                     _next_link_ID = _shortest_path_tree -> find(_node_ID) -> second;
 
                     if (_next_link_ID == -1)
@@ -1069,7 +1070,7 @@ MNM_Routing_Adaptive_With_POIs::update_best_POI()
                 _shortest_path_tree = m_table -> find(_dest) -> second;
                 _path = nullptr;
                 _path = MNM::extract_path(_node -> m_node_ID, _dest -> m_dest_node -> m_node_ID, *_shortest_path_tree, m_graph);
-                IAssert(_path != nullptr);
+                Assert(_path != nullptr);
                 _path_cost = MNM::get_path_tt_snapshot(_path, m_link_cost);
                 delete _path;
 
@@ -1077,7 +1078,7 @@ MNM_Routing_Adaptive_With_POIs::update_best_POI()
                 _shortest_path_tree = m_table_POIs -> find(_node) -> second;
                 _path = nullptr;
                 _path = MNM::extract_path(_origin -> m_origin_node -> m_node_ID, _node -> m_node_ID, *_shortest_path_tree, m_graph);
-                IAssert(_path != nullptr);
+                Assert(_path != nullptr);
                 _path_cost += MNM::get_path_tt_snapshot(_path, m_link_cost);
                 delete _path;
 
@@ -1098,8 +1099,6 @@ MNM_Routing_Adaptive_With_POIs::update_best_POI2()
 {
     MNM_Origin* _origin;
     MNM_Destination* _dest;
-    // std::unordered_map<TInt, TInt> *_shortest_path_tree;
-    MNM_Path *_path;
     TFlt _path_cost, _current_best_path_cost;
     MNM_Dnode *_current_best_poi_node;
     for (auto _it : *m_od_candidate_poi_table) {
@@ -1273,7 +1272,7 @@ MNM_IO_EV::add_charging_station_node(const std::string& file_folder, MNM_ConfRea
                                     MNM_Node_Factory *node_factory, const std::string& file_name)
 {
     auto _node_factory_ev = dynamic_cast<MNM_Node_Factory_EV*>(node_factory);
-    IAssert(_node_factory_ev != nullptr);
+    Assert(_node_factory_ev != nullptr);
     /* find file */
     std::string _file_name = file_folder + "/" + file_name;
     std::ifstream _file;
@@ -1333,7 +1332,7 @@ MNM_IO_EV::load_candidate_poi_table(const std::string& file_folder, MNM_ConfRead
                                     MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory, const std::string& file_name)
 {   
     auto _node_factory_with_ev = dynamic_cast<MNM_Node_Factory_EV*>(node_factory);
-    IAssert(_node_factory_with_ev != nullptr);
+    Assert(_node_factory_with_ev != nullptr);
 
     // destruct in MNM_Routing_Adaptive_With_EV
     OD_Candidate_POI_Table *table = new OD_Candidate_POI_Table();
@@ -1372,7 +1371,7 @@ MNM_IO_EV::load_candidate_poi_table(const std::string& file_folder, MNM_ConfRead
                 for (size_t i = 2; i < _words.size(); ++i) {
                     _charging_station_ID = TInt(std::stoi(trim(_words[i])));
                     _charging_station = dynamic_cast<MNM_Charging_Station*>(_node_factory_with_ev -> get_node(_charging_station_ID));
-                    IAssert(_charging_station != nullptr);
+                    Assert(_charging_station != nullptr);
                     auto _it = std::find(_candidate_poi_vec -> begin(), _candidate_poi_vec -> end(), _charging_station);
                     if (_it == _candidate_poi_vec -> end()) {
                         _candidate_poi_vec -> push_back(_charging_station);
@@ -1605,8 +1604,8 @@ MNM_Dta_EV::is_ok()
     // check POI
     printf("Checking......OD Candidate POIs connectivity!\n");
     if (auto _routing = dynamic_cast<MNM_Routing_Hybrid_EV*>(m_routing)) {
-        IAssert(_routing -> m_routing_adaptive != nullptr);
-        IAssert(_routing -> m_routing_adaptive -> m_od_candidate_poi_table != nullptr && !_routing -> m_routing_adaptive -> m_od_candidate_poi_table -> empty());
+        Assert(_routing -> m_routing_adaptive != nullptr);
+        Assert(_routing -> m_routing_adaptive -> m_od_candidate_poi_table != nullptr && !_routing -> m_routing_adaptive -> m_od_candidate_poi_table -> empty());
         _temp_flag = _routing -> m_routing_adaptive -> check_od_candidate_poi_table_connectivity();
     }
     else {

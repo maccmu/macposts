@@ -16,7 +16,7 @@ MNM_Veh_Delivery::~MNM_Veh_Delivery() {
 
 int MNM_Veh_Delivery::set_multi_od_seq(std::vector<std::pair<MNM_Origin*, MNM_Destination*>>* multi_od_seq)
 {
-  IAssert(multi_od_seq -> size() > 1);
+  Assert(multi_od_seq -> size() > 1);
   m_multi_od_seq = multi_od_seq;
   m_current_OD_index = 0;
   return 0;
@@ -433,7 +433,7 @@ int MNM_Routing_Delivery_Fixed::remove_finished(MNM_Veh* veh, bool del)
   }
   
   if (m_tracker.find(veh) != m_tracker.end() && del) {
-    IAssert(veh -> m_type == MNM_TYPE_STATIC);  // adaptive user not in m_tracker
+    Assert(veh -> m_type == MNM_TYPE_STATIC);  // adaptive user not in m_tracker
     m_tracker.find(veh) -> second -> clear();
     delete m_tracker.find(veh) -> second;
     m_tracker.erase(veh);
@@ -672,7 +672,7 @@ MNM_IO_Delivery::build_demand_multi_OD_seq(const std::string& file_folder, MNM_C
 
       // od sequence
       _words = split(_line1, ' ');
-      IAssert(_words.size() % 2 == 0);  // multiple OD pairs
+      Assert(_words.size() % 2 == 0);  // multiple OD pairs
       // destruct in Origin destructor
       _od_seq = new std::vector<std::pair<MNM_Origin*, MNM_Destination*>>();
       for (size_t i=0; i<_words.size(); i+=2) {
