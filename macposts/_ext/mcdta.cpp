@@ -412,7 +412,7 @@ Mcdta::generate_shortest_pathsets (const std::string &folder, int max_iter,
   // m_mcdta -> hook_up_node_and_link();
   // m_mcdta -> is_ok();
 
-  IAssert (m_mcdta != nullptr);
+  Assert (m_mcdta != nullptr);
   // this is based on travel time
   Path_Table *_driving_path_table
     = MNM::build_pathset_multiclass (m_mcdta->m_graph, m_mcdta->m_od_factory,
@@ -582,9 +582,9 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
           throw std::runtime_error ("failed to open _vis_file2");
         }
 
-      _str1 = "timestamp (intervals), driving_link_ID, car_inflow, "
-              "truck_inflow, car_tt (s), truck_tt (s), car_fftt (s), "
-              "truck_fftt (s), car_speed (mph), truck_speed (mph)\n";
+      _str1 = "timestamp(intervals), driving_link_ID, car_inflow, "
+              "truck_inflow, car_tt(s), truck_tt(s), car_fftt(s), "
+              "truck_fftt(s), car_speed(mph), truck_speed(mph)\n";
       _vis_file2 << _str1;
 
       TInt _iter = 0;
@@ -592,7 +592,7 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
         {
           if (_iter % cong_frequency == 0 || _iter == _current_inter - 1)
             {
-              printf ("Current loading interval: %d\n", int (_iter));
+              // printf ("Current loading interval: %d\n", int (_iter));
               for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
                 {
                   _link = _link_it.second;
@@ -697,6 +697,7 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
       if (_vis_file2.is_open ())
         _vis_file2.close ();
     }
+  std::cout << "Finish printing simulation results" << std::endl;
   return 0;
 }
 
@@ -1235,7 +1236,7 @@ Mcdta::update_tdsp_tree ()
       m_tdsp_tree_map.insert (
         std::pair<TInt, MNM_TDSP_Tree *> (_dest_node_ID, _tdsp_tree));
       _tdsp_tree = nullptr;
-      IAssert (m_tdsp_tree_map.find (_dest_node_ID)->second != nullptr);
+      Assert (m_tdsp_tree_map.find (_dest_node_ID)->second != nullptr);
     }
   return 0;
 }
@@ -1277,7 +1278,7 @@ Mcdta::get_lowest_cost_path (int start_interval, int o_node_ID, int d_node_ID)
       _path_set
         = _path_table->find (o_node_ID)->second->find (d_node_ID)->second;
     }
-  IAssert (_path_set != nullptr);
+  Assert (_path_set != nullptr);
 
   _tdsp_tree = m_tdsp_tree_map.find (d_node_ID)->second;
 
@@ -1317,7 +1318,7 @@ Mcdta::get_lowest_cost_path (int start_interval, int o_node_ID, int d_node_ID)
         }
     }
   IAssert (_cur_best_time >= 0 && _cur_best_assign_col >= 0);
-  IAssert (_cur_best_path != nullptr);
+  Assert (_cur_best_path != nullptr);
 
   _exist = _path_set->is_in (_cur_best_path);
   _num_col = (int) _cur_best_path->m_node_vec.size ();
@@ -2516,7 +2517,7 @@ Mcdta::generate_paths_to_cover_registered_links ()
               // exit(-1);
               continue;
             }
-          IAssert (_origin != nullptr && _dest != nullptr);
+          Assert (_origin != nullptr && _dest != nullptr);
 
           if (!_shortest_path_tree.empty ())
             {
@@ -3074,7 +3075,7 @@ Mcdta::save_car_dar_matrix (py::array_t<int> start_intervals,
                 "Error, Mcdta::save_car_dar_matrix, input end intervals "
                 "exceeds the total loading intervals");
             }
-          IAssert (_record.empty ());
+          Assert (_record.empty ());
           MNM_DTA_GRADIENT::add_dar_records_car (_record, m_link_vec[i],
                                                  m_path_set,
                                                  TFlt (start_ptr[t]),
@@ -3188,7 +3189,7 @@ Mcdta::save_truck_dar_matrix (py::array_t<int> start_intervals,
                 "Error, Mcdta::save_truck_dar_matrix, input end intervals "
                 "exceeds the total loading intervals");
             }
-          IAssert (_record.empty ());
+          Assert (_record.empty ());
           MNM_DTA_GRADIENT::add_dar_records_truck (_record, m_link_vec[i],
                                                    m_path_set,
                                                    TFlt (start_ptr[t]),
@@ -3541,12 +3542,12 @@ Mcdta::get_car_ltg_matrix (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -3858,12 +3859,12 @@ Mcdta::get_truck_ltg_matrix (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -4185,12 +4186,12 @@ Mcdta::get_complete_car_ltg_matrix (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -4519,12 +4520,12 @@ Mcdta::get_complete_truck_ltg_matrix (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -4638,7 +4639,7 @@ Mcdta::get_complete_truck_ltg_matrix (py::array_t<int> start_intervals,
                         }
                       IAssert (_t_depart_lift_up_valid
                                <= get_cur_loading_interval () - 1);
-                      IAssert (_t_arrival_lift_up < _t_queue_dissipated_valid);
+                      Assert (_t_arrival_lift_up < _t_queue_dissipated_valid);
                       if (_t_depart_prime > _t_depart_lift_up_valid)
                         {
                           std::cout << "\nError, Mcdta::get_truck_ltg_matrix"

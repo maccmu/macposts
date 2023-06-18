@@ -682,7 +682,8 @@ MNM_Dta::loading (bool verbose)
   int _current_inter = 0;
   int _assign_inter = m_start_assign_interval;
 
-  // pre_loading();
+  // It at least will release all vehicles no matter what value total_interval is set
+  // the least length of simulation = max_interval * assign_frq
   while (!finished_loading (_current_inter)
          || _assign_inter < m_total_assign_inter)
     {
