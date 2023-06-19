@@ -179,7 +179,7 @@ MNM_Cumulative_Emission::output ()
   _s += "HC: " + std::to_string (m_HC ()) + " g, ";
   _s += "CO: " + std::to_string (m_CO ()) + " g, ";
   _s += "NOX: " + std::to_string (m_NOX ()) + " g, ";
-  _s += "Total VMT: " + std::to_string (m_VMT ()) + " miles";
+  _s += "Total VMT: " + std::to_string (m_VMT ()) + " miles, ";
   _s += "EV VMT: " + std::to_string (m_VMT_ev ()) + " miles\n";
 
   printf ("The emission stats are: ");
