@@ -568,11 +568,14 @@ TFlt get_link_inflow_car (MNM_Dlink_Multiclass *link, TFlt start_time,
                           TFlt end_time);
 TFlt get_link_inflow_car (MNM_Dlink_Multiclass *link, TInt start_time,
                           TInt end_time);
+TFlt get_link_outflow_car (MNM_Dlink_Multiclass *link, TInt start_time,
+                          TInt end_time);                          
 TFlt get_link_inflow_truck (MNM_Dlink_Multiclass *link, TFlt start_time,
                             TFlt end_time);
 TFlt get_link_inflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
                             TInt end_time);
-
+TFlt get_link_outflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
+                            TInt end_time);
 TFlt get_average_waiting_time_at_intersection (MNM_Dlink_Multiclass *link);
 TFlt get_average_waiting_time_at_intersection_car (MNM_Dlink_Multiclass *link);
 TFlt
