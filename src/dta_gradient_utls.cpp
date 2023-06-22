@@ -37,6 +37,22 @@ get_link_inflow (MNM_Dlink *link, TInt start_time, TInt end_time)
 }
 
 TFlt
+get_link_outflow (MNM_Dlink *link, TInt start_time, TInt end_time)
+{
+  if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_link_outflow link is null");
+    }
+  if (link->m_N_out == nullptr)
+    {
+      throw std::runtime_error ("Error, get_link_outflow link "
+                                "cummulative curve is not installed");
+    }
+  return link->m_N_out->get_result (TFlt (end_time))
+         - link->m_N_out->get_result (TFlt (start_time));
+}
+
+TFlt
 get_last_valid_time (MNM_Cumulative_Curve *N_in, MNM_Cumulative_Curve *N_out,
                      TInt end_loading_timestamp, const std::string &s)
 {

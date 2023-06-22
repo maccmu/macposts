@@ -3952,6 +3952,22 @@ get_link_inflow_car (MNM_Dlink_Multiclass *link, TInt start_time, TInt end_time)
 }
 
 TFlt
+get_link_outflow_car (MNM_Dlink_Multiclass *link, TInt start_time, TInt end_time)
+{
+  if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_link_outflow_car link is null");
+    }
+  if (link->m_N_out_car == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_link_outflow_car link cumulative curve is not installed");
+    }
+  return link->m_N_out_car->get_result (TFlt (end_time))
+         - link->m_N_out_car->get_result (TFlt (start_time));
+}
+
+TFlt
 get_link_inflow_truck (MNM_Dlink_Multiclass *link, TFlt start_time,
                        TFlt end_time)
 {
@@ -3983,6 +3999,23 @@ get_link_inflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
     }
   return link->m_N_in_truck->get_result (TFlt (end_time))
          - link->m_N_in_truck->get_result (TFlt (start_time));
+}
+
+TFlt
+get_link_outflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
+                       TInt end_time)
+{
+  if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_link_outflow_truck link is null");
+    }
+  if (link->m_N_out_truck == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_link_outflow_truck link cumulative curve is not installed");
+    }
+  return link->m_N_out_truck->get_result (TFlt (end_time))
+         - link->m_N_out_truck->get_result (TFlt (start_time));
 }
 
 TFlt

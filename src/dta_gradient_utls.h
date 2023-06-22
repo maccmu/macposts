@@ -33,7 +33,7 @@ namespace MNM_DTA_GRADIENT
 {
 TFlt get_link_inflow (MNM_Dlink *link, TFlt start_time, TFlt end_time);
 TFlt get_link_inflow (MNM_Dlink *link, TInt start_time, TInt end_time);
-
+TFlt get_link_outflow (MNM_Dlink *link, TInt start_time, TInt end_time);
 TFlt get_last_valid_time (MNM_Cumulative_Curve *N_in,
                           MNM_Cumulative_Curve *N_out,
                           TInt end_loading_timestamp,

@@ -802,8 +802,8 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
           throw std::runtime_error ("failed to open _vis_file2");
         }
 
-      _str1 = "timestamp(intervals) driving_link_ID vehicle_inflow "
-              "vehicle_tt(s) vehicle_fftt(s) vehicle_speed(mph)\n";
+      _str1 = "timestamp(intervals) driving_link_ID vehicle_inflow vehicle_outflow "
+              "vehicle_tt(s) vehicle_fftt(s) vehicle_freeflow_speed(mph) vehicle_speed(mph)\n";
       _vis_file2 << _str1;
 
       TInt _iter = 0;
@@ -823,6 +823,12 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
                                                             _iter
                                                               + cong_frequency))
                        + " ";
+                  _str1
+                    += std::to_string (
+                         MNM_DTA_GRADIENT::get_link_outflow (_link, _iter,
+                                                            _iter
+                                                              + cong_frequency))
+                       + " ";
                   // _str1 +=
                   // std::to_string(MNM_DTA_GRADIENT::get_travel_time(_link,
                   // TFlt(_iter + 1), m_dta -> m_unit_time, m_dta ->
@@ -836,12 +842,17 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
                              * m_dta->m_unit_time)
                            + " "; // seconds
                   _str1
-                    += std::to_string (_link->get_link_freeflow_tt ()) + " ";
+                    += std::to_string (_link->get_link_freeflow_tt ()) + " ";  // seconds
                   // _str1 += std::to_string(_link_m ->
                   // m_length/(MNM_DTA_GRADIENT::get_travel_time(_link,
                   // TFlt(_iter + 1), m_dta -> m_unit_time, m_dta ->
                   // m_current_loading_interval) * m_dta -> m_unit_time) * 3600
                   // / 1600) + " ";
+                  _str1 += std::to_string (
+                             _link->m_length
+                             / _link->get_link_freeflow_tt ()
+                             * 3600 / 1600)
+                           + " "; // mph
                   _str1 += std::to_string (
                              _link->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_robust (

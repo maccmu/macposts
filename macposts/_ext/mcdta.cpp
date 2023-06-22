@@ -582,9 +582,10 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
           throw std::runtime_error ("failed to open _vis_file2");
         }
 
-      _str1 = "timestamp(intervals), driving_link_ID, car_inflow, "
-              "truck_inflow, car_tt(s), truck_tt(s), car_fftt(s), "
-              "truck_fftt(s), car_speed(mph), truck_speed(mph)\n";
+      _str1 = "timestamp(intervals) driving_link_ID car_inflow car_outflow "
+              "truck_inflow truck_outflow car_tt(s) truck_tt(s) car_fftt(s) "
+              "truck_fftt(s) car_freeflow_speed(mph) car_speed(mph) "
+              "truck_freeflow_speed(mph) truck_speed(mph)\n";
       _vis_file2 << _str1;
 
       TInt _iter = 0;
@@ -606,7 +607,17 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                            + " ";
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
+                               get_link_outflow_car (_link_m, _iter,
+                                                    _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
                                get_link_inflow_truck (_link_m, _iter,
+                                                      _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
+                               get_link_outflow_truck (_link_m, _iter,
                                                       _iter + cong_frequency))
                            + " ";
                   // _str1 +=
@@ -636,9 +647,8 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                            + " ";
                   _str1 += std::to_string (_link_m->get_link_freeflow_tt_car ())
                            + " ";
-                  _str1
-                    += std::to_string (_link_m->get_link_freeflow_tt_truck ())
-                       + " ";
+                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_truck ())
+                           + " ";
                   // _str1 += std::to_string(_link_m ->
                   // m_length/(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
                   // TFlt(_iter + 1), m_mcdta -> m_unit_time, m_mcdta ->
@@ -648,6 +658,12 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   // TFlt(_iter + 1), m_mcdta -> m_unit_time, m_mcdta ->
                   // m_current_loading_interval) * m_mcdta -> m_unit_time) *
                   // 3600 / 1600) + "\n";
+
+                  _str1 += std::to_string (
+                             _link_m->m_length
+                             / _link_m->get_link_freeflow_tt_car ()
+                             * 3600 / 1600)
+                           + " "; // mph
                   _str1 += std::to_string (
                              _link_m->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_car_robust (
@@ -656,6 +672,11 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                                   m_mcdta->m_unit_time,
                                   m_mcdta->m_current_loading_interval)
                                 * m_mcdta->m_unit_time)
+                             * 3600 / 1600)
+                           + " "; // mph
+                  _str1 += std::to_string (
+                             _link_m->m_length
+                             / _link_m->get_link_freeflow_tt_truck ()
                              * 3600 / 1600)
                            + " "; // mph
                   _str1 += std::to_string (
