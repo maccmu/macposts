@@ -841,16 +841,21 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
                                m_dta->m_current_loading_interval)
                              * m_dta->m_unit_time)
                            + " "; // seconds
-                  _str1
-                    += std::to_string (_link->get_link_freeflow_tt ()) + " ";  // seconds
+                  // _str1 += std::to_string (_link->get_link_freeflow_tt ()) + " ";  // seconds
+                  _str1 += std::to_string (_link->get_link_freeflow_tt_loading () * m_dta->m_unit_time) + " ";  // seconds
                   // _str1 += std::to_string(_link_m ->
                   // m_length/(MNM_DTA_GRADIENT::get_travel_time(_link,
                   // TFlt(_iter + 1), m_dta -> m_unit_time, m_dta ->
                   // m_current_loading_interval) * m_dta -> m_unit_time) * 3600
                   // / 1600) + " ";
+                  // _str1 += std::to_string (
+                  //            _link->m_length
+                  //            / _link->get_link_freeflow_tt ()
+                  //            * 3600 / 1600)
+                  //          + " "; // mph
                   _str1 += std::to_string (
                              _link->m_length
-                             / _link->get_link_freeflow_tt ()
+                             / (_link->get_link_freeflow_tt_loading () * m_dta -> m_unit_time)
                              * 3600 / 1600)
                            + " "; // mph
                   _str1 += std::to_string (
