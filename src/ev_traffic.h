@@ -42,10 +42,20 @@ public:
     MNM_Veh_Factory_EV();
     virtual ~MNM_Veh_Factory_EV();
 
-    MNM_Veh_Electrified* make_veh_electrified(TInt timestamp, Vehicle_type veh_type, TFlt starting_range, bool using_roadside_charging=false, TFlt full_range = 200.);
-    MNM_Veh_Electrified_Delivery* make_veh_electrified_delivery(TInt timestamp, Vehicle_type veh_type, TFlt starting_range, bool using_roadside_charging=false, TFlt full_range = 200.);
+    MNM_Veh_Electrified* make_veh_electrified(TInt timestamp, Vehicle_type veh_type, bool using_roadside_charging=false);
+    MNM_Veh_Electrified_Delivery* make_veh_electrified_delivery(TInt timestamp, Vehicle_type veh_type, bool using_roadside_charging=false);
     
+    int set_ev_range(TFlt EV_starting_range_roadside_charging, TFlt EV_starting_range_non_roadside_charging, TFlt EV_full_range);
+
     TInt m_veh_electrified;
+    TInt m_veh_non_roadside_charging;
+
+    TFlt m_starting_range_roadside_charging;
+    TFlt m_starting_range_non_roadside_charging;
+    TFlt m_full_range;
+    // https://www.power-sonic.com/blog/guide-to-level-2-ev-charging/#:~:text=Charging%20speeds%20for%20Level%202,range%20per%20hour%20of%20charging.
+    // average 40 kWh battery
+    
 };
 
 class MNM_Origin_EV : public MNM_Origin_Delivery

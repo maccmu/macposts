@@ -104,6 +104,7 @@ MNM_Veh_Factory_EV::MNM_Veh_Factory_EV()
     : MNM_Veh_Factory_Delivery::MNM_Veh_Factory_Delivery()
 {
     m_veh_electrified = 0;
+    m_veh_non_roadside_charging = 0;
 }
 
 MNM_Veh_Factory_EV::~MNM_Veh_Factory_EV()
@@ -112,20 +113,25 @@ MNM_Veh_Factory_EV::~MNM_Veh_Factory_EV()
 }
 
 MNM_Veh_Electrified* 
-MNM_Veh_Factory_EV::make_veh_electrified(TInt timestamp, Vehicle_type veh_type, TFlt starting_range, bool using_roadside_charging, TFlt full_range)
+MNM_Veh_Factory_EV::make_veh_electrified(TInt timestamp, Vehicle_type veh_type, bool using_roadside_charging)
 {
+    TFlt starting_range = using_roadside_charging ? m_starting_range_roadside_charging : m_starting_range_non_roadside_charging;
+    TFlt full_range = m_full_range;
     MNM_Veh_Electrified *_veh = new MNM_Veh_Electrified(m_num_veh + 1, timestamp, starting_range, using_roadside_charging, full_range);
     _veh -> m_type = veh_type;
     m_veh_map.insert(std::pair<TInt, MNM_Veh*>(m_num_veh + 1, _veh));
     m_num_veh += 1;
     m_enroute += 1;
     m_veh_electrified += 1;
+    m_veh_non_roadside_charging += (!using_roadside_charging);
     return _veh;
 }
 
 MNM_Veh_Electrified_Delivery* 
-MNM_Veh_Factory_EV::make_veh_electrified_delivery(TInt timestamp, Vehicle_type veh_type, TFlt starting_range, bool using_roadside_charging, TFlt full_range)
+MNM_Veh_Factory_EV::make_veh_electrified_delivery(TInt timestamp, Vehicle_type veh_type, bool using_roadside_charging)
 {
+    TFlt starting_range = using_roadside_charging ? m_starting_range_roadside_charging : m_starting_range_non_roadside_charging;
+    TFlt full_range = m_full_range;
     MNM_Veh_Electrified_Delivery *_veh = new MNM_Veh_Electrified_Delivery (m_num_veh + 1, timestamp, starting_range, using_roadside_charging, full_range);
     _veh->m_type = veh_type;
     m_veh_map.insert (std::pair<TInt, MNM_Veh *> (m_num_veh + 1, _veh));
@@ -133,9 +139,18 @@ MNM_Veh_Factory_EV::make_veh_electrified_delivery(TInt timestamp, Vehicle_type v
     m_enroute += 1;
     m_veh_delivery += 1;
     m_veh_electrified += 1;
+    m_veh_non_roadside_charging += (!using_roadside_charging);
     return _veh;
 }
 
+int 
+MNM_Veh_Factory_EV::set_ev_range(TFlt EV_starting_range_roadside_charging, TFlt EV_starting_range_non_roadside_charging, TFlt EV_full_range)
+{
+    m_starting_range_roadside_charging = EV_starting_range_roadside_charging;
+    m_starting_range_non_roadside_charging = EV_starting_range_non_roadside_charging;
+    m_full_range = EV_full_range;
+    return 0;
+}
 
 //#################################################################
 //            Origin with Electrified and Delivery Traffic
@@ -200,7 +215,7 @@ MNM_Origin_EV::release_one_interval(TInt current_interval, MNM_Veh_Factory* veh_
                 _r = MNM_Ults::rand_flt ();
                 if (_r <= m_roadside_charging_ratio) {
                     // EV using roadside charging station and it will be routed to charging station during its trip
-                    _veh = _veh_factory_ev->make_veh_electrified(current_interval, MNM_TYPE_ADAPTIVE, 5., true, 200.);
+                    _veh = _veh_factory_ev->make_veh_electrified(current_interval, MNM_TYPE_ADAPTIVE, true);
                 }
                 else {
                     // EV charging at origin or destination
@@ -209,7 +224,7 @@ MNM_Origin_EV::release_one_interval(TInt current_interval, MNM_Veh_Factory* veh_
                         MNM_Ults::rand_flt () <= adaptive_ratio
                             ? MNM_TYPE_ADAPTIVE
                             : MNM_TYPE_STATIC,
-                        200., false, 200.);
+                        false);
                 }
             }
             else {
@@ -250,9 +265,8 @@ MNM_Origin_EV::release_one_interval(TInt current_interval, MNM_Veh_Factory* veh_
                 _veh = _veh_factory_ev->make_veh_electrified_delivery (
                         current_interval,
                         MNM_Ults::rand_flt () <= adaptive_ratio ? MNM_TYPE_ADAPTIVE : MNM_TYPE_STATIC,
-                        0.16,   // TODO: test
-                        MNM_Ults::rand_flt () <= m_roadside_charging_ratio, 
-                        200.);  // TODO: test
+                        MNM_Ults::rand_flt () <= m_roadside_charging_ratio
+                        ); 
             }
             else {
                 // non-EV
@@ -1065,6 +1079,8 @@ MNM_Routing_Adaptive_With_POIs::update_best_POI()
                 continue;
             }
             _current_best_path_cost = std::numeric_limits<double>::infinity();
+            std::random_shuffle(std::begin(*(_it_it.second)),
+                                std::end(*(_it_it.second)));
             for (auto _node : *(_it_it.second)) {
                 // mid_node to dest
                 _shortest_path_tree = m_table -> find(_dest) -> second;
@@ -1113,6 +1129,8 @@ MNM_Routing_Adaptive_With_POIs::update_best_POI2()
                 continue;
             }
             _current_best_path_cost = std::numeric_limits<double>::infinity();
+            std::random_shuffle(std::begin(*(_it_it.second)),
+                                std::end(*(_it_it.second)));
             for (auto _node : *(_it_it.second)) {
                 _path_cost = dynamic_cast<MNM_Charging_Station*>(_node) -> get_current_estimated_waiting_time();
                 if (_current_best_path_cost > _path_cost) {
@@ -1506,6 +1524,12 @@ MNM_Dta_EV::build_from_files()
     std::cout << "# of OD pairs: " << m_od_factory -> m_origin_map.size() << "\n";
     
     m_graph = MNM_IO::build_graph(m_file_folder, m_config);
+
+    dynamic_cast<MNM_Veh_Factory_EV*>(m_veh_factory) -> set_ev_range(
+        m_config -> get_float("EV_starting_range_roadside_charging"),
+        m_config -> get_float("EV_starting_range_non_roadside_charging"),
+        m_config -> get_float("EV_full_range")
+    );
 
     MNM_IO::build_demand(m_file_folder, m_config, m_od_factory);
     MNM_IO_Delivery::build_demand_multi_OD_seq(m_file_folder, m_config, m_od_factory);
