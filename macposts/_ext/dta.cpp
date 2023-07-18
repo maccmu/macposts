@@ -627,7 +627,7 @@ Dta::run_dnl_electrified_traffic(const std::string &folder, bool verbose, bool s
   printf("\n====================================== Finished loading! =======================================\n\n\n");
 
 	// Output total travels and travel time, before divided by flow_scalar
-	TInt _finished_car, _released_car, _enroute_car, _released_delivery_car, _released_electrified_car;
+	TInt _finished_car, _released_car, _enroute_car, _released_delivery_car, _released_electrified_car, _home_charged_electrified_car;
 	TFlt _tot_tt_car;
 	MNM_Veh_Factory_EV *_veh_factory = dynamic_cast<MNM_Veh_Factory_EV*>(m_dta -> m_veh_factory);
 
@@ -636,6 +636,7 @@ Dta::run_dnl_electrified_traffic(const std::string &folder, bool verbose, bool s
 	_enroute_car = _veh_factory -> m_enroute;
 	_released_delivery_car = _veh_factory -> m_veh_delivery;
 	_released_electrified_car = _veh_factory -> m_veh_electrified;
+  _home_charged_electrified_car = _veh_factory -> m_veh_non_roadside_charging;
 	_tot_tt_car = _veh_factory -> m_total_time * m_dta -> m_unit_time / 3600.0;
 	for (auto _map_it : m_dta -> m_veh_factory -> m_veh_map){
 		if (_map_it.second -> m_finish_time > 0) {
@@ -651,6 +652,7 @@ Dta::run_dnl_electrified_traffic(const std::string &folder, bool verbose, bool s
   _enroute_car = _enroute_car / m_dta -> m_flow_scalar;
   _released_delivery_car = _released_delivery_car / m_dta -> m_flow_scalar;
   _released_electrified_car = _released_electrified_car / m_dta -> m_flow_scalar;
+  _home_charged_electrified_car = _home_charged_electrified_car / m_dta -> m_flow_scalar;
   _tot_tt_car = _tot_tt_car / m_dta -> m_flow_scalar;
 
   std::string _str;
@@ -659,11 +661,14 @@ Dta::run_dnl_electrified_traffic(const std::string &folder, bool verbose, bool s
 	if (! _vis_file.is_open()){
 		throw std::runtime_error("Error happens when open _vis_file\n");
 	}
-	_str = "Total released car: " + std::to_string(int(_released_car)) + "\n" 
+	_str = "\nActual figures are already divided by flow_scalar\n"
+          "Total released car: " + std::to_string(int(_released_car)) + "\n" 
 	      + "Total finished car: " + std::to_string(int(_finished_car)) + "\n" 
         + "Total enroute car: " + std::to_string(int(_enroute_car)) + "\n" 
         + "Total released delivery car: " + std::to_string(int(_released_delivery_car)) + "\n"
         + "Total released electrified car: " + std::to_string(int(_released_electrified_car)) + "\n"
+        + "Total home charged electrified car: " + std::to_string(int(_home_charged_electrified_car)) + "\n"
+        + "Total roadside charged electrified car: " + std::to_string(int(_released_electrified_car) - int(_home_charged_electrified_car)) + "\n"
         + "Total car tt: " + std::to_string(float(_tot_tt_car)) + " hours\n\n";
 
 	_str += print_emission_stats();
