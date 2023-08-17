@@ -1360,7 +1360,7 @@ MNM_Dlink_Lq_Multiclass::evolve (TInt timestamp)
     }
 
   if ((m_veh_out_buffer_car.size () != 0)
-      || (m_veh_out_buffer_car.size () != 0))
+      || (m_veh_out_buffer_truck.size () != 0))
     {
       throw std::runtime_error ("non-empty buffer");
     }
