@@ -26,6 +26,11 @@ public:
                         TFlt ffs_truck);
   virtual ~MNM_Dlink_Multiclass () override;
 
+  virtual int modify_property(TInt number_of_lane, TFlt length,
+                              TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                              TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                              TFlt ffs_car, TFlt ffs_truck) {return 0;};
+
   // use this one instead of the one in Dlink class
   int install_cumulative_curve_multiclass ();
   // use this one instead of the one in Dlink class
@@ -124,6 +129,11 @@ public:
                        TFlt last_cell_length);
   int update_out_veh ();
   int move_last_cell ();
+
+  virtual int modify_property(TInt number_of_lane, TFlt length,
+                              TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                              TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                              TFlt ffs_car, TFlt ffs_truck) override;
 
   TFlt m_unit_time;
   TInt m_num_cells;
