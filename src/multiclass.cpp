@@ -62,6 +62,19 @@ MNM_Dlink_Multiclass::~MNM_Dlink_Multiclass ()
     delete m_N_in_tree_truck;
 }
 
+int  
+MNM_Dlink_Multiclass::modify_property(TInt number_of_lane, TFlt length,
+                              TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                              TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                              TFlt ffs_car, TFlt ffs_truck)
+{
+  m_number_of_lane = number_of_lane;
+  m_length = length;
+  m_ffs_car = ffs_car;
+  m_ffs_truck = ffs_truck;
+  return 0;
+}
+
 int
 MNM_Dlink_Multiclass::install_cumulative_curve_multiclass ()
 {
@@ -207,8 +220,6 @@ MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (
   m_veh_convert_factor = veh_convert_factor;
   m_flow_scalar = flow_scalar;
 
-  m_cell_array = std::vector<Ctm_Cell_Multiclass *> ();
-
   // Note m_ffs_car > m_ffs_truck, use ffs_car to define the standard cell
   // length
   TFlt _std_cell_length = m_ffs_car * unit_time;
@@ -249,6 +260,7 @@ MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (
   m_lane_rho_1_N = m_lane_hold_cap_car
                    * (m_wave_speed_car / (m_ffs_truck + m_wave_speed_car));
 
+  m_cell_array = std::vector<Ctm_Cell_Multiclass *> ();
   init_cell_array (unit_time, _std_cell_length, _last_cell_length);
 }
 
@@ -259,6 +271,137 @@ MNM_Dlink_Ctm_Multiclass::~MNM_Dlink_Ctm_Multiclass ()
       delete _cell;
     }
   m_cell_array.clear ();
+}
+
+int 
+MNM_Dlink_Ctm_Multiclass::modify_property(TInt number_of_lane, TFlt length,
+                              TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                              TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                              TFlt ffs_car, TFlt ffs_truck)
+{
+  MNM_Dlink_Multiclass::modify_property(number_of_lane, length,
+                                        lane_hold_cap_car, lane_hold_cap_truck,
+                                        lane_flow_cap_car, lane_flow_cap_truck,
+                                        ffs_car, ffs_truck);
+
+  // Jam density for private cars and trucks cannot be negative
+  if ((lane_hold_cap_car < 0) || (lane_hold_cap_truck < 0))
+    {
+      throw std::runtime_error ("negative lane_hold_cap for link "
+                                + std::to_string (m_link_ID ()));
+    }
+  // Jam density for private cars cannot be too large
+  if (lane_hold_cap_car > TFlt (400) / TFlt (1600))
+    {
+      // "lane_hold_cap is too large, set to 300 veh/mile
+      lane_hold_cap_car = TFlt (400) / TFlt (1600);
+    }
+  // Jam density for trucks cannot be too large
+  if (lane_hold_cap_truck > TFlt (400) / TFlt (1600))
+    {
+      // "lane_hold_cap is too large, set to 300 veh/mile
+      lane_hold_cap_truck = TFlt (400) / TFlt (1600);
+    }
+
+  // Maximum flux for private cars and trucks cannot be negative
+  if ((lane_flow_cap_car < 0) || (lane_flow_cap_truck < 0))
+    {
+      throw std::runtime_error ("negative lane_flow_cap for link "
+                                + std::to_string (m_link_ID ()));
+    }
+  // Maximum flux for private cars cannot be too large
+  if (lane_flow_cap_car > TFlt (3500) / TFlt (3600))
+    {
+      // lane_flow_cap is too large, set to 3500 veh/hour
+      lane_flow_cap_car = TFlt (3500) / TFlt (3600);
+    }
+  // Maximum flux for trucks cannot be too large
+  if (lane_flow_cap_truck > TFlt (3500) / TFlt (3600))
+    {
+      // lane_flow_cap is too large, set to 3500 veh/hour
+      lane_flow_cap_truck = TFlt (3500) / TFlt (3600);
+    }
+
+  if ((ffs_car < 0) || (ffs_truck < 0))
+    {
+      throw std::runtime_error ("negative ffs for link "
+                                + std::to_string (m_link_ID ()));
+    }
+
+  m_lane_flow_cap_car = lane_flow_cap_car;
+  m_lane_flow_cap_truck = lane_flow_cap_truck;
+  m_lane_hold_cap_car = lane_hold_cap_car;
+  m_lane_hold_cap_truck = lane_hold_cap_truck;
+
+  // Note m_ffs_car > m_ffs_truck, use ffs_car to define the standard cell
+  // length
+  TFlt _std_cell_length = m_ffs_car * m_unit_time;
+  m_num_cells = TInt (floor (m_length / _std_cell_length));
+  // this means the least link travel time is at least one cell!
+  if (m_num_cells == 0)
+    {
+      m_num_cells = 1;
+      m_length = _std_cell_length;
+    }
+  // this means the link travel time is rounded down!
+  // the last cell can have larger length than the previous ones
+  TFlt _last_cell_length = m_length - TFlt (m_num_cells - 1) * _std_cell_length;
+
+  m_lane_critical_density_car = m_lane_flow_cap_car / m_ffs_car;
+  m_lane_critical_density_truck = m_lane_flow_cap_truck / m_ffs_truck;
+
+  if (m_lane_hold_cap_car <= m_lane_critical_density_car)
+    {
+      throw std::runtime_error ("invalid car parameters for link "
+                                + std::to_string (m_link_ID ()));
+    }
+  m_wave_speed_car
+    = m_lane_flow_cap_car / (m_lane_hold_cap_car - m_lane_critical_density_car);
+
+  if (m_lane_hold_cap_truck <= m_lane_critical_density_truck)
+    {
+      throw std::runtime_error ("invalid truck parameters for link "
+                                + std::to_string (m_link_ID ()));
+    }
+  m_wave_speed_truck
+    = m_lane_flow_cap_truck
+      / (m_lane_hold_cap_truck - m_lane_critical_density_truck);
+
+  // see the reference paper for definition, Fig. 6
+  // m_lane_rho_1_N > m_lane_critical_density_car and
+  // m_lane_critical_density_truck
+  m_lane_rho_1_N = m_lane_hold_cap_car
+                   * (m_wave_speed_car / (m_ffs_truck + m_wave_speed_car));
+
+  if (m_num_cells != (int)m_cell_array.size() | _std_cell_length != m_cell_array.front() -> m_cell_length | _last_cell_length != m_cell_array.back() -> m_cell_length) {
+    // TODO: recreate cell, but will lose vehicles in queue
+    for (Ctm_Cell_Multiclass *_cell : m_cell_array)
+    {
+      delete _cell;
+    }
+    m_cell_array.clear ();
+    init_cell_array (m_unit_time, _std_cell_length, _last_cell_length);
+  }
+  else {
+    // modify existing cells
+    // All previous cells
+  
+    for (int i = 0; i < m_num_cells; ++i)
+      {
+        // Convert lane parameters to cell (link)
+        // parameters by multiplying # of lanes
+        m_cell_array[i] -> modify_property(
+                                        TFlt (m_number_of_lane) * m_lane_hold_cap_car,
+                                        TFlt (m_number_of_lane) * m_lane_hold_cap_truck,
+                                        TFlt (m_number_of_lane) * m_lane_critical_density_car,
+                                        TFlt (m_number_of_lane) * m_lane_critical_density_truck,
+                                        TFlt (m_number_of_lane) * m_lane_rho_1_N,
+                                        TFlt (m_number_of_lane) * m_lane_flow_cap_car,
+                                        TFlt (m_number_of_lane) * m_lane_flow_cap_truck,
+                                        m_ffs_car, m_ffs_truck, m_wave_speed_car, m_wave_speed_truck);
+      }
+  }
+  return 0;
 }
 
 int
@@ -289,7 +432,7 @@ MNM_Dlink_Ctm_Multiclass::init_cell_array (TFlt unit_time, TFlt std_cell_length,
                                            TFlt last_cell_length)
 {
   // All previous cells
-  Ctm_Cell_Multiclass *cell = NULL;
+  Ctm_Cell_Multiclass *cell = nullptr;
   for (int i = 0; i < m_num_cells - 1; ++i)
     {
       cell = new Ctm_Cell_Multiclass (TInt (i), std_cell_length, unit_time,
@@ -310,7 +453,7 @@ MNM_Dlink_Ctm_Multiclass::init_cell_array (TFlt unit_time, TFlt std_cell_length,
                                         * m_lane_flow_cap_truck,
                                       m_ffs_car, m_ffs_truck, m_wave_speed_car,
                                       m_wave_speed_truck, m_flow_scalar);
-      if (cell == NULL)
+      if (cell == nullptr)
         {
           throw std::runtime_error ("failed to create cell");
         }
@@ -921,6 +1064,26 @@ MNM_Dlink_Ctm_Multiclass::Ctm_Cell_Multiclass::~Ctm_Cell_Multiclass ()
   m_veh_queue_truck.clear ();
 }
 
+int MNM_Dlink_Ctm_Multiclass::Ctm_Cell_Multiclass::modify_property(TFlt hold_cap_car, TFlt hold_cap_truck,
+                       TFlt critical_density_car, TFlt critical_density_truck,
+                       TFlt rho_1_N, TFlt flow_cap_car, TFlt flow_cap_truck,
+                       TFlt ffs_car, TFlt ffs_truck, TFlt wave_speed_car,
+                       TFlt wave_speed_truck)
+{
+  m_hold_cap_car = hold_cap_car;                     // Veh/m
+  m_hold_cap_truck = hold_cap_truck;                 // Veh/m
+  m_critical_density_car = critical_density_car;     // Veh/m
+  m_critical_density_truck = critical_density_truck; // Veh/m
+  m_rho_1_N = rho_1_N;                               // Veh/m
+  m_flow_cap_car = flow_cap_car;                     // Veh/s
+  m_flow_cap_truck = flow_cap_truck;                 // Veh/s
+  m_ffs_car = ffs_car;
+  m_ffs_truck = ffs_truck;
+  m_wave_speed_car = wave_speed_car;
+  m_wave_speed_truck = wave_speed_truck;
+  return 0;
+}
+
 int
 MNM_Dlink_Ctm_Multiclass::Ctm_Cell_Multiclass::update_perceived_density ()
 {
@@ -1106,6 +1269,29 @@ MNM_Dlink_Lq_Multiclass::~MNM_Dlink_Lq_Multiclass ()
   m_veh_queue_truck.clear ();
   m_veh_out_buffer_car.clear ();
   m_veh_out_buffer_truck.clear ();
+}
+
+int 
+MNM_Dlink_Lq_Multiclass::modify_property(TInt number_of_lane, TFlt length,
+                              TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                              TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                              TFlt ffs_car, TFlt ffs_truck)
+{
+  MNM_Dlink_Multiclass::modify_property(number_of_lane, length,
+                                        lane_hold_cap_car, lane_hold_cap_truck,
+                                        lane_flow_cap_car, lane_flow_cap_truck,
+                                        ffs_car, ffs_truck);
+
+  m_k_j_car = lane_hold_cap_car * number_of_lane;
+  m_k_j_truck = lane_hold_cap_truck * number_of_lane;
+  m_C_car = lane_flow_cap_car * number_of_lane;
+  m_C_truck = lane_flow_cap_truck * number_of_lane;
+  m_k_C_car = m_C_car / ffs_car;
+  m_k_C_truck = m_C_truck / ffs_truck;
+  m_w_car = m_C_car / (m_k_j_car - m_k_C_car);
+  m_w_truck = m_C_truck / (m_k_j_truck - m_k_C_truck);
+  m_rho_1_N = m_k_j_car * (m_w_car / (m_ffs_truck + m_w_car));
+  return 0;
 }
 
 int

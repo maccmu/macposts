@@ -29,7 +29,7 @@ public:
   virtual int modify_property(TInt number_of_lane, TFlt length,
                               TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
                               TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
-                              TFlt ffs_car, TFlt ffs_truck) {return 0;};
+                              TFlt ffs_car, TFlt ffs_truck);
 
   // use this one instead of the one in Dlink class
   int install_cumulative_curve_multiclass ();
@@ -157,13 +157,19 @@ public:
   Ctm_Cell_Multiclass (TInt cell_ID, TFlt cell_length, TFlt unit_time,
                        TFlt hold_cap_car, TFlt hold_cap_truck,
                        TFlt critical_density_car, TFlt critical_density_truck,
-                       TFlt m_rho_1_N, TFlt flow_cap_car, TFlt flow_cap_truck,
+                       TFlt rho_1_N, TFlt flow_cap_car, TFlt flow_cap_truck,
                        TFlt ffs_car, TFlt ffs_truck, TFlt wave_speed_car,
                        TFlt wave_speed_truck, TFlt flow_scalar);
   ~Ctm_Cell_Multiclass ();
   TFlt get_perceived_demand (TInt veh_type);
   TFlt get_perceived_supply (TInt veh_type);
   int update_perceived_density ();
+
+  int modify_property(TFlt hold_cap_car, TFlt hold_cap_truck,
+                       TFlt critical_density_car, TFlt critical_density_truck,
+                       TFlt rho_1_N, TFlt flow_cap_car, TFlt flow_cap_truck,
+                       TFlt ffs_car, TFlt ffs_truck, TFlt wave_speed_car,
+                       TFlt wave_speed_truck);
 
   TInt m_cell_ID;
   TFlt m_cell_length;
@@ -225,6 +231,11 @@ public:
   virtual TInt get_link_freeflow_tt_loading_truck () override; // intervals
 
   int update_perceived_density ();
+
+  virtual int modify_property(TInt number_of_lane, TFlt length,
+                            TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                            TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                            TFlt ffs_car, TFlt ffs_truck) override;
 
   std::deque<MNM_Veh *> m_veh_queue_car;
   std::deque<MNM_Veh *> m_veh_queue_truck;
