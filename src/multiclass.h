@@ -493,6 +493,20 @@ public:
                                    TFlt flow_scalar, TFlt veh_convert_factor);
 };
 
+struct td_link_attribute_row {
+  std::string link_type;
+  float length;
+  float FFS_car;
+  float Cap_car;
+  float RHOJ_car;
+  int Lane;
+  float FFS_truck;
+  float Cap_truck;
+  float RHOJ_truck;
+  float Convert_factor;
+  float toll;
+};
+
 class MNM_Link_Factory_Multiclass : public MNM_Link_Factory
 {
 public:
@@ -505,6 +519,11 @@ public:
     TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car,
     TFlt lane_flow_cap_truck, TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
     TFlt veh_convert_factor, TFlt flow_scalar);
+
+  virtual int update_link_attribute(TInt interval) override;
+
+  std::unordered_map<int, std::unordered_map<int, td_link_attribute_row*>*>* m_td_link_attribute_table;
+
 };
 
 class MNM_OD_Factory_Multiclass : public MNM_OD_Factory
@@ -559,6 +578,9 @@ public:
                                          MNM_Link_Factory *link_factory,
                                          const std::string &file_name
                                          = "MNM_input_link_toll");
+  static int build_link_td_attribute(const std::string &file_folder,
+                                    MNM_Link_Factory *link_factory,
+                                    const std::string &file_name = "MNM_input_link_td_attribute");
 };
 
 ///

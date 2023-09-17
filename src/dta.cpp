@@ -546,6 +546,10 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   // step 1: Origin release vehicle
   if (verbose)
     printf ("Releasing!\n");
+
+  // update some link attributes over time
+  m_link_factory -> update_link_attribute(load_int);
+
   if (load_int % m_assign_freq == 0 || load_int == 0)
     {
       for (auto _origin_it = m_od_factory->m_origin_map.begin ();

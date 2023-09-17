@@ -1040,7 +1040,13 @@ MNM_Dlink_Ctm_Multiclass::Ctm_Cell_Multiclass::Ctm_Cell_Multiclass (
   m_critical_density_truck = critical_density_truck; // Veh/m
   m_rho_1_N = rho_1_N;                               // Veh/m
   m_flow_cap_car = flow_cap_car;                     // Veh/s
+  if (m_flow_cap_car * m_unit_time * m_flow_scalar < 1.) {
+    m_flow_cap_car = 1. / (m_unit_time * m_flow_scalar);  // the design capacity at least allows one car to pass
+  }
   m_flow_cap_truck = flow_cap_truck;                 // Veh/s
+  if (m_flow_cap_truck * m_unit_time * m_flow_scalar < 1.) {
+    m_flow_cap_truck = 1. / (m_unit_time * m_flow_scalar);  // the design capacity at least allows one truck to pass
+  }
   m_ffs_car = ffs_car;
   m_ffs_truck = ffs_truck;
   m_wave_speed_car = wave_speed_car;
@@ -1076,7 +1082,13 @@ int MNM_Dlink_Ctm_Multiclass::Ctm_Cell_Multiclass::modify_property(TFlt hold_cap
   m_critical_density_truck = critical_density_truck; // Veh/m
   m_rho_1_N = rho_1_N;                               // Veh/m
   m_flow_cap_car = flow_cap_car;                     // Veh/s
+  if (m_flow_cap_car * m_unit_time * m_flow_scalar < 1.) {
+    m_flow_cap_car = 1. / (m_unit_time * m_flow_scalar);  // the design capacity at least allows one car to pass
+  }
   m_flow_cap_truck = flow_cap_truck;                 // Veh/s
+  if (m_flow_cap_truck * m_unit_time * m_flow_scalar < 1.) {
+    m_flow_cap_truck = 1. / (m_unit_time * m_flow_scalar);  // the design capacity at least allows one truck to pass
+  }
   m_ffs_car = ffs_car;
   m_ffs_truck = ffs_truck;
   m_wave_speed_car = wave_speed_car;
@@ -1241,6 +1253,12 @@ MNM_Dlink_Lq_Multiclass::MNM_Dlink_Lq_Multiclass (
   m_k_j_truck = lane_hold_cap_truck * number_of_lane;
   m_C_car = lane_flow_cap_car * number_of_lane;
   m_C_truck = lane_flow_cap_truck * number_of_lane;
+  if (m_C_car * m_unit_time * m_flow_scalar < 1.) {
+    m_C_car = 1. / (m_unit_time * m_flow_scalar);  // the design capacity allows at least one car to pass
+  }
+  if (m_C_truck * m_unit_time * m_flow_scalar < 1.) {
+    m_C_truck = 1. / (m_unit_time * m_flow_scalar);  // the design capacity allows at least one truck to pass
+  }
   m_k_C_car = m_C_car / ffs_car;
   m_k_C_truck = m_C_truck / ffs_truck;
   m_w_car = m_C_car / (m_k_j_car - m_k_C_car);
@@ -1286,6 +1304,12 @@ MNM_Dlink_Lq_Multiclass::modify_property(TInt number_of_lane, TFlt length,
   m_k_j_truck = lane_hold_cap_truck * number_of_lane;
   m_C_car = lane_flow_cap_car * number_of_lane;
   m_C_truck = lane_flow_cap_truck * number_of_lane;
+  if (m_C_car * m_unit_time * m_flow_scalar < 1.) {
+    m_C_car = 1. / (m_unit_time * m_flow_scalar);  // the design capacity allows at least one car to pass
+  }
+  if (m_C_truck * m_unit_time * m_flow_scalar < 1.) {
+    m_C_truck = 1. / (m_unit_time * m_flow_scalar);  // the design capacity allows at least one truck to pass
+  }
   m_k_C_car = m_C_car / ffs_car;
   m_k_C_truck = m_C_truck / ffs_truck;
   m_w_car = m_C_car / (m_k_j_car - m_k_C_car);
@@ -3274,10 +3298,18 @@ MNM_Node_Factory_Multiclass::make_node_multiclass (
 MNM_Link_Factory_Multiclass::MNM_Link_Factory_Multiclass ()
     : MNM_Link_Factory::MNM_Link_Factory ()
 {
-  ;
+  m_td_link_attribute_table = new std::unordered_map<int, std::unordered_map<int, td_link_attribute_row*>*>();
 }
 
-MNM_Link_Factory_Multiclass::~MNM_Link_Factory_Multiclass () { ; }
+MNM_Link_Factory_Multiclass::~MNM_Link_Factory_Multiclass () { 
+  for(auto _it : *m_td_link_attribute_table) {
+    for (auto _it_it : *(_it.second)) {
+      delete _it_it.second;
+    }
+    _it.second -> clear();
+  } 
+  m_td_link_attribute_table -> clear();
+}
 
 MNM_Dlink *
 MNM_Link_Factory_Multiclass::make_link_multiclass (
@@ -3318,6 +3350,33 @@ MNM_Link_Factory_Multiclass::make_link_multiclass (
     }
   m_link_map.insert ({ ID, _link });
   return _link;
+}
+
+int 
+MNM_Link_Factory_Multiclass::update_link_attribute(TInt interval)
+{
+  if (m_td_link_attribute_table -> find(interval) != m_td_link_attribute_table -> end()) {
+    for (auto _it : *(m_td_link_attribute_table -> find(interval) -> second)) {
+      auto _link = dynamic_cast<MNM_Dlink_Multiclass*>(m_link_map.find(_it.first) -> second);
+      _link -> modify_property(
+        _it.second -> Lane, 
+        _it.second -> length,
+        _it.second -> RHOJ_car,
+        _it.second -> RHOJ_truck,
+        _it.second -> Cap_car,
+        _it.second -> Cap_truck,
+        _it.second -> FFS_car,
+        _it.second -> FFS_truck
+      );
+      // TODO: reconcile this with fixed toll input MNM_input_link_toll
+      // TODO: currently only _link -> m_toll works, check MNM_Routing_Adaptive::update_link_cost()
+      _link -> m_toll = _it.second -> toll;
+      _link -> m_toll_car = _it.second -> toll;
+      _link -> m_toll_truck = _it.second -> toll;
+      printf("link %d attribute updated\n", _it.first);
+    }
+  }
+  return 0;
 }
 
 /// OD factory
@@ -3895,6 +3954,111 @@ MNM_IO_Multiclass::build_link_toll_multiclass (const std::string &file_folder,
   return 0;
 }
 
+int
+MNM_IO_Multiclass::build_link_td_attribute (const std::string &file_folder,
+                                            MNM_Link_Factory *link_factory,
+                                            const std::string &file_name)
+{
+  /* find file */
+  std::string _file_name = file_folder + "/" + file_name;
+  std::ifstream _file;
+  _file.open (_file_name, std::ios::in);
+
+  std::string _line;
+  std::vector<std::string> _words;
+  TInt _interval, _link_ID;
+  TFlt _lane_hold_cap_car;
+  TFlt _lane_flow_cap_car;
+  TInt _number_of_lane;
+  TFlt _length;
+  TFlt _ffs_car;
+  std::string _type;
+  // new in multiclass vehicle case
+  TFlt _lane_hold_cap_truck;
+  TFlt _lane_flow_cap_truck;
+  TFlt _ffs_truck;
+  TFlt _veh_convert_factor;
+  // TODO: tentative format
+  TFlt _toll;
+
+  auto td_link_attribute_table = dynamic_cast<MNM_Link_Factory_Multiclass*>(link_factory) -> m_td_link_attribute_table;
+
+  if (_file.is_open ())
+  {
+    printf ("Start build time-dependent link attribute.\n");
+    std::getline (_file, _line); // #link_ID toll_car toll_truck
+    int i = 0;
+    while (std::getline(_file, _line))
+    {
+      // std::getline (_file, _line);
+      // std::cout << "Processing: " << _line << "\n";
+
+      _words = split (_line, ' ');
+      if (TInt (_words.size ()) == 13)
+      {
+        _interval = TInt (std::stoi (_words[0]));
+        _link_ID = TInt (std::stoi (_words[1]));
+        _type = trim (_words[2]);
+        _length = TFlt (std::stod (_words[3]));
+        _ffs_car = TFlt (std::stod (_words[4]));
+        _lane_flow_cap_car = TFlt(std::stod (_words[5])); // flow capacity (vehicles/hour/lane)
+        _lane_hold_cap_car = TFlt (std::stod (_words[6])); // jam density (vehicles/mile/lane)
+        _number_of_lane = TInt (std::stoi (_words[7]));
+        // new in multiclass vehicle case
+        _ffs_truck = TFlt (std::stod (_words[8]));
+        _lane_flow_cap_truck = TFlt (std::stod (_words[9]));
+        _lane_hold_cap_truck = TFlt (std::stod (_words[10]));
+        _veh_convert_factor = TFlt (std::stod (_words[11]));
+        _toll = TFlt(std::stoi(_words[12]));
+
+        /* unit conversion */
+        // mile -> meter, hour -> second
+        _length = _length * TFlt (1600);                 // m
+        _ffs_car = _ffs_car * TFlt (1600) / TFlt (3600); // m/s
+        _lane_flow_cap_car = _lane_flow_cap_car / TFlt (3600); // vehicles/s/lane
+        _lane_hold_cap_car = _lane_hold_cap_car / TFlt (1600); // vehicles/m/lane
+        _ffs_truck = _ffs_truck * TFlt (1600) / TFlt (3600); // m/s
+        _lane_flow_cap_truck  = _lane_flow_cap_truck / TFlt (3600); // vehicles/s/lane
+        _lane_hold_cap_truck = _lane_hold_cap_truck / TFlt (1600); // vehicles/m/lane
+
+        if (td_link_attribute_table -> find(_interval) == td_link_attribute_table -> end()) {
+          td_link_attribute_table -> insert(std::make_pair(_interval, new std::unordered_map<int, td_link_attribute_row*>()));
+        }
+        if (td_link_attribute_table -> find(_interval) -> second -> find(_link_ID) == td_link_attribute_table -> find(_interval) -> second -> end()) {
+          td_link_attribute_table -> find(_interval) -> second -> insert(std::make_pair(_link_ID, new td_link_attribute_row()));
+        }
+
+        auto *_td_row = td_link_attribute_table -> find(_interval) -> second -> find(_link_ID) -> second;
+        _td_row -> link_type = _type;
+        _td_row -> length = _length;
+        _td_row -> FFS_car = _ffs_car;
+        _td_row -> Cap_car = _lane_flow_cap_car;
+        _td_row -> RHOJ_car = _lane_hold_cap_car;
+        _td_row -> Lane = _number_of_lane;
+        _td_row -> FFS_truck = _ffs_truck;
+        _td_row -> Cap_truck = _lane_flow_cap_truck;
+        _td_row -> RHOJ_truck = _lane_hold_cap_truck;
+        _td_row -> Convert_factor = _veh_convert_factor;
+        // TODO: tentative format
+        _td_row -> toll = _toll;
+      }
+      else
+      {
+        std::cout << _line << std::endl;
+        throw std::runtime_error ("failed to parse line: " + _line);
+      }
+      ++i;
+    }
+    _file.close ();
+    printf ("Finish build time-dependent link attribute.\n");
+  }
+  else
+  {
+    printf ("No time-dependent link attribute.\n");
+  }
+  return 0;
+}
+
 ///
 /// Multiclass DTA
 ///
@@ -4017,6 +4181,7 @@ MNM_Dta_Multiclass::build_from_files ()
                                                     m_od_factory);
   MNM_IO_Multiclass::build_link_toll_multiclass (m_file_folder, m_config,
                                                  m_link_factory);
+  MNM_IO_Multiclass::build_link_td_attribute(m_file_folder, m_link_factory);
   // build_workzone();
   m_workzone = nullptr;
   set_statistics ();
