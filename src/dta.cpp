@@ -537,8 +537,10 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   MNM_Dnode *_node;
   MNM_Dlink *_link;
   MNM_Destination *_dest;
-  if (load_int == 0)
-    m_statistics->update_record (load_int);
+
+  // update some link attributes over time
+  m_link_factory -> update_link_attribute(load_int);
+  if (load_int == 0) m_statistics->update_record (load_int);
   if (verbose)
     printf ("-------------------------------    Interval %d   "
             "------------------------------ \n",
@@ -546,9 +548,6 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   // step 1: Origin release vehicle
   if (verbose)
     printf ("Releasing!\n");
-
-  // update some link attributes over time
-  m_link_factory -> update_link_attribute(load_int);
 
   if (load_int % m_assign_freq == 0 || load_int == 0)
     {
