@@ -396,7 +396,7 @@ MNM_Dlink_Ctm_Multiclass::modify_property(TInt number_of_lane, TFlt length,
   m_lane_rho_1_N = m_lane_hold_cap_car
                    * (m_wave_speed_car / (m_ffs_truck + m_wave_speed_car));
   
-  if ((m_num_cells != (int)m_cell_array.size()) || !MNM_Ults::approximate_equal(_std_cell_length, m_cell_array.front() -> m_cell_length, 1e-4) || !MNM_Ults::approximate_equal(_last_cell_length, m_cell_array.back() -> m_cell_length, 1e-4)) {
+  if (m_num_cells != (int)m_cell_array.size()) {
     throw std::runtime_error ("number of cells changed");
     // TODO: recreate cell, but will lose vehicles in queue
     // for (Ctm_Cell_Multiclass *_cell : m_cell_array)
@@ -406,25 +406,36 @@ MNM_Dlink_Ctm_Multiclass::modify_property(TInt number_of_lane, TFlt length,
     // m_cell_array.clear ();
     // init_cell_array (m_unit_time, _std_cell_length, _last_cell_length);
   }
-  else {
-    // modify existing cells
-    // All previous cells
-  
-    for (int i = 0; i < m_num_cells; ++i)
-      {
-        // Convert lane parameters to cell (link)
-        // parameters by multiplying # of lanes
-        m_cell_array[i] -> modify_property(
-                                        TFlt (m_number_of_lane) * m_lane_hold_cap_car,
-                                        TFlt (m_number_of_lane) * m_lane_hold_cap_truck,
-                                        TFlt (m_number_of_lane) * m_lane_critical_density_car,
-                                        TFlt (m_number_of_lane) * m_lane_critical_density_truck,
-                                        TFlt (m_number_of_lane) * m_lane_rho_1_N,
-                                        TFlt (m_number_of_lane) * m_lane_flow_cap_car,
-                                        TFlt (m_number_of_lane) * m_lane_flow_cap_truck,
-                                        m_ffs_car, m_ffs_truck, m_wave_speed_car, m_wave_speed_truck);
-      }
+
+  if (m_num_cells == 1) {
+    if (!MNM_Ults::approximate_equal(_last_cell_length, m_cell_array.back() -> m_cell_length, 1e-4)) {
+      throw std::runtime_error("last cell length changed");
+    }
   }
+  else {
+    if (!MNM_Ults::approximate_equal(_std_cell_length, m_cell_array.front() -> m_cell_length, 1e-4) || !MNM_Ults::approximate_equal(_last_cell_length, m_cell_array.back() -> m_cell_length, 1e-4)) {
+      throw std::runtime_error("standard or last cell length changed");
+    }
+  }
+
+  // modify existing cells
+  // All previous cells
+
+  for (int i = 0; i < m_num_cells; ++i)
+  {
+    // Convert lane parameters to cell (link)
+    // parameters by multiplying # of lanes
+    m_cell_array[i] -> modify_property(
+                                    TFlt (m_number_of_lane) * m_lane_hold_cap_car,
+                                    TFlt (m_number_of_lane) * m_lane_hold_cap_truck,
+                                    TFlt (m_number_of_lane) * m_lane_critical_density_car,
+                                    TFlt (m_number_of_lane) * m_lane_critical_density_truck,
+                                    TFlt (m_number_of_lane) * m_lane_rho_1_N,
+                                    TFlt (m_number_of_lane) * m_lane_flow_cap_car,
+                                    TFlt (m_number_of_lane) * m_lane_flow_cap_truck,
+                                    m_ffs_car, m_ffs_truck, m_wave_speed_car, m_wave_speed_truck);
+  }
+  
   return 0;
 }
 
