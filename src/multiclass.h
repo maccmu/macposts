@@ -31,6 +31,8 @@ public:
                               TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
                               TFlt ffs_car, TFlt ffs_truck);
 
+  virtual void print_info() override;
+
   // use this one instead of the one in Dlink class
   int install_cumulative_curve_multiclass ();
   // use this one instead of the one in Dlink class

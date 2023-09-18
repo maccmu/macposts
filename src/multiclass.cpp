@@ -75,6 +75,16 @@ MNM_Dlink_Multiclass::modify_property(TInt number_of_lane, TFlt length,
   return 0;
 }
 
+void
+MNM_Dlink_Multiclass::print_info()
+{
+  std::string _s = "link ID: " + std::to_string(m_link_ID()) + ", ";
+  _s +=  "length: " + std::to_string(m_length) + " m, ";
+  _s +=  "ffs car: " + std::to_string(m_ffs_car) + " m/s, ";
+  _s +=  "ffs truck: " + std::to_string(m_ffs_truck) + " m/s";
+  std::cout << _s << std::endl;
+}
+
 int
 MNM_Dlink_Multiclass::install_cumulative_curve_multiclass ()
 {
@@ -213,12 +223,18 @@ MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (
                                 + std::to_string (m_link_ID ()));
     }
   m_unit_time = unit_time;
-  m_lane_flow_cap_car = lane_flow_cap_car;
-  m_lane_flow_cap_truck = lane_flow_cap_truck;
+  m_flow_scalar = flow_scalar;
+  m_lane_flow_cap_car = lane_flow_cap_car;                     // Veh/s
+  if (m_lane_flow_cap_car * m_unit_time * m_flow_scalar * number_of_lane < 1.) {
+    m_lane_flow_cap_car = 1. / (m_unit_time * m_flow_scalar * number_of_lane);  // the design capacity at least allows one car to pass
+  }
+  m_lane_flow_cap_truck = lane_flow_cap_truck;                 // Veh/s
+  if (m_lane_flow_cap_truck * m_unit_time * m_flow_scalar * number_of_lane < 1.) {
+    m_lane_flow_cap_truck = 1. / (m_unit_time * m_flow_scalar * number_of_lane);  // the design capacity at least allows one truck to pass
+  }
   m_lane_hold_cap_car = lane_hold_cap_car;
   m_lane_hold_cap_truck = lane_hold_cap_truck;
   m_veh_convert_factor = veh_convert_factor;
-  m_flow_scalar = flow_scalar;
 
   // Note m_ffs_car > m_ffs_truck, use ffs_car to define the standard cell
   // length
@@ -328,8 +344,15 @@ MNM_Dlink_Ctm_Multiclass::modify_property(TInt number_of_lane, TFlt length,
                                 + std::to_string (m_link_ID ()));
     }
 
-  m_lane_flow_cap_car = lane_flow_cap_car;
-  m_lane_flow_cap_truck = lane_flow_cap_truck;
+  m_lane_flow_cap_car = lane_flow_cap_car;                     // Veh/s
+  if (m_lane_flow_cap_car * m_unit_time * m_flow_scalar * number_of_lane < 1.) {
+    m_lane_flow_cap_car = 1. / (m_unit_time * m_flow_scalar * number_of_lane);  // the design capacity at least allows one car to pass
+  }
+  m_lane_flow_cap_truck = lane_flow_cap_truck;                 // Veh/s
+  if (m_lane_flow_cap_truck * m_unit_time * m_flow_scalar * number_of_lane < 1.) {
+    m_lane_flow_cap_truck = 1. / (m_unit_time * m_flow_scalar * number_of_lane);  // the design capacity at least allows one truck to pass
+  }
+
   m_lane_hold_cap_car = lane_hold_cap_car;
   m_lane_hold_cap_truck = lane_hold_cap_truck;
 
@@ -372,15 +395,16 @@ MNM_Dlink_Ctm_Multiclass::modify_property(TInt number_of_lane, TFlt length,
   // m_lane_critical_density_truck
   m_lane_rho_1_N = m_lane_hold_cap_car
                    * (m_wave_speed_car / (m_ffs_truck + m_wave_speed_car));
-
-  if (m_num_cells != (int)m_cell_array.size() | _std_cell_length != m_cell_array.front() -> m_cell_length | _last_cell_length != m_cell_array.back() -> m_cell_length) {
+  
+  if ((m_num_cells != (int)m_cell_array.size()) || !MNM_Ults::approximate_equal(_std_cell_length, m_cell_array.front() -> m_cell_length, 1e-4) || !MNM_Ults::approximate_equal(_last_cell_length, m_cell_array.back() -> m_cell_length, 1e-4)) {
+    throw std::runtime_error ("number of cells changed");
     // TODO: recreate cell, but will lose vehicles in queue
-    for (Ctm_Cell_Multiclass *_cell : m_cell_array)
-    {
-      delete _cell;
-    }
-    m_cell_array.clear ();
-    init_cell_array (m_unit_time, _std_cell_length, _last_cell_length);
+    // for (Ctm_Cell_Multiclass *_cell : m_cell_array)
+    // {
+    //   delete _cell;
+    // }
+    // m_cell_array.clear ();
+    // init_cell_array (m_unit_time, _std_cell_length, _last_cell_length);
   }
   else {
     // modify existing cells
@@ -501,6 +525,14 @@ MNM_Dlink_Ctm_Multiclass::init_cell_array (TFlt unit_time, TFlt std_cell_length,
 void
 MNM_Dlink_Ctm_Multiclass::print_info ()
 {
+  MNM_Dlink_Multiclass::print_info();
+
+  std::string _s =  "jam density car: " + std::to_string(m_lane_hold_cap_car) + " veh/m/lane, ";
+  _s +=  "jam density truck: " + std::to_string(m_lane_hold_cap_truck) + " veh/m/lane, ";
+  _s +=  "capacity car: " + std::to_string(m_lane_flow_cap_car) + " veh/s/lane, ";
+  _s +=  "capacity truck: " + std::to_string(m_lane_flow_cap_truck) + " veh/s/lane";
+  std::cout << _s << std::endl;
+
   printf ("Total number of cell: \t%d\n Flow scalar: \t%.4f\n",
           int (m_num_cells), double (m_flow_scalar));
 
