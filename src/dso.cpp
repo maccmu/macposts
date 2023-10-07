@@ -84,8 +84,8 @@ int MNM_Dso::get_link_marginal_cost(MNM_Dta *dta)
             for (int j = i; j < _total_loading_inter; j++) {
                 if (dynamic_cast<MNM_Dlink_Ctm*>(_link) != nullptr) {
                     TFlt _inflow_rate = MNM_DTA_GRADIENT::get_arrival_cc_slope(_link, 
-                                                                        TFlt(i), 
-                                                                        TFlt(i + 1));  // veh / 5s
+                                                                        TFlt(j), 
+                                                                        TFlt(j + 1));  // veh / 5s
                     TFlt _cap = dynamic_cast<MNM_Dlink_Ctm*>(_link) -> m_cell_array.front() -> m_flow_cap * dta -> m_unit_time;  // veh / 5s
                     if (MNM_Ults::approximate_less_than(_inflow_rate * dta -> m_flow_scalar, floor(_cap * dta -> m_flow_scalar))) {
                         _actual_lift_up_time = j;
