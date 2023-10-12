@@ -13,6 +13,8 @@ MNM_Veh::MNM_Veh (TInt ID, TInt start_time)
   m_class = TInt (0);
   m_bus_route_ID = TInt (-1);
   m_pnr = false;
+  m_tracked = false;
+  m_visual_position_on_link = 0.5; // default: visualize veh as at the middle point of link
 }
 
 MNM_Veh::~MNM_Veh ()
