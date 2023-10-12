@@ -3222,8 +3222,6 @@ MNM_Veh_Multiclass::MNM_Veh_Multiclass (TInt ID, TInt vehicle_class,
     : MNM_Veh::MNM_Veh (ID, start_time)
 {
   m_class = vehicle_class; // 0: car, 1: truck
-  m_visual_position_on_link
-    = 0.5; // default: visualize veh as at the middle point of link
 }
 
 MNM_Veh_Multiclass::~MNM_Veh_Multiclass () { ; }
@@ -4304,6 +4302,49 @@ MNM_Dta_Multiclass::record_queue_vehicles ()
     }
   m_queue_veh_num.push_back (_tot_queue_size);
   return 0;
+}
+
+int 
+MNM_Dta_Multiclass::loading_vehicle_tracking(bool verbose, const std::string &folder, double sampling_rate, int frequency) 
+{
+  int _current_inter = 0;
+  int _assign_inter = m_start_assign_interval;
+
+  // It at least will release all vehicles no matter what value total_interval is set
+  // the least length of simulation = max_interval * assign_frq
+  while (!finished_loading (_current_inter)
+         || _assign_inter < m_total_assign_inter)
+    {
+      if (verbose)
+        {
+          std::cout << std::endl
+                    << "Current loading interval: " << _current_inter << ", "
+                    << "Current assignment interval: " << int(_current_inter/m_config -> get_int("assign_frq"))
+                    << std::endl;
+        }
+      load_once (verbose, _current_inter, _assign_inter);
+      MNM::print_vehicle_route_results(dynamic_cast<MNM_Veh_Factory_Multiclass*>(m_veh_factory),
+                                      folder,
+                                      _current_inter,
+                                      sampling_rate,
+                                      frequency);
+      // link cc will be updated with the record at the end of this interval
+      // (i.e., _current_inter + 1)
+      if (++_current_inter % m_assign_freq == 0)
+        {
+          ++_assign_inter;
+        }
+    }
+  if (verbose)
+    {
+      MNM::print_vehicle_statistics (m_veh_factory);
+    }
+  m_statistics->post_record ();
+  if (m_gridlock_recorder != nullptr)
+    m_gridlock_recorder->post_record ();
+  m_current_loading_interval = _current_inter;
+  return _current_inter; // total number of actual loading intervals =
+                         // _current_inter
 }
 
 ///
@@ -5537,6 +5578,73 @@ build_pathset_multiclass (PNEGraph &graph, MNM_OD_Factory *od_factory,
   _free_shortest_path_tree.clear ();
 
   return _path_table;
+}
+
+int 
+print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory, 
+                            const std::string &folder,
+                            int interval,
+                            double sampling_rate,
+                            int cong_frequency)
+{
+  if (cong_frequency == 0) {
+    printf("Skip printing vehicle route results");
+    return 0;
+  }
+
+  std::string _s;
+  std::ofstream _vis_file;
+  if (interval == 0) {
+    // overwrite
+    _vis_file.open(folder + "/vehicle_route_cong_raw.txt", std::ofstream::out);
+  }
+  else {
+    // append
+    _vis_file.open(folder + "/vehicle_route_cong_raw.txt", std::ofstream::app);
+  }
+  
+  if (!_vis_file.is_open ())
+  {
+    throw std::runtime_error ("failed to open _vis_file");
+  }
+
+  if (interval == 0) {
+    _s = "timestamp(intervals) vehicle_ID routing_type origin_ID origin_node_ID destination_ID destination_node_ID current_link next_link position\n";
+    _vis_file << _s;
+  }
+  
+  if (interval % cong_frequency == 0) {
+    for (auto veh_it : veh_factory -> m_veh_map) {
+      // determined which vehicle needs to be tracked among vehicle just being released
+      if ((veh_it.second -> m_start_time == interval) 
+          && (veh_it.second -> m_current_link != nullptr)
+          && (veh_it.second -> m_next_link != nullptr)
+          && !(veh_it.second -> m_tracked)) {
+          if (veh_it.second -> m_current_link -> m_from_node -> m_node_ID == veh_it.second -> m_origin -> m_origin_node -> m_node_ID) {
+            veh_it.second -> m_tracked = (MNM_Ults::rand_flt () <= sampling_rate) ? true : false;
+          }
+      }
+
+      if (veh_it.second -> m_tracked) {
+        _s = std::to_string(interval) + " ";
+        _s += std::to_string(veh_it.first) + " ";
+        _s += (veh_it.second -> m_type == MNM_TYPE_STATIC ? "habitual " : "adaptive ");
+        _s += std::to_string(veh_it.second -> m_origin -> m_Origin_ID) + " ";
+        _s += std::to_string(veh_it.second -> m_origin -> m_origin_node -> m_node_ID) + " ";
+        _s += std::to_string(veh_it.second -> m_dest -> m_Dest_ID) + " ";
+        _s += std::to_string(veh_it.second -> m_dest -> m_dest_node -> m_node_ID) + " ";
+        _s += std::to_string(veh_it.second -> m_current_link == nullptr ? TInt(-1) : veh_it.second -> m_current_link -> m_link_ID) + " ";
+        _s += std::to_string(veh_it.second -> m_next_link == nullptr ? TInt(-1) : veh_it.second -> m_next_link -> m_link_ID) + " ";
+        _s += std::to_string(veh_it.second -> m_visual_position_on_link) + "\n";
+        
+        _vis_file << _s;
+      }
+    }
+  }
+  
+  if (_vis_file.is_open()) _vis_file.close ();
+  std::cout << "Finish printing vehicle route results" << std::endl;
+  return 0;
 }
 
 } // end namespace MNM

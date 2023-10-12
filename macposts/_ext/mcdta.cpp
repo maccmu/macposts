@@ -43,6 +43,10 @@ public:
   std::string print_emission_stats ();
   int print_simulation_results (const std::string &folder,
                                 int cong_frequency = 180);
+  int run_whole_vehicle_tracking (bool verbose,
+                                  const std::string &folder,
+                                  double sampling_rate = 0.05,
+                                  int cong_frequency = 1);
 
   int build_link_cost_map (bool with_congestion_indicator = false);
   int get_link_queue_dissipated_time ();
@@ -193,6 +197,7 @@ init (py::module &m)
     .def ("get_cur_loading_interval", &Mcdta::get_cur_loading_interval)
     .def_property_readonly ("links", &Mcdta::get_all_links, "IDs of all links.")
     .def ("print_simulation_results", &Mcdta::print_simulation_results)
+    .def ("run_whole_vehicle_tracking", &Mcdta::run_whole_vehicle_tracking)
 
     .def ("build_link_cost_map", &Mcdta::build_link_cost_map)
     .def ("get_link_queue_dissipated_time",
@@ -739,6 +744,17 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
         _vis_file2.close ();
     }
   std::cout << "Finish printing simulation results" << std::endl;
+  return 0;
+}
+
+int 
+Mcdta::run_whole_vehicle_tracking (bool verbose,
+                                  const std::string &folder,
+                                  double sampling_rate,
+                                  int cong_frequency)
+{
+  m_mcdta -> pre_loading ();
+  m_mcdta -> loading_vehicle_tracking(verbose, folder, sampling_rate, cong_frequency);
   return 0;
 }
 

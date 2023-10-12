@@ -456,8 +456,7 @@ public:
   }; // virtual getter for derived class
 
   TInt m_class;
-  TFlt m_visual_position_on_link; //[0(start), 1(end)], for vehicle-based
-                                  // visualization
+  
 };
 
 ///
@@ -598,6 +597,7 @@ public:
   virtual int build_from_files () override;
   virtual int pre_loading () override;
   virtual int record_queue_vehicles () override;
+  int loading_vehicle_tracking(bool verbose, const std::string &folder, double sampling_rate, int frequency);
 
   std::unordered_map<TInt, std::deque<TInt> *> m_queue_veh_map_car;
   std::unordered_map<TInt, std::deque<TInt> *> m_queue_veh_map_truck;
@@ -723,11 +723,18 @@ int add_ltg_records_eigen_veh (std::vector<Eigen::Triplet<double>> &record,
 namespace MNM
 {
 int print_vehicle_statistics (MNM_Veh_Factory_Multiclass *veh_factory);
+
 Path_Table *build_pathset_multiclass (
   PNEGraph &graph, MNM_OD_Factory *od_factory, MNM_Link_Factory *link_factory,
   TFlt min_path_length = 0.0, size_t MaxIter = 10, TFlt vot = 6.,
   TFlt Mid_Scale = 3, TFlt Heavy_Scale = 6, TInt buffer_length = -1);
-}
+
+int print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
+                                const std::string &folder,
+                                int interval,
+                                double sampling_rate,
+                                int cong_frequency);
+};
 
 ///
 /// Multiclass emissions

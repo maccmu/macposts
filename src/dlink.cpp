@@ -103,6 +103,7 @@ MNM_Dlink::move_veh_queue (std::deque<MNM_Veh *> *from_queue,
     {
       _veh = from_queue->front ();
       from_queue->pop_front ();
+      // TODO: update _veh->m_visual_position_on_link for different link types as in multiclass
       to_queue->push_back (_veh);
     }
   return 0;
