@@ -53,7 +53,7 @@ public:
     Node &operator= (const Node &) = delete;
 
   private:
-    Node (NData data);
+    explicit Node (NData data);
   };
 
   class Link
@@ -71,7 +71,7 @@ public:
     Link &operator= (const Link &) = delete;
 
   private:
-    Link (LData data);
+    explicit Link (LData data);
   };
 
   class Nodes
@@ -115,7 +115,7 @@ public:
     const Direction direction;
 
   public:
-    Nodes (Node &start, Direction direction);
+    explicit Nodes (Node &start, Direction direction);
     const_iterator begin () const noexcept;
     const_iterator end () const noexcept;
 
@@ -160,7 +160,7 @@ public:
     const Direction direction;
 
   public:
-    Links (Node &start, Direction direction);
+    explicit Links (Node &start, Direction direction);
     const_iterator begin () const noexcept;
     const_iterator end () const noexcept;
 
@@ -173,7 +173,7 @@ protected:
   std::vector<std::unique_ptr<Link>> links;
 
 public:
-  DiGraph ();
+  explicit DiGraph ();
   Node &add_node (NData data);
   Link &add_link (Node &from, Node &to, LData data);
   Nodes neighbors (Node &node, Direction direction);
