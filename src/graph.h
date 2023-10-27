@@ -6,11 +6,9 @@
 // transportation networks.
 //
 // A note on the memory model: the graph owns all nodes and links. Users may use
-// the returned references or pointers by graph methods, but can only do that
+// the returned references/pointers by graph methods, but should only do that
 // when the graph is alive. Also, for memory safety, it is not allowed to delete
-// nodes or links once added to the graph. It is possible to modify the graph
-// nodes using iterators but that is not supported and doing so may lead to
-// severe errors.
+// nodes or links once added to the graph.
 //
 // [0]: https://github.com/petgraph/petgraph
 
