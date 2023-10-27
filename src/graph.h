@@ -29,7 +29,7 @@ namespace macposts
 {
 namespace graph
 {
-enum Direction
+enum class Direction
 {
   Incoming = 0,
   Outgoing = 1,
@@ -106,7 +106,7 @@ public:
       };
       inline reference operator* () const
       {
-        return *current->endpoints[direction];
+        return *current->endpoints[static_cast<int> (direction)];
       };
     };
 
