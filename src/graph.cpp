@@ -6,19 +6,26 @@ namespace graph
 {
 template <typename NData, typename LData>
 DiGraph<NData, LData>::Node::Node (NData data)
-    : data (data), next ({ nullptr, nullptr }){};
+    : data (data), next ({ nullptr, nullptr })
+{
+}
 
 template <typename NData, typename LData>
 DiGraph<NData, LData>::Link::Link (LData data)
-    : data (data), endpoints ({ nullptr, nullptr }),
-      next ({ nullptr, nullptr }){};
+    : data (data), endpoints ({ nullptr, nullptr }), next ({ nullptr, nullptr })
+{
+}
 
 template <typename NData, typename LData>
-DiGraph<NData, LData>::DiGraph () : nodes (), links (){};
+DiGraph<NData, LData>::DiGraph () : nodes (), links ()
+{
+}
 
 template <typename NData, typename LData>
 DiGraph<NData, LData>::Nodes::Nodes (Node &start, Direction direction)
-    : start (start), direction (direction){};
+    : start (start), direction (direction)
+{
+}
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Nodes::const_iterator
@@ -38,7 +45,9 @@ DiGraph<NData, LData>::Nodes::end () const noexcept
 template <typename NData, typename LData>
 DiGraph<NData, LData>::Nodes::const_iterator::const_iterator (
   Link *start, Direction direction)
-    : current (start), direction (direction), seen (){};
+    : current (start), direction (direction), seen ()
+{
+}
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Nodes::const_iterator &
@@ -68,7 +77,9 @@ DiGraph<NData, LData>::Nodes::const_iterator::operator++ (int)
 
 template <typename NData, typename LData>
 DiGraph<NData, LData>::Links::Links (Node &start, Direction direction)
-    : start (start), direction (direction){};
+    : start (start), direction (direction)
+{
+}
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Links::const_iterator
@@ -88,7 +99,9 @@ DiGraph<NData, LData>::Links::end () const noexcept
 template <typename NData, typename LData>
 DiGraph<NData, LData>::Links::const_iterator::const_iterator (
   Link *start, Direction direction)
-    : current (start), direction (direction){};
+    : current (start), direction (direction)
+{
+}
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Links::const_iterator &

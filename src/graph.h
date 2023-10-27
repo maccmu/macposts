@@ -99,15 +99,15 @@ public:
       inline bool operator== (const const_iterator &other) const
       {
         return (current == other.current) && (direction == other.direction);
-      };
+      }
       inline bool operator!= (const const_iterator &other) const
       {
         return (current != other.current) || (direction != other.direction);
-      };
+      }
       inline reference operator* () const
       {
         return *current->endpoints[static_cast<int> (direction)];
-      };
+      }
     };
 
   private:
@@ -119,8 +119,8 @@ public:
     const_iterator begin () const noexcept;
     const_iterator end () const noexcept;
 
-    inline const_iterator cbegin () const noexcept { return begin (); };
-    inline const_iterator cend () const noexcept { return end (); };
+    inline const_iterator cbegin () const noexcept { return begin (); }
+    inline const_iterator cend () const noexcept { return end (); }
   };
 
   class Links
@@ -147,11 +147,11 @@ public:
       inline bool operator== (const const_iterator &other) const
       {
         return (current == other.current) && (direction == other.direction);
-      };
+      }
       inline bool operator!= (const const_iterator &other) const
       {
         return (current != other.current) || (direction != other.direction);
-      };
+      }
       inline reference operator* () const { return *current; }
     };
 
@@ -164,8 +164,8 @@ public:
     const_iterator begin () const noexcept;
     const_iterator end () const noexcept;
 
-    inline const_iterator cbegin () const noexcept { return begin (); };
-    inline const_iterator cend () const noexcept { return end (); };
+    inline const_iterator cbegin () const noexcept { return begin (); }
+    inline const_iterator cend () const noexcept { return end (); }
   };
 
 protected:
@@ -179,18 +179,18 @@ public:
   Nodes neighbors (Node &node, Direction direction);
   Links connections (Node &node, Direction direction);
 
-  inline std::size_t size_nodes () const noexcept { return nodes.size (); };
-  inline std::size_t size_links () const noexcept { return links.size (); };
+  inline std::size_t size_nodes () const noexcept { return nodes.size (); }
+  inline std::size_t size_links () const noexcept { return links.size (); }
   inline typename std::vector<std::unique_ptr<Node>>::const_iterator
   begin () const noexcept
   {
     return nodes.begin ();
-  };
+  }
   inline typename std::vector<std::unique_ptr<Node>>::const_iterator
   end () const noexcept
   {
     return nodes.end ();
-  };
+  }
   inline typename std::vector<std::unique_ptr<Node>>::const_iterator
   cbegin () const noexcept
   {
@@ -200,7 +200,7 @@ public:
   cend () const noexcept
   {
     return nodes.cend ();
-  };
+  }
 };
 }
 }
