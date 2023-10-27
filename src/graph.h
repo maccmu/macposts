@@ -1,4 +1,4 @@
-// Direction graph implementation.
+// Adjacency list based directed graph implementation.
 //
 // This is a port of the graph library in the discontinued Rust version of
 // macposts. The design is heavily inspired by the Rust `petgraph'[0] library,
@@ -13,6 +13,12 @@
 // severe errors.
 //
 // [0]: https://github.com/petgraph/petgraph
+
+// TODO: Move graph related functions (e.g., shortest path) to this library.
+//
+// TODO: Add undirected graph.
+//
+// TODO: Expose the graph class to Python.
 
 #pragma once
 
