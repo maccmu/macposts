@@ -33,6 +33,7 @@ add_library(macposts STATIC
   src/emission.cpp
   src/ev_traffic.cpp
   src/factory.cpp
+  src/graph.cpp
   src/gridlock_checker.cpp
   src/io.cpp
   src/marginal_cost.cpp
