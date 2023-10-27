@@ -24,7 +24,7 @@ template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Nodes::const_iterator
 DiGraph<NData, LData>::Nodes::begin () const noexcept
 {
-  Link *next = start.next[direction];
+  Link *next = start.next[static_cast<int> (direction)];
   return const_iterator (next, direction);
 }
 
@@ -46,12 +46,13 @@ DiGraph<NData, LData>::Nodes::const_iterator::operator++ ()
 {
   if (current)
     {
-      seen.insert (current->endpoints[direction]);
+      seen.insert (current->endpoints[static_cast<int> (direction)]);
       do
         {
-          current = current->next[direction];
+          current = current->next[static_cast<int> (direction)];
         }
-      while (current && seen.count (current->endpoints[direction]));
+      while (current
+             && seen.count (current->endpoints[static_cast<int> (direction)]));
     }
   return *this;
 }
@@ -73,7 +74,7 @@ template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Links::const_iterator
 DiGraph<NData, LData>::Links::begin () const noexcept
 {
-  Link *next = start.next[direction];
+  Link *next = start.next[static_cast<int> (direction)];
   return const_iterator (next, direction);
 }
 
@@ -94,7 +95,7 @@ typename DiGraph<NData, LData>::Links::const_iterator &
 DiGraph<NData, LData>::Links::const_iterator::operator++ ()
 {
   if (current)
-    current = current->next[direction];
+    current = current->next[static_cast<int> (direction)];
   return *this;
 }
 
@@ -121,13 +122,17 @@ template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Link &
 DiGraph<NData, LData>::add_link (Node &from, Node &to, LData data)
 {
+  static const int incoming = static_cast<int> (Direction::Incoming);
+  static const int outgoing = static_cast<int> (Direction::Outgoing);
+
   auto link = std::unique_ptr<Link> (new Link (data));
-  link->endpoints[Incoming] = &from;
-  link->endpoints[Outgoing] = &to;
-  link->next[Incoming] = to.next[Incoming];
-  link->next[Outgoing] = from.next[Outgoing];
-  from.next[Outgoing] = link.get ();
-  to.next[Incoming] = link.get ();
+  link->endpoints[incoming] = &from;
+  link->endpoints[outgoing] = &to;
+  link->next[incoming] = to.next[incoming];
+  link->next[outgoing] = from.next[outgoing];
+  from.next[outgoing] = link.get ();
+  to.next[incoming] = link.get ();
+
   auto &r = *link;
   links.push_back (std::move (link));
   return r;
@@ -162,8 +167,7 @@ DiGraph<NData, LData>::connections (Node &node, Direction direction)
 int
 main (void)
 {
-  using macposts::graph::Incoming;
-  using macposts::graph::Outgoing;
+  using macposts::graph::Direction;
   using DiGraph = typename macposts::graph::DiGraph<int, int>;
   using Node = typename DiGraph::Node;
   using Link = typename DiGraph::Link;
@@ -189,7 +193,7 @@ main (void)
 
     {
       std::unordered_set<const Node *> ns;
-      auto nodes = g.neighbors (n0, Outgoing);
+      auto nodes = g.neighbors (n0, Direction::Outgoing);
       for (const auto &n : nodes)
         ns.insert (&n);
       assert (ns.size () == 1);
@@ -197,14 +201,14 @@ main (void)
     }
     {
       std::unordered_set<const Node *> ns;
-      auto nodes = g.neighbors (n0, Incoming);
+      auto nodes = g.neighbors (n0, Direction::Incoming);
       for (const auto &n : nodes)
         ns.insert (&n);
       assert (std::distance (nodes.cbegin (), nodes.cend ()) == 0);
     }
     {
       std::unordered_set<const Node *> ns;
-      auto nodes = g.neighbors (n1, Outgoing);
+      auto nodes = g.neighbors (n1, Direction::Outgoing);
       for (const auto &n : nodes)
         ns.insert (&n);
       assert (ns.size () == 1);
@@ -212,7 +216,7 @@ main (void)
     }
     {
       std::unordered_set<const Node *> ns;
-      auto nodes = g.neighbors (n1, Incoming);
+      auto nodes = g.neighbors (n1, Direction::Incoming);
       for (const auto &n : nodes)
         ns.insert (&n);
       assert (ns.size () == 1);
@@ -220,14 +224,14 @@ main (void)
     }
     {
       std::unordered_set<const Node *> ns;
-      auto nodes = g.neighbors (n2, Outgoing);
+      auto nodes = g.neighbors (n2, Direction::Outgoing);
       for (const auto &n : nodes)
         ns.insert (&n);
       assert (ns.size () == 0);
     }
     {
       std::unordered_set<const Node *> ns;
-      auto nodes = g.neighbors (n2, Incoming);
+      auto nodes = g.neighbors (n2, Direction::Incoming);
       for (const auto &n : nodes)
         ns.insert (&n);
       assert (ns.size () == 1);
@@ -236,7 +240,7 @@ main (void)
 
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n0, Outgoing);
+      auto links = g.connections (n0, Direction::Outgoing);
       for (const auto &l : links)
         ls.insert (&l);
       assert (ls.size () == 1);
@@ -244,14 +248,14 @@ main (void)
     }
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n0, Incoming);
+      auto links = g.connections (n0, Direction::Incoming);
       for (const auto &l : links)
         ls.insert (&l);
       assert (ls.size () == 0);
     }
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n1, Outgoing);
+      auto links = g.connections (n1, Direction::Outgoing);
       for (const auto &l : links)
         ls.insert (&l);
       assert (ls.size () == 1);
@@ -259,7 +263,7 @@ main (void)
     }
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n1, Incoming);
+      auto links = g.connections (n1, Direction::Incoming);
       for (const auto &l : links)
         ls.insert (&l);
       assert (ls.size () == 1);
@@ -267,14 +271,14 @@ main (void)
     }
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n2, Outgoing);
+      auto links = g.connections (n2, Direction::Outgoing);
       for (const auto &l : links)
         ls.insert (&l);
       assert (ls.size () == 0);
     }
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n2, Incoming);
+      auto links = g.connections (n2, Direction::Incoming);
       for (const auto &l : links)
         ls.insert (&l);
       assert (ls.size () == 1);
@@ -293,14 +297,14 @@ main (void)
 
     {
       std::vector<const Node *> ns;
-      auto nodes = g.neighbors (n0, Incoming);
+      auto nodes = g.neighbors (n0, Direction::Incoming);
       for (const auto &n : nodes)
         ns.push_back (&n);
       assert (ns.size () == 0);
     }
     {
       std::vector<const Node *> ns;
-      auto nodes = g.neighbors (n0, Outgoing);
+      auto nodes = g.neighbors (n0, Direction::Outgoing);
       for (const auto &n : nodes)
         ns.push_back (&n);
       assert (ns.size () == 1);
@@ -308,7 +312,7 @@ main (void)
     }
     {
       std::vector<const Node *> ns;
-      auto nodes = g.neighbors (n1, Incoming);
+      auto nodes = g.neighbors (n1, Direction::Incoming);
       for (const auto &n : nodes)
         ns.push_back (&n);
       assert (ns.size () == 1);
@@ -316,21 +320,21 @@ main (void)
     }
     {
       std::vector<const Node *> ns;
-      auto nodes = g.neighbors (n1, Outgoing);
+      auto nodes = g.neighbors (n1, Direction::Outgoing);
       for (const auto &n : nodes)
         ns.push_back (&n);
       assert (ns.size () == 0);
     }
 
     {
-      auto nodes = g.neighbors (n0, Incoming);
+      auto nodes = g.neighbors (n0, Direction::Incoming);
       auto it0 = nodes.cbegin ();
       auto it1 = it0++;
       assert (std::distance (it0, nodes.cend ()) == 0);
       assert (std::distance (it1, nodes.cend ()) == 0);
     }
     {
-      auto nodes = g.neighbors (n0, Outgoing);
+      auto nodes = g.neighbors (n0, Direction::Outgoing);
       auto it0 = nodes.cbegin ();
       auto it1 = it0++;
       assert (std::distance (it0, nodes.cend ()) == 0);
@@ -339,14 +343,14 @@ main (void)
 
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n0, Incoming);
+      auto links = g.connections (n0, Direction::Incoming);
       for (const auto &l : links)
         ls.insert (&l);
       assert (std::distance (links.cbegin (), links.cend ()) == 0);
     }
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n0, Outgoing);
+      auto links = g.connections (n0, Direction::Outgoing);
       for (const auto &l : links)
         ls.insert (&l);
       assert (std::distance (links.cbegin (), links.cend ()) == 3);
@@ -356,7 +360,7 @@ main (void)
     }
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n1, Incoming);
+      auto links = g.connections (n1, Direction::Incoming);
       for (const auto &l : links)
         ls.insert (&l);
       assert (std::distance (links.cbegin (), links.cend ()) == 3);
@@ -366,7 +370,7 @@ main (void)
     }
     {
       std::unordered_set<const Link *> ls;
-      auto links = g.connections (n1, Outgoing);
+      auto links = g.connections (n1, Direction::Outgoing);
       for (const auto &l : links)
         ls.insert (&l);
       assert (std::distance (links.cbegin (), links.cend ()) == 0);
@@ -383,7 +387,7 @@ main (void)
 
     {
       std::vector<const Node *> ns;
-      auto nodes = g.neighbors (n0, Incoming);
+      auto nodes = g.neighbors (n0, Direction::Incoming);
       for (const auto &n : nodes)
         ns.push_back (&n);
       assert (ns.size () == 1);
@@ -391,7 +395,7 @@ main (void)
     }
     {
       std::vector<const Node *> ns;
-      auto nodes = g.neighbors (n0, Outgoing);
+      auto nodes = g.neighbors (n0, Direction::Outgoing);
       for (const auto &n : nodes)
         ns.push_back (&n);
       assert (ns.size () == 1);
@@ -399,7 +403,7 @@ main (void)
     }
     {
       std::vector<const Node *> ns;
-      auto nodes = g.neighbors (n1, Incoming);
+      auto nodes = g.neighbors (n1, Direction::Incoming);
       for (const auto &n : nodes)
         ns.push_back (&n);
       assert (ns.size () == 1);
@@ -407,7 +411,7 @@ main (void)
     }
     {
       std::vector<const Node *> ns;
-      auto nodes = g.neighbors (n1, Outgoing);
+      auto nodes = g.neighbors (n1, Direction::Outgoing);
       for (const auto &n : nodes)
         ns.push_back (&n);
       assert (ns.size () == 1);
@@ -416,7 +420,7 @@ main (void)
 
     {
       std::vector<const Link *> ls;
-      auto links = g.connections (n0, Incoming);
+      auto links = g.connections (n0, Direction::Incoming);
       for (const auto &l : links)
         ls.push_back (&l);
       assert (ls.size () == 1);
@@ -424,7 +428,7 @@ main (void)
     }
     {
       std::vector<const Link *> ls;
-      auto links = g.connections (n0, Outgoing);
+      auto links = g.connections (n0, Direction::Outgoing);
       for (const auto &l : links)
         ls.push_back (&l);
       assert (ls.size () == 1);
@@ -432,7 +436,7 @@ main (void)
     }
     {
       std::vector<const Link *> ls;
-      auto links = g.connections (n1, Incoming);
+      auto links = g.connections (n1, Direction::Incoming);
       for (const auto &l : links)
         ls.push_back (&l);
       assert (ls.size () == 1);
@@ -440,7 +444,7 @@ main (void)
     }
     {
       std::vector<const Link *> ls;
-      auto links = g.connections (n1, Outgoing);
+      auto links = g.connections (n1, Direction::Outgoing);
       for (const auto &l : links)
         ls.push_back (&l);
       assert (ls.size () == 1);
