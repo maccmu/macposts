@@ -157,6 +157,8 @@ DiGraph<NData, LData>::connections (Node &node, Direction direction)
     if (!(c))                                                                  \
       __builtin_trap ();
 
+// TODO: Turn those into real unit test cases.
+
 int
 main (void)
 {
