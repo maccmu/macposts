@@ -171,9 +171,9 @@ DiGraph<NData, LData>::connections (Node &node, Direction direction)
 
 #ifdef LIBMACPOSTS_INTERNAL_TEST
 
-#  define assert(c)                                                            \
-    if (!(c))                                                                  \
-      __builtin_trap ();
+// clang-format off
+#define assert(c) if (!(c)) __builtin_trap ()
+// clang-format on
 
 // TODO: Turn those into real unit test cases.
 
