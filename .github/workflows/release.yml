@@ -61,6 +61,13 @@ jobs:
       run: sha256sum * > SHA256SUMS
       working-directory: dist
 
+    - name: Extract release note
+      run: |
+        awk -v v='${{ github.ref_name }}' \
+          '/^## v[0-9]/{if($2==v){p=1;next}else{p=0}};p' \
+          CHANGELOG.md > relnote
+
     - uses: softprops/action-gh-release@v1
       with:
+        body_path: relnote
         files: dist/*
