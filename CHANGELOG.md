@@ -9,7 +9,7 @@ here.
 
 - Add module for modeling electric vehicles ([GH-32]).
 - Add support for modeling incidents ([GH-33]).
-- Add support for Python 3.12 (GH-31).
+- Add support for Python 3.12 ([GH-31]).
 
 [GH-31]: https://github.com/maccmu/macposts/pull/31
 [GH-32]: https://github.com/maccmu/macposts/pull/32
@@ -21,7 +21,7 @@ here.
 
 ### Fixed
 
-- Correct DSO marginal cost of CTM links (GH-34).
+- Correct DSO marginal cost of CTM links ([GH-34]).
 
 [GH-34]: https://github.com/maccmu/macposts/pull/34
 
