@@ -18,6 +18,8 @@
 //
 // TODO: Expose the graph class to Python.
 //
+// TODO: Mark functions as `noexcept' properly (maybe not very necessary?).
+//
 // NOTE: This library use smart pointers to manage resources and does not check
 // the validaty of pointers. However, it is still possible to trigger unsafe
 // behaviors and lead to subtle bugs, e.g., deferencing an `end' iterator. Maybe
@@ -143,11 +145,11 @@ public:
 
   public:
     explicit Nodes (Node &start, Direction direction);
-    const_iterator begin () const noexcept;
-    const_iterator end () const noexcept;
+    const_iterator begin () const;
+    const_iterator end () const;
 
-    inline const_iterator cbegin () const noexcept { return begin (); }
-    inline const_iterator cend () const noexcept { return end (); }
+    inline const_iterator cbegin () const { return begin (); }
+    inline const_iterator cend () const { return end (); }
   };
 
   class Links
@@ -188,11 +190,11 @@ public:
 
   public:
     explicit Links (Node &start, Direction direction);
-    const_iterator begin () const noexcept;
-    const_iterator end () const noexcept;
+    const_iterator begin () const;
+    const_iterator end () const;
 
-    inline const_iterator cbegin () const noexcept { return begin (); }
-    inline const_iterator cend () const noexcept { return end (); }
+    inline const_iterator cbegin () const { return begin (); }
+    inline const_iterator cend () const { return end (); }
   };
 
   class const_iterator
@@ -236,8 +238,8 @@ public:
   Nodes neighbors (Node &node, Direction direction);
   Links connections (Node &node, Direction direction);
 
-  inline std::size_t size_nodes () const noexcept { return nodes.size (); }
-  inline std::size_t size_links () const noexcept { return links.size (); }
+  inline std::size_t size_nodes () const { return nodes.size (); }
+  inline std::size_t size_links () const { return links.size (); }
   inline Node &get_node (const NData &data) const { return *nodes.at (data); }
   inline Link &get_link (const LData &data) const { return *links.at (data); }
   inline const_iterator begin () const
