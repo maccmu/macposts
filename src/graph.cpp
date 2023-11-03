@@ -30,7 +30,7 @@ DiGraph<NData, LData>::Nodes::Nodes (Node &start, Direction direction)
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Nodes::const_iterator
-DiGraph<NData, LData>::Nodes::begin () const noexcept
+DiGraph<NData, LData>::Nodes::begin () const
 {
   Link *next = start.next[static_cast<int> (direction)];
   return const_iterator (next, direction);
@@ -38,7 +38,7 @@ DiGraph<NData, LData>::Nodes::begin () const noexcept
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Nodes::const_iterator
-DiGraph<NData, LData>::Nodes::end () const noexcept
+DiGraph<NData, LData>::Nodes::end () const
 {
   return const_iterator (nullptr, direction);
 }
@@ -89,7 +89,7 @@ DiGraph<NData, LData>::Links::Links (Node &start, Direction direction)
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Links::const_iterator
-DiGraph<NData, LData>::Links::begin () const noexcept
+DiGraph<NData, LData>::Links::begin () const
 {
   Link *next = start.next[static_cast<int> (direction)];
   return const_iterator (next, direction);
@@ -97,7 +97,7 @@ DiGraph<NData, LData>::Links::begin () const noexcept
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Links::const_iterator
-DiGraph<NData, LData>::Links::end () const noexcept
+DiGraph<NData, LData>::Links::end () const
 {
   return const_iterator (nullptr, direction);
 }
