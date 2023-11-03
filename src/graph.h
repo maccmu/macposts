@@ -17,11 +17,18 @@
 // TODO: Add undirected graph.
 //
 // TODO: Expose the graph class to Python.
+//
+// NOTE: This library use smart pointers to manage resources and does not check
+// the validaty of pointers. However, it is still possible to trigger unsafe
+// behaviors and lead to subtle bugs, e.g., deferencing an `end' iterator. Maybe
+// add some basic checks?
 
 #pragma once
 
 #include <array>
+#include <functional>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -37,6 +44,26 @@ enum class Direction
 
 template <typename NData, typename LData> class DiGraph
 {
+protected:
+  // Internal hash map type used to store nodes and links. Creating an alias
+  // here to avoid typing the overlong name everywhere.
+  //
+  // NOTE: It is generally a bad idea to use references as hash map keys due to
+  // the potential mismatch of lifetimes between keys and values. However, in
+  // this case it is okay because value (node or link) owns the key (data).
+  //
+  // FIXME: `unordered_map' does not provide any guarantee on the order of
+  // elements when enumerating, which is not ideal for reproducibility of
+  // experiment results. However, `map' is an overkill in this case because we
+  // only need a deterministic ordering of elements and sorting elements is too
+  // much for this purpose. One solution would be using a vector to store the
+  // insertion order of elements.
+  template <typename Key, typename Value>
+  using hashmap =
+    typename std::unordered_map<std::reference_wrapper<const Key>,
+                                std::unique_ptr<Value>, std::hash<Key>,
+                                std::equal_to<Key>>;
+
 public:
   class Link;
   class Node
@@ -168,39 +195,61 @@ public:
     inline const_iterator cend () const noexcept { return end (); }
   };
 
+  class const_iterator
+  {
+  public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = Node;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const Node *;
+    using reference = const Node &;
+
+  private:
+    typename hashmap<NData, Node>::const_iterator current;
+
+  public:
+    explicit const_iterator (
+      typename hashmap<NData, Node>::const_iterator start);
+    const_iterator &operator++ ();
+    const_iterator operator++ (int);
+
+    inline bool operator== (const const_iterator &other) const
+    {
+      return current == other.current;
+    }
+    inline bool operator!= (const const_iterator &other) const
+    {
+      return current != other.current;
+    }
+    inline reference operator* () const { return *current->second; }
+  };
+
 protected:
-  std::vector<std::unique_ptr<Node>> nodes;
-  std::vector<std::unique_ptr<Link>> links;
+  hashmap<NData, Node> nodes;
+  hashmap<LData, Link> links;
 
 public:
   explicit DiGraph ();
   Node &add_node (NData data);
   Link &add_link (Node &from, Node &to, LData data);
+  Link &add_link (const NData &from, const NData &to, LData data);
   Nodes neighbors (Node &node, Direction direction);
   Links connections (Node &node, Direction direction);
 
   inline std::size_t size_nodes () const noexcept { return nodes.size (); }
   inline std::size_t size_links () const noexcept { return links.size (); }
-  inline typename std::vector<std::unique_ptr<Node>>::const_iterator
-  begin () const noexcept
+  inline Node &get_node (const NData &data) const { return *nodes.at (data); }
+  inline Link &get_link (const LData &data) const { return *links.at (data); }
+  inline const_iterator begin () const
   {
-    return nodes.begin ();
+    return const_iterator (nodes.begin ());
   }
-  inline typename std::vector<std::unique_ptr<Node>>::const_iterator
-  end () const noexcept
+  inline const_iterator end () const { return const_iterator (nodes.end ()); }
+  inline const_iterator cbegin () const
   {
-    return nodes.end ();
+    return const_iterator (nodes.cbegin ());
   }
-  inline typename std::vector<std::unique_ptr<Node>>::const_iterator
-  cbegin () const noexcept
-  {
-    return nodes.cbegin ();
-  }
-  inline typename std::vector<std::unique_ptr<Node>>::const_iterator
-  cend () const noexcept
-  {
-    return nodes.cend ();
-  }
+  inline const_iterator cend () const { return const_iterator (nodes.cend ()); }
 };
 }
 }
