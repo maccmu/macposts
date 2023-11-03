@@ -127,7 +127,7 @@ DiGraph<NData, LData>::add_node (NData data)
 {
   auto node = std::unique_ptr<Node> (new Node (data));
   auto &r = *node;
-  nodes.push_back (std::move (node));
+  nodes.insert ({ std::cref (r.data), std::move (node) });
   return r;
 }
 
@@ -147,8 +147,17 @@ DiGraph<NData, LData>::add_link (Node &from, Node &to, LData data)
   to.next[incoming] = link.get ();
 
   auto &r = *link;
-  links.push_back (std::move (link));
+  links.insert ({ std::cref (r.data), std::move (link) });
   return r;
+}
+
+template <typename NData, typename LData>
+typename DiGraph<NData, LData>::Link &
+DiGraph<NData, LData>::add_link (const NData &from, const NData &to, LData data)
+{
+  auto &&nfrom = get_node (from);
+  auto &&nto = get_node (to);
+  return add_link (nfrom, nto, data);
 }
 
 template <typename NData, typename LData>
@@ -165,6 +174,30 @@ DiGraph<NData, LData>::connections (Node &node, Direction direction)
 {
   auto links = Links (node, direction);
   return links;
+}
+
+template <typename NData, typename LData>
+DiGraph<NData, LData>::const_iterator::const_iterator (
+  typename hashmap<NData, Node>::const_iterator start)
+    : current (start)
+{
+}
+
+template <typename NData, typename LData>
+typename DiGraph<NData, LData>::const_iterator &
+DiGraph<NData, LData>::const_iterator::operator++ ()
+{
+  ++current;
+  return *this;
+}
+
+template <typename NData, typename LData>
+typename DiGraph<NData, LData>::const_iterator
+DiGraph<NData, LData>::const_iterator::operator++ (int)
+{
+  const_iterator r = *this;
+  ++(*this);
+  return r;
 }
 }
 }
@@ -191,17 +224,27 @@ main (void)
     auto &&n0 = g.add_node (0);
     auto &&n1 = g.add_node (1);
     auto &&n2 = g.add_node (2);
+    // Add link by node references
     auto &&l0 = g.add_link (n0, n1, 0);
-    auto &&l1 = g.add_link (n1, n2, 1);
+    // Add link by node data (ID)
+    auto &&l1 = g.add_link (1, 2, 1);
 
     {
       std::unordered_set<const Node *> ns;
       for (const auto &n : g)
-        ns.insert (n.get ());
+        ns.insert (&n);
       assert (std::distance (g.cbegin (), g.cend ()) == 3);
       assert (ns.count (&n0));
       assert (ns.count (&n1));
       assert (ns.count (&n2));
+    }
+
+    {
+      assert (&n0 == &g.get_node (0));
+      assert (&n1 == &g.get_node (1));
+      assert (&n2 == &g.get_node (2));
+      assert (&l0 == &g.get_link (0));
+      assert (&l1 == &g.get_link (1));
     }
 
     {
@@ -306,7 +349,7 @@ main (void)
     auto &&n1 = g.add_node (1);
     auto &&l0 = g.add_link (n0, n1, 0);
     auto &&l1 = g.add_link (n0, n1, 1);
-    auto &&l2 = g.add_link (n0, n1, 2);
+    auto &&l2 = g.add_link (0, 1, 2);
 
     {
       std::vector<const Node *> ns;
@@ -396,7 +439,7 @@ main (void)
     auto &&n0 = g.add_node (0);
     auto &&n1 = g.add_node (1);
     auto &&l0 = g.add_link (n0, n1, 0);
-    auto &&l1 = g.add_link (n1, n0, 1);
+    auto &&l1 = g.add_link (1, 0, 1);
 
     {
       std::vector<const Node *> ns;
