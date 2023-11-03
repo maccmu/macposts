@@ -7,13 +7,14 @@ namespace graph
 {
 template <typename NData, typename LData>
 DiGraph<NData, LData>::Node::Node (NData data)
-    : data (data), next ({ nullptr, nullptr })
+    : data (std::move (data)), next ({ nullptr, nullptr })
 {
 }
 
 template <typename NData, typename LData>
 DiGraph<NData, LData>::Link::Link (LData data)
-    : data (data), endpoints ({ nullptr, nullptr }), next ({ nullptr, nullptr })
+    : data (std::move (data)), endpoints ({ nullptr, nullptr }),
+      next ({ nullptr, nullptr })
 {
 }
 
@@ -133,7 +134,7 @@ DiGraph<NData, LData>::add_node (NData data)
 {
   if (nodes.count (data))
     throw std::runtime_error ("node already in graph");
-  auto node = std::unique_ptr<Node> (new Node (data));
+  auto node = std::unique_ptr<Node> (new Node (std::move (data)));
   auto &r = *node;
   nodes.insert ({ std::cref (r.data), std::move (node) });
   return r;
@@ -148,7 +149,7 @@ DiGraph<NData, LData>::add_link (Node &from, Node &to, LData data)
   static const int incoming = static_cast<int> (Direction::Incoming);
   static const int outgoing = static_cast<int> (Direction::Outgoing);
 
-  auto link = std::unique_ptr<Link> (new Link (data));
+  auto link = std::unique_ptr<Link> (new Link (std::move (data)));
   link->endpoints[incoming] = &from;
   link->endpoints[outgoing] = &to;
   link->next[incoming] = to.next[incoming];
@@ -167,7 +168,7 @@ DiGraph<NData, LData>::add_link (const NData &from, const NData &to, LData data)
 {
   auto &&nfrom = get_node (from);
   auto &&nto = get_node (to);
-  return add_link (nfrom, nto, data);
+  return add_link (nfrom, nto, std::move (data));
 }
 
 template <typename NData, typename LData>
@@ -550,6 +551,42 @@ main (void)
         ls.push_back (&l);
       assert (ls.size () == 1);
       assert (ls[0] == &l1);
+    }
+  }
+
+  // Test case 4: other types of data
+  {
+    // `std::string'
+    {
+      using DiGraph =
+        typename macposts::graph::DiGraph<std::string, std::string>;
+
+      DiGraph g;
+      std::string d0 = "node 0";
+      auto &&n0 = g.add_node (std::move (d0));
+      auto &&n1 = g.add_node ("node 1");
+      auto &&n2 = g.add_node ("node 2");
+      auto &&l0 = g.add_link ("node 0", "node 1", "link 0");
+      auto &&l1 = g.add_link (n1, n2, "link 1");
+
+      assert (d0.empty ());
+      assert (&n0 == &g.get_node ("node 0"));
+      assert (&n1 == &g.get_node ("node 1"));
+      assert (&n2 == &g.get_node ("node 2"));
+      assert (&l0 == &g.get_link ("link 0"));
+      assert (&l1 == &g.get_link ("link 1"));
+    }
+
+    // `std::unique_ptr' (non-copyable)
+    {
+      using DiGraph =
+        typename macposts::graph::DiGraph<std::unique_ptr<int>, int>;
+
+      DiGraph g;
+      auto d0 = std::unique_ptr<int> (new int (0));
+      g.add_node (std::move (d0));
+      assert (g.size_nodes () == 1);
+      assert (!d0.get ());
     }
   }
 
