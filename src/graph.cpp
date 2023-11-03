@@ -1,4 +1,5 @@
 #include "graph.h"
+#include <stdexcept>
 
 namespace macposts
 {
@@ -125,6 +126,8 @@ template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Node &
 DiGraph<NData, LData>::add_node (NData data)
 {
+  if (nodes.count (data))
+    throw std::runtime_error ("node already in graph");
   auto node = std::unique_ptr<Node> (new Node (data));
   auto &r = *node;
   nodes.insert ({ std::cref (r.data), std::move (node) });
@@ -135,6 +138,8 @@ template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Link &
 DiGraph<NData, LData>::add_link (Node &from, Node &to, LData data)
 {
+  if (links.count (data))
+    throw std::runtime_error ("link already in graph");
   static const int incoming = static_cast<int> (Direction::Incoming);
   static const int outgoing = static_cast<int> (Direction::Outgoing);
 
@@ -245,6 +250,41 @@ main (void)
       assert (&n2 == &g.get_node (2));
       assert (&l0 == &g.get_link (0));
       assert (&l1 == &g.get_link (1));
+    }
+
+    {
+      try
+        {
+          g.add_node (0);
+          assert (false);
+        }
+      catch (const std::runtime_error &)
+        {
+        }
+      try
+        {
+          g.add_link (n0, n1, 0);
+          assert (false);
+        }
+      catch (const std::runtime_error &)
+        {
+        }
+      try
+        {
+          g.add_link (n0, n2, 1);
+          assert (false);
+        }
+      catch (const std::runtime_error &)
+        {
+        }
+      try
+        {
+          g.add_link (0, 1, 0);
+          assert (false);
+        }
+      catch (const std::runtime_error &)
+        {
+        }
     }
 
     {
