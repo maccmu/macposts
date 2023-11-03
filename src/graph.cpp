@@ -56,6 +56,11 @@ DiGraph<NData, LData>::Nodes::const_iterator::operator++ ()
 {
   if (current)
     {
+      // TODO: Switch to `assert'
+#ifndef NDEBUG
+      if (seen.count (current->endpoints[static_cast<int> (direction)]))
+        __builtin_trap ();
+#endif
       seen.insert (current->endpoints[static_cast<int> (direction)]);
       do
         {
