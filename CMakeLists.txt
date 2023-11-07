@@ -23,6 +23,7 @@ set_property(TARGET snap PROPERTY POSITION_INDEPENDENT_CODE ON)
 # guide at the top of this file.
 add_library(macposts STATIC
   src/cc_tree.cpp
+  src/delivery_traffic.cpp
   src/dlink.cpp
   src/dnode.cpp
   src/dso.cpp
@@ -30,6 +31,7 @@ add_library(macposts STATIC
   src/dta_gradient_utls.cpp
   src/due.cpp
   src/emission.cpp
+  src/ev_traffic.cpp
   src/factory.cpp
   src/gridlock_checker.cpp
   src/io.cpp

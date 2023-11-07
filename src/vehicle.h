@@ -45,7 +45,10 @@ public:
   {
     return m_label;
   }; // virtual getter for derived class
-     // private:
+
+  virtual int update_miles_traveled(MNM_Dlink *link);
+  
+  // private:
   Vehicle_type m_type;
   MNM_Dlink *m_current_link;
   TInt m_start_time;
@@ -58,6 +61,12 @@ public:
   // path
   MNM_Path *m_path;
   TInt m_assign_interval;
+
+  bool m_tracked;   // tracked to output route info
+  TFlt m_visual_position_on_link; //[0(start), 1(end)], for vehicle-based
+                                  // visualization
+
+  TFlt m_miles_traveled;
 
   TInt m_class;
   // m_bus_route only used in multimodal loading

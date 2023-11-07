@@ -12,6 +12,8 @@
 #include <dta.h>
 #include <due.h>
 #include <multimodal.h>
+#include <delivery_traffic.h>
+#include <ev_traffic.h>
 
 namespace py = pybind11;
 using SparseMatrixR = Eigen::SparseMatrix<double, Eigen::RowMajor>;
@@ -37,6 +39,8 @@ public:
                bool with_dtc = false, const std::string &method = "MSA");
   int run_dso (int max_iter, const std::string &folder, bool verbose = true,
                bool with_dtc = false, const std::string &method = "MSA");
+  int run_dnl_delivery_traffic(const std::string &folder, bool verbose = false, bool skip_check = false, int cong_frequency = 180);
+  int run_dnl_electrified_traffic(const std::string &folder, bool verbose = false, bool skip_check = false, int cong_frequency = 180);
   py::array_t<double> get_travel_stats ();
   std::string print_emission_stats ();
   int print_simulation_results (const std::string &folder,
@@ -110,6 +114,8 @@ init (py::module &m)
     .def ("run_whole", &Dta::run_whole, py::arg ("verbose") = false)
     .def ("run_due", &Dta::run_due)
     .def ("run_dso", &Dta::run_dso)
+    .def("run_dnl_delivery_traffic", &Dta::run_dnl_delivery_traffic)
+    .def("run_dnl_electrified_traffic", &Dta::run_dnl_electrified_traffic)
     .def ("install_cc", &Dta::install_cc)
     .def ("install_cc_tree", &Dta::install_cc_tree)
     .def ("get_travel_stats", &Dta::get_travel_stats)
@@ -202,7 +208,7 @@ Dta::initialize (const std::string &folder)
   m_dta->build_from_files ();
   m_dta->hook_up_node_and_link ();
   m_dta->is_ok ();
-  IAssert (m_dta->m_config->get_string ("routing_type") == "Due"
+  Assert (m_dta->m_config->get_string ("routing_type") == "Due"
            || m_dta->m_config->get_string ("routing_type") == "Hybrid"
            || m_dta->m_config->get_string ("routing_type") == "Fixed"
            || m_dta->m_config->get_string ("routing_type") == "Adaptive");
@@ -305,7 +311,7 @@ int
 Dta::run_due (int max_iter, const std::string &folder, bool verbose,
               bool with_dtc, const std::string &method)
 {
-  IAssert (m_dta == nullptr);
+  Assert (m_dta == nullptr);
   MNM_ConfReader *_config
     = new MNM_ConfReader (folder + "/config.conf", "STAT");
   std::string _rec_folder = _config->get_string ("rec_folder");
@@ -407,7 +413,7 @@ int
 Dta::run_dso (int max_iter, const std::string &folder, bool verbose,
               bool with_dtc, const std::string &method)
 {
-  IAssert (m_dta == nullptr);
+  Assert (m_dta == nullptr);
   MNM_ConfReader *_config
     = new MNM_ConfReader (folder + "/config.conf", "STAT");
   std::string _rec_folder = _config->get_string ("rec_folder");
@@ -509,6 +515,203 @@ Dta::run_dso (int max_iter, const std::string &folder, bool verbose,
   return 0;
 }
 
+int 
+Dta::run_dnl_delivery_traffic(const std::string &folder, bool verbose, bool skip_check, int cong_frequency)
+{
+  Assert(m_dta == nullptr);
+  MNM_ConfReader *_config = new MNM_ConfReader(folder + "/config.conf", "STAT");
+  std::string _rec_folder = _config -> get_string("rec_folder");
+  delete _config;
+
+  m_dta = new MNM_Dta_Delivery(folder);
+  printf("================================ DTA set! =================================\n");
+  m_dta -> build_from_files();
+  printf("========================= Finished initialization! ========================\n");
+  m_dta -> hook_up_node_and_link();
+  MNM_Dlink *_link;
+	for (auto _link_it : m_dta -> m_link_factory -> m_link_map){
+		_link = _link_it.second;
+		_link -> install_cumulative_curve();
+	}
+  printf("====================== Finished node and link hook-up! ====================\n");
+  if (!skip_check) {
+    m_dta -> is_ok();
+    printf("============================ DTA is OK to run! ============================\n");
+  }
+  m_dta -> pre_loading();
+  printf("========================== Finished pre_loading! ==========================\n");
+
+	printf("\n\n\n====================================== Start loading! =======================================\n");
+  m_dta -> loading(verbose);
+  printf("\n====================================== Finished loading! =======================================\n\n\n");
+
+  // Output total travels and travel time, before divided by flow_scalar
+	TInt _finished_car, _released_car, _enroute_car, _released_delivery_car;
+	TFlt _tot_tt_car;
+	MNM_Veh_Factory_Delivery *_veh_factory = dynamic_cast<MNM_Veh_Factory_Delivery*>(m_dta -> m_veh_factory);
+
+	_finished_car = _veh_factory -> m_finished;
+	_released_car = _veh_factory -> m_num_veh;
+	_enroute_car = _veh_factory -> m_enroute;
+	_released_delivery_car = _veh_factory -> m_veh_delivery;
+	_tot_tt_car = _veh_factory -> m_total_time * m_dta -> m_unit_time / 3600.0;
+	for (auto _map_it : m_dta -> m_veh_factory -> m_veh_map){
+		if (_map_it.second -> m_finish_time > 0) {
+			throw std::runtime_error("Finished vehicles are deleted and remaining vehicles are all enroute");
+		}
+		else {
+			_tot_tt_car += (m_dta -> m_current_loading_interval - _map_it.second -> m_start_time) * m_dta -> m_unit_time / 3600.0;
+		}
+	}
+  // divided by flow_scalar
+  _finished_car = _finished_car / m_dta -> m_flow_scalar;
+  _released_car = _released_car / m_dta -> m_flow_scalar;
+  _enroute_car = _enroute_car / m_dta -> m_flow_scalar;
+  _released_delivery_car = _released_delivery_car / m_dta -> m_flow_scalar;
+  _tot_tt_car = _tot_tt_car / m_dta -> m_flow_scalar;
+
+  std::string _str;
+	std::ofstream _vis_file;
+	_vis_file.open(folder + "/" + _rec_folder + "/statistics_and_emission.txt", std::ofstream::out);
+	if (! _vis_file.is_open()){
+		throw std::runtime_error("Error happens when open _vis_file\n");
+	}
+	_str = "Total released car: " + std::to_string(int(_released_car)) + "\n" 
+	       + "Total finished car: " + std::to_string(int(_finished_car)) + "\n" 
+		     + "Total enroute car: " + std::to_string(int(_enroute_car)) + "\n" 
+		     + "Total released delivery car: " + std::to_string(int(_released_delivery_car)) + "\n"
+		     + "Total car tt: " + std::to_string(float(_tot_tt_car)) + " hours\n\n";
+
+	_str += print_emission_stats();
+	std::cout << _str << std::endl;
+	_vis_file << _str;
+	if (_vis_file.is_open()) _vis_file.close();
+
+  print_simulation_results(folder + "/" + _rec_folder, cong_frequency);
+
+  printf("Finished DNL!\n");
+  return 0;
+}
+
+int 
+Dta::run_dnl_electrified_traffic(const std::string &folder, bool verbose, bool skip_check, int cong_frequency)
+{
+  Assert (m_dta == nullptr);
+  MNM_ConfReader *_config = new MNM_ConfReader(folder + "/config.conf", "STAT");
+  std::string _rec_folder = _config -> get_string("rec_folder");
+	delete _config;
+
+	m_dta = new MNM_Dta_EV(folder);
+	printf("================================ DTA set! =================================\n");
+	m_dta -> build_from_files();
+	printf("========================= Finished initialization! ========================\n");
+	m_dta -> hook_up_node_and_link();
+
+  MNM_Dlink *_link;
+	for (auto _link_it : m_dta -> m_link_factory -> m_link_map){
+		_link = _link_it.second;
+		_link -> install_cumulative_curve();
+	}
+	printf("====================== Finished node and link hook-up! ====================\n");
+
+  if (!skip_check) {
+    m_dta -> is_ok();
+    printf("============================ DTA is OK to run! ============================\n");
+  }
+
+	m_dta -> pre_loading();
+	printf("========================== Finished pre_loading! ==========================\n");
+
+	printf("\n\n\n====================================== Start loading! =======================================\n");
+  m_dta -> loading(verbose);
+  printf("\n====================================== Finished loading! =======================================\n\n\n");
+
+	// Output total travels and travel time, before divided by flow_scalar
+	TInt _finished_car, _released_car, _enroute_car, _released_delivery_car, _released_electrified_car, _home_charged_electrified_car;
+	TFlt _tot_tt_car;
+	MNM_Veh_Factory_EV *_veh_factory = dynamic_cast<MNM_Veh_Factory_EV*>(m_dta -> m_veh_factory);
+
+	_finished_car = _veh_factory -> m_finished;
+	_released_car = _veh_factory -> m_num_veh;
+	_enroute_car = _veh_factory -> m_enroute;
+	_released_delivery_car = _veh_factory -> m_veh_delivery;
+	_released_electrified_car = _veh_factory -> m_veh_electrified;
+  _home_charged_electrified_car = _veh_factory -> m_veh_non_roadside_charging;
+	_tot_tt_car = _veh_factory -> m_total_time * m_dta -> m_unit_time / 3600.0;
+	for (auto _map_it : m_dta -> m_veh_factory -> m_veh_map){
+		if (_map_it.second -> m_finish_time > 0) {
+			throw std::runtime_error("Finished vehicles are deleted and remaining vehicles are all enroute");
+		}
+		else {
+			_tot_tt_car += (m_dta -> m_current_loading_interval - _map_it.second -> m_start_time) * m_dta -> m_unit_time / 3600.0;
+		}
+	}
+  // divided by flow_scalar
+  _finished_car = _finished_car / m_dta -> m_flow_scalar;
+  _released_car = _released_car / m_dta -> m_flow_scalar;
+  _enroute_car = _enroute_car / m_dta -> m_flow_scalar;
+  _released_delivery_car = _released_delivery_car / m_dta -> m_flow_scalar;
+  _released_electrified_car = _released_electrified_car / m_dta -> m_flow_scalar;
+  _home_charged_electrified_car = _home_charged_electrified_car / m_dta -> m_flow_scalar;
+  _tot_tt_car = _tot_tt_car / m_dta -> m_flow_scalar;
+
+  std::string _str;
+	std::ofstream _vis_file;
+	_vis_file.open(folder + "/" + _rec_folder + "/statistics_and_emission.txt", std::ofstream::out);
+	if (! _vis_file.is_open()){
+		throw std::runtime_error("Error happens when open _vis_file\n");
+	}
+	_str = "\nActual figures are already divided by flow_scalar\n"
+          "Total released car: " + std::to_string(int(_released_car)) + "\n" 
+	      + "Total finished car: " + std::to_string(int(_finished_car)) + "\n" 
+        + "Total enroute car: " + std::to_string(int(_enroute_car)) + "\n" 
+        + "Total released delivery car: " + std::to_string(int(_released_delivery_car)) + "\n"
+        + "Total released electrified car: " + std::to_string(int(_released_electrified_car)) + "\n"
+        + "Total home charged electrified car: " + std::to_string(int(_home_charged_electrified_car)) + "\n"
+        + "Total roadside charged electrified car: " + std::to_string(int(_released_electrified_car) - int(_home_charged_electrified_car)) + "\n"
+        + "Total car tt: " + std::to_string(float(_tot_tt_car)) + " hours\n\n";
+
+	_str += print_emission_stats();
+	std::cout << _str << std::endl;
+	_vis_file << _str;
+	if (_vis_file.is_open()) _vis_file.close();
+
+  print_simulation_results(folder + "/" + _rec_folder, cong_frequency);
+
+	// std::ofstream _vis_file2;
+	// if (output_link_cong){
+	// 	_vis_file2.open(folder + "/" + _rec_folder + "/link_cong_raw.txt", std::ofstream::out);
+	// 	if (! _vis_file2.is_open()){
+  //     throw std::runtime_error("Error happens when open _vis_file2\n");
+  //   }
+	// 	TInt _iter = 0;
+	// 	_str = "timestamp(intervals) link_ID car_inflow car_tt(s) car_fftt(s) car_speed(mph)\n";
+	// 	_vis_file2 << _str;
+  //   while (_iter < m_dta -> m_current_loading_interval){
+  //       if (_iter % cong_frequency == 0){
+  //           // printf("Current loading interval: %d\n", int(_iter));
+  //           for (auto _link_it : m_dta -> m_link_factory -> m_link_map){
+  //               _link = _link_it.second;
+  //               _str = std::to_string(int(_iter)) + " ";
+  //               _str += std::to_string(_link -> m_link_ID()) + " ";
+  //               _str += std::to_string(MNM_DTA_GRADIENT::get_link_inflow(_link, _iter, _iter + cong_frequency)) + " ";
+  //               _str += std::to_string(MNM_DTA_GRADIENT::get_travel_time(_link, TFlt(_iter + 1), m_dta -> m_unit_time, m_dta -> m_current_loading_interval) * m_dta -> m_unit_time) + " ";
+  //               _str += std::to_string(_link -> get_link_freeflow_tt()) + " ";
+  //               _str += std::to_string(_link -> m_length/(MNM_DTA_GRADIENT::get_travel_time(_link, TFlt(_iter + 1), m_dta -> m_unit_time, m_dta -> m_current_loading_interval) * m_dta -> m_unit_time) * 3600 / 1600) + "\n";
+  //               _vis_file2 << _str;
+  //           }
+  //       }
+  //       _iter += 1;
+  //   }
+	// 	if (_vis_file2.is_open()) _vis_file2.close();
+	// }
+
+	MNM_IO_EV::save_charging_station_record(folder + "/" + _rec_folder, m_dta ->m_node_factory);
+
+  printf("Finished DNL!\n");
+  return 0;
+}
+
 int
 Dta::get_cur_loading_interval ()
 {
@@ -604,8 +807,8 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
           throw std::runtime_error ("failed to open _vis_file2");
         }
 
-      _str1 = "timestamp (intervals), driving_link_ID, vehicle_inflow, "
-              "vehicle_tt (s), vehicle_fftt (s), vehicle_speed (mph)\n";
+      _str1 = "timestamp(intervals) driving_link_ID vehicle_inflow vehicle_outflow "
+              "vehicle_tt(s) vehicle_fftt(s) vehicle_freeflow_speed(mph) vehicle_speed(mph)\n";
       _vis_file2 << _str1;
 
       TInt _iter = 0;
@@ -613,7 +816,7 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
         {
           if (_iter % cong_frequency == 0 || _iter == _current_inter - 1)
             {
-              printf ("Current loading interval: %d\n", int (_iter));
+              // printf ("Current loading interval: %d\n", int (_iter));
               for (auto _link_it : m_dta->m_link_factory->m_link_map)
                 {
                   _link = _link_it.second;
@@ -622,6 +825,12 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
                   _str1
                     += std::to_string (
                          MNM_DTA_GRADIENT::get_link_inflow (_link, _iter,
+                                                            _iter
+                                                              + cong_frequency))
+                       + " ";
+                  _str1
+                    += std::to_string (
+                         MNM_DTA_GRADIENT::get_link_outflow (_link, _iter,
                                                             _iter
                                                               + cong_frequency))
                        + " ";
@@ -637,13 +846,23 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
                                m_dta->m_current_loading_interval)
                              * m_dta->m_unit_time)
                            + " "; // seconds
-                  _str1
-                    += std::to_string (_link->get_link_freeflow_tt ()) + " ";
+                  // _str1 += std::to_string (_link->get_link_freeflow_tt ()) + " ";  // seconds
+                  _str1 += std::to_string (_link->get_link_freeflow_tt_loading () * m_dta->m_unit_time) + " ";  // seconds
                   // _str1 += std::to_string(_link_m ->
                   // m_length/(MNM_DTA_GRADIENT::get_travel_time(_link,
                   // TFlt(_iter + 1), m_dta -> m_unit_time, m_dta ->
                   // m_current_loading_interval) * m_dta -> m_unit_time) * 3600
                   // / 1600) + " ";
+                  // _str1 += std::to_string (
+                  //            _link->m_length
+                  //            / _link->get_link_freeflow_tt ()
+                  //            * 3600 / 1600)
+                  //          + " "; // mph
+                  _str1 += std::to_string (
+                             _link->m_length
+                             / (_link->get_link_freeflow_tt_loading () * m_dta -> m_unit_time)
+                             * 3600 / 1600)
+                           + " "; // mph
                   _str1 += std::to_string (
                              _link->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_robust (
@@ -678,6 +897,7 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
       if (_vis_file2.is_open ())
         _vis_file2.close ();
     }
+  std::cout << "Finish printing simulation results" << std::endl;
   return 0;
 }
 
@@ -1216,7 +1436,7 @@ Dta::generate_paths_to_cover_registered_links ()
               // exit(-1);
               continue;
             }
-          IAssert (_origin != nullptr && _dest != nullptr);
+          Assert (_origin != nullptr && _dest != nullptr);
 
           if (!_shortest_path_tree.empty ())
             {
@@ -1853,7 +2073,7 @@ Dta::save_dar_matrix (py::array_t<int> start_intervals,
                 "Error, Dta::save_dar_matrix, input end intervals exceeds "
                 "the total loading intervals");
             }
-          IAssert (_record.empty ());
+          Assert (_record.empty ());
           MNM_DTA_GRADIENT::add_dar_records (_record, m_link_vec[i], m_path_map,
                                              TFlt (start_ptr[t]),
                                              TFlt (end_ptr[t]));

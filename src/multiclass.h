@@ -26,6 +26,13 @@ public:
                         TFlt ffs_truck);
   virtual ~MNM_Dlink_Multiclass () override;
 
+  virtual int modify_property(TInt number_of_lane, TFlt length,
+                              TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                              TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                              TFlt ffs_car, TFlt ffs_truck);
+
+  virtual void print_info() override;
+
   // use this one instead of the one in Dlink class
   int install_cumulative_curve_multiclass ();
   // use this one instead of the one in Dlink class
@@ -125,6 +132,11 @@ public:
   int update_out_veh ();
   int move_last_cell ();
 
+  virtual int modify_property(TInt number_of_lane, TFlt length,
+                              TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                              TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                              TFlt ffs_car, TFlt ffs_truck) override;
+
   TFlt m_unit_time;
   TInt m_num_cells;
   TFlt m_lane_hold_cap_car;
@@ -147,13 +159,19 @@ public:
   Ctm_Cell_Multiclass (TInt cell_ID, TFlt cell_length, TFlt unit_time,
                        TFlt hold_cap_car, TFlt hold_cap_truck,
                        TFlt critical_density_car, TFlt critical_density_truck,
-                       TFlt m_rho_1_N, TFlt flow_cap_car, TFlt flow_cap_truck,
+                       TFlt rho_1_N, TFlt flow_cap_car, TFlt flow_cap_truck,
                        TFlt ffs_car, TFlt ffs_truck, TFlt wave_speed_car,
                        TFlt wave_speed_truck, TFlt flow_scalar);
   ~Ctm_Cell_Multiclass ();
   TFlt get_perceived_demand (TInt veh_type);
   TFlt get_perceived_supply (TInt veh_type);
   int update_perceived_density ();
+
+  int modify_property(TFlt hold_cap_car, TFlt hold_cap_truck,
+                       TFlt critical_density_car, TFlt critical_density_truck,
+                       TFlt rho_1_N, TFlt flow_cap_car, TFlt flow_cap_truck,
+                       TFlt ffs_car, TFlt ffs_truck, TFlt wave_speed_car,
+                       TFlt wave_speed_truck);
 
   TInt m_cell_ID;
   TFlt m_cell_length;
@@ -215,6 +233,11 @@ public:
   virtual TInt get_link_freeflow_tt_loading_truck () override; // intervals
 
   int update_perceived_density ();
+
+  virtual int modify_property(TInt number_of_lane, TFlt length,
+                            TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+                            TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+                            TFlt ffs_car, TFlt ffs_truck) override;
 
   std::deque<MNM_Veh *> m_veh_queue_car;
   std::deque<MNM_Veh *> m_veh_queue_truck;
@@ -433,8 +456,7 @@ public:
   }; // virtual getter for derived class
 
   TInt m_class;
-  TFlt m_visual_position_on_link; //[0(start), 1(end)], for vehicle-based
-                                  // visualization
+  
 };
 
 ///
@@ -472,6 +494,20 @@ public:
                                    TFlt flow_scalar, TFlt veh_convert_factor);
 };
 
+struct td_link_attribute_row {
+  std::string link_type;
+  float length;
+  float FFS_car;
+  float Cap_car;
+  float RHOJ_car;
+  int Lane;
+  float FFS_truck;
+  float Cap_truck;
+  float RHOJ_truck;
+  float Convert_factor;
+  float toll;
+};
+
 class MNM_Link_Factory_Multiclass : public MNM_Link_Factory
 {
 public:
@@ -484,6 +520,11 @@ public:
     TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car,
     TFlt lane_flow_cap_truck, TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
     TFlt veh_convert_factor, TFlt flow_scalar);
+
+  virtual int update_link_attribute(TInt interval) override;
+
+  std::unordered_map<int, std::unordered_map<int, td_link_attribute_row*>*>* m_td_link_attribute_table;
+
 };
 
 class MNM_OD_Factory_Multiclass : public MNM_OD_Factory
@@ -538,6 +579,9 @@ public:
                                          MNM_Link_Factory *link_factory,
                                          const std::string &file_name
                                          = "MNM_input_link_toll");
+  static int build_link_td_attribute(const std::string &file_folder,
+                                    MNM_Link_Factory *link_factory,
+                                    const std::string &file_name = "MNM_input_link_td_attribute");
 };
 
 ///
@@ -553,6 +597,7 @@ public:
   virtual int build_from_files () override;
   virtual int pre_loading () override;
   virtual int record_queue_vehicles () override;
+  int loading_vehicle_tracking(bool verbose, const std::string &folder, double sampling_rate, int frequency);
 
   std::unordered_map<TInt, std::deque<TInt> *> m_queue_veh_map_car;
   std::unordered_map<TInt, std::deque<TInt> *> m_queue_veh_map_truck;
@@ -568,11 +613,14 @@ TFlt get_link_inflow_car (MNM_Dlink_Multiclass *link, TFlt start_time,
                           TFlt end_time);
 TFlt get_link_inflow_car (MNM_Dlink_Multiclass *link, TInt start_time,
                           TInt end_time);
+TFlt get_link_outflow_car (MNM_Dlink_Multiclass *link, TInt start_time,
+                          TInt end_time);                          
 TFlt get_link_inflow_truck (MNM_Dlink_Multiclass *link, TFlt start_time,
                             TFlt end_time);
 TFlt get_link_inflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
                             TInt end_time);
-
+TFlt get_link_outflow_truck (MNM_Dlink_Multiclass *link, TInt start_time,
+                            TInt end_time);
 TFlt get_average_waiting_time_at_intersection (MNM_Dlink_Multiclass *link);
 TFlt get_average_waiting_time_at_intersection_car (MNM_Dlink_Multiclass *link);
 TFlt
@@ -675,11 +723,18 @@ int add_ltg_records_eigen_veh (std::vector<Eigen::Triplet<double>> &record,
 namespace MNM
 {
 int print_vehicle_statistics (MNM_Veh_Factory_Multiclass *veh_factory);
+
 Path_Table *build_pathset_multiclass (
   PNEGraph &graph, MNM_OD_Factory *od_factory, MNM_Link_Factory *link_factory,
   TFlt min_path_length = 0.0, size_t MaxIter = 10, TFlt vot = 6.,
   TFlt Mid_Scale = 3, TFlt Heavy_Scale = 6, TInt buffer_length = -1);
-}
+
+int print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
+                                const std::string &folder,
+                                int interval,
+                                double sampling_rate,
+                                int cong_frequency);
+};
 
 ///
 /// Multiclass emissions

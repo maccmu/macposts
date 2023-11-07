@@ -43,6 +43,10 @@ public:
   std::string print_emission_stats ();
   int print_simulation_results (const std::string &folder,
                                 int cong_frequency = 180);
+  int run_whole_vehicle_tracking (bool verbose,
+                                  const std::string &folder,
+                                  double sampling_rate = 0.05,
+                                  int cong_frequency = 1);
 
   int build_link_cost_map (bool with_congestion_indicator = false);
   int get_link_queue_dissipated_time ();
@@ -77,9 +81,11 @@ public:
 
   int register_paths (py::array_t<int> paths);
 
+  py::array_t<int> get_registered_links_coverage_in_registered_paths ();
   std::vector<bool> check_registered_links_in_registered_paths ();
   py::array_t<bool> are_registered_links_in_registered_paths ();
   py::array_t<int> generate_paths_to_cover_registered_links ();
+  py::array_t<int> generate_paths_to_cover_links (py::array_t<int> links, int max_iter);
   int save_path_table (const std::string &folder);
 
   py::array_t<double> get_car_link_out_cc (int link_ID);
@@ -191,6 +197,7 @@ init (py::module &m)
     .def ("get_cur_loading_interval", &Mcdta::get_cur_loading_interval)
     .def_property_readonly ("links", &Mcdta::get_all_links, "IDs of all links.")
     .def ("print_simulation_results", &Mcdta::print_simulation_results)
+    .def ("run_whole_vehicle_tracking", &Mcdta::run_whole_vehicle_tracking)
 
     .def ("build_link_cost_map", &Mcdta::build_link_cost_map)
     .def ("get_link_queue_dissipated_time",
@@ -202,10 +209,14 @@ init (py::module &m)
     .def ("register_paths", &Mcdta::register_paths)
     .def_property_readonly ("registered_links", &Mcdta::get_registered_links,
                             "IDs of previously registered links.")
+    .def("get_registered_links_coverage_in_registered_paths",
+         &Mcdta::get_registered_links_coverage_in_registered_paths)
     .def ("are_registered_links_in_registered_paths",
           &Mcdta::are_registered_links_in_registered_paths)
     .def ("generate_paths_to_cover_registered_links",
           &Mcdta::generate_paths_to_cover_registered_links)
+    .def ("generate_paths_to_cover_links",
+          &Mcdta::generate_paths_to_cover_links)
 
     .def ("get_car_link_fftt", &Mcdta::get_car_link_fftt)
     .def ("get_truck_link_fftt", &Mcdta::get_truck_link_fftt)
@@ -412,7 +423,7 @@ Mcdta::generate_shortest_pathsets (const std::string &folder, int max_iter,
   // m_mcdta -> hook_up_node_and_link();
   // m_mcdta -> is_ok();
 
-  IAssert (m_mcdta != nullptr);
+  Assert (m_mcdta != nullptr);
   // this is based on travel time
   Path_Table *_driving_path_table
     = MNM::build_pathset_multiclass (m_mcdta->m_graph, m_mcdta->m_od_factory,
@@ -582,9 +593,10 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
           throw std::runtime_error ("failed to open _vis_file2");
         }
 
-      _str1 = "timestamp (intervals), driving_link_ID, car_inflow, "
-              "truck_inflow, car_tt (s), truck_tt (s), car_fftt (s), "
-              "truck_fftt (s), car_speed (mph), truck_speed (mph)\n";
+      _str1 = "timestamp(intervals) driving_link_ID car_inflow car_outflow "
+              "truck_inflow truck_outflow car_tt(s) truck_tt(s) car_fftt(s) "
+              "truck_fftt(s) car_freeflow_speed(mph) car_speed(mph) "
+              "truck_freeflow_speed(mph) truck_speed(mph)\n";
       _vis_file2 << _str1;
 
       TInt _iter = 0;
@@ -592,7 +604,7 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
         {
           if (_iter % cong_frequency == 0 || _iter == _current_inter - 1)
             {
-              printf ("Current loading interval: %d\n", int (_iter));
+              // printf ("Current loading interval: %d\n", int (_iter));
               for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
                 {
                   _link = _link_it.second;
@@ -606,7 +618,17 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                            + " ";
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
+                               get_link_outflow_car (_link_m, _iter,
+                                                    _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
                                get_link_inflow_truck (_link_m, _iter,
+                                                      _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
+                               get_link_outflow_truck (_link_m, _iter,
                                                       _iter + cong_frequency))
                            + " ";
                   // _str1 +=
@@ -634,11 +656,14 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                                m_mcdta->m_current_loading_interval)
                              * m_mcdta->m_unit_time)
                            + " ";
-                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_car ())
+                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_car ())
+                  //          + " ";
+                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_truck ())
+                  //          + " ";
+                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_loading_car () * m_mcdta -> m_unit_time)
                            + " ";
-                  _str1
-                    += std::to_string (_link_m->get_link_freeflow_tt_truck ())
-                       + " ";
+                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_loading_truck () * m_mcdta -> m_unit_time)
+                           + " ";
                   // _str1 += std::to_string(_link_m ->
                   // m_length/(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
                   // TFlt(_iter + 1), m_mcdta -> m_unit_time, m_mcdta ->
@@ -648,6 +673,17 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   // TFlt(_iter + 1), m_mcdta -> m_unit_time, m_mcdta ->
                   // m_current_loading_interval) * m_mcdta -> m_unit_time) *
                   // 3600 / 1600) + "\n";
+
+                  // _str1 += std::to_string (
+                  //            _link_m->m_length
+                  //            / _link_m->get_link_freeflow_tt_car ()
+                  //            * 3600 / 1600)
+                  //          + " "; // mph
+                  _str1 += std::to_string (
+                             _link_m->m_length
+                             / (_link_m->get_link_freeflow_tt_loading_car () * m_mcdta -> m_unit_time)
+                             * 3600 / 1600)
+                           + " "; // mph
                   _str1 += std::to_string (
                              _link_m->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_car_robust (
@@ -656,6 +692,16 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                                   m_mcdta->m_unit_time,
                                   m_mcdta->m_current_loading_interval)
                                 * m_mcdta->m_unit_time)
+                             * 3600 / 1600)
+                           + " "; // mph
+                  // _str1 += std::to_string (
+                  //            _link_m->m_length
+                  //            / _link_m->get_link_freeflow_tt_truck ()
+                  //            * 3600 / 1600)
+                  //          + " "; // mph
+                  _str1 += std::to_string (
+                             _link_m->m_length
+                             / (_link_m->get_link_freeflow_tt_loading_truck () * m_mcdta -> m_unit_time)
                              * 3600 / 1600)
                            + " "; // mph
                   _str1 += std::to_string (
@@ -697,6 +743,18 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
       if (_vis_file2.is_open ())
         _vis_file2.close ();
     }
+  std::cout << "Finish printing simulation results" << std::endl;
+  return 0;
+}
+
+int 
+Mcdta::run_whole_vehicle_tracking (bool verbose,
+                                  const std::string &folder,
+                                  double sampling_rate,
+                                  int cong_frequency)
+{
+  m_mcdta -> pre_loading ();
+  m_mcdta -> loading_vehicle_tracking(verbose, folder, sampling_rate, cong_frequency);
   return 0;
 }
 
@@ -1235,7 +1293,7 @@ Mcdta::update_tdsp_tree ()
       m_tdsp_tree_map.insert (
         std::pair<TInt, MNM_TDSP_Tree *> (_dest_node_ID, _tdsp_tree));
       _tdsp_tree = nullptr;
-      IAssert (m_tdsp_tree_map.find (_dest_node_ID)->second != nullptr);
+      Assert (m_tdsp_tree_map.find (_dest_node_ID)->second != nullptr);
     }
   return 0;
 }
@@ -1277,7 +1335,7 @@ Mcdta::get_lowest_cost_path (int start_interval, int o_node_ID, int d_node_ID)
       _path_set
         = _path_table->find (o_node_ID)->second->find (d_node_ID)->second;
     }
-  IAssert (_path_set != nullptr);
+  Assert (_path_set != nullptr);
 
   _tdsp_tree = m_tdsp_tree_map.find (d_node_ID)->second;
 
@@ -1317,7 +1375,7 @@ Mcdta::get_lowest_cost_path (int start_interval, int o_node_ID, int d_node_ID)
         }
     }
   IAssert (_cur_best_time >= 0 && _cur_best_assign_col >= 0);
-  IAssert (_cur_best_path != nullptr);
+  Assert (_cur_best_path != nullptr);
 
   _exist = _path_set->is_in (_cur_best_path);
   _num_col = (int) _cur_best_path->m_node_vec.size ();
@@ -2296,6 +2354,38 @@ Mcdta::register_paths (py::array_t<int> paths)
   return 0;
 }
 
+py::array_t<int>
+Mcdta::get_registered_links_coverage_in_registered_paths()
+{
+  int new_shape[2] = {(int) m_path_vec.size(), (int) m_link_vec.size ()};
+  auto result = py::array_t<int> (new_shape);
+  auto result_buf = result.request ();
+  int *result_ptr = (int *) result_buf.ptr;
+
+  if (m_link_vec.empty ())
+  {
+    printf ("Warning, Mcdta::get_registered_links_coverage_in_registered_paths, "
+            "no link registered\n");
+    return result;
+  }
+  if (m_path_vec.empty ())
+  {
+    printf ("Warning, Mcdta::get_registered_links_coverage_in_registered_paths, "
+            "no path registered\n");
+    return result;
+  }
+
+  for (size_t j = 0; j < m_path_vec.size(); ++j)
+  {
+    MNM_Path *_path = m_path_vec[j];
+    for (size_t i = 0; i < m_link_vec.size (); ++i)
+    {
+      result_ptr[j * new_shape[1] + i] = _path->is_link_in (m_link_vec[i]->m_link_ID);
+    }
+  }
+  return result;
+}
+
 std::vector<bool>
 Mcdta::check_registered_links_in_registered_paths ()
 {
@@ -2489,8 +2579,7 @@ Mcdta::generate_paths_to_cover_registered_links ()
                                    std::end (pair_ptrs_2));
               for (auto _it_it : pair_ptrs_2)
                 {
-                  _dest
-                    = dynamic_cast<MNM_Destination_Multiclass *> (_it_it.first);
+                  _dest = dynamic_cast<MNM_Destination_Multiclass *> (_it_it.first);
                   if (_shortest_path_tree
                           .find (_origin->m_origin_node->m_node_ID)
                           ->second
@@ -2516,7 +2605,7 @@ Mcdta::generate_paths_to_cover_registered_links ()
               // exit(-1);
               continue;
             }
-          IAssert (_origin != nullptr && _dest != nullptr);
+          Assert (_origin != nullptr && _dest != nullptr);
 
           if (!_shortest_path_tree.empty ())
             {
@@ -2600,6 +2689,199 @@ Mcdta::generate_paths_to_cover_registered_links ()
     }
 
   _link_existing.clear ();
+  _cost_map.clear ();
+  _shortest_path_tree.clear ();
+  _shortest_path_tree_reversed.clear ();
+  reversed_graph.Clr ();
+  pair_ptrs_1.clear ();
+  pair_ptrs_2.clear ();
+  return result;
+}
+
+py::array_t<int> 
+Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
+{
+  auto links_buf = links.request ();
+  if (links_buf.ndim != 1)
+  {
+    throw std::runtime_error ("Error, Mcdta::generate_paths_to_cover_links, "
+                              "input dimension mismatch");
+  }
+  int num_links = links_buf.shape[0];
+  int new_shape[1] = { num_links };
+  auto result = py::array_t<int> (new_shape);
+  auto result_buf = result.request ();
+  int *result_ptr = (int *) result_buf.ptr;
+  int *links_ptr = (int *) links_buf.ptr;
+  
+  PNEGraph reversed_graph = MNM_Ults::reverse_graph (m_mcdta->m_graph);
+  std::unordered_map<TInt, TFlt> _cost_map = std::unordered_map<TInt, TFlt> ();
+  for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
+  {
+    _cost_map.insert (std::pair<TInt, TFlt> (_link_it.first,
+                                             dynamic_cast<MNM_Dlink_Multiclass *> (_link_it.second) ->get_link_freeflow_tt_car ()));
+  }
+  std::unordered_map<TInt, TInt> _shortest_path_tree = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TInt> _shortest_path_tree_reversed = std::unordered_map<TInt, TInt> ();
+  TInt _from_node_ID, _to_node_ID;
+  MNM_Origin_Multiclass *_origin;
+  MNM_Destination_Multiclass *_dest;
+  MNM_Path *_path_1, *_path_2, *_path;
+  std::vector<std::pair<TInt, MNM_Origin *>> pair_ptrs_1 = std::vector<std::pair<TInt, MNM_Origin *>> ();
+  std::vector<std::pair<MNM_Destination *, TFlt *>> pair_ptrs_2 = std::vector<std::pair<MNM_Destination *, TFlt *>> ();
+
+  for (size_t i = 0; i < num_links; ++i) {
+    result_ptr[i] = 0;
+  }
+
+  for (size_t i = 0; i < num_links; ++i)
+  {
+    // generate new path including this link
+    _from_node_ID = m_mcdta->m_graph->GetEI (links_ptr[i]).GetSrcNId ();
+    _to_node_ID = m_mcdta->m_graph->GetEI (links_ptr[i]).GetDstNId ();
+
+    // path from origin to from_node_ID
+    if (!_shortest_path_tree.empty ())
+    {
+      _shortest_path_tree.clear ();
+    }
+    if (dynamic_cast<MNM_DMOND_Multiclass *> (m_mcdta->m_node_factory->get_node (_from_node_ID))
+        != nullptr)
+    {
+      _path_1 = new MNM_Path ();
+      _path_1->m_node_vec.push_back (_from_node_ID);
+    }
+    else
+    {
+      MNM_Shortest_Path::all_to_one_FIFO (_from_node_ID,
+                                          m_mcdta->m_graph, _cost_map,
+                                          _shortest_path_tree);
+    }
+
+    // path from to_node_ID to destination
+    if (!_shortest_path_tree_reversed.empty ())
+    {
+      _shortest_path_tree_reversed.clear ();
+    }
+    if (dynamic_cast<MNM_DMDND_Multiclass *> (m_mcdta->m_node_factory->get_node (_to_node_ID))
+        != nullptr)
+    {
+      _path_2 = new MNM_Path ();
+      _path_2->m_node_vec.push_back (_to_node_ID);
+    }
+    else
+    {
+      MNM_Shortest_Path::all_to_one_FIFO (_to_node_ID, reversed_graph,
+                                          _cost_map,
+                                          _shortest_path_tree_reversed);
+    }
+
+    for (size_t k = 0; k < max_iter; ++k) 
+    {
+      _origin = nullptr;
+      _dest = nullptr;
+      bool _flg = false;
+
+      if (!pair_ptrs_1.empty ()) pair_ptrs_1.clear ();
+      for (const auto &p : m_mcdta->m_od_factory->m_origin_map)
+      {
+        pair_ptrs_1.emplace_back (p);
+      }
+      std::random_shuffle (std::begin (pair_ptrs_1), std::end (pair_ptrs_1));
+      for (auto _it : pair_ptrs_1)
+      {
+        _origin = dynamic_cast<MNM_Origin_Multiclass *> (_it.second);
+        if (_origin->m_demand_car.empty ()) continue;
+          
+        if (!pair_ptrs_2.empty ()) pair_ptrs_2.clear ();
+        for (const auto &p : _origin->m_demand_car)
+        {
+          pair_ptrs_2.emplace_back (p);
+        }
+        std::random_shuffle (std::begin (pair_ptrs_2), std::end (pair_ptrs_2));
+        for (auto _it_it : pair_ptrs_2)
+        {
+          _dest = dynamic_cast<MNM_Destination_Multiclass *> (_it_it.first);
+          if (_shortest_path_tree.find (_origin->m_origin_node->m_node_ID)->second != -1
+              && _shortest_path_tree_reversed.find (_dest->m_dest_node->m_node_ID)->second != -1)
+          {
+            _flg = true;
+            break;
+          }
+        }
+        if (_flg) break;
+      }
+
+      if (!_flg)
+      {
+        continue;
+      }
+      Assert (_origin != nullptr && _dest != nullptr);
+
+      if (!_shortest_path_tree.empty ())
+      {
+        _path_1 = MNM::extract_path (_origin->m_origin_node->m_node_ID,
+                                      _from_node_ID, _shortest_path_tree,
+                                      m_mcdta->m_graph);
+      }
+      if (!_shortest_path_tree_reversed.empty ())
+      {
+        _path_2 = MNM::extract_path (_dest->m_dest_node->m_node_ID, _to_node_ID,
+                                    _shortest_path_tree_reversed,
+                                    reversed_graph);
+      }
+
+      // merge the paths to a complete path
+      _path = new MNM_Path ();
+      _path->m_link_vec = _path_1->m_link_vec;
+      _path->m_link_vec.push_back (links_ptr[i]);
+      _path->m_link_vec.insert (_path->m_link_vec.end (),
+                                _path_2->m_link_vec.rbegin (),
+                                _path_2->m_link_vec.rend ());
+      _path->m_node_vec = _path_1->m_node_vec;
+      _path->m_node_vec.insert (_path->m_node_vec.end (),
+                                _path_2->m_node_vec.rbegin (),
+                                _path_2->m_node_vec.rend ());
+      _path->allocate_buffer (2 * m_mcdta->m_config->get_int ("max_interval"));
+      if (_path_1 -> m_node_vec.size() > 1) delete _path_1;
+      if (_path_2 -> m_node_vec.size() > 1) delete _path_2;
+      // add this new path to path table
+      if (dynamic_cast<MNM_Routing_Biclass_Hybrid *> (m_mcdta->m_routing)
+          ->m_routing_fixed_car->m_path_table
+          ->find (_origin->m_origin_node->m_node_ID)
+          ->second->find (_dest->m_dest_node->m_node_ID)
+          ->second->is_in(_path)) {
+          delete _path;
+          continue;
+      }
+      else {
+        dynamic_cast<MNM_Routing_Biclass_Hybrid *> (m_mcdta->m_routing)
+        ->m_routing_fixed_car->m_path_table
+        ->find (_origin->m_origin_node->m_node_ID)
+        ->second->find (_dest->m_dest_node->m_node_ID)
+        ->second->m_path_vec.push_back (_path);
+
+        result_ptr[i] += 1;
+        m_path_vec.push_back (_path);
+
+        // check if this new path cover other links
+        for (size_t j = 0; j < num_links; ++j)
+        {
+          if (i != j && _path->is_link_in (links_ptr[j]))
+          {
+            result_ptr[j] += 1;
+          }
+        }
+      }
+    }
+  }
+
+  MNM::save_path_table (m_mcdta->m_file_folder,
+                        dynamic_cast<MNM_Routing_Biclass_Hybrid *> (
+                          m_mcdta->m_routing)
+                          ->m_routing_fixed_car->m_path_table,
+                        m_mcdta->m_od_factory, true, false);
+
   _cost_map.clear ();
   _shortest_path_tree.clear ();
   _shortest_path_tree_reversed.clear ();
@@ -2781,8 +3063,8 @@ Mcdta::get_queue_veh_each_link (py::array_t<int> useful_links,
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
   double *result_ptr = (double *) result_buf.ptr;
-  double *intervals_ptr = (double *) intervals_buf.ptr;
-  double *links_ptr = (double *) links_buf.ptr;
+  int *intervals_ptr = (int *) intervals_buf.ptr;
+  int *links_ptr = (int *) links_buf.ptr;
 
   for (int t = 0; t < num_intervals; ++t)
     {
@@ -3074,7 +3356,7 @@ Mcdta::save_car_dar_matrix (py::array_t<int> start_intervals,
                 "Error, Mcdta::save_car_dar_matrix, input end intervals "
                 "exceeds the total loading intervals");
             }
-          IAssert (_record.empty ());
+          Assert (_record.empty ());
           MNM_DTA_GRADIENT::add_dar_records_car (_record, m_link_vec[i],
                                                  m_path_set,
                                                  TFlt (start_ptr[t]),
@@ -3188,7 +3470,7 @@ Mcdta::save_truck_dar_matrix (py::array_t<int> start_intervals,
                 "Error, Mcdta::save_truck_dar_matrix, input end intervals "
                 "exceeds the total loading intervals");
             }
-          IAssert (_record.empty ());
+          Assert (_record.empty ());
           MNM_DTA_GRADIENT::add_dar_records_truck (_record, m_link_vec[i],
                                                    m_path_set,
                                                    TFlt (start_ptr[t]),
@@ -3541,12 +3823,12 @@ Mcdta::get_car_ltg_matrix (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -3858,12 +4140,12 @@ Mcdta::get_truck_ltg_matrix (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -4185,12 +4467,12 @@ Mcdta::get_complete_car_ltg_matrix (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -4519,12 +4801,12 @@ Mcdta::get_complete_truck_ltg_matrix (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multiclass *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -4638,7 +4920,7 @@ Mcdta::get_complete_truck_ltg_matrix (py::array_t<int> start_intervals,
                         }
                       IAssert (_t_depart_lift_up_valid
                                <= get_cur_loading_interval () - 1);
-                      IAssert (_t_arrival_lift_up < _t_queue_dissipated_valid);
+                      Assert (_t_arrival_lift_up < _t_queue_dissipated_valid);
                       if (_t_depart_prime > _t_depart_lift_up_valid)
                         {
                           std::cout << "\nError, Mcdta::get_truck_ltg_matrix"

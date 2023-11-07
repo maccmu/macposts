@@ -176,9 +176,11 @@ int
 MNM_Routing_Adaptive::update_link_cost ()
 {
   for (auto _it : m_statistics->m_record_interval_tt)
-    { // seconds
+    { // it.second in seconds
+      // TODO: tolls for car and truck separately
       // for multiclass, m_toll is for car, see
       // MNM_IO_Multiclass::build_link_toll_multiclass
+      // in dollars
       m_link_cost[_it.first] = _it.second * m_vot + m_link_factory->get_link (_it.first)->m_toll;
       // printf("link %d, cost %f\n", _it.first(), m_link_cost[_it.first]());
     }

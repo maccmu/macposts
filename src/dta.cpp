@@ -537,8 +537,10 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   MNM_Dnode *_node;
   MNM_Dlink *_link;
   MNM_Destination *_dest;
-  if (load_int == 0)
-    m_statistics->update_record (load_int);
+
+  // update some link attributes over time
+  m_link_factory -> update_link_attribute(load_int);
+  if (load_int == 0) m_statistics->update_record (load_int);
   if (verbose)
     printf ("-------------------------------    Interval %d   "
             "------------------------------ \n",
@@ -546,6 +548,7 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   // step 1: Origin release vehicle
   if (verbose)
     printf ("Releasing!\n");
+
   if (load_int % m_assign_freq == 0 || load_int == 0)
     {
       for (auto _origin_it = m_od_factory->m_origin_map.begin ();
@@ -631,7 +634,7 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   // finished array
   record_queue_vehicles ();
   if (verbose)
-    printf ("Moving through link\n");
+    printf ("Moving through link!\n");
   // step 4: move vehicles through link
   for (auto _link_it = m_link_factory->m_link_map.begin ();
        _link_it != m_link_factory->m_link_map.end (); _link_it++)
@@ -649,6 +652,8 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
       _link->evolve (load_int);
     }
 
+  if (m_emission != nullptr) m_emission -> update(m_veh_factory);
+  
   if (verbose)
     printf ("Receiving!\n");
   // step 5: Destination receive vehicle
@@ -680,7 +685,8 @@ MNM_Dta::loading (bool verbose)
   int _current_inter = 0;
   int _assign_inter = m_start_assign_interval;
 
-  // pre_loading();
+  // It at least will release all vehicles no matter what value total_interval is set
+  // the least length of simulation = max_interval * assign_frq
   while (!finished_loading (_current_inter)
          || _assign_inter < m_total_assign_inter)
     {

@@ -1421,11 +1421,12 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
           throw std::runtime_error ("failed to open _vis_file3");
         }
 
-      _str1 = "timestamp (intervals), driving_link_ID, car_inflow, "
-              "truck_inflow, car_tt (s), truck_tt (s), car_fftt (s), "
-              "truck_fftt (s), car_speed (mph), truck_speed (mph)\n";
-      _str2 = "timestamp (intervals), bus_transit_link_ID, "
-              "bus_transit_link_type, passenger_inflow, tt (s), fftt (s)\n";
+      _str1 = "timestamp(intervals) driving_link_ID car_inflow car_outflow "
+              "truck_inflow truck_outflow car_tt(s) truck_tt(s) car_fftt(s) "
+              "truck_fftt(s) car_freeflow_speed(mph) car_speed(mph) "
+              "truck_freeflow_speed(mph) truck_speed(mph)\n";
+      _str2 = "timestamp(intervals) bus_transit_link_ID "
+              "bus_transit_link_type passenger_inflow tt(s) fftt(s)\n";
       _vis_file2 << _str1;
       _vis_file3 << _str2;
 
@@ -1434,7 +1435,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
         {
           if (_iter % cong_frequency == 0 || _iter == _current_inter - 1)
             {
-              printf ("Current loading interval: %d\n", int (_iter));
+              // printf ("Current loading interval: %d\n", int (_iter));
               for (auto _link_it : m_mmdta->m_link_factory->m_link_map)
                 {
                   _link = _link_it.second;
@@ -1448,7 +1449,17 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                            + " ";
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
+                               get_link_outflow_car (_link_m, _iter,
+                                                    _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
                                get_link_inflow_truck (_link_m, _iter,
+                                                      _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
+                               get_link_outflow_truck (_link_m, _iter,
                                                       _iter + cong_frequency))
                            + " ";
                   // _str1 +=
@@ -1476,11 +1487,14 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                                m_mmdta->m_current_loading_interval)
                              * m_mmdta->m_unit_time)
                            + " ";
-                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_car ())
+                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_car ())
+                  //          + " ";
+                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_truck ())
+                  //          + " ";
+                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_loading_car () * m_mmdta -> m_unit_time)
                            + " ";
-                  _str1
-                    += std::to_string (_link_m->get_link_freeflow_tt_truck ())
-                       + " ";
+                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_loading_truck () * m_mmdta -> m_unit_time)
+                           + " ";
                   // _str1 += std::to_string(_link_m ->
                   // m_length/(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
                   // TFlt(_iter + 1), m_mmdta -> m_unit_time, m_mmdta ->
@@ -1490,6 +1504,17 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   // TFlt(_iter + 1), m_mmdta -> m_unit_time, m_mmdta ->
                   // m_current_loading_interval) * m_mmdta -> m_unit_time) *
                   // 3600 / 1600) + "\n";
+
+                  // _str1 += std::to_string (
+                  //            _link_m->m_length
+                  //            / _link_m->get_link_freeflow_tt_car ()
+                  //            * 3600 / 1600)
+                  //          + " "; // mph
+                  _str1 += std::to_string (
+                             _link_m->m_length
+                             / (_link_m->get_link_freeflow_tt_loading_car () * m_mmdta -> m_unit_time)
+                             * 3600 / 1600)
+                           + " "; // mph
                   _str1 += std::to_string (
                              _link_m->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_car_robust (
@@ -1500,6 +1525,16 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                                 * m_mmdta->m_unit_time)
                              * 3600 / 1600)
                            + " ";
+                  // _str1 += std::to_string (
+                  //            _link_m->m_length
+                  //            / _link_m->get_link_freeflow_tt_truck ()
+                  //            * 3600 / 1600)
+                  //          + " "; // mph
+                  _str1 += std::to_string (
+                             _link_m->m_length
+                             / (_link_m->get_link_freeflow_tt_loading_truck () * m_mmdta -> m_unit_time)
+                             * 3600 / 1600)
+                           + " "; // mph
                   _str1 += std::to_string (
                              _link_m->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_truck_robust (
@@ -1621,6 +1656,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
       if (_vis_file3.is_open ())
         _vis_file3.close ();
     }
+  std::cout << "Finish printing simulation results" << std::endl;
   return 0;
 }
 
@@ -2504,7 +2540,7 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
               // exit(-1);
               continue;
             }
-          IAssert (_origin != nullptr && _dest != nullptr);
+          Assert (_origin != nullptr && _dest != nullptr);
 
           if (!_shortest_path_tree.empty ())
             {
@@ -2786,7 +2822,7 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           if (!_flg)
             {
               // PnR path
-              IAssert (!pair_ptrs_1.empty ());
+              Assert (!pair_ptrs_1.empty ());
               for (auto _it : pair_ptrs_1)
                 {
                   _origin = dynamic_cast<MNM_Origin_Multimodal *> (_it.second);
@@ -2850,7 +2886,7 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
               // exit(-1);
               continue;
             }
-          IAssert (_origin != nullptr && _dest != nullptr);
+          Assert (_origin != nullptr && _dest != nullptr);
           if (_is_pnr)
             {
               IAssert (_mid_dest_node_ID > -1);
@@ -3121,7 +3157,7 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           if (!_flg)
             {
               // PnR path
-              IAssert (!pair_ptrs_1.empty ());
+              Assert (!pair_ptrs_1.empty ());
               for (auto _it : pair_ptrs_1)
                 {
                   _origin = dynamic_cast<MNM_Origin_Multimodal *> (_it.second);
@@ -3185,7 +3221,7 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
               // exit(-1);
               continue;
             }
-          IAssert (_origin != nullptr && _dest != nullptr);
+          Assert (_origin != nullptr && _dest != nullptr);
           if (_is_pnr)
             {
               IAssert (_mid_dest_node_ID > -1);
@@ -3591,7 +3627,7 @@ Mmdta::get_passenger_path_cost_driving (py::array_t<int> link_IDs,
     m_mmdue->m_carpool_cost_multiplier, 0.0, _dest->m_parking_lot,
     m_mmdue->m_parking_lot_to_destination_walking_time);
   _path = nullptr;
-  IAssert (_p_path->m_path != nullptr);
+  Assert (_p_path->m_path != nullptr);
 
   int new_shape[2]
     = { 3, l }; // rows: car travel time, truck travel time, car travel cost
@@ -3667,7 +3703,7 @@ Mmdta::get_passenger_path_cost_bus (py::array_t<int> link_IDs,
                                   m_mmdue->m_target_time, m_mmdue->m_bus_fare,
                                   m_mmdue->m_bus_inconvenience);
   _path = nullptr;
-  IAssert (_p_path->m_path != nullptr);
+  Assert (_p_path->m_path != nullptr);
 
   int new_shape[2] = { 2, l }; // rows: travel time, travel cost
   auto result = py::array_t<double> (new_shape);
@@ -3744,7 +3780,7 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   auto *_mid_dest = dynamic_cast<MNM_Destination_Multimodal *> (
     ((MNM_DMDND *) m_mmdta->m_node_factory->get_node (_mid_dest_node_ID))
       ->m_dest);
-  IAssert (_mid_dest->m_parking_lot != nullptr);
+  Assert (_mid_dest->m_parking_lot != nullptr);
 
   auto *_path_bustransit = new MNM_Path ();
   _path_bustransit->m_node_vec.push_back (
@@ -3771,7 +3807,7 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
                                   _mid_dest->m_parking_lot, m_mmdue->m_bus_fare,
                                   m_mmdue->m_pnr_inconvenience);
   _path_pnr = nullptr;
-  IAssert (_p_path->m_path != nullptr);
+  Assert (_p_path->m_path != nullptr);
 
   int new_shape[2] = { 2, l }; // rows: travel time, travel cost
   auto result = py::array_t<double> (new_shape);
@@ -4464,7 +4500,7 @@ Mmdta::update_tdsp_tree ()
       m_tdsp_tree_map_driving.insert (
         std::pair<TInt, MNM_TDSP_Tree *> (_dest_node_ID, _tdsp_tree));
       _tdsp_tree = nullptr;
-      IAssert (m_tdsp_tree_map_driving.find (_dest_node_ID)->second != nullptr);
+      Assert (m_tdsp_tree_map_driving.find (_dest_node_ID)->second != nullptr);
 
       // for bus transit
       if (m_mmdta->m_bus_transit_graph->IsNode (_dest_node_ID))
@@ -4478,7 +4514,7 @@ Mmdta::update_tdsp_tree ()
           m_tdsp_tree_map_bus.insert (
             std::pair<TInt, MNM_TDSP_Tree *> (_dest_node_ID, _tdsp_tree));
           _tdsp_tree = nullptr;
-          IAssert (m_tdsp_tree_map_bus.find (_dest_node_ID)->second != nullptr);
+          Assert (m_tdsp_tree_map_bus.find (_dest_node_ID)->second != nullptr);
         }
     }
   return 0;
@@ -4592,7 +4628,7 @@ Mmdta::get_lowest_cost_path (int start_interval, int o_node_ID, int d_node_ID)
     {
       throw std::runtime_error ("unsupported mode");
     }
-  IAssert (_path != nullptr);
+  Assert (_path != nullptr);
 
   int new_shape[2] = {
     4, _num_col
@@ -4723,7 +4759,7 @@ Mmdta::get_lowest_cost_path_snapshot (int start_interval, int o_node_ID,
     {
       throw std::runtime_error ("unsupported mode");
     }
-  IAssert (_path != nullptr);
+  Assert (_path != nullptr);
 
   int new_shape[2] = {
     4, _num_col
@@ -8051,12 +8087,12 @@ Mmdta::get_car_ltg_matrix_driving (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multimodal *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multimodal *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time > 0);
               if (_t_arrival_lift_up
@@ -8168,7 +8204,7 @@ Mmdta::get_car_ltg_matrix_driving (py::array_t<int> start_intervals,
                         }
                       IAssert (_t_depart_lift_up_valid
                                <= get_cur_loading_interval () - 1);
-                      IAssert (_t_arrival_lift_up < _t_queue_dissipated_valid);
+                      Assert (_t_arrival_lift_up < _t_queue_dissipated_valid);
                       if (_t_depart_prime > _t_depart_lift_up_valid)
                         {
                           std::cout
@@ -8423,12 +8459,12 @@ Mmdta::get_truck_ltg_matrix_driving (py::array_t<int> start_intervals,
                 }
               else
                 {
-                  IAssert (dynamic_cast<MNM_Dlink_Ctm_Multimodal *> (_link)
+                  Assert (dynamic_cast<MNM_Dlink_Ctm_Multimodal *> (_link)
                            != nullptr);
-                  IAssert (_t_depart_lift_up >= 0); // from its upstream link
+                  Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
-              IAssert (_t_arrival_lift_up >= _t_arrival);
+              Assert (_t_arrival_lift_up >= _t_arrival);
 
               IAssert (_link->m_last_valid_time_truck > 0);
               if (_t_arrival_lift_up
@@ -8541,7 +8577,7 @@ Mmdta::get_truck_ltg_matrix_driving (py::array_t<int> start_intervals,
                         }
                       IAssert (_t_depart_lift_up_valid
                                <= get_cur_loading_interval () - 1);
-                      IAssert (_t_arrival_lift_up < _t_queue_dissipated_valid);
+                      Assert (_t_arrival_lift_up < _t_queue_dissipated_valid);
                       if (_t_depart_prime > _t_depart_lift_up_valid)
                         {
                           std::cout << "\nError, "

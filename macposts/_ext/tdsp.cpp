@@ -323,7 +323,7 @@ Tdsp::extract_tdsp (int origin_node_ID, int timestamp)
 
   IAssert (m_tdsp_tree->m_dist.find (origin_node_ID)
            != m_tdsp_tree->m_dist.end ());
-  IAssert (m_tdsp_tree->m_dist[origin_node_ID] != nullptr);
+  Assert (m_tdsp_tree->m_dist[origin_node_ID] != nullptr);
 
   printf ("get travel cost to dest\n");
   tmp_cost = m_tdsp_tree
