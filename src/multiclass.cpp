@@ -4146,6 +4146,8 @@ MNM_Dta_Multiclass::initialize ()
     delete m_od_factory;
   if (m_config != nullptr)
     delete m_config;
+  if (m_statistics != nullptr)
+    delete m_statistics;
   m_veh_factory = new MNM_Veh_Factory_Multiclass ();
   // printf("1\n");
   m_node_factory = new MNM_Node_Factory_Multiclass ();
@@ -4228,6 +4230,21 @@ MNM_Dta_Multiclass::build_from_files ()
   set_statistics ();
   set_gridlock_recorder ();
   set_routing ();
+  return 0;
+}
+
+int
+MNM_Dta_Multiclass::set_statistics ()
+{
+  MNM_ConfReader *_record_config
+    = new MNM_ConfReader (m_file_folder + "/config.conf", "STAT");
+  if (_record_config->get_string ("rec_mode") == "LRn")
+    {
+      m_statistics
+        = new MNM_Statistics_Lrn_Multiclass (m_file_folder, m_config, _record_config,
+                                  m_od_factory, m_node_factory, m_link_factory);
+    }
+  // printf("set_statistics finished\n");
   return 0;
 }
 
@@ -5913,4 +5930,563 @@ MNM_Cumulative_Emission_Multiclass::output ()
           m_NOX_truck (), m_VMT_truck (), m_VMT_ev_truck (), m_VHT_truck (),
           int (m_truck_set.size ()));
   return _s;
+}
+
+
+/******************************************************************************************************************
+*******************************************************************************************************************
+                                              Statistics
+*******************************************************************************************************************
+******************************************************************************************************************/
+MNM_Statistics_Lrn_Multiclass::MNM_Statistics_Lrn_Multiclass (
+  const std::string &file_folder, MNM_ConfReader *conf_reader,
+  MNM_ConfReader *record_config, MNM_OD_Factory *od_factory,
+  MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory)
+    : MNM_Statistics_Lrn::MNM_Statistics_Lrn (file_folder, conf_reader,
+                                              record_config, od_factory,
+                                              node_factory, link_factory)
+{
+  m_to_be_volume_car = std::unordered_map<TInt, TFlt> ();
+  m_load_interval_volume_car = std::unordered_map<TInt, TFlt> ();
+  m_record_interval_volume_car = std::unordered_map<TInt, TFlt> ();
+
+  m_to_be_tt_car = std::unordered_map<TInt, TFlt> ();
+  m_load_interval_tt_car = std::unordered_map<TInt, TFlt> ();
+  m_record_interval_tt_car = std::unordered_map<TInt, TFlt> ();
+
+  m_to_be_volume_truck = std::unordered_map<TInt, TFlt> ();
+  m_load_interval_volume_truck = std::unordered_map<TInt, TFlt> ();
+  m_record_interval_volume_truck = std::unordered_map<TInt, TFlt> ();
+  
+  m_to_be_tt_truck = std::unordered_map<TInt, TFlt> ();
+  m_load_interval_tt_truck = std::unordered_map<TInt, TFlt> ();
+  m_record_interval_tt_truck = std::unordered_map<TInt, TFlt> ();
+}
+
+MNM_Statistics_Lrn_Multiclass::~MNM_Statistics_Lrn_Multiclass()
+{
+  m_to_be_volume_car.clear();
+  m_load_interval_volume_car.clear();
+  m_record_interval_volume_car.clear();
+
+  m_to_be_tt_car.clear();
+  m_load_interval_tt_car.clear();
+  m_record_interval_tt_car.clear();
+
+  m_to_be_volume_truck.clear();
+  m_load_interval_volume_truck.clear();
+  m_record_interval_volume_truck.clear();
+  
+  m_to_be_tt_truck.clear();
+  m_load_interval_tt_truck.clear();
+  m_record_interval_tt_truck.clear();
+}
+
+int 
+MNM_Statistics_Lrn_Multiclass::record_loading_interval_condition (TInt timestamp)
+{
+  std::string _str, _str1, _str2;
+  TFlt _flow, _flow1, _flow2, _tt, _tt1, _tt2;
+  if (m_record_volume && m_load_interval_volume_file.is_open () && m_load_interval_volume_car_file.is_open() && m_load_interval_volume_truck_file.is_open())
+    {
+      _str = std::to_string(timestamp) + " ";
+      _str1 = std::to_string(timestamp) + " ";
+      _str2 = std::to_string(timestamp) + " ";
+      for (auto _link : m_link_order)
+        {
+          _flow = m_load_interval_volume.find (_link->m_link_ID)->second;
+          _str += std::to_string (_flow) + " ";
+          _flow1 = m_load_interval_volume_car.find (_link->m_link_ID)->second;
+          _str1 += std::to_string (_flow1) + " ";
+          _flow2 = m_load_interval_volume_truck.find (_link->m_link_ID)->second;
+          _str2 += std::to_string (_flow2) + " ";
+        }
+      _str.pop_back ();
+      _str += "\n";
+      _str1.pop_back ();
+      _str1 += "\n";
+      _str2.pop_back ();
+      _str2 += "\n";
+      m_load_interval_volume_file << _str;
+      m_load_interval_volume_car_file << _str1;
+      m_load_interval_volume_truck_file << _str2;
+    }
+
+  _str.clear ();
+  _str1.clear ();
+  _str2.clear ();
+  if (m_record_tt && m_load_interval_tt_file.is_open () && m_load_interval_tt_car_file.is_open() && m_load_interval_tt_truck_file.is_open())
+    {
+      _str = std::to_string(timestamp) + " ";
+      _str1 = std::to_string(timestamp) + " ";
+      _str2 = std::to_string(timestamp) + " ";
+      for (auto _link : m_link_order)
+        {
+          _tt = m_load_interval_tt.find (_link->m_link_ID)->second;
+          _str += std::to_string (_tt) + " ";
+          _tt1 = m_load_interval_tt_car.find (_link->m_link_ID)->second;
+          _str1 += std::to_string (_tt1) + " ";
+          _tt2 = m_load_interval_tt_truck.find (_link->m_link_ID)->second;
+          _str2 += std::to_string (_tt2) + " ";
+        }
+      _str.pop_back ();
+      _str += "\n";
+      _str1.pop_back ();
+      _str1 += "\n";
+      _str2.pop_back ();
+      _str2 += "\n";
+      m_load_interval_tt_file << _str;
+      m_load_interval_tt_car_file << _str1;
+      m_load_interval_tt_truck_file << _str2;
+    }
+
+  return 0;
+}
+
+int MNM_Statistics_Lrn_Multiclass::record_record_interval_condition (TInt timestamp)
+{
+  std::string _str, _str1, _str2;
+  TFlt _flow, _flow1, _flow2, _tt, _tt1, _tt2;
+  if (m_record_volume && m_record_interval_volume_file.is_open () && m_record_interval_volume_car_file.is_open() && m_record_interval_volume_truck_file.is_open())
+    {
+      _str = std::to_string(timestamp) + " ";
+      _str1 = std::to_string(timestamp) + " ";
+      _str2 = std::to_string(timestamp) + " ";
+      for (auto _link : m_link_order)
+        {
+          _flow = m_record_interval_volume.find (_link->m_link_ID)->second;
+          _str += std::to_string (_flow) + " ";
+          _flow1 = m_record_interval_volume_car.find (_link->m_link_ID)->second;
+          _str1 += std::to_string (_flow1) + " ";
+          _flow2 = m_record_interval_volume_truck.find (_link->m_link_ID)->second;
+          _str2 += std::to_string (_flow2) + " ";
+        }
+      _str.pop_back ();
+      _str += "\n";
+      _str1.pop_back ();
+      _str1 += "\n";
+      _str2.pop_back ();
+      _str2 += "\n";
+      m_record_interval_volume_file << _str;
+      m_record_interval_volume_car_file << _str1;
+      m_record_interval_volume_truck_file << _str2;
+    }
+  _str.clear ();
+  _str1.clear ();
+  _str2.clear ();
+  if (m_record_tt && m_record_interval_tt_file.is_open () && m_record_interval_tt_car_file.is_open() && m_record_interval_tt_truck_file.is_open())
+    {
+      _str = std::to_string(timestamp) + " ";
+      _str1 = std::to_string(timestamp) + " ";
+      _str2 = std::to_string(timestamp) + " ";
+      for (auto _link : m_link_order)
+        {
+          _tt = m_record_interval_tt.find (_link->m_link_ID)->second;
+          _str += std::to_string (_tt) + " ";
+          _tt1 = m_record_interval_tt_car.find (_link->m_link_ID)->second;
+          _str1 += std::to_string (_tt1) + " ";
+          _tt2 = m_record_interval_tt_truck.find (_link->m_link_ID)->second;
+          _str2 += std::to_string (_tt2) + " ";
+        }
+      _str.pop_back ();
+      _str += "\n";
+      _str1.pop_back ();
+      _str1 += "\n";
+      _str2.pop_back ();
+      _str2 += "\n";
+      m_record_interval_tt_file << _str;
+      m_record_interval_tt_car_file << _str1;
+      m_record_interval_tt_truck_file << _str2;
+    }
+  return 0;
+}
+
+int
+MNM_Statistics_Lrn_Multiclass::init_record ()
+{
+  TInt _link_ID;
+  std::string _file_name;
+  if (m_record_volume)
+    {
+      for (auto _link_it : m_link_factory->m_link_map)
+        {
+          _link_ID = _link_it.first;
+          m_to_be_volume.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_load_interval_volume.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_record_interval_volume.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          
+          m_to_be_volume_car.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_load_interval_volume_car.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_record_interval_volume_car.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+
+          m_to_be_volume_truck.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_load_interval_volume_truck.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_record_interval_volume_truck.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+        }
+
+      if (m_self_config->get_int ("volume_load_automatic_rec") == 1
+          || m_self_config->get_int ("volume_record_automatic_rec") == 1)
+        {
+          std::string _str = "Interval ";
+          for (auto _link_it : m_link_factory->m_link_map)
+            {
+              _str += std::to_string (_link_it.first) + " ";
+            }
+          _str.pop_back ();
+          _str += "\n";
+
+          if (m_self_config->get_int ("volume_load_automatic_rec") == 1)
+            {
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_load_interval_volume";
+              m_load_interval_volume_file.open (_file_name, std::ofstream::out);
+              if (!m_load_interval_volume_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_load_interval_volume_file << _str;
+
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_load_interval_volume_car";
+              m_load_interval_volume_car_file.open (_file_name, std::ofstream::out);
+              if (!m_load_interval_volume_car_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_load_interval_volume_car_file << _str;
+
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_load_interval_volume_truck";
+              m_load_interval_volume_truck_file.open (_file_name, std::ofstream::out);
+              if (!m_load_interval_volume_truck_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_load_interval_volume_truck_file << _str;
+            }
+
+          if (m_self_config->get_int ("volume_record_automatic_rec") == 1)
+            {
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_record_interval_volume";
+              m_record_interval_volume_file.open (_file_name,
+                                                  std::ofstream::out);
+              if (!m_record_interval_volume_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_record_interval_volume_file << _str;
+
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_record_interval_volume_car";
+              m_record_interval_volume_car_file.open (_file_name,
+                                                  std::ofstream::out);
+              if (!m_record_interval_volume_car_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_record_interval_volume_car_file << _str;
+
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_record_interval_volume_truck";
+              m_record_interval_volume_truck_file.open (_file_name,
+                                                  std::ofstream::out);
+              if (!m_record_interval_volume_truck_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_record_interval_volume_truck_file << _str;
+            }
+        }
+    }
+
+  if (m_record_tt)
+    {
+      for (auto _link_it : m_link_factory->m_link_map)
+        {
+          _link_ID = _link_it.first;
+          m_to_be_tt.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_load_interval_tt.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_record_interval_tt.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+
+          m_to_be_tt_car.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_load_interval_tt_car.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_record_interval_tt_car.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          
+          m_to_be_tt_truck.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_load_interval_tt_truck.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+          m_record_interval_tt_truck.insert (
+            std::pair<TInt, TFlt> (_link_ID, TFlt (0)));
+        }
+
+      if (m_self_config->get_int ("tt_load_automatic_rec") == 1
+          || m_self_config->get_int ("tt_record_automatic_rec") == 1)
+        {
+          std::string _str = "Interval ";
+          for (auto _link_it : m_link_factory->m_link_map)
+            {
+              _str += std::to_string (_link_it.first) + " ";
+            }
+          _str.pop_back ();
+          _str += "\n";
+
+          if (m_self_config->get_int ("tt_load_automatic_rec") == 1)
+            {
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_load_interval_tt";
+              m_load_interval_tt_file.open (_file_name, std::ofstream::out);
+              if (!m_load_interval_tt_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_load_interval_tt_file << _str;
+
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_load_interval_tt_car";
+              m_load_interval_tt_car_file.open (_file_name, std::ofstream::out);
+              if (!m_load_interval_tt_car_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_load_interval_tt_car_file << _str;
+
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_load_interval_tt_truck";
+              m_load_interval_tt_truck_file.open (_file_name, std::ofstream::out);
+              if (!m_load_interval_tt_truck_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_load_interval_tt_truck_file << _str;
+            }
+
+          if (m_self_config->get_int ("tt_record_automatic_rec") == 1)
+            {
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_record_interval_tt";
+              m_record_interval_tt_file.open (_file_name, std::ofstream::out);
+              if (!m_record_interval_tt_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_record_interval_tt_file << _str;
+
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_record_interval_tt_car";
+              m_record_interval_tt_car_file.open (_file_name, std::ofstream::out);
+              if (!m_record_interval_tt_car_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_record_interval_tt_car_file << _str;
+
+              _file_name = m_file_folder + "/"
+                           + m_self_config->get_string ("rec_folder")
+                           + "/MNM_output_record_interval_tt_truck";
+              m_record_interval_tt_truck_file.open (_file_name, std::ofstream::out);
+              if (!m_record_interval_tt_truck_file.is_open ())
+                {
+                  throw std::runtime_error ("failed to open file: "
+                                            + _file_name);
+                }
+              m_record_interval_tt_truck_file << _str;
+            }
+        }
+    }
+
+  // store links in a fixed order in a vector, same as the order of creating the
+  // head of the record file
+  // https://stackoverflow.com/questions/18301302/is-forauto-i-unordered-map-guaranteed-to-have-the-same-order-every-time
+  // The iteration order of unordered associative containers can only change
+  // when rehashing as a result of a mutating operation (as described in
+  // C++11 23.2.5/8). You are not modifying the container between iterations, so
+  // the order will not change.
+  for (auto _link_it : m_link_factory->m_link_map)
+    {
+      m_link_order.push_back (_link_it.second);
+    }
+  return 0;
+}
+
+int
+MNM_Statistics_Lrn_Multiclass::update_record (TInt timestamp)
+{
+  MNM_Dlink_Multiclass *_link;
+  TFlt _flow, _flow1, _flow2, _tt, _tt1, _tt2;
+  if (m_record_volume)
+    {
+      if ((timestamp) % m_n == 0 || timestamp == 0)
+        {
+          for (auto _link_it : m_link_factory->m_link_map)
+            {
+              _link = dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second);
+              _flow = _link->get_link_flow ();
+              _flow1 = _link->get_link_flow_car();
+              _flow2 = _link->get_link_flow_truck();
+
+              m_load_interval_volume.find (_link->m_link_ID)->second = _flow;
+              m_load_interval_volume_car.find (_link->m_link_ID)->second = _flow1;
+              m_load_interval_volume_truck.find (_link->m_link_ID)->second = _flow2;
+              if (timestamp == 0)
+                {
+                  m_record_interval_volume.find (_link->m_link_ID)->second = _flow;
+                  m_record_interval_volume_car.find (_link->m_link_ID)->second = _flow1;
+                  m_record_interval_volume_truck.find (_link->m_link_ID)->second = _flow2;
+                }
+              else
+                {
+                  m_record_interval_volume.find (_link->m_link_ID)->second = m_to_be_volume.find (_link->m_link_ID)->second + _flow / TFlt (m_n);
+                  m_record_interval_volume_car.find (_link->m_link_ID)->second = m_to_be_volume_car.find (_link->m_link_ID)->second + _flow1 / TFlt (m_n);
+                  m_record_interval_volume_truck.find (_link->m_link_ID)->second = m_to_be_volume_truck.find (_link->m_link_ID)->second + _flow2 / TFlt (m_n);
+                }
+              // reset
+              m_to_be_volume.find (_link->m_link_ID)->second = TFlt (0);
+              m_to_be_volume_car.find (_link->m_link_ID)->second = TFlt (0);
+              m_to_be_volume_truck.find (_link->m_link_ID)->second = TFlt (0);
+            }
+        }
+      else
+        {
+          for (auto _link_it : m_link_factory->m_link_map)
+            {
+              _link = dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second);
+              _flow = _link->get_link_flow ();
+              _flow1 = _link->get_link_flow_car();
+              _flow2 = _link->get_link_flow_truck();
+
+              m_load_interval_volume.find (_link->m_link_ID)->second = _flow;
+              m_load_interval_volume_car.find (_link->m_link_ID)->second = _flow1;
+              m_load_interval_volume_truck.find (_link->m_link_ID)->second = _flow2;
+
+              m_to_be_volume.find (_link->m_link_ID)->second += _flow / TFlt (m_n);
+              m_to_be_volume_car.find (_link->m_link_ID)->second += _flow1 / TFlt (m_n);
+              m_to_be_volume_truck.find (_link->m_link_ID)->second += _flow2 / TFlt (m_n);
+            }
+        }
+    }
+  if (m_record_tt)
+    {
+      if ((timestamp) % m_n == 0 || timestamp == 0)
+        {
+          for (auto _link_it : m_link_factory->m_link_map)
+            {
+              _link = dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second);
+              _tt = _link->get_link_tt (); // seconds
+              _flow1 = _link->get_link_flow_car();
+              _flow2 = _link->get_link_flow_truck();
+              _tt1 = _link -> get_link_tt_from_flow_car(_flow1);
+              _tt2 = _link -> get_link_tt_from_flow_truck(_flow2);
+              m_load_interval_tt.find (_link->m_link_ID)->second = _tt;
+              m_load_interval_tt_car.find (_link->m_link_ID)->second = _tt1;
+              m_load_interval_tt_truck.find (_link->m_link_ID)->second = _tt2;
+              if (timestamp == 0)
+                {
+                  m_record_interval_tt.find (_link->m_link_ID)->second = _tt;
+                  m_record_interval_tt_car.find (_link->m_link_ID)->second = _tt1;
+                  m_record_interval_tt_truck.find (_link->m_link_ID)->second = _tt2;
+                }
+              else
+                {
+                  m_record_interval_tt.find (_link->m_link_ID)->second = m_to_be_tt.find (_link->m_link_ID)->second + _tt / TFlt (m_n);
+                  m_record_interval_tt_car.find (_link->m_link_ID)->second = m_to_be_tt_car.find (_link->m_link_ID)->second + _tt1 / TFlt (m_n);
+                  m_record_interval_tt_truck.find (_link->m_link_ID)->second = m_to_be_tt_truck.find (_link->m_link_ID)->second + _tt2 / TFlt (m_n);
+                }
+              // reset
+              m_to_be_tt.find (_link->m_link_ID)->second = TFlt (0);
+              m_to_be_tt_car.find (_link->m_link_ID)->second = TFlt (0);
+              m_to_be_tt_truck.find (_link->m_link_ID)->second = TFlt (0);
+            }
+        }
+      else
+        {
+          for (auto _link_it : m_link_factory->m_link_map)
+            {
+              _link = dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second);
+              _tt = _link->get_link_tt (); // seconds
+              _flow1 = _link->get_link_flow_car();
+              _flow2 = _link->get_link_flow_truck();
+              _tt1 = _link -> get_link_tt_from_flow_car(_flow1);
+              _tt2 = _link -> get_link_tt_from_flow_truck(_flow2);
+              m_load_interval_tt.find (_link->m_link_ID)->second = _tt;
+              m_load_interval_tt_car.find (_link->m_link_ID)->second = _tt1;
+              m_load_interval_tt_truck.find (_link->m_link_ID)->second = _tt2;
+              m_to_be_tt.find (_link->m_link_ID)->second += _tt / TFlt (m_n);
+              m_to_be_tt_car.find (_link->m_link_ID)->second += _tt1 / TFlt (m_n);
+              m_to_be_tt_truck.find (_link->m_link_ID)->second += _tt2 / TFlt (m_n);
+            }
+        }
+    }
+
+  record_loading_interval_condition (timestamp);
+
+  if ((timestamp) % m_n == 0 || timestamp == 0)
+    {
+      record_record_interval_condition (timestamp);
+    }
+  return 0;
+}
+
+int
+MNM_Statistics_Lrn_Multiclass::post_record ()
+{
+  if (m_record_volume)
+    {
+      if (m_load_interval_volume_file.is_open ()) m_load_interval_volume_file.close ();
+      if (m_record_interval_volume_file.is_open ()) m_record_interval_volume_file.close ();
+
+      if (m_load_interval_volume_car_file.is_open()) m_load_interval_volume_car_file.close();
+      if (m_record_interval_volume_car_file.is_open()) m_record_interval_volume_car_file.close();
+      if (m_load_interval_volume_truck_file.is_open()) m_load_interval_volume_truck_file.close();
+      if (m_record_interval_volume_truck_file.is_open()) m_record_interval_volume_truck_file.close();
+    }
+  if (m_record_tt)
+    {
+      if (m_load_interval_tt_file.is_open ()) m_load_interval_tt_file.close ();
+      if (m_record_interval_tt_file.is_open ()) m_record_interval_tt_file.close ();
+
+      if (m_load_interval_tt_car_file.is_open()) m_load_interval_tt_car_file.close();
+      if (m_record_interval_tt_car_file.is_open()) m_record_interval_tt_car_file.close();
+      if (m_load_interval_tt_truck_file.is_open()) m_load_interval_tt_truck_file.close();
+      if (m_record_interval_tt_truck_file.is_open()) m_record_interval_tt_truck_file.close();
+    }
+  return 0;
 }

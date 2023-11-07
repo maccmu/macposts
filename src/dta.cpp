@@ -540,7 +540,8 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
 
   // update some link attributes over time
   m_link_factory -> update_link_attribute(load_int, verbose);
-  if (load_int == 0) m_statistics->update_record (load_int);
+  // compute empty network link tt, for adaptive routing
+  if (load_int == 0) m_statistics->update_record (-1);
   if (verbose)
     printf ("-------------------------------    Interval %d   "
             "------------------------------ \n",
