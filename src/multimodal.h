@@ -691,7 +691,7 @@ public:
                                                                                                 Statistics
 *******************************************************************************************************************
 ******************************************************************************************************************/
-class MNM_Statistics_Lrn_Multimodal : public MNM_Statistics_Lrn
+class MNM_Statistics_Lrn_Multimodal : public MNM_Statistics_Lrn_Multiclass
 {
 public:
   MNM_Statistics_Lrn_Multimodal (const std::string &file_folder,

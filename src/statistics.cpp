@@ -94,7 +94,7 @@ MNM_Statistics::init_record ()
       if (m_self_config->get_int ("volume_load_automatic_rec") == 1
           || m_self_config->get_int ("volume_record_automatic_rec") == 1)
         {
-          std::string _str;
+          std::string _str = "Interval ";
           for (auto _link_it : m_link_factory->m_link_map)
             {
               _str += std::to_string (_link_it.first) + " ";
@@ -147,7 +147,7 @@ MNM_Statistics::init_record ()
       if (m_self_config->get_int ("tt_load_automatic_rec") == 1
           || m_self_config->get_int ("tt_record_automatic_rec") == 1)
         {
-          std::string _str;
+          std::string _str = "Interval ";
           for (auto _link_it : m_link_factory->m_link_map)
             {
               _str += std::to_string (_link_it.first) + " ";
@@ -206,6 +206,7 @@ MNM_Statistics::record_loading_interval_condition (TInt timestamp)
   TFlt _flow, _tt;
   if (m_record_volume && m_load_interval_volume_file.is_open ())
     {
+      _str = std::to_string(timestamp) + " ";
       for (auto _link : m_link_order)
         {
           _flow = m_load_interval_volume.find (_link->m_link_ID)->second;
@@ -219,6 +220,7 @@ MNM_Statistics::record_loading_interval_condition (TInt timestamp)
   _str.clear ();
   if (m_record_tt && m_load_interval_tt_file.is_open ())
     {
+      _str = std::to_string(timestamp) + " ";
       for (auto _link : m_link_order)
         {
           _tt = m_load_interval_tt.find (_link->m_link_ID)->second;
@@ -239,6 +241,7 @@ MNM_Statistics::record_record_interval_condition (TInt timestamp)
   TFlt _flow, _tt;
   if (m_record_volume && m_record_interval_volume_file.is_open ())
     {
+      _str = std::to_string(timestamp) + " ";
       for (auto _link : m_link_order)
         {
           _flow = m_record_interval_volume.find (_link->m_link_ID)->second;
@@ -252,6 +255,7 @@ MNM_Statistics::record_record_interval_condition (TInt timestamp)
 
   if (m_record_tt && m_record_interval_tt_file.is_open ())
     {
+      _str = std::to_string(timestamp) + " ";
       for (auto _link : m_link_order)
         {
           _tt = m_record_interval_tt.find (_link->m_link_ID)->second;
@@ -269,21 +273,13 @@ MNM_Statistics::post_record ()
 {
   if (m_record_volume)
     {
-      if (m_load_interval_volume_file.is_open ())
-        {
-          m_load_interval_volume_file.close ();
-        }
-      if (m_record_interval_volume_file.is_open ())
-        m_record_interval_volume_file.close ();
+      if (m_load_interval_volume_file.is_open ()) m_load_interval_volume_file.close ();
+      if (m_record_interval_volume_file.is_open ()) m_record_interval_volume_file.close ();
     }
   if (m_record_tt)
     {
-      if (m_load_interval_tt_file.is_open ())
-        {
-          m_load_interval_tt_file.close ();
-        }
-      if (m_record_interval_tt_file.is_open ())
-        m_record_interval_tt_file.close ();
+      if (m_load_interval_tt_file.is_open ()) m_load_interval_tt_file.close ();
+      if (m_record_interval_tt_file.is_open ()) m_record_interval_tt_file.close ();
     }
   return 0;
 }
@@ -318,7 +314,7 @@ int
 MNM_Statistics_Lrn::update_record (TInt timestamp)
 {
   MNM_Dlink *_link;
-  TFlt _flow;
+  TFlt _flow, _tt;
   if (m_record_volume)
     {
       if ((timestamp) % m_n == 0 || timestamp == 0)
@@ -362,17 +358,17 @@ MNM_Statistics_Lrn::update_record (TInt timestamp)
           for (auto _link_it : m_link_factory->m_link_map)
             {
               _link = _link_it.second;
-              _flow = _link->get_link_tt (); // seconds
-              m_load_interval_tt.find (_link->m_link_ID)->second = _flow;
+              _tt = _link->get_link_tt (); // seconds
+              m_load_interval_tt.find (_link->m_link_ID)->second = _tt;
               if (timestamp == 0)
                 {
-                  m_record_interval_tt.find (_link->m_link_ID)->second = _flow;
+                  m_record_interval_tt.find (_link->m_link_ID)->second = _tt;
                 }
               else
                 {
                   m_record_interval_tt.find (_link->m_link_ID)->second
                     = m_to_be_tt.find (_link->m_link_ID)->second
-                      + _flow / TFlt (m_n);
+                      + _tt / TFlt (m_n);
                 }
               // reset
               m_to_be_tt.find (_link->m_link_ID)->second = TFlt (0);
@@ -383,9 +379,9 @@ MNM_Statistics_Lrn::update_record (TInt timestamp)
           for (auto _link_it : m_link_factory->m_link_map)
             {
               _link = _link_it.second;
-              _flow = _link->get_link_tt (); // seconds
-              m_load_interval_tt.find (_link->m_link_ID)->second = _flow;
-              m_to_be_tt.find (_link->m_link_ID)->second += _flow / TFlt (m_n);
+              _tt = _link->get_link_tt (); // seconds
+              m_load_interval_tt.find (_link->m_link_ID)->second = _tt;
+              m_to_be_tt.find (_link->m_link_ID)->second += _tt / TFlt (m_n);
             }
         }
     }

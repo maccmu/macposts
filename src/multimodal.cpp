@@ -4796,7 +4796,7 @@ MNM_Statistics_Lrn_Multimodal::MNM_Statistics_Lrn_Multimodal (
   MNM_ConfReader *record_config, MNM_OD_Factory *od_factory,
   MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
   MNM_Transit_Link_Factory *transitlink_factory)
-    : MNM_Statistics_Lrn::MNM_Statistics_Lrn (file_folder, conf_reader,
+    : MNM_Statistics_Lrn_Multiclass::MNM_Statistics_Lrn_Multiclass (file_folder, conf_reader,
                                               record_config, od_factory,
                                               node_factory, link_factory)
 {
@@ -4823,6 +4823,7 @@ MNM_Statistics_Lrn_Multimodal::record_loading_interval_condition (
   TFlt _tt;
   if (m_record_tt && m_load_interval_tt_bus_transit_file.is_open ())
     {
+      _str = std::to_string(timestamp) + " ";
       for (auto _link : m_transitlink_order)
         {
           _tt = m_load_interval_tt_bus_transit.find (_link->m_link_ID)->second;
@@ -4842,6 +4843,7 @@ MNM_Statistics_Lrn_Multimodal::record_record_interval_condition (TInt timestamp)
   TFlt _tt;
   if (m_record_tt && m_record_interval_tt_bus_transit_file.is_open ())
     {
+      _str = std::to_string(timestamp) + " ";
       for (auto _link : m_transitlink_order)
         {
           _tt
@@ -4858,7 +4860,7 @@ MNM_Statistics_Lrn_Multimodal::record_record_interval_condition (TInt timestamp)
 int
 MNM_Statistics_Lrn_Multimodal::init_record ()
 {
-  MNM_Statistics_Lrn::init_record ();
+  MNM_Statistics_Lrn_Multiclass::init_record ();
 
   TInt _link_ID;
   std::string _file_name;
@@ -4878,7 +4880,7 @@ MNM_Statistics_Lrn_Multimodal::init_record ()
       if (m_self_config->get_int ("tt_load_automatic_rec") == 1
           || m_self_config->get_int ("tt_record_automatic_rec") == 1)
         {
-          std::string _str;
+          std::string _str = "Interval ";
           for (auto _link_it : m_transitlink_factory->m_transit_link_map)
             {
               _str += std::to_string (_link_it.first) + " ";
@@ -4935,7 +4937,7 @@ MNM_Statistics_Lrn_Multimodal::init_record ()
 int
 MNM_Statistics_Lrn_Multimodal::update_record (TInt timestamp)
 {
-  MNM_Statistics_Lrn::update_record (timestamp);
+  MNM_Statistics_Lrn_Multiclass::update_record (timestamp);
 
   MNM_Transit_Link *_link;
   TFlt _tt;
@@ -4992,7 +4994,7 @@ MNM_Statistics_Lrn_Multimodal::update_record (TInt timestamp)
 int
 MNM_Statistics_Lrn_Multimodal::post_record ()
 {
-  MNM_Statistics::post_record ();
+  MNM_Statistics_Lrn_Multiclass::post_record ();
 
   if (m_record_tt)
     {
@@ -10325,7 +10327,7 @@ MNM_Dta_Multimodal::load_once (bool verbose, TInt load_int, TInt assign_int)
     = dynamic_cast<MNM_Routing_Multimodal_Hybrid *> (m_routing);
 
   if (load_int == 0)
-    m_statistics->update_record (load_int);
+    m_statistics->update_record (-1);
   if (verbose)
     printf ("-------------------------------    Interval %d   "
             "------------------------------ \n",

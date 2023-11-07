@@ -595,6 +595,7 @@ public:
   virtual ~MNM_Dta_Multiclass () override;
   virtual int initialize () override;
   virtual int build_from_files () override;
+  virtual int set_statistics() override;
   virtual int pre_loading () override;
   virtual int record_queue_vehicles () override;
   int loading_vehicle_tracking(bool verbose, const std::string &folder, double sampling_rate, int frequency);
@@ -776,3 +777,53 @@ public:
   std::unordered_set<MNM_Veh *> m_car_set;
   std::unordered_set<MNM_Veh *> m_truck_set;
 };
+
+/******************************************************************************************************************
+*******************************************************************************************************************
+                                              Statistics
+*******************************************************************************************************************
+******************************************************************************************************************/
+class MNM_Statistics_Lrn_Multiclass : public MNM_Statistics_Lrn
+{
+public:
+  MNM_Statistics_Lrn_Multiclass (
+    const std::string &file_folder, MNM_ConfReader *conf_reader,
+    MNM_ConfReader *record_config, MNM_OD_Factory *od_factory,
+    MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory);
+
+  virtual ~MNM_Statistics_Lrn_Multiclass () override;
+
+  virtual int record_loading_interval_condition (TInt timestamp) override;
+  virtual int record_record_interval_condition (TInt timestamp) override;
+  virtual int init_record() override;
+  virtual int update_record(TInt timestamp) override;
+  virtual int post_record () override;
+
+  std::unordered_map<TInt, TFlt> m_to_be_volume_car;
+  std::unordered_map<TInt, TFlt> m_load_interval_volume_car;
+  std::unordered_map<TInt, TFlt> m_record_interval_volume_car;
+
+  std::unordered_map<TInt, TFlt> m_to_be_tt_car;
+  std::unordered_map<TInt, TFlt> m_load_interval_tt_car;
+  std::unordered_map<TInt, TFlt> m_record_interval_tt_car;
+  
+  std::unordered_map<TInt, TFlt> m_to_be_volume_truck;
+  std::unordered_map<TInt, TFlt> m_load_interval_volume_truck;
+  std::unordered_map<TInt, TFlt> m_record_interval_volume_truck;
+
+  std::unordered_map<TInt, TFlt> m_to_be_tt_truck;
+  std::unordered_map<TInt, TFlt> m_load_interval_tt_truck;
+  std::unordered_map<TInt, TFlt> m_record_interval_tt_truck;
+
+  std::ofstream m_load_interval_volume_car_file;
+  std::ofstream m_record_interval_volume_car_file;
+  std::ofstream m_load_interval_tt_car_file;
+  std::ofstream m_record_interval_tt_car_file;
+
+  std::ofstream m_load_interval_volume_truck_file;
+  std::ofstream m_record_interval_volume_truck_file;
+  std::ofstream m_load_interval_tt_truck_file;
+  std::ofstream m_record_interval_tt_truck_file;
+};
+
+
