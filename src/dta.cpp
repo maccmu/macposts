@@ -539,7 +539,7 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   MNM_Destination *_dest;
 
   // update some link attributes over time
-  m_link_factory -> update_link_attribute(load_int);
+  m_link_factory -> update_link_attribute(load_int, verbose);
   if (load_int == 0) m_statistics->update_record (load_int);
   if (verbose)
     printf ("-------------------------------    Interval %d   "

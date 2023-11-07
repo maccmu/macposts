@@ -3,7 +3,7 @@
 All notable changes for each released versions (since v0.3.1) will be documented
 here.
 
-## v0.4.0 (unreleased)
+## v0.4.0 (2023-11-07)
 
 ### Added
 

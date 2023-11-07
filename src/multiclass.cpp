@@ -3394,7 +3394,7 @@ MNM_Link_Factory_Multiclass::make_link_multiclass (
 }
 
 int 
-MNM_Link_Factory_Multiclass::update_link_attribute(TInt interval)
+MNM_Link_Factory_Multiclass::update_link_attribute(TInt interval, bool verbose)
 {
   if (m_td_link_attribute_table -> find(interval) != m_td_link_attribute_table -> end()) {
     for (auto _it : *(m_td_link_attribute_table -> find(interval) -> second)) {
@@ -3414,7 +3414,7 @@ MNM_Link_Factory_Multiclass::update_link_attribute(TInt interval)
       _link -> m_toll = _it.second -> toll;
       _link -> m_toll_car = _it.second -> toll;
       _link -> m_toll_truck = _it.second -> toll;
-      printf("link %d attribute updated\n", _it.first);
+      if (verbose) printf("link %d attribute updated\n", _it.first);
     }
   }
   return 0;
@@ -4327,7 +4327,8 @@ MNM_Dta_Multiclass::loading_vehicle_tracking(bool verbose, const std::string &fo
                                       folder,
                                       _current_inter,
                                       sampling_rate,
-                                      frequency);
+                                      frequency,
+                                      verbose);
       // link cc will be updated with the record at the end of this interval
       // (i.e., _current_inter + 1)
       if (++_current_inter % m_assign_freq == 0)
@@ -5585,10 +5586,11 @@ print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
                             const std::string &folder,
                             int interval,
                             double sampling_rate,
-                            int cong_frequency)
+                            int cong_frequency,
+                            bool verbose)
 {
   if (cong_frequency == 0) {
-    printf("Skip printing vehicle route results");
+    if (verbose) printf("Skip printing vehicle route results");
     return 0;
   }
 
@@ -5643,7 +5645,7 @@ print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
   }
   
   if (_vis_file.is_open()) _vis_file.close ();
-  std::cout << "Finish printing vehicle route results" << std::endl;
+  if (verbose) std::cout << "Finish printing vehicle route results" << std::endl;
   return 0;
 }
 

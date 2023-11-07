@@ -51,7 +51,7 @@ public:
                                 TFlt ffs, TFlt unit_time, TFlt flow_scalar);
   MNM_Dlink *get_link (TInt ID);
   int delete_link (TInt ID);
-  virtual int update_link_attribute(TInt interval) {return 0;};
+  virtual int update_link_attribute(TInt interval, bool verbose=false) {return 0;};
   std::unordered_map<TInt, MNM_Dlink *> m_link_map;
 };
 
