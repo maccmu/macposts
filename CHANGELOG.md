@@ -17,6 +17,10 @@ This is a hot fix release to address two issues with the Python package.
 
 ## v0.4.0 (2023-11-07)
 
+**This release has some issues (see [GH-39]), please use v0.4.1 instead.**
+
+[GH-39]: https://github.com/maccmu/macposts/issues/39
+
 ### Added
 
 - Add module for modeling electric vehicles ([GH-32]).
