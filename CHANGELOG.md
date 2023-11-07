@@ -3,6 +3,18 @@
 All notable changes for each released versions (since v0.3.1) will be documented
 here.
 
+## v0.4.1 (2023-11-07)
+
+This is a hot fix release to address two issues with the Python package.
+
+### Fixed
+
+- Update version number for the Python package ([GH-41]).
+- Fix release workflow on GitHub ([GH-40]).
+
+[GH-40]: https://github.com/maccmu/macposts/pull/40
+[GH-41]: https://github.com/maccmu/macposts/pull/41
+
 ## v0.4.0 (2023-11-07)
 
 ### Added
