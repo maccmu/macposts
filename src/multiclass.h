@@ -521,7 +521,7 @@ public:
     TFlt lane_flow_cap_truck, TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
     TFlt veh_convert_factor, TFlt flow_scalar);
 
-  virtual int update_link_attribute(TInt interval) override;
+  virtual int update_link_attribute(TInt interval, bool verbose=false) override;
 
   std::unordered_map<int, std::unordered_map<int, td_link_attribute_row*>*>* m_td_link_attribute_table;
 
@@ -733,7 +733,8 @@ int print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
                                 const std::string &folder,
                                 int interval,
                                 double sampling_rate,
-                                int cong_frequency);
+                                int cong_frequency,
+                                bool verbose=false);
 };
 
 ///
