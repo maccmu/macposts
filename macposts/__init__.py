@@ -5,7 +5,7 @@ modeling.
 
 """
 
-__version__ = "0.3.2-dev0"
+__version__ = "0.4.2-dev0"
 
 from _macposts_ext import set_random_state, Tdsp  # noqa: F401
 from ._compat import *  # noqa: F401,F403
