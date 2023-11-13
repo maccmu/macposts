@@ -24,7 +24,7 @@ DiGraph<NData, LData>::DiGraph () : nodes (), links ()
 }
 
 template <typename NData, typename LData>
-DiGraph<NData, LData>::Nodes::Nodes (Node &start, Direction direction)
+DiGraph<NData, LData>::Nodes::Nodes (const Node &start, Direction direction)
     : start (start), direction (direction)
 {
 }
@@ -83,7 +83,7 @@ DiGraph<NData, LData>::Nodes::const_iterator::operator++ (int)
 }
 
 template <typename NData, typename LData>
-DiGraph<NData, LData>::Links::Links (Node &start, Direction direction)
+DiGraph<NData, LData>::Links::Links (const Node &start, Direction direction)
     : start (start), direction (direction)
 {
 }
@@ -173,7 +173,7 @@ DiGraph<NData, LData>::add_link (const NData &from, const NData &to, LData data)
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Nodes
-DiGraph<NData, LData>::neighbors (Node &node, Direction direction)
+DiGraph<NData, LData>::neighbors (const Node &node, Direction direction) const
 {
   auto nodes = Nodes (node, direction);
   return nodes;
@@ -181,7 +181,7 @@ DiGraph<NData, LData>::neighbors (Node &node, Direction direction)
 
 template <typename NData, typename LData>
 typename DiGraph<NData, LData>::Links
-DiGraph<NData, LData>::connections (Node &node, Direction direction)
+DiGraph<NData, LData>::connections (const Node &node, Direction direction) const
 {
   auto links = Links (node, direction);
   return links;

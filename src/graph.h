@@ -144,7 +144,7 @@ public:
     const Direction direction;
 
   public:
-    explicit Nodes (Node &start, Direction direction);
+    explicit Nodes (const Node &start, Direction direction);
     const_iterator begin () const;
     const_iterator end () const;
 
@@ -189,7 +189,7 @@ public:
     const Direction direction;
 
   public:
-    explicit Links (Node &start, Direction direction);
+    explicit Links (const Node &start, Direction direction);
     const_iterator begin () const;
     const_iterator end () const;
 
@@ -235,8 +235,8 @@ public:
   Node &add_node (NData data);
   Link &add_link (Node &from, Node &to, LData data);
   Link &add_link (const NData &from, const NData &to, LData data);
-  Nodes neighbors (Node &node, Direction direction);
-  Links connections (Node &node, Direction direction);
+  Nodes neighbors (const Node &node, Direction direction) const;
+  Links connections (const Node &node, Direction direction) const;
   Node &get_endpoint (const Link &link, Direction direction) const;
 
   inline std::size_t size_nodes () const { return nodes.size (); }
