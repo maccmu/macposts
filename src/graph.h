@@ -237,6 +237,7 @@ public:
   Link &add_link (const NData &from, const NData &to, LData data);
   Nodes neighbors (Node &node, Direction direction);
   Links connections (Node &node, Direction direction);
+  Node &get_endpoint (const Link &link, Direction direction) const;
 
   inline std::size_t size_nodes () const { return nodes.size (); }
   inline std::size_t size_links () const { return links.size (); }

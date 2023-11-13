@@ -188,6 +188,21 @@ DiGraph<NData, LData>::connections (Node &node, Direction direction)
 }
 
 template <typename NData, typename LData>
+typename DiGraph<NData, LData>::Node &
+DiGraph<NData, LData>::get_endpoint (const Link &link,
+                                     Direction direction) const
+{
+  auto node = link.endpoints[static_cast<int> (direction)];
+  if (!node)
+    {
+      // This should be unreachable if the graph, links, and nodes are created
+      // and managed through the designated, public interface
+      throw std::runtime_error ("invalid link");
+    }
+  return *node;
+}
+
+template <typename NData, typename LData>
 DiGraph<NData, LData>::const_iterator::const_iterator (
   typename hashmap<NData, Node>::const_iterator start)
     : current (start)
@@ -256,6 +271,8 @@ main (void)
       assert (&n2 == &g.get_node (2));
       assert (&l0 == &g.get_link (0));
       assert (&l1 == &g.get_link (1));
+      assert (&n0 == &g.get_endpoint (l0, Direction::Incoming));
+      assert (&n1 == &g.get_endpoint (l0, Direction::Outgoing));
     }
 
     {
@@ -429,6 +446,15 @@ main (void)
     }
 
     {
+      assert (&n0 == &g.get_endpoint (l0, Direction::Incoming));
+      assert (&n1 == &g.get_endpoint (l0, Direction::Outgoing));
+      assert (&n0 == &g.get_endpoint (l1, Direction::Incoming));
+      assert (&n1 == &g.get_endpoint (l1, Direction::Outgoing));
+      assert (&n0 == &g.get_endpoint (l2, Direction::Incoming));
+      assert (&n1 == &g.get_endpoint (l2, Direction::Outgoing));
+    }
+
+    {
       auto nodes = g.neighbors (n0, Direction::Incoming);
       auto it0 = nodes.cbegin ();
       auto it1 = it0++;
@@ -518,6 +544,13 @@ main (void)
         ns.push_back (&n);
       assert (ns.size () == 1);
       assert (ns[0] == &n0);
+    }
+
+    {
+      assert (&n0 == &g.get_endpoint (l0, Direction::Incoming));
+      assert (&n1 == &g.get_endpoint (l0, Direction::Outgoing));
+      assert (&n1 == &g.get_endpoint (l1, Direction::Incoming));
+      assert (&n0 == &g.get_endpoint (l1, Direction::Outgoing));
     }
 
     {
