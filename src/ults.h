@@ -8,6 +8,8 @@
 #include <sstream>
 #include <string>
 
+#include "graph.h"
+
 template <> struct std::hash<TInt>
 {
   std::size_t operator() (const TInt &s) const
@@ -37,6 +39,8 @@ bool approximate_less_than (TFlt a, TFlt b, float p = 1e-4);
 int round_up_time (TFlt time, float p = 1e-4);
 int round_down_time (TFlt time);
 PNEGraph reverse_graph (const PNEGraph &graph);
+macposts::graph::DiGraph<TInt, TInt>
+reverse_graph (const macposts::graph::DiGraph<TInt, TInt> &graph);
 }
 
 class Chameleon

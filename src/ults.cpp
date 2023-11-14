@@ -177,6 +177,25 @@ reverse_graph (const PNEGraph &graph)
     }
   return reversed_graph;
 }
+
+// TODO: Provide a generic method for reversing a graph
+macposts::graph::DiGraph<TInt, TInt>
+reverse_graph (const macposts::graph::DiGraph<TInt, TInt> &graph)
+{
+  using macposts::graph::Direction;
+  macposts::graph::DiGraph<TInt, TInt> reversed_graph;
+  for (auto &&node : graph)
+    reversed_graph.add_node (node.data);
+  for (auto &&from : graph)
+    {
+      for (auto &&link : graph.connections (from, Direction::Outgoing))
+        {
+          auto &&to = graph.get_endpoint (link, Direction::Outgoing);
+          reversed_graph.add_link (to.data, from.data, link.data);
+        }
+    }
+  return std::move (reversed_graph);
+}
 }
 
 Chameleon::Chameleon (std::string const &value) { value_ = value; }
