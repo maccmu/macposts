@@ -30,6 +30,7 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -82,7 +83,10 @@ public:
     Node &operator= (const Node &) = delete;
 
   private:
-    explicit Node (NData data);
+    explicit Node (NData data)
+        : data (std::move (data)), next ({ nullptr, nullptr })
+    {
+    }
   };
 
   class Link
@@ -100,7 +104,11 @@ public:
     Link &operator= (const Link &) = delete;
 
   private:
-    explicit Link (LData data);
+    explicit Link (LData data)
+        : data (std::move (data)), endpoints ({ nullptr, nullptr }),
+          next ({ nullptr, nullptr })
+    {
+    }
   };
 
   class Nodes
@@ -121,9 +129,37 @@ public:
       std::unordered_set<const Node *> seen;
 
     public:
-      explicit const_iterator (Link *start, Direction direction);
-      const_iterator &operator++ ();
-      const_iterator operator++ (int);
+      explicit const_iterator (Link *start, Direction direction)
+          : current (start), direction (direction), seen ()
+      {
+      }
+
+      const_iterator &operator++ ()
+      {
+        if (current)
+          {
+            // TODO: Switch to `assert'
+#ifndef NDEBUG
+            if (seen.count (current->endpoints[static_cast<int> (direction)]))
+              __builtin_trap ();
+#endif
+            seen.insert (current->endpoints[static_cast<int> (direction)]);
+            do
+              {
+                current = current->next[static_cast<int> (direction)];
+              }
+            while (
+              current
+              && seen.count (current->endpoints[static_cast<int> (direction)]));
+          }
+        return *this;
+      }
+      const_iterator operator++ (int)
+      {
+        const_iterator r = *this;
+        ++(*this);
+        return r;
+      }
 
       inline bool operator== (const const_iterator &other) const
       {
@@ -144,9 +180,17 @@ public:
     const Direction direction;
 
   public:
-    explicit Nodes (const Node &start, Direction direction);
-    const_iterator begin () const;
-    const_iterator end () const;
+    explicit Nodes (const Node &start, Direction direction)
+        : start (start), direction (direction)
+    {
+    }
+
+    const_iterator begin () const
+    {
+      Link *next = start.next[static_cast<int> (direction)];
+      return const_iterator (next, direction);
+    }
+    const_iterator end () const { return const_iterator (nullptr, direction); }
 
     inline const_iterator cbegin () const { return begin (); }
     inline const_iterator cend () const { return end (); }
@@ -169,9 +213,23 @@ public:
       const Direction direction;
 
     public:
-      explicit const_iterator (Link *start, Direction direction);
-      const_iterator &operator++ ();
-      const_iterator operator++ (int);
+      explicit const_iterator (Link *start, Direction direction)
+          : current (start), direction (direction)
+      {
+      }
+
+      const_iterator &operator++ ()
+      {
+        if (current)
+          current = current->next[static_cast<int> (direction)];
+        return *this;
+      }
+      const_iterator operator++ (int)
+      {
+        const_iterator r = *this;
+        ++(*this);
+        return r;
+      }
 
       inline bool operator== (const const_iterator &other) const
       {
@@ -189,9 +247,17 @@ public:
     const Direction direction;
 
   public:
-    explicit Links (const Node &start, Direction direction);
-    const_iterator begin () const;
-    const_iterator end () const;
+    explicit Links (const Node &start, Direction direction)
+        : start (start), direction (direction)
+    {
+    }
+
+    const_iterator begin () const
+    {
+      Link *next = start.next[static_cast<int> (direction)];
+      return const_iterator (next, direction);
+    }
+    const_iterator end () const { return const_iterator (nullptr, direction); }
 
     inline const_iterator cbegin () const { return begin (); }
     inline const_iterator cend () const { return end (); }
@@ -211,9 +277,22 @@ public:
 
   public:
     explicit const_iterator (
-      typename hashmap<NData, Node>::const_iterator start);
-    const_iterator &operator++ ();
-    const_iterator operator++ (int);
+      typename hashmap<NData, Node>::const_iterator start)
+        : current (start)
+    {
+    }
+
+    const_iterator &operator++ ()
+    {
+      ++current;
+      return *this;
+    }
+    const_iterator operator++ (int)
+    {
+      const_iterator r = *this;
+      ++(*this);
+      return r;
+    }
 
     inline bool operator== (const const_iterator &other) const
     {
@@ -231,13 +310,68 @@ protected:
   hashmap<LData, Link> links;
 
 public:
-  explicit DiGraph ();
-  Node &add_node (NData data);
-  Link &add_link (Node &from, Node &to, LData data);
-  Link &add_link (const NData &from, const NData &to, LData data);
-  Nodes neighbors (const Node &node, Direction direction) const;
-  Links connections (const Node &node, Direction direction) const;
-  Node &get_endpoint (const Link &link, Direction direction) const;
+  explicit DiGraph () : nodes (), links () {}
+
+  Node &add_node (NData data)
+  {
+    if (nodes.count (data))
+      throw std::runtime_error ("node already in graph");
+    auto node = std::unique_ptr<Node> (new Node (std::move (data)));
+    auto &r = *node;
+    nodes.insert ({ std::cref (r.data), std::move (node) });
+    return r;
+  }
+
+  Link &add_link (Node &from, Node &to, LData data)
+  {
+    if (links.count (data))
+      throw std::runtime_error ("link already in graph");
+    static const int incoming = static_cast<int> (Direction::Incoming);
+    static const int outgoing = static_cast<int> (Direction::Outgoing);
+
+    auto link = std::unique_ptr<Link> (new Link (std::move (data)));
+    link->endpoints[incoming] = &from;
+    link->endpoints[outgoing] = &to;
+    link->next[incoming] = to.next[incoming];
+    link->next[outgoing] = from.next[outgoing];
+    from.next[outgoing] = link.get ();
+    to.next[incoming] = link.get ();
+
+    auto &r = *link;
+    links.insert ({ std::cref (r.data), std::move (link) });
+    return r;
+  }
+  Link &add_link (const NData &from, const NData &to, LData data)
+  {
+    auto &&nfrom = get_node (from);
+    auto &&nto = get_node (to);
+    return add_link (nfrom, nto, std::move (data));
+  }
+
+  Nodes neighbors (const Node &node, Direction direction) const
+  {
+    auto nodes = Nodes (node, direction);
+    return nodes;
+  }
+
+  Links connections (const Node &node, Direction direction) const
+
+  {
+    auto links = Links (node, direction);
+    return links;
+  }
+
+  Node &get_endpoint (const Link &link, Direction direction) const
+  {
+    auto node = link.endpoints[static_cast<int> (direction)];
+    if (!node)
+      {
+        // This should be unreachable if the graph, links, and nodes are created
+        // and managed through the designated, public interface
+        throw std::runtime_error ("invalid link");
+      }
+    return *node;
+  }
 
   inline std::size_t size_nodes () const { return nodes.size (); }
   inline std::size_t size_links () const { return links.size (); }

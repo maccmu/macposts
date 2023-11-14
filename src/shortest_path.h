@@ -18,6 +18,7 @@ class MNM_Path;
 namespace MNM_Shortest_Path
 {
 using DiGraph = macposts::graph::DiGraph<TInt, TInt>;
+
 int one_to_one (TInt origin_node_ID, TInt dest_node_ID, PNEGraph graph,
                 const std::unordered_map<TInt, TFlt> &cost_map,
                 std::vector<TInt> &output_array);

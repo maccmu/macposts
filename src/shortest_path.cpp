@@ -1,5 +1,4 @@
 #include "shortest_path.h"
-#include "graph.cpp"
 #include <limits>
 
 static_assert (std::numeric_limits<double>::is_iec559,
