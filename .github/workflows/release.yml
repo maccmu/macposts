@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -31,12 +31,12 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
         persist-credentials: false
 
-    - uses: pypa/cibuildwheel@v2.11.2
+    - uses: pypa/cibuildwheel@v2.16.2
       env:
         CIBW_ARCHS: native
         # We do not support PyPy (for now) and SNAP does not build for musl.
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
