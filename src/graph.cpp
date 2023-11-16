@@ -394,6 +394,40 @@ main (void)
     }
   }
 
+  // Test case 5: change data (known bug)
+  //
+  // FIXME: If the hash value of the node/link data changes, we will not be able
+  // to retrieve the node/link.
+  {
+    DiGraph g;
+    auto &&n0 = g.add_node (0);
+    n0.data = 10;
+    try
+      {
+        g.get_node (n0.data);
+        assert (false);
+      }
+    catch (const std::out_of_range &)
+      {
+      }
+    try
+      {
+        g.get_node (0);
+        assert (false);
+      }
+    catch (const std::out_of_range &)
+      {
+      }
+    try
+      {
+        g.get_node (10);
+        assert (false);
+      }
+    catch (const std::out_of_range &)
+      {
+      }
+  }
+
   return 0;
 }
 
