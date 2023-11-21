@@ -23,11 +23,13 @@ include lib/snap/CMakeLists.txt
 include lib/snap/License.txt
 
 # macposts
-graft src
-include macposts/*.cpp
+include src/*.h src/*.cpp
+include macposts/_ext/*.h macposts/_ext/*.cpp
 include CMakeLists.txt
 
 # exclude generated files…
 global-exclude *.o *.so *.dylib *.dll *.a
 # …and hidden files
 global-exclude .*
+# …and hidden directories (at project root)
+prune .*
