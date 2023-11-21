@@ -6,6 +6,7 @@
 *.dll
 __pycache__/
 *.py[cod]
+/macposts/_version.py
 /build/
 /dist/
 *.egg-info
