@@ -12,7 +12,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
+        fetch-depth: 0
+        fetch-tags: true
         submodules: true
+        persist-credentials: false
 
     - name: Build sdist
       run: pipx run build --sdist
@@ -33,6 +36,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
+        fetch-depth: 0
+        fetch-tags: true
         submodules: true
         persist-credentials: false
 
@@ -54,7 +59,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: true
+        persist-credentials: false
 
     - uses: actions/download-artifact@v3
       with:
