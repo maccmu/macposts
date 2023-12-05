@@ -129,6 +129,23 @@ main (void)
       catch (const std::runtime_error &)
         {
         }
+
+      try
+        {
+          g.add_link (0, 0, 100);
+          assert (false);
+        }
+      catch (const std::runtime_error &)
+        {
+        }
+      try
+        {
+          g.add_link (n0, n0, 100);
+          assert (false);
+        }
+      catch (const std::runtime_error &)
+        {
+        }
     }
 
     // Changing data
@@ -507,6 +524,23 @@ main (void)
       try
         {
           g.add_link (0, 1, 0);
+          assert (false);
+        }
+      catch (const std::runtime_error &)
+        {
+        }
+
+      try
+        {
+          g.add_link (0, 0, 100);
+          assert (false);
+        }
+      catch (const std::runtime_error &)
+        {
+        }
+      try
+        {
+          g.add_link (n0, n0, 100);
           assert (false);
         }
       catch (const std::runtime_error &)
