@@ -240,7 +240,6 @@ public:
       {
         Link *current = this->current;
         int direction = static_cast<int> (this->direction);
-        bool wrapped = false;
 
         // Invariant: before stepping to the next neighbor, the current one
         // should have never been seen.
@@ -260,13 +259,13 @@ public:
                 const_cast<Direction &> (this->direction)
                   = invert (this->direction);
                 direction = static_cast<int> (this->direction);
-                wrapped = true;
+              }
+            else
+              {
+                seen.insert (current->endpoints[direction]);
               }
 
-            Node *node = current->endpoints[direction];
-            if (!wrapped)
-              seen.insert (node);
-            if (!seen.count (node))
+            if (!seen.count (current->endpoints[direction]))
               break;
             else
               current = current->next[direction];
