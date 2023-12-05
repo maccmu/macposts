@@ -116,10 +116,11 @@ private:
     template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
     operator Type<true> () const
     {
-      // HACK: This is really ugly, and is very prone to error. We know this
-      // works under the assumption that the difference between a non-const
-      // iterator and a const one *only* lies on the `const' specifier on the
-      // value, pointer, and reference types.
+      // HACK: This is really ugly, and is very prone to error. This works
+      // safely because the difference between a non-const iterator and a const
+      // one *only* lies on the `const' specifier on the value, pointer, and
+      // reference types. When modifying this template, please be sure to not
+      // violate that contract.
       auto r = reinterpret_cast<const Type<true> *> (this);
       return *r;
     }
