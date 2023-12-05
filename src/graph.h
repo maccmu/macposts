@@ -364,8 +364,14 @@ public:
     iterator begin () const { return iterator (head); }
     iterator end () const { return iterator (tail); }
 
-    const_iterator cbegin () const { return begin (); }
-    const_iterator cend () const { return end (); }
+    const_iterator cbegin () const
+    {
+      return static_cast<const_iterator> (begin ());
+    }
+    const_iterator cend () const
+    {
+      return static_cast<const_iterator> (end ());
+    }
   };
 
   class Connections
