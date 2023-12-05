@@ -478,6 +478,9 @@ public:
     if (links_.count (idx))
       throw std::runtime_error ("link " + std::to_string (idx)
                                 + " already in graph");
+    if (&to == &from)
+      throw std::runtime_error ("self-loops are not allowed");
+
     static const int incoming = static_cast<int> (Direction::Incoming);
     static const int outgoing = static_cast<int> (Direction::Outgoing);
 
