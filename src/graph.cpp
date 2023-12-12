@@ -39,6 +39,11 @@ main (void)
       assert (&g.get_node (2) == &n2);
       assert (&g.get_link (0) == &l0);
       assert (&g.get_link (1) == &l1);
+      assert (g.get_id (n0) == 0);
+      assert (g.get_id (n1) == 1);
+      assert (g.get_id (n2) == 2);
+      assert (g.get_id (l0) == 0);
+      assert (g.get_id (l1) == 1);
 
       auto &&endpoints = g.get_endpoints (l0);
       assert (&endpoints.first == &n0);
@@ -438,6 +443,11 @@ main (void)
       assert (&g.get_node (2) == &n2);
       assert (&g.get_link (0) == &l0);
       assert (&g.get_link (1) == &l1);
+      assert (g.get_id (n0) == 0);
+      assert (g.get_id (n1) == 1);
+      assert (g.get_id (n2) == 2);
+      assert (g.get_id (l0) == 0);
+      assert (g.get_id (l1) == 1);
 
       auto &&endpoints = g.get_endpoints (l0);
       assert (&endpoints.first == &n0);

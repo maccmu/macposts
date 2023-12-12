@@ -57,7 +57,7 @@ invert (Direction direction)
 
 // FIXME: If we do not want to attach data to a node/link, there is a waste of
 // space in the current implementation.
-template <class NIdx, class LIdx, class NData, class LData, bool directed>
+template <class NId, class LId, class NData, class LData, bool directed>
 class Graph
 {
 private:
@@ -141,14 +141,17 @@ public:
   private:
     friend class Graph;
     std::array<Link *, 2> next;
+    // I originally planned to go with pointers/references only but in the
+    // existing code base IDs are heavily used.
+    const NId id;
 
   public:
     Node (const Node &) = delete;
     Node &operator= (const Node &) = delete;
 
   private:
-    explicit Node (NData data)
-        : data (std::move (data)), next ({ nullptr, nullptr })
+    explicit Node (NId id, NData data)
+        : data (std::move (data)), next ({ nullptr, nullptr }), id (id)
     {
     }
   };
@@ -162,15 +165,18 @@ public:
     friend class Graph;
     std::array<Node *, 2> endpoints;
     std::array<Link *, 2> next;
+    // I originally planned to go with pointers/references only but in the
+    // existing code base IDs are heavily used.
+    const LId id;
 
   public:
     Link (const Link &) = delete;
     Link &operator= (const Link &) = delete;
 
   private:
-    explicit Link (LData data)
+    explicit Link (LId id, LData data)
         : data (std::move (data)), endpoints ({ nullptr, nullptr }),
-          next ({ nullptr, nullptr })
+          next ({ nullptr, nullptr }), id (id)
     {
     }
   };
@@ -181,7 +187,7 @@ public:
   {
   private:
     using State =
-      typename std::unordered_map<NIdx, std::unique_ptr<Node>>::iterator;
+      typename std::unordered_map<NId, std::unique_ptr<Node>>::iterator;
     template <bool readonly>
     class Iterator_ : public Iterator<Node, State, readonly, Iterator_>
     {
@@ -335,7 +341,7 @@ public:
   {
   private:
     using State =
-      typename std::unordered_map<LIdx, std::unique_ptr<Link>>::iterator;
+      typename std::unordered_map<LId, std::unique_ptr<Link>>::iterator;
     template <bool readonly>
     class Iterator_ : public Iterator<Link, State, readonly, Iterator_>
     {
@@ -461,28 +467,28 @@ public:
   explicit Graph () : nodes_ (), links_ () {}
 
   // Add a node
-  Node &add_node (NIdx idx) { return add_node (idx, NData ()); }
-  Node &add_node (NIdx idx, NData data)
+  Node &add_node (NId id) { return add_node (id, NData ()); }
+  Node &add_node (NId id, NData data)
   {
-    if (nodes_.count (idx))
-      throw std::runtime_error ("node " + std::to_string (idx)
+    if (nodes_.count (id))
+      throw std::runtime_error ("node " + std::to_string (id)
                                 + " already in graph");
-    auto node = std::unique_ptr<Node> (new Node (std::move (data)));
+    auto node = std::unique_ptr<Node> (new Node (id, std::move (data)));
     auto &r = *node;
-    nodes_.insert ({ idx, std::move (node) });
+    nodes_.insert ({ id, std::move (node) });
     return r;
   }
-  Node &get_node (NIdx idx) const { return *nodes_.at (idx); }
+  Node &get_node (NId id) const { return *nodes_.at (id); }
 
   // Add a link
-  Link &add_link (Node &from, Node &to, LIdx idx)
+  Link &add_link (Node &from, Node &to, LId id)
   {
-    return add_link (from, to, idx, LData ());
+    return add_link (from, to, id, LData ());
   }
-  Link &add_link (Node &from, Node &to, LIdx idx, LData data)
+  Link &add_link (Node &from, Node &to, LId id, LData data)
   {
-    if (links_.count (idx))
-      throw std::runtime_error ("link " + std::to_string (idx)
+    if (links_.count (id))
+      throw std::runtime_error ("link " + std::to_string (id)
                                 + " already in graph");
     if (&to == &from)
       throw std::runtime_error ("self-loops are not allowed");
@@ -490,7 +496,7 @@ public:
     static const int incoming = static_cast<int> (Direction::Incoming);
     static const int outgoing = static_cast<int> (Direction::Outgoing);
 
-    auto link = std::unique_ptr<Link> (new Link (std::move (data)));
+    auto link = std::unique_ptr<Link> (new Link (id, std::move (data)));
     link->endpoints[incoming] = &from;
     link->endpoints[outgoing] = &to;
     link->next[incoming] = to.next[incoming];
@@ -499,23 +505,27 @@ public:
     to.next[incoming] = link.get ();
 
     auto &r = *link;
-    links_.insert ({ idx, std::move (link) });
+    links_.insert ({ id, std::move (link) });
     return r;
   }
-  Link &add_link (NIdx from, NIdx to, LIdx idx)
+  Link &add_link (NId from, NId to, LId id)
   {
-    return add_link (from, to, idx, LData ());
+    return add_link (from, to, id, LData ());
   }
-  Link &add_link (NIdx from, NIdx to, LIdx idx, LData data)
+  Link &add_link (NId from, NId to, LId id, LData data)
   {
     auto &&from_ = get_node (from);
     auto &&to_ = get_node (to);
-    return add_link (from_, to_, idx, std::move (data));
+    return add_link (from_, to_, id, std::move (data));
   }
-  Link &get_link (LIdx idx) const { return *links_.at (idx); }
+  Link &get_link (LId id) const { return *links_.at (id); }
+
+  NId get_id(const Node &node) { return node.id; }
+  LId get_id(const Link &link) { return link.id; }
 
   std::size_t size_nodes () const { return nodes_.size (); }
   std::size_t size_links () const { return links_.size (); }
+
   Nodes nodes () { return Nodes (nodes_.begin (), nodes_.end ()); }
   Links links () { return Links (links_.begin (), links_.end ()); }
 
@@ -555,8 +565,8 @@ public:
   }
 
 protected:
-  std::unordered_map<NIdx, std::unique_ptr<Node>> nodes_;
-  std::unordered_map<LIdx, std::unique_ptr<Link>> links_;
+  std::unordered_map<NId, std::unique_ptr<Node>> nodes_;
+  std::unordered_map<LId, std::unique_ptr<Link>> links_;
 };
 
 template <class NData, class LData>
