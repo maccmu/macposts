@@ -151,6 +151,18 @@ main (void)
       catch (const std::runtime_error &)
         {
         }
+
+      {
+        const auto &g_ = g;
+        auto &&nodes = g_.nodes ();
+        assert (std::distance (nodes.begin (), nodes.end ()) == 3);
+        auto &&links = g_.links ();
+        assert (std::distance (links.begin (), links.end ()) == 2);
+        auto &&neighbors = g_.neighbors (n0, Direction::Outgoing);
+        assert (std::distance (neighbors.begin (), neighbors.end ()) == 1);
+        auto &&connections = g_.connections (n0, Direction::Outgoing);
+        assert (std::distance (connections.begin (), connections.end ()) == 1);
+      }
     }
 
     // Changing data
@@ -556,6 +568,18 @@ main (void)
       catch (const std::runtime_error &)
         {
         }
+
+      {
+        const auto &g_ = g;
+        auto &&nodes = g_.nodes ();
+        assert (std::distance (nodes.begin (), nodes.end ()) == 3);
+        auto &&links = g_.links ();
+        assert (std::distance (links.begin (), links.end ()) == 2);
+        auto &&neighbors = g_.neighbors (n0);
+        assert (std::distance (neighbors.begin (), neighbors.end ()) == 1);
+        auto &&connections = g_.connections (n0);
+        assert (std::distance (connections.begin (), connections.end ()) == 1);
+      }
     }
 
     // Changing data

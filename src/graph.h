@@ -183,16 +183,18 @@ public:
 
 public:
   // Collections of nodes/links
-  class Nodes
+  template <bool readonly> class Nodes
   {
   private:
+    // NOTE: Because we use `unique_ptr' with a non-const pointer type,
+    // `const_iterator' is good for non-const case as well.
     using State =
-      typename std::unordered_map<NId, std::unique_ptr<Node>>::iterator;
-    template <bool readonly>
-    class Iterator_ : public Iterator<Node, State, readonly, Iterator_>
+      typename std::unordered_map<NId, std::unique_ptr<Node>>::const_iterator;
+    template <bool readonly_>
+    class Iterator_ : public Iterator<Node, State, readonly_, Iterator_>
     {
     private:
-      using Base = Iterator<Node, State, readonly, Iterator_>;
+      using Base = Iterator<Node, State, readonly_, Iterator_>;
 
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
@@ -207,7 +209,7 @@ public:
     const State tail;
 
   public:
-    using iterator = Iterator_<false>;
+    using iterator = Iterator_<readonly>;
     using const_iterator = Iterator_<true>;
 
     explicit Nodes (State head, State tail) : head (head), tail (tail) {}
@@ -225,14 +227,14 @@ public:
     }
   };
 
-  class Neighbors
+  template <bool readonly> class Neighbors
   {
   private:
-    template <bool readonly>
-    class Iterator_ : public Iterator<Node, Link *, readonly, Iterator_>
+    template <bool readonly_>
+    class Iterator_ : public Iterator<Node, Link *, readonly_, Iterator_>
     {
     private:
-      using Base = Iterator<Node, Link *, readonly, Iterator_>;
+      using Base = Iterator<Node, Link *, readonly_, Iterator_>;
       std::unordered_set<const Node *> seen;
       Link *refill;
 
@@ -279,7 +281,7 @@ public:
         this->current = current;
       }
 
-      typename Base::reference operator* ()
+      typename Base::reference operator* () const
       {
         return *this->current->endpoints[static_cast<int> (this->direction)];
       }
@@ -306,7 +308,7 @@ public:
     const Direction direction;
 
   public:
-    using iterator = Iterator_<false>;
+    using iterator = Iterator_<readonly>;
     using const_iterator = Iterator_<true>;
 
     explicit Neighbors (const Node &start, Direction direction)
@@ -337,16 +339,18 @@ public:
     }
   };
 
-  class Links
+  template <bool readonly> class Links
   {
   private:
+    // NOTE: Because we use `unique_ptr' with a non-const pointer type,
+    // `const_iterator' is good for non-const case as well.
     using State =
-      typename std::unordered_map<LId, std::unique_ptr<Link>>::iterator;
-    template <bool readonly>
-    class Iterator_ : public Iterator<Link, State, readonly, Iterator_>
+      typename std::unordered_map<LId, std::unique_ptr<Link>>::const_iterator;
+    template <bool readonly_>
+    class Iterator_ : public Iterator<Link, State, readonly_, Iterator_>
     {
     private:
-      using Base = Iterator<Link, State, readonly, Iterator_>;
+      using Base = Iterator<Link, State, readonly_, Iterator_>;
 
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
@@ -361,7 +365,7 @@ public:
     const State tail;
 
   public:
-    using iterator = Iterator_<false>;
+    using iterator = Iterator_<readonly>;
     using const_iterator = Iterator_<true>;
 
     explicit Links (State head, State tail) : head (head), tail (tail) {}
@@ -379,14 +383,14 @@ public:
     }
   };
 
-  class Connections
+  template <bool readonly> class Connections
   {
   private:
-    template <bool readonly>
-    class Iterator_ : public Iterator<Link, Link *, readonly, Iterator_>
+    template <bool readonly_>
+    class Iterator_ : public Iterator<Link, Link *, readonly_, Iterator_>
     {
     private:
-      using Base = Iterator<Link, Link *, readonly, Iterator_>;
+      using Base = Iterator<Link, Link *, readonly_, Iterator_>;
       Link *refill;
 
     public:
@@ -432,7 +436,7 @@ public:
     const Direction direction;
 
   public:
-    using iterator = Iterator_<false>;
+    using iterator = Iterator_<readonly>;
     using const_iterator = Iterator_<true>;
 
     explicit Connections (const Node &start, Direction direction)
@@ -478,7 +482,8 @@ public:
     nodes_.insert ({ id, std::move (node) });
     return r;
   }
-  Node &get_node (NId id) const { return *nodes_.at (id); }
+  Node &get_node (NId id) { return *nodes_.at (id); }
+  const Node &get_node (NId id) const { return *nodes_.at (id); }
 
   // Add a link
   Link &add_link (Node &from, Node &to, LId id)
@@ -518,40 +523,80 @@ public:
     auto &&to_ = get_node (to);
     return add_link (from_, to_, id, std::move (data));
   }
-  Link &get_link (LId id) const { return *links_.at (id); }
+  Link &get_link (LId id) { return *links_.at (id); }
+  const Link &get_link (LId id) const { return *links_.at (id); }
 
-  NId get_id(const Node &node) { return node.id; }
-  LId get_id(const Link &link) { return link.id; }
+  NId get_id (const Node &node) const { return node.id; }
+  LId get_id (const Link &link) const { return link.id; }
 
   std::size_t size_nodes () const { return nodes_.size (); }
   std::size_t size_links () const { return links_.size (); }
 
-  Nodes nodes () { return Nodes (nodes_.begin (), nodes_.end ()); }
-  Links links () { return Links (links_.begin (), links_.end ()); }
+  Nodes<false> nodes ()
+  {
+    return Nodes<false> (nodes_.begin (), nodes_.end ());
+  }
+  Nodes<true> nodes () const
+  {
+    return Nodes<true> (nodes_.begin (), nodes_.end ());
+  }
+  Links<false> links ()
+  {
+    return Links<false> (links_.begin (), links_.end ());
+  }
+  Links<true> links () const
+  {
+    return Links<true> (links_.begin (), links_.end ());
+  }
 
   template <bool d = directed, typename std::enable_if<d, int>::type = 0>
-  Neighbors neighbors (const Node &node, Direction direction)
+  Neighbors<false> neighbors (const Node &node, Direction direction)
   {
-    return Neighbors (node, direction);
+    return Neighbors<false> (node, direction);
   }
   template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
-  Neighbors neighbors (const Node &node)
+  Neighbors<false> neighbors (const Node &node)
   {
-    return Neighbors (node, Direction::Outgoing);
+    return Neighbors<false> (node, Direction::Outgoing);
+  }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Neighbors<true> neighbors (const Node &node, Direction direction) const
+  {
+    return Neighbors<true> (node, direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Neighbors<true> neighbors (const Node &node) const
+  {
+    return Neighbors<true> (node, Direction::Outgoing);
   }
 
   template <bool d = directed, typename std::enable_if<d, int>::type = 0>
-  Connections connections (const Node &node, Direction direction)
+  Connections<false> connections (const Node &node, Direction direction)
   {
-    return Connections (node, direction);
+    return Connections<false> (node, direction);
   }
   template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
-  Connections connections (const Node &node)
+  Connections<false> connections (const Node &node)
   {
-    return Connections (node, Direction::Incoming);
+    return Connections<false> (node, Direction::Incoming);
+  }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Connections<true> connections (const Node &node, Direction direction) const
+  {
+    return Connections<true> (node, direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Connections<true> connections (const Node &node) const
+  {
+    return Connections<true> (node, Direction::Incoming);
   }
 
   std::pair<Node &, Node &> get_endpoints (const Link &link)
+  {
+    auto r = static_cast<const Graph *> (this)->get_endpoints (link);
+    return { const_cast<Node &> (r.first), const_cast<Node &> (r.second) };
+  }
+  std::pair<const Node &, const Node &> get_endpoints (const Link &link) const
   {
     auto from = link.endpoints[static_cast<int> (Direction::Incoming)];
     auto to = link.endpoints[static_cast<int> (Direction::Outgoing)];
