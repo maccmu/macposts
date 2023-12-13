@@ -177,6 +177,23 @@ reverse_graph (const PNEGraph &graph)
     }
   return reversed_graph;
 }
+
+macposts::Graph
+reverse_graph (const macposts::Graph &graph)
+{
+  macposts::Graph reversed_graph;
+  for (const auto &node : graph.nodes ())
+    reversed_graph.add_node (graph.get_id (node));
+  for (const auto &link : graph.links ())
+    {
+      auto endpoints = graph.get_endpoints (link);
+      auto from = graph.get_id (endpoints.first);
+      auto to = graph.get_id (endpoints.second);
+      auto id = graph.get_id (link);
+      reversed_graph.add_link (to, from, id);
+    }
+  return reversed_graph;
+}
 }
 
 Chameleon::Chameleon (std::string const &value) { value_ = value; }
