@@ -132,9 +132,7 @@ MNM_Pre_Routing::~MNM_Pre_Routing ()
             {
               free (_demand_it->second);
             }
-          free (&_rt_dit->second);
         }
-      free (&_rt_it->second);
     }
   free (routing_table);
 }
