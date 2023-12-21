@@ -130,11 +130,11 @@ MNM_Pre_Routing::~MNM_Pre_Routing ()
           for (auto _demand_it = _rt_dit->second.begin ();
                _demand_it != _rt_dit->second.end (); _demand_it++)
             {
-              free (_demand_it->second);
+              delete _demand_it->second;
             }
         }
     }
-  free (routing_table);
+  delete routing_table;
 }
 
 int
