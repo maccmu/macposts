@@ -86,6 +86,14 @@ public:
                                               const std::string &file_name
                                               = "MNM_input_origin_vehicle_label");
 
+  static int read_vehicle_tracking_setting (const std::string &file_folder,
+                                              std::vector<std::pair<int, int>> *od_pair_tracked,
+                                              std::vector<int> *interval_tracked,
+                                              const std::string &od_tracking_file_name
+                                              = "MNM_input_od_tracking",
+                                              const std::string &interval_tracking_file_name
+                                              = "MNM_input_interval_tracking");
+
   // private:
   static std::vector<std::string> split (const std::string &text, char sep);
   static std::string inline &ltrim (std::string &s)

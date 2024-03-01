@@ -1345,6 +1345,9 @@ MNM_IO_EV::add_charging_station_node(const std::string& file_folder, MNM_ConfRea
     return 0;
 }
   
+// assume the candidate POIs table is constructed beforehand
+// refer to /home/qlzou/Documents/CodeBase/maccmu_github/macposts-dev-examples/cpp/test_candidate_charging_station.cpp
+// if not, it tries to use all POIs, which can be slow
 OD_Candidate_POI_Table* 
 MNM_IO_EV::load_candidate_poi_table(const std::string& file_folder, MNM_ConfReader *conf_reader, 
                                     MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory, const std::string& file_name)

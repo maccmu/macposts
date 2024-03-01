@@ -4327,6 +4327,10 @@ MNM_Dta_Multiclass::loading_vehicle_tracking(bool verbose, const std::string &fo
   int _current_inter = 0;
   int _assign_inter = m_start_assign_interval;
 
+  std::vector<std::pair<int, int>> _OD_pair_tracked = std::vector<std::pair<int, int>> (); 
+  std::vector<int> _depart_interval_tracked = std::vector<int> ();
+  MNM_IO::read_vehicle_tracking_setting(m_file_folder, &_OD_pair_tracked, &_depart_interval_tracked, "MNM_input_od_tracking", "MNM_input_interval_tracking");
+
   // It at least will release all vehicles no matter what value total_interval is set
   // the least length of simulation = max_interval * assign_frq
   while (!finished_loading (_current_inter)
@@ -4342,6 +4346,8 @@ MNM_Dta_Multiclass::loading_vehicle_tracking(bool verbose, const std::string &fo
       load_once (verbose, _current_inter, _assign_inter);
       MNM::print_vehicle_route_results(dynamic_cast<MNM_Veh_Factory_Multiclass*>(m_veh_factory),
                                       folder,
+                                      _OD_pair_tracked, 
+                                      _depart_interval_tracked,
                                       _current_inter,
                                       sampling_rate,
                                       frequency,
@@ -4361,6 +4367,8 @@ MNM_Dta_Multiclass::loading_vehicle_tracking(bool verbose, const std::string &fo
   if (m_gridlock_recorder != nullptr)
     m_gridlock_recorder->post_record ();
   m_current_loading_interval = _current_inter;
+  _OD_pair_tracked.clear();
+  _depart_interval_tracked.clear();
   return _current_inter; // total number of actual loading intervals =
                          // _current_inter
 }
@@ -5598,13 +5606,14 @@ build_pathset_multiclass (PNEGraph &graph, MNM_OD_Factory *od_factory,
   return _path_table;
 }
 
-int 
-print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory, 
-                            const std::string &folder,
-                            int interval,
-                            double sampling_rate,
-                            int cong_frequency,
-                            bool verbose)
+int print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
+                                const std::string &folder,
+                                const std::vector<std::pair<int, int>> &OD_pair_tracked,
+                                const std::vector<int> &depart_interval_tracked,
+                                int interval,
+                                double sampling_rate,
+                                int cong_frequency,
+                                bool verbose)
 {
   if (cong_frequency == 0) {
     if (verbose) printf("Skip printing vehicle route results");
@@ -5628,19 +5637,28 @@ print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
   }
 
   if (interval == 0) {
-    _s = "timestamp(intervals) vehicle_ID routing_type origin_ID origin_node_ID destination_ID destination_node_ID current_link next_link position\n";
+    _s = "timestamp(intervals) vehicle_ID routing_type departure_interval origin_ID origin_node_ID destination_ID destination_node_ID current_link next_link position\n";
     _vis_file << _s;
   }
+
+  bool _flg = depart_interval_tracked.empty() ? true : (std::find(depart_interval_tracked.begin(), depart_interval_tracked.end(), interval) != depart_interval_tracked.end());
   
   if (interval % cong_frequency == 0) {
     for (auto veh_it : veh_factory -> m_veh_map) {
       // determined which vehicle needs to be tracked among vehicle just being released
-      if ((veh_it.second -> m_start_time == interval) 
+      if (_flg && (veh_it.second -> m_start_time == interval) 
           && (veh_it.second -> m_current_link != nullptr)
           && (veh_it.second -> m_next_link != nullptr)
           && !(veh_it.second -> m_tracked)) {
           if (veh_it.second -> m_current_link -> m_from_node -> m_node_ID == veh_it.second -> m_origin -> m_origin_node -> m_node_ID) {
-            veh_it.second -> m_tracked = (MNM_Ults::rand_flt () <= sampling_rate) ? true : false;
+            if (OD_pair_tracked.empty()) {
+              veh_it.second -> m_tracked = (MNM_Ults::rand_flt () <= sampling_rate) ? true : false;
+            }
+            else {
+              if (std::find(OD_pair_tracked.begin(), OD_pair_tracked.end(), std::pair<int, int>(veh_it.second -> m_origin -> m_Origin_ID, veh_it.second -> m_dest -> m_Dest_ID)) != OD_pair_tracked.end()) {
+                veh_it.second -> m_tracked = (MNM_Ults::rand_flt () <= sampling_rate) ? true : false;
+              }
+            }
           }
       }
 
@@ -5648,6 +5666,7 @@ print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
         _s = std::to_string(interval) + " ";
         _s += std::to_string(veh_it.first) + " ";
         _s += (veh_it.second -> m_type == MNM_TYPE_STATIC ? "habitual " : "adaptive ");
+        _s += std::to_string(veh_it.second -> m_start_time) + " ";
         _s += std::to_string(veh_it.second -> m_origin -> m_Origin_ID) + " ";
         _s += std::to_string(veh_it.second -> m_origin -> m_origin_node -> m_node_ID) + " ";
         _s += std::to_string(veh_it.second -> m_dest -> m_Dest_ID) + " ";

@@ -732,6 +732,8 @@ Path_Table *build_pathset_multiclass (
 
 int print_vehicle_route_results(MNM_Veh_Factory_Multiclass *veh_factory,
                                 const std::string &folder,
+                                const std::vector<std::pair<int, int>> &OD_pair_tracked,
+                                const std::vector<int> &depart_interval_tracked,
                                 int interval,
                                 double sampling_rate,
                                 int cong_frequency,
