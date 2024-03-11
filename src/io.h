@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "enum.h"
 #include "factory.h"
 #include "path.h"
@@ -13,6 +13,15 @@
 #include <vector>
 
 class MNM_Node_Factory;
+
+namespace macposts
+{
+  namespace io
+  {
+    macposts::Graph build_graph(const std::string &file_folder,
+                                MNM_ConfReader *conf_reader);
+  }
+}
 
 class MNM_IO
 {
@@ -50,8 +59,17 @@ public:
   static Path_Table *load_path_table (const std::string &file_name,
                                       const PNEGraph &graph, TInt num_path,
                                       bool w_buffer = false, bool w_ID = false);
+  static Path_Table *load_path_table (const std::string &file_name,
+                                      const macposts::Graph &graph,
+                                      TInt num_path, bool w_buffer = false,
+                                      bool w_ID = false);
   static int build_vms_facotory (const std::string &file_folder, PNEGraph graph,
                                  TInt num_vms, MNM_Vms_Factory *vms_factory,
+                                 const std::string &file_name
+                                 = "MNM_input_vms");
+  static int build_vms_facotory (const std::string &file_folder,
+                                 const macposts::Graph &graph, TInt num_vms,
+                                 MNM_Vms_Factory *vms_factory,
                                  const std::string &file_name
                                  = "MNM_input_vms");
   static int read_int_float (const std::string &file_name,
