@@ -573,9 +573,10 @@ MNM_IO::build_graph (const std::string &file_folder,
 }
 
 macposts::Graph
-macposts::io::build_graph (const std::string &file_folder,
-                           MNM_ConfReader *conf_reader)
+MNM_IO::build_graph (const std::string &file_folder,
+                     MNM_ConfReader *conf_reader, int _phantom)
 {
+  (void) _phantom;
   /* find file */
   std::string _network_name = conf_reader->get_string ("network_name");
   std::string _graph_file_name = file_folder + "/" + _network_name;

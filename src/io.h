@@ -14,15 +14,6 @@
 
 class MNM_Node_Factory;
 
-namespace macposts
-{
-  namespace io
-  {
-    macposts::Graph build_graph(const std::string &file_folder,
-                                MNM_ConfReader *conf_reader);
-  }
-}
-
 class MNM_IO
 {
 public:
@@ -52,6 +43,12 @@ public:
                               const std::string &file_name = "MNM_input_od");
   static PNEGraph build_graph (const std::string &file_folder,
                                MNM_ConfReader *conf_reader);
+  // FIXME: Currently we use a phantom argument for function resolution. This is
+  // only temporary and we should remove it (and the above overlord) once we
+  // have successfully migrated to `macposts::Graph'.
+  static macposts::Graph build_graph (const std::string &file_folder,
+                                      MNM_ConfReader *conf_reader,
+                                      int _phantom);
   static int build_demand (const std::string &file_folder,
                            MNM_ConfReader *conf_reader,
                            MNM_OD_Factory *od_factory,
