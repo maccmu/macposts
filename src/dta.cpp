@@ -1,5 +1,7 @@
 #include "dta.h"
 
+using macposts::graph::Direction;
+
 MNM_Dta::MNM_Dta (const std::string &file_folder)
 {
   m_file_folder = file_folder;
@@ -56,7 +58,6 @@ MNM_Dta::~MNM_Dta ()
     delete m_workzone;
   // printf("m_workzone\n");
 
-  m_graph->Clr ();
   // printf("3\n");
   m_queue_veh_num.clear ();
   m_enroute_veh_num.clear ();
@@ -308,8 +309,11 @@ MNM_Dta::set_routing ()
 int
 MNM_Dta::build_workzone ()
 {
-  m_workzone = new MNM_Workzone (m_node_factory, m_link_factory, m_graph);
-  MNM_IO::build_workzone_list (m_file_folder, m_workzone);
+  // TODO: Disabled for the new builtin `macposts::Graph' class because it does
+  // not support removing a link yet.
+  //
+  // m_workzone = new MNM_Workzone (m_node_factory, m_link_factory, m_graph);
+  // MNM_IO::build_workzone_list (m_file_folder, m_workzone);
   return 0;
 }
 
@@ -324,7 +328,7 @@ MNM_Dta::build_from_files ()
                             m_node_factory);
   std::cout << "# of OD pairs: " << m_od_factory->m_origin_map.size () << "\n";
   // std::cout << m_od_factory -> m_destination_map.size() << "\n";
-  m_graph = MNM_IO::build_graph (m_file_folder, m_config);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_config, 0);
   MNM_IO::build_demand (m_file_folder, m_config, m_od_factory);
   MNM_IO::read_origin_vehicle_label_ratio (m_file_folder, m_config,
                                            m_od_factory);
@@ -344,37 +348,32 @@ MNM_Dta::hook_up_node_and_link ()
   TInt _node_ID;
   MNM_Dnode *_node;
   MNM_Dlink *_link;
-  // hook up node to link
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+
+  // hook up link to node
+  for (const auto &n : m_graph.nodes ())
     {
-      // printf("node id %d with out-degree %d and in-degree %d\n",
-      // _node_it.GetId(), _node_it.GetOutDeg(), _node_it.GetInDeg());
-      _node_ID = _node_it.GetId ();
+      _node_ID = m_graph.get_id (n);
       _node = m_node_factory->get_node (_node_ID);
-      for (int e = 0; e < _node_it.GetOutDeg (); ++e)
+      for (auto const &l : m_graph.connections (n, Direction::Outgoing))
         {
-          // printf("Out: edge (%d %d)\n", _node_it.GetId(),
-          // _node_it.GetOutNId(e));
-          _link = m_link_factory->get_link (_node_it.GetOutEId (e));
+          _link = m_link_factory->get_link (m_graph.get_id (l));
           _node->add_out_link (_link);
         }
-      for (int e = 0; e < _node_it.GetInDeg (); ++e)
+      for (auto const &l : m_graph.connections (n, Direction::Incoming))
         {
-          // printf("In: edge (%d %d)\n", _node_it.GetInNId(e),
-          // _node_it.GetId());
-          _link = m_link_factory->get_link (_node_it.GetInEId (e));
+          _link = m_link_factory->get_link (m_graph.get_id (l));
           _node->add_in_link (_link);
         }
     }
-  // printf("Hook up link to node\n");
-  // hook up link to node
-  for (auto _link_it = m_graph->BegEI (); _link_it < m_graph->EndEI ();
-       _link_it++)
+
+  // hook up node to link
+  for (const auto &l : m_graph.links ())
     {
-      _link = m_link_factory->get_link (_link_it.GetId ());
-      _link->hook_up_node (m_node_factory->get_node (_link_it.GetSrcNId ()),
-                           m_node_factory->get_node (_link_it.GetDstNId ()));
+      _link = m_link_factory->get_link (m_graph.get_id (l));
+      const auto &sd = m_graph.get_endpoints (l);
+      _link->hook_up_node (m_node_factory->get_node (m_graph.get_id (sd.first)),
+                           m_node_factory->get_node (
+                             m_graph.get_id (sd.second)));
     }
   return 0;
 }
@@ -387,20 +386,23 @@ MNM_Dta::is_ok ()
 {
   bool _flag = true;
   bool _temp_flag = true;
+
+  // TODO: Port this to the builtin graph (if necessary).
+  //
   // Checks the graph data structure for internal consistency.
   // For each node in the graph check that its neighbors are also nodes in the
   // graph.
-  printf ("\nChecking......Driving Graph consistent!\n");
-  _temp_flag = m_graph->IsOk ();
-  _flag = _flag && _temp_flag;
-  if (_temp_flag)
-    printf ("Passed!\n");
+  // printf ("\nChecking......Driving Graph consistent!\n");
+  // _temp_flag = m_graph->IsOk ();
+  // _flag = _flag && _temp_flag;
+  // if (_temp_flag)
+  //   printf ("Passed!\n");
 
   // check node
   printf ("Checking......Driving Node consistent!\n");
   _temp_flag
-    = (m_graph->GetNodes () == m_config->get_int ("num_of_node"))
-      && (m_graph->GetNodes () == TInt (m_node_factory->m_node_map.size ()));
+    = (m_graph.size_nodes () == m_config->get_int ("num_of_node"))
+      && (m_graph.size_nodes () == TInt (m_node_factory->m_node_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
@@ -408,8 +410,8 @@ MNM_Dta::is_ok ()
   // check link
   printf ("Checking......Driving Link consistent!\n");
   _temp_flag
-    = (m_graph->GetEdges () == m_config->get_int ("num_of_link"))
-      && (m_graph->GetEdges () == TInt (m_link_factory->m_link_map.size ()));
+    = (m_graph.size_links () == m_config->get_int ("num_of_link"))
+      && (m_graph.size_links () == TInt (m_link_factory->m_link_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
@@ -426,20 +428,28 @@ MNM_Dta::is_ok ()
        _origin_map_it != m_od_factory->m_origin_map.end (); _origin_map_it++)
     {
       _node_ID = _origin_map_it->second->m_origin_node->m_node_ID;
-      _temp_flag = _temp_flag
-                   && ((m_graph->GetNI (_node_ID)).GetId () == _node_ID)
-                   && (m_graph->GetNI (_node_ID).GetOutDeg () >= 1)
-                   && (m_graph->GetNI (_node_ID).GetInDeg () == 0);
+      const auto &n = m_graph.get_node (_node_ID);
+      _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID);
+      auto &&outs = m_graph.connections (n, Direction::Outgoing);
+      _temp_flag
+        = _temp_flag && (std::distance (outs.begin (), outs.end ()) >= 1);
+      auto &&ins = m_graph.connections (n, Direction::Incoming);
+      _temp_flag
+        = _temp_flag && (std::distance (ins.begin (), ins.end ()) == 0);
     }
   std::unordered_map<TInt, MNM_Destination *>::iterator _dest_map_it;
   for (_dest_map_it = m_od_factory->m_destination_map.begin ();
        _dest_map_it != m_od_factory->m_destination_map.end (); _dest_map_it++)
     {
       _node_ID = _dest_map_it->second->m_dest_node->m_node_ID;
-      _temp_flag = _temp_flag
-                   && ((m_graph->GetNI (_node_ID)).GetId () == _node_ID)
-                   && (m_graph->GetNI (_node_ID).GetOutDeg () == 0)
-                   && (m_graph->GetNI (_node_ID).GetInDeg () >= 1);
+      const auto &n = m_graph.get_node (_node_ID);
+      _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID);
+      auto &&outs = m_graph.connections (n, Direction::Outgoing);
+      _temp_flag
+        = _temp_flag && (std::distance (outs.begin (), outs.end ()) == 0);
+      auto &&ins = m_graph.connections (n, Direction::Incoming);
+      _temp_flag
+        = _temp_flag && (std::distance (ins.begin (), ins.end ()) >= 1);
     }
   _flag = _flag && _temp_flag;
   if (_temp_flag)
@@ -539,9 +549,10 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   MNM_Destination *_dest;
 
   // update some link attributes over time
-  m_link_factory -> update_link_attribute(load_int, verbose);
+  m_link_factory->update_link_attribute (load_int, verbose);
   // compute empty network link tt, for adaptive routing
-  if (load_int == 0) m_statistics->update_record (-1);
+  if (load_int == 0)
+    m_statistics->update_record (-1);
   if (verbose)
     printf ("-------------------------------    Interval %d   "
             "------------------------------ \n",
@@ -563,7 +574,8 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
             }
           else
             {
-              if (m_config->get_string ("routing_type") == "Fixed" || m_config -> get_string("routing_type") == "Due")
+              if (m_config->get_string ("routing_type") == "Fixed"
+                  || m_config->get_string ("routing_type") == "Due")
                 {
                   // printf("Fixed Releasing.\n");
                   _origin->release_one_interval (load_int, m_veh_factory,
@@ -653,8 +665,9 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
       _link->evolve (load_int);
     }
 
-  if (m_emission != nullptr) m_emission -> update(m_veh_factory);
-  
+  if (m_emission != nullptr)
+    m_emission->update (m_veh_factory);
+
   if (verbose)
     printf ("Receiving!\n");
   // step 5: Destination receive vehicle
@@ -672,7 +685,8 @@ MNM_Dta::load_once (bool verbose, TInt load_int, TInt assign_int)
   m_statistics->update_record (load_int);
 
   record_enroute_vehicles ();
-  if (verbose) MNM::print_vehicle_statistics(m_veh_factory);
+  if (verbose)
+    MNM::print_vehicle_statistics (m_veh_factory);
   // test();
   // consistent with loading()
   m_current_loading_interval = load_int + 1;
@@ -686,8 +700,8 @@ MNM_Dta::loading (bool verbose)
   int _current_inter = 0;
   int _assign_inter = m_start_assign_interval;
 
-  // It at least will release all vehicles no matter what value total_interval is set
-  // the least length of simulation = max_interval * assign_frq
+  // It at least will release all vehicles no matter what value total_interval
+  // is set the least length of simulation = max_interval * assign_frq
   while (!finished_loading (_current_inter)
          || _assign_inter < m_total_assign_inter)
     {
@@ -695,7 +709,8 @@ MNM_Dta::loading (bool verbose)
         {
           std::cout << std::endl
                     << "Current loading interval: " << _current_inter << ", "
-                    << "Current assignment interval: " << int(_current_inter/m_config -> get_int("assign_frq"))
+                    << "Current assignment interval: "
+                    << int (_current_inter / m_config->get_int ("assign_frq"))
                     << std::endl;
         }
       load_once (verbose, _current_inter, _assign_inter);

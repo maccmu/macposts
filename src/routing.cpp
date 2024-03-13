@@ -1,10 +1,12 @@
 #include "routing.h"
 
-MNM_Routing::MNM_Routing (PNEGraph &graph, MNM_OD_Factory *od_factory,
+using macposts::graph::Direction;
+
+MNM_Routing::MNM_Routing (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                           MNM_Node_Factory *node_factory,
                           MNM_Link_Factory *link_factory)
+    : m_graph (graph)
 {
-  m_graph = graph;
   m_od_factory = od_factory;
   m_node_factory = node_factory;
   m_link_factory = link_factory;
@@ -16,7 +18,7 @@ MNM_Routing::~MNM_Routing () { ; }
                           Random routing
 **************************************************************************/
 /* assign each vehicle a random link ahead of it, only used for testing */
-MNM_Routing_Random::MNM_Routing_Random (PNEGraph &graph,
+MNM_Routing_Random::MNM_Routing_Random (macposts::Graph &graph,
                                         MNM_OD_Factory *od_factory,
                                         MNM_Node_Factory *node_factory,
                                         MNM_Link_Factory *link_factory)
@@ -38,7 +40,6 @@ MNM_Routing_Random::update_routing (TInt timestamp)
   MNM_Origin *_origin;
   MNM_DMOND *_origin_node;
   TInt _node_ID;
-  TNEGraph::TNodeI _node_I;
   TInt _out_ID;
   MNM_Dlink *_next_link;
   MNM_Dlink *_link;
@@ -53,11 +54,14 @@ MNM_Routing_Random::update_routing (TInt timestamp)
       for (auto _veh_it = _origin_node->m_in_veh_queue.begin ();
            _veh_it != _origin_node->m_in_veh_queue.end (); _veh_it++)
         {
-          _node_I = m_graph->GetNI (_node_ID);
-          _out_ID
-            = _node_I.GetOutNId (MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
-          _next_link = m_link_factory->get_link (
-            m_graph->GetEI (_node_ID, _out_ID).GetId ());
+          const auto &n = m_graph.get_node (_node_ID);
+          auto &&outs = m_graph.connections (n, Direction::Outgoing);
+          int idx = MNM_Ults::mod (rand (),
+                                   std::distance (outs.begin (), outs.end ()));
+          auto it = outs.begin ();
+          while (idx--)
+            ++it;
+          _next_link = m_link_factory->get_link (m_graph.get_id (*it));
           (*_veh_it)->set_next_link (_next_link);
           // note that it neither initializes nor updates _veh -> m_path
         }
@@ -73,11 +77,16 @@ MNM_Routing_Random::update_routing (TInt timestamp)
       for (auto _veh_it = _link->m_finished_array.begin ();
            _veh_it != _link->m_finished_array.end (); _veh_it++)
         {
-          _node_I = m_graph->GetNI (_node_ID);
-          if (_node_I.GetOutDeg () > 0)
+          const auto &n = m_graph.get_node (_node_ID);
+          auto &&outs = m_graph.connections (n, Direction::Outgoing);
+          int deg = std::distance (outs.begin (), outs.end ());
+          if (deg > 0)
             {
-              _link_ID = _node_I.GetOutEId (
-                MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+              int idx = MNM_Ults::mod (rand (), deg);
+              auto it = outs.begin ();
+              while (idx--)
+                it++;
+              _link_ID = m_graph.get_id (*it);
               _next_link = m_link_factory->get_link (_link_ID);
               (*_veh_it)->set_next_link (_next_link);
             }
@@ -95,7 +104,7 @@ MNM_Routing_Random::update_routing (TInt timestamp)
                           Adaptive routing
 **************************************************************************/
 MNM_Routing_Adaptive::MNM_Routing_Adaptive (const std::string &file_folder,
-                                            PNEGraph &graph,
+                                            macposts::Graph &graph,
                                             MNM_Statistics *statistics,
                                             MNM_OD_Factory *od_factory,
                                             MNM_Node_Factory *node_factory,
@@ -181,7 +190,8 @@ MNM_Routing_Adaptive::update_link_cost ()
       // for multiclass, m_toll is for car, see
       // MNM_IO_Multiclass::build_link_toll_multiclass
       // in dollars
-      m_link_cost[_it.first] = _it.second * m_vot + m_link_factory->get_link (_it.first)->m_toll;
+      m_link_cost[_it.first]
+        = _it.second * m_vot + m_link_factory->get_link (_it.first)->m_toll;
       // printf("link %d, cost %f\n", _it.first(), m_link_cost[_it.first]());
     }
   return 0;
@@ -291,14 +301,20 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
                       printf ("The node is %d, the vehicle should head to %d\n",
                               (int) _node_ID,
                               (int) _veh_dest->m_dest_node->m_node_ID);
-                      // exit(-1);
-                      auto _node_I = m_graph->GetNI (_node_ID);
-                      if (_node_I.GetOutDeg () > 0)
+                      const auto &n = m_graph.get_node (_node_ID);
+                      auto &&outs
+                        = m_graph.connections (n, Direction::Outgoing);
+                      int deg = std::distance (outs.begin (), outs.end ());
+                      if (deg > 0)
                         {
                           printf ("Assign randomly!\n");
-                          _next_link_ID = _node_I.GetOutEId (
-                            MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+                          auto it = outs.begin ();
+                          int idx = MNM_Ults::mod (rand (), deg);
+                          while (idx--)
+                            it++;
+                          _next_link_ID = m_graph.get_id (*it);
                         }
+
                       else
                         {
                           printf ("Can't do anything!\n");
@@ -348,7 +364,7 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
 /**************************************************************************
                           fixed routing
 **************************************************************************/
-MNM_Routing_Fixed::MNM_Routing_Fixed (PNEGraph &graph,
+MNM_Routing_Fixed::MNM_Routing_Fixed (macposts::Graph &graph,
                                       MNM_OD_Factory *od_factory,
                                       MNM_Node_Factory *node_factory,
                                       MNM_Link_Factory *link_factory,
@@ -635,10 +651,13 @@ MNM_Routing_Fixed::add_veh_path (MNM_Veh *veh, std::deque<TInt> *link_que)
 /**************************************************************************
                           Hybrid (Adaptive+Fixed) routing
 **************************************************************************/
-MNM_Routing_Hybrid::MNM_Routing_Hybrid (
-  const std::string &file_folder, PNEGraph &graph, MNM_Statistics *statistics,
-  MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
-  MNM_Link_Factory *link_factory, TInt route_frq_fixed, TInt buffer_len)
+MNM_Routing_Hybrid::MNM_Routing_Hybrid (const std::string &file_folder,
+                                        macposts::Graph &graph,
+                                        MNM_Statistics *statistics,
+                                        MNM_OD_Factory *od_factory,
+                                        MNM_Node_Factory *node_factory,
+                                        MNM_Link_Factory *link_factory,
+                                        TInt route_frq_fixed, TInt buffer_len)
     : MNM_Routing::MNM_Routing (graph, od_factory, node_factory, link_factory)
 {
   m_routing_fixed
@@ -688,9 +707,10 @@ MNM_Routing_Hybrid::remove_finished (MNM_Veh *veh, bool del)
                           Bi-class Hybrid routing
 **************************************************************************/
 MNM_Routing_Biclass_Hybrid::MNM_Routing_Biclass_Hybrid (
-  const std::string &file_folder, PNEGraph &graph, MNM_Statistics *statistics,
-  MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
-  MNM_Link_Factory *link_factory, TInt route_frq_fixed, TInt buffer_length)
+  const std::string &file_folder, macposts::Graph &graph,
+  MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
+  MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
+  TInt route_frq_fixed, TInt buffer_length)
     : MNM_Routing::MNM_Routing (graph, od_factory, node_factory, link_factory)
 {
   m_routing_fixed_car
@@ -760,9 +780,9 @@ MNM_Routing_Biclass_Hybrid::remove_finished (MNM_Veh *veh, bool del)
                           Bi-class fixed routing
 **************************************************************************/
 MNM_Routing_Biclass_Fixed::MNM_Routing_Biclass_Fixed (
-  PNEGraph &graph, MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
-  MNM_Link_Factory *link_factory, TInt routing_frq, TInt buffer_length,
-  TInt veh_class)
+  macposts::Graph &graph, MNM_OD_Factory *od_factory,
+  MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
+  TInt routing_frq, TInt buffer_length, TInt veh_class)
     : MNM_Routing_Fixed::MNM_Routing_Fixed (graph, od_factory, node_factory,
                                             link_factory, routing_frq,
                                             buffer_length)
