@@ -101,7 +101,7 @@ public:
 class MNM_Routing_Delivery_Fixed : public MNM_Routing_Fixed
 {
 public:
-  MNM_Routing_Delivery_Fixed (PNEGraph &graph, MNM_OD_Factory *od_factory,
+  MNM_Routing_Delivery_Fixed (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                      MNM_Node_Factory *node_factory,
                      MNM_Link_Factory *link_factory, TInt route_frq = TInt (-1),
                      TInt buffer_len = TInt (-1));
@@ -114,7 +114,7 @@ public:
 class MNM_Routing_Delivery_Hybrid : public MNM_Routing_Hybrid
 {
 public:
-  MNM_Routing_Delivery_Hybrid(const std::string& file_folder, PNEGraph &graph, MNM_Statistics* statistics, MNM_OD_Factory *od_factory,
+  MNM_Routing_Delivery_Hybrid(const std::string& file_folder, macposts::Graph &graph, MNM_Statistics* statistics, MNM_OD_Factory *od_factory,
                     MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
                      TInt route_frq_fixed = TInt(-1), TInt buffer_len = TInt(-1));
   virtual ~MNM_Routing_Delivery_Hybrid() override;

@@ -407,7 +407,7 @@ MNM_Origin *MNM_OD_Factory_Delivery::make_origin(TInt ID, TInt max_interval, TFl
 //                  Fixed Routing with Delivery Traffic
 //#################################################################
 
-MNM_Routing_Delivery_Fixed::MNM_Routing_Delivery_Fixed (PNEGraph &graph,
+MNM_Routing_Delivery_Fixed::MNM_Routing_Delivery_Fixed (macposts::Graph &graph,
                                       MNM_OD_Factory *od_factory,
                                       MNM_Node_Factory *node_factory,
                                       MNM_Link_Factory *link_factory,
@@ -447,7 +447,7 @@ int MNM_Routing_Delivery_Fixed::remove_finished(MNM_Veh* veh, bool del)
 //#################################################################
 
 MNM_Routing_Delivery_Hybrid::MNM_Routing_Delivery_Hybrid (
-  const std::string &file_folder, PNEGraph &graph, MNM_Statistics *statistics,
+  const std::string &file_folder, macposts::Graph &graph, MNM_Statistics *statistics,
   MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
   MNM_Link_Factory *link_factory, TInt route_frq_fixed, TInt buffer_len)
     : MNM_Routing_Hybrid::MNM_Routing_Hybrid (file_folder, graph, statistics,
@@ -755,8 +755,8 @@ MNM_Dta_Delivery::build_from_files()
     std::cout << "# of links: " << m_link_factory -> m_link_map.size() << "\n";
     MNM_IO_Delivery::build_od_factory_delivery(m_file_folder, m_config, m_od_factory, m_node_factory);
     std::cout << "# of OD pairs: " << m_od_factory -> m_origin_map.size() << "\n";
-    
-    m_graph = MNM_IO::build_graph(m_file_folder, m_config);
+
+    m_graph = MNM_IO::build_graph(m_file_folder, m_config, 0);
 
     MNM_IO::build_demand(m_file_folder, m_config, m_od_factory);
     MNM_IO_Delivery::build_demand_multi_OD_seq(m_file_folder, m_config, m_od_factory);
