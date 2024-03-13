@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "path.h"
 #include "pre_routing.h"
 #include "shortest_path.h"
@@ -16,14 +16,14 @@ typedef std::unordered_map<MNM_Destination *, std::unordered_map<TInt, TInt> *>
 class MNM_Routing
 {
 public:
-  MNM_Routing (PNEGraph &graph, MNM_OD_Factory *od_factory,
+  MNM_Routing (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory);
   virtual ~MNM_Routing ();
   virtual int init_routing (Path_Table *path_table = nullptr) { return 0; };
   virtual int update_routing (TInt timestamp) { return 0; };
   virtual int remove_finished (MNM_Veh *veh, bool del = true) { return 0; };
 
-  PNEGraph m_graph;
+  macposts::Graph &m_graph;
   MNM_OD_Factory *m_od_factory;
   MNM_Link_Factory *m_link_factory;
   MNM_Node_Factory *m_node_factory;
@@ -33,7 +33,7 @@ public:
 class MNM_Routing_Random : public MNM_Routing
 {
 public:
-  MNM_Routing_Random (PNEGraph &graph, MNM_OD_Factory *od_factory,
+  MNM_Routing_Random (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                       MNM_Node_Factory *node_factory,
                       MNM_Link_Factory *link_factory);
   virtual ~MNM_Routing_Random () override;
@@ -44,7 +44,7 @@ public:
 class MNM_Routing_Adaptive : public MNM_Routing
 {
 public:
-  MNM_Routing_Adaptive (const std::string &file_folder, PNEGraph &graph,
+  MNM_Routing_Adaptive (const std::string &file_folder, macposts::Graph &graph,
                         MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
                         MNM_Node_Factory *node_factory,
                         MNM_Link_Factory *link_factory);
@@ -59,13 +59,13 @@ public:
   TInt m_routing_freq;
   TFlt m_vot;
   MNM_ConfReader *m_self_config;
-  bool m_working=true;
+  bool m_working = true;
 };
 
 class MNM_Routing_Fixed : public MNM_Routing
 {
 public:
-  MNM_Routing_Fixed (PNEGraph &graph, MNM_OD_Factory *od_factory,
+  MNM_Routing_Fixed (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                      MNM_Node_Factory *node_factory,
                      MNM_Link_Factory *link_factory, TInt route_frq = TInt (-1),
                      TInt buffer_len = TInt (-1));
@@ -90,7 +90,7 @@ public:
 class MNM_Routing_Hybrid : public MNM_Routing
 {
 public:
-  MNM_Routing_Hybrid (const std::string &file_folder, PNEGraph &graph,
+  MNM_Routing_Hybrid (const std::string &file_folder, macposts::Graph &graph,
                       MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
                       MNM_Node_Factory *node_factory,
                       MNM_Link_Factory *link_factory,
@@ -110,7 +110,7 @@ public:
 class MNM_Routing_Biclass_Fixed : public MNM_Routing_Fixed
 {
 public:
-  MNM_Routing_Biclass_Fixed (PNEGraph &graph, MNM_OD_Factory *od_factory,
+  MNM_Routing_Biclass_Fixed (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                              MNM_Node_Factory *node_factory,
                              MNM_Link_Factory *link_factory,
                              TInt route_frq = TInt (-1),
@@ -131,13 +131,11 @@ public:
 class MNM_Routing_Biclass_Hybrid : public MNM_Routing
 {
 public:
-  MNM_Routing_Biclass_Hybrid (const std::string &file_folder, PNEGraph &graph,
-                              MNM_Statistics *statistics,
-                              MNM_OD_Factory *od_factory,
-                              MNM_Node_Factory *node_factory,
-                              MNM_Link_Factory *link_factory,
-                              TInt route_frq_fixed = TInt (-1),
-                              TInt buffer_length = TInt (-1));
+  MNM_Routing_Biclass_Hybrid (
+    const std::string &file_folder, macposts::Graph &graph,
+    MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
+    MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
+    TInt route_frq_fixed = TInt (-1), TInt buffer_length = TInt (-1));
   virtual ~MNM_Routing_Biclass_Hybrid () override;
   virtual int init_routing (Path_Table *path_table = NULL) override;
   virtual int update_routing (TInt timestamp) override;
@@ -154,7 +152,7 @@ public:
 class MNM_Routing_Predetermined : public MNM_Routing
 {
 public:
-  MNM_Routing_Predetermined (PNEGraph &graph, MNM_OD_Factory *od_factory,
+  MNM_Routing_Predetermined (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                              MNM_Node_Factory *node_factory,
                              MNM_Link_Factory *link_factory,
                              Path_Table *p_table, MNM_Pre_Routing *pre_routing,
