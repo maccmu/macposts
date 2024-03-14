@@ -3824,15 +3824,17 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   int *links_ptr_bustransit = (int *) links_buf_bustransit.ptr;
 
   auto *_path_driving = new MNM_Path ();
-  auto &&graph = m_mmdta->m_graph;
-  _path_driving->m_node_vec.push_back (graph.get_id (
-    graph.get_endpoints (graph.get_link (links_ptr_driving[0])).first));
-  for (int i = 0; i < m_driving; ++i)
-    {
-      _path_driving->m_link_vec.push_back (links_ptr_driving[i]);
-      _path_driving->m_node_vec.push_back (graph.get_id (
-        graph.get_endpoints (graph.get_link (links_ptr_driving[i])).second));
-    }
+  {
+    auto &&graph = m_mmdta->m_graph;
+    _path_driving->m_node_vec.push_back (graph.get_id (
+      graph.get_endpoints (graph.get_link (links_ptr_driving[0])).first));
+    for (int i = 0; i < m_driving; ++i)
+      {
+        _path_driving->m_link_vec.push_back (links_ptr_driving[i]);
+        _path_driving->m_node_vec.push_back (graph.get_id (
+          graph.get_endpoints (graph.get_link (links_ptr_driving[i])).second));
+      }
+  }
   TInt _mid_dest_node_ID = _path_driving->m_node_vec.back ();
   auto *_mid_dest = dynamic_cast<MNM_Destination_Multimodal *> (
     ((MNM_DMDND *) m_mmdta->m_node_factory->get_node (_mid_dest_node_ID))
@@ -3840,16 +3842,18 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   Assert (_mid_dest->m_parking_lot != nullptr);
 
   auto *_path_bustransit = new MNM_Path ();
-  graph = m_mmdta->m_bus_transit_graph;
-  _path_bustransit->m_node_vec.push_back (graph.get_id (
-    graph.get_endpoints (graph.get_link (links_ptr_bustransit[0])).first));
-  for (int i = 0; i < m_bustransit; ++i)
-    {
-      _path_bustransit->m_link_vec.push_back (links_ptr_bustransit[i]);
-      _path_bustransit->m_node_vec.push_back (graph.get_id (
-        graph.get_endpoints (graph.get_link (links_ptr_bustransit[i])).second));
-    }
-
+  {
+    auto &&graph = m_mmdta->m_bus_transit_graph;
+    _path_bustransit->m_node_vec.push_back (graph.get_id (
+      graph.get_endpoints (graph.get_link (links_ptr_bustransit[0])).first));
+    for (int i = 0; i < m_bustransit; ++i)
+      {
+        _path_bustransit->m_link_vec.push_back (links_ptr_bustransit[i]);
+        _path_bustransit->m_node_vec.push_back (graph.get_id (
+          graph.get_endpoints (graph.get_link (links_ptr_bustransit[i]))
+            .second));
+      }
+  }
   auto *_path_pnr
     = new MNM_PnR_Path (0, _mid_dest->m_parking_lot->m_ID, _mid_dest_node_ID,
                         _path_driving, _path_bustransit);
