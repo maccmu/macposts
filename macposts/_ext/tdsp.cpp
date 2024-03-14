@@ -1,11 +1,11 @@
 // Time-dependent shortest path (TDSP)
 
-#include <Snap.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <unordered_map>
 #include <vector>
 
+#include <common.h>
 #include <io.h>
 #include <shortest_path.h>
 
@@ -44,7 +44,7 @@ public:
 
   TInt m_num_rows_link_file, m_num_rows_node_file, m_dest_node_ID,
     m_max_interval;
-  PNEGraph m_graph;
+  macposts::Graph m_graph;
   MNM_TDSP_Tree *m_tdsp_tree;
 
   std::unordered_map<TInt, TFlt *> m_td_link_tt;
@@ -79,8 +79,6 @@ Tdsp::Tdsp ()
 
   m_num_rows_link_file = -1;
   m_num_rows_node_file = -1;
-
-  m_graph = nullptr;
 }
 
 Tdsp::~Tdsp ()
@@ -116,8 +114,6 @@ Tdsp::~Tdsp ()
       _it.second.clear ();
     }
   m_td_node_cost.clear ();
-
-  m_graph->Clr ();
 }
 
 int
@@ -131,7 +127,7 @@ Tdsp::initialize (const std::string &folder, int max_interval,
 
   MNM_ConfReader *conf_reader
     = new MNM_ConfReader (folder + "/config.conf", "Network");
-  m_graph = MNM_IO::build_graph (folder, conf_reader);
+  m_graph = MNM_IO::build_graph (folder, conf_reader, 0);
 
   delete conf_reader;
   return 0;
