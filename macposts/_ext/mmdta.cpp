@@ -7,8 +7,10 @@
 #include <vector>
 
 #include "utils.h"
-#include <Snap.h>
+#include <common.h>
 #include <multimodal.h>
+
+using macposts::graph::Direction;
 
 namespace py = pybind11;
 
@@ -844,7 +846,7 @@ Mmdta::check_input_files ()
 int
 Mmdta::install_cc ()
 {
-// // car and truck
+  // // car and truck
   // for (size_t i = 0; i < m_link_vec_driving.size (); ++i)
   //   {
   //     m_link_vec_driving[i]->install_cumulative_curve_multiclass ();
@@ -860,8 +862,10 @@ Mmdta::install_cc ()
   //     // passenger
   //     m_link_vec_bus[i]->install_cumulative_curve ();
   //     // bus
-  //     m_link_vec_bus[i]->m_from_busstop->install_cumulative_curve_multiclass ();
-  //     m_link_vec_bus[i]->m_to_busstop->install_cumulative_curve_multiclass ();
+  //     m_link_vec_bus[i]->m_from_busstop->install_cumulative_curve_multiclass
+  //     ();
+  //     m_link_vec_bus[i]->m_to_busstop->install_cumulative_curve_multiclass
+  //     ();
   //   }
   // // truck traversing bus links
   // for (size_t i = 0; i < m_link_vec_bus_driving.size (); ++i)
@@ -869,24 +873,31 @@ Mmdta::install_cc ()
   //     m_link_vec_bus_driving[i]->install_cumulative_curve_multiclass ();
   //   }
 
-  for (auto _link_it : m_mmdta -> m_link_factory -> m_link_map){
-    dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second) -> install_cumulative_curve_multiclass();
-  }
-  for (auto _link_it : m_mmdta -> m_transitlink_factory -> m_transit_link_map){
-    if (auto _bus_link = dynamic_cast<MNM_Bus_Link*>(_link_it.second)) {
-      // passenger
-      _bus_link->install_cumulative_curve ();
-      // bus
-      _bus_link->m_from_busstop->install_cumulative_curve_multiclass ();
-      _bus_link->m_to_busstop->install_cumulative_curve_multiclass ();
+  for (auto _link_it : m_mmdta->m_link_factory->m_link_map)
+    {
+      dynamic_cast<MNM_Dlink_Multiclass *> (_link_it.second)
+        ->install_cumulative_curve_multiclass ();
     }
-    else if (auto _walking_link = dynamic_cast<MNM_Walking_Link*>(_link_it.second)) {
-      _walking_link->install_cumulative_curve ();
+  for (auto _link_it : m_mmdta->m_transitlink_factory->m_transit_link_map)
+    {
+      if (auto _bus_link = dynamic_cast<MNM_Bus_Link *> (_link_it.second))
+        {
+          // passenger
+          _bus_link->install_cumulative_curve ();
+          // bus
+          _bus_link->m_from_busstop->install_cumulative_curve_multiclass ();
+          _bus_link->m_to_busstop->install_cumulative_curve_multiclass ();
+        }
+      else if (auto _walking_link
+               = dynamic_cast<MNM_Walking_Link *> (_link_it.second))
+        {
+          _walking_link->install_cumulative_curve ();
+        }
+      else
+        {
+          throw std::runtime_error ("Wrong transit link type");
+        }
     }
-    else {
-      throw std::runtime_error ("Wrong transit link type");
-    }
-  }
   return 0;
 }
 
@@ -1450,7 +1461,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
                                get_link_outflow_car (_link_m, _iter,
-                                                    _iter + cong_frequency))
+                                                     _iter + cong_frequency))
                            + " ";
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
@@ -1460,7 +1471,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
                                get_link_outflow_truck (_link_m, _iter,
-                                                      _iter + cong_frequency))
+                                                       _iter + cong_frequency))
                            + " ";
                   // _str1 +=
                   // std::to_string(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
@@ -1487,13 +1498,19 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                                m_mmdta->m_current_loading_interval)
                              * m_mmdta->m_unit_time)
                            + " ";
-                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_car ())
+                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_car
+                  // ())
                   //          + " ";
-                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_truck ())
+                  // _str1 += std::to_string
+                  // (_link_m->get_link_freeflow_tt_truck ())
                   //          + " ";
-                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_loading_car () * m_mmdta -> m_unit_time)
+                  _str1 += std::to_string (
+                             _link_m->get_link_freeflow_tt_loading_car ()
+                             * m_mmdta->m_unit_time)
                            + " ";
-                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_loading_truck () * m_mmdta -> m_unit_time)
+                  _str1 += std::to_string (
+                             _link_m->get_link_freeflow_tt_loading_truck ()
+                             * m_mmdta->m_unit_time)
                            + " ";
                   // _str1 += std::to_string(_link_m ->
                   // m_length/(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
@@ -1512,7 +1529,8 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   //          + " "; // mph
                   _str1 += std::to_string (
                              _link_m->m_length
-                             / (_link_m->get_link_freeflow_tt_loading_car () * m_mmdta -> m_unit_time)
+                             / (_link_m->get_link_freeflow_tt_loading_car ()
+                                * m_mmdta->m_unit_time)
                              * 3600 / 1600)
                            + " "; // mph
                   _str1 += std::to_string (
@@ -1532,7 +1550,8 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   //          + " "; // mph
                   _str1 += std::to_string (
                              _link_m->m_length
-                             / (_link_m->get_link_freeflow_tt_loading_truck () * m_mmdta -> m_unit_time)
+                             / (_link_m->get_link_freeflow_tt_loading_truck ()
+                                * m_mmdta->m_unit_time)
                              * 3600 / 1600)
                            + " "; // mph
                   _str1 += std::to_string (
@@ -2405,7 +2424,7 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
       return result;
     }
 
-  PNEGraph reversed_graph = MNM_Ults::reverse_graph (m_mmdta->m_graph);
+  macposts::Graph reversed_graph = MNM_Ults::reverse_graph (m_mmdta->m_graph);
   std::unordered_map<TInt, TFlt> _cost_map = std::unordered_map<TInt, TFlt> ();
   for (auto _link_it : m_mmdta->m_link_factory->m_link_map)
     {
@@ -2433,12 +2452,11 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
       if (!_link_existing_driving[i])
         {
           // generate new path including this link
-          _from_node_ID
-            = m_mmdta->m_graph->GetEI (m_link_vec_driving[i]->m_link_ID)
-                .GetSrcNId ();
-          _to_node_ID
-            = m_mmdta->m_graph->GetEI (m_link_vec_driving[i]->m_link_ID)
-                .GetDstNId ();
+          const auto &l
+            = m_mmdta->m_graph.get_link (m_link_vec_driving[i]->m_link_ID);
+          auto &&sd = m_mmdta->m_graph.get_endpoints (l);
+          _from_node_ID = m_mmdta->m_graph.get_id (sd.first);
+          _to_node_ID = m_mmdta->m_graph.get_id (sd.second);
 
           // path from origin to from_node_ID
           if (!_shortest_path_tree.empty ())
@@ -2631,7 +2649,6 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
   _cost_map.clear ();
   _shortest_path_tree.clear ();
   _shortest_path_tree_reversed.clear ();
-  reversed_graph.Clr ();
   pair_ptrs_1.clear ();
   pair_ptrs_2.clear ();
   return result;
@@ -2676,7 +2693,7 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
       return result;
     }
 
-  PNEGraph reversed_graph
+  macposts::Graph reversed_graph
     = MNM_Ults::reverse_graph (m_mmdta->m_bus_transit_graph);
   std::unordered_map<TInt, TFlt> _cost_map_driving
     = std::unordered_map<TInt, TFlt> ();
@@ -2719,20 +2736,23 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           _is_pnr = false;
 
           // generate new path including this link
-          _from_node_ID
-            = m_mmdta->m_bus_transit_graph->GetEI (m_link_vec_bus[i]->m_link_ID)
-                .GetSrcNId ();
-          _to_node_ID
-            = m_mmdta->m_bus_transit_graph->GetEI (m_link_vec_bus[i]->m_link_ID)
-                .GetDstNId ();
+          const auto &l
+            = m_mmdta->m_graph.get_link (m_link_vec_bus[i]->m_link_ID);
+          auto &&sd = m_mmdta->m_graph.get_endpoints (l);
+          _from_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.first);
+          _to_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.second);
 
           // path from origin to from_node_ID
           if (!_shortest_path_tree.empty ())
             {
               _shortest_path_tree.clear ();
             }
-          if (m_mmdta->m_bus_transit_graph->GetNI (_from_node_ID).GetInDeg ()
-              == 0)
+          auto &&ins = m_mmdta->m_bus_transit_graph
+                         .connections (m_mmdta->m_bus_transit_graph.get_node (
+                                         _from_node_ID),
+                                       Direction::Incoming);
+
+          if (std::distance (ins.begin (), ins.end ()) == 0)
             {
               _path_1 = new MNM_Path ();
               _path_1->m_node_vec.push_back (_from_node_ID);
@@ -2750,8 +2770,11 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               _shortest_path_tree_reversed.clear ();
             }
-          if (m_mmdta->m_bus_transit_graph->GetNI (_from_node_ID).GetOutDeg ()
-              == 0)
+          auto &&outs = m_mmdta->m_bus_transit_graph
+                          .connections (m_mmdta->m_bus_transit_graph.get_node (
+                                          _from_node_ID),
+                                        Direction::Outgoing);
+          if (std::distance (outs.begin (), outs.end ()) == 0)
             {
               _path_2 = new MNM_Path ();
               _path_2->m_node_vec.push_back (_to_node_ID);
@@ -3054,20 +3077,23 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           _is_pnr = false;
 
           // generate new path including this link
-          _from_node_ID = m_mmdta->m_bus_transit_graph
-                            ->GetEI (m_link_vec_walking[i]->m_link_ID)
-                            .GetSrcNId ();
-          _to_node_ID = m_mmdta->m_bus_transit_graph
-                          ->GetEI (m_link_vec_walking[i]->m_link_ID)
-                          .GetDstNId ();
+          const auto &l = m_mmdta->m_bus_transit_graph.get_link (
+            m_link_vec_walking[i]->m_link_ID);
+          auto &&sd = m_mmdta->m_graph.get_endpoints (l);
+          _from_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.first);
+          _to_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.second);
 
           // path from origin to from_node_ID
           if (!_shortest_path_tree.empty ())
             {
               _shortest_path_tree.clear ();
             }
-          if (m_mmdta->m_bus_transit_graph->GetNI (_from_node_ID).GetInDeg ()
-              == 0)
+          auto &&ins = m_mmdta->m_bus_transit_graph
+                         .connections (m_mmdta->m_bus_transit_graph.get_node (
+                                         _from_node_ID),
+                                       Direction::Incoming);
+
+          if (std::distance (ins.begin (), ins.end ()) == 0)
             {
               _path_1 = new MNM_Path ();
               _path_1->m_node_vec.push_back (_from_node_ID);
@@ -3085,8 +3111,11 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               _shortest_path_tree_reversed.clear ();
             }
-          if (m_mmdta->m_bus_transit_graph->GetNI (_from_node_ID).GetOutDeg ()
-              == 0)
+          auto &&outs = m_mmdta->m_bus_transit_graph
+                          .connections (m_mmdta->m_bus_transit_graph.get_node (
+                                          _from_node_ID),
+                                        Direction::Outgoing);
+          if (std::distance (outs.begin (), outs.end ()) == 0)
             {
               _path_2 = new MNM_Path ();
               _path_2->m_node_vec.push_back (_to_node_ID);
@@ -3400,7 +3429,6 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
   _cost_map.clear ();
   _shortest_path_tree.clear ();
   _shortest_path_tree_reversed.clear ();
-  reversed_graph.Clr ();
   pair_ptrs_1.clear ();
   pair_ptrs_2.clear ();
   return result;
@@ -3469,10 +3497,14 @@ Mmdta::link_seq_to_node_seq_driving (py::array_t<int> link_IDs)
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
 
-  result_ptr[0] = m_mmdta->m_graph->GetEI (links_ptr[0]).GetSrcNId ();
+  const auto &l = m_mmdta->m_graph.get_link (links_ptr[0]);
+  result_ptr[0]
+    = m_mmdta->m_graph.get_id (m_mmdta->m_graph.get_endpoints (l).first);
   for (int i = 0; i < m; ++i)
     {
-      result_ptr[i + 1] = m_mmdta->m_graph->GetEI (links_ptr[i]).GetDstNId ();
+      const auto &l = m_mmdta->m_graph.get_link (links_ptr[i]);
+      result_ptr[i + 1]
+        = m_mmdta->m_graph.get_id (m_mmdta->m_graph.get_endpoints (l).second);
     }
 
   return result;
@@ -3496,12 +3528,13 @@ Mmdta::link_seq_to_node_seq_bustransit (py::array_t<int> link_IDs)
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
 
-  result_ptr[0]
-    = m_mmdta->m_bus_transit_graph->GetEI (links_ptr[0]).GetSrcNId ();
+  const auto &l = m_mmdta->m_bus_transit_graph.get_link (links_ptr[0]);
+  result_ptr[0] = m_mmdta->m_bus_transit_graph.get_id (
+    m_mmdta->m_bus_transit_graph.get_endpoints (l).first);
   for (int i = 0; i < m; ++i)
     {
-      result_ptr[i + 1]
-        = m_mmdta->m_bus_transit_graph->GetEI (links_ptr[i]).GetDstNId ();
+      result_ptr[i + 1] = m_mmdta->m_bus_transit_graph.get_id (
+        m_mmdta->m_bus_transit_graph.get_endpoints (l).second);
     }
 
   return result;
@@ -3533,7 +3566,18 @@ Mmdta::node_seq_to_link_seq_driving (py::array_t<int> node_IDs)
 
   for (int i = 0; i < m - 1; ++i)
     {
-      result_ptr[i] = m_mmdta->m_graph->GetEId (nodes_ptr[i], nodes_ptr[i + 1]);
+      const auto &n = m_mmdta->m_graph.get_node (nodes_ptr[i]);
+      for (const auto &l :
+           m_mmdta->m_graph.connections (n, Direction::Outgoing))
+        {
+          if (m_mmdta->m_graph.get_id (
+                m_mmdta->m_graph.get_endpoints (l).second)
+              == nodes_ptr[i + 1])
+            {
+              result_ptr[i] = m_mmdta->m_graph.get_id (l);
+              break;
+            }
+        }
       if (result_ptr[i] < 0)
         {
           throw std::runtime_error (
@@ -3571,8 +3615,18 @@ Mmdta::node_seq_to_link_seq_bustransit (py::array_t<int> node_IDs)
 
   for (int i = 0; i < m - 1; ++i)
     {
-      result_ptr[i]
-        = m_mmdta->m_bus_transit_graph->GetEId (nodes_ptr[i], nodes_ptr[i + 1]);
+      const auto &n = m_mmdta->m_bus_transit_graph.get_node (nodes_ptr[i]);
+      for (const auto &l :
+           m_mmdta->m_bus_transit_graph.connections (n, Direction::Outgoing))
+        {
+          if (m_mmdta->m_bus_transit_graph.get_id (
+                m_mmdta->m_bus_transit_graph.get_endpoints (l).second)
+              == nodes_ptr[i + 1])
+            {
+              result_ptr[i] = m_mmdta->m_bus_transit_graph.get_id (l);
+              break;
+            }
+        }
       if (result_ptr[i] < 0)
         {
           throw std::runtime_error (
@@ -3609,13 +3663,14 @@ Mmdta::get_passenger_path_cost_driving (py::array_t<int> link_IDs,
   int *links_ptr = (int *) links_buf.ptr;
 
   auto *_path = new MNM_Path ();
+  auto &&graph = m_mmdta->m_graph;
   _path->m_node_vec.push_back (
-    m_mmdta->m_graph->GetEI (links_ptr[0]).GetSrcNId ());
+    graph.get_id (graph.get_endpoints (graph.get_link (links_ptr[0])).first));
   for (int i = 0; i < m; ++i)
     {
       _path->m_link_vec.push_back (links_ptr[i]);
-      _path->m_node_vec.push_back (
-        m_mmdta->m_graph->GetEI (links_ptr[i]).GetDstNId ());
+      _path->m_node_vec.push_back (graph.get_id (
+        graph.get_endpoints (graph.get_link (links_ptr[i])).second));
     }
   TInt _dest_node_ID = _path->m_node_vec.back ();
   auto *_dest = dynamic_cast<MNM_Destination_Multimodal *> (
@@ -3687,13 +3742,14 @@ Mmdta::get_passenger_path_cost_bus (py::array_t<int> link_IDs,
   int *links_ptr = (int *) links_buf.ptr;
 
   auto *_path = new MNM_Path ();
+  auto &&graph = m_mmdta->m_bus_transit_graph;
   _path->m_node_vec.push_back (
-    m_mmdta->m_bus_transit_graph->GetEI (links_ptr[0]).GetSrcNId ());
+    graph.get_id (graph.get_endpoints (graph.get_link (links_ptr[0])).first));
   for (int i = 0; i < m; ++i)
     {
       _path->m_link_vec.push_back (links_ptr[i]);
-      _path->m_node_vec.push_back (
-        m_mmdta->m_bus_transit_graph->GetEI (links_ptr[i]).GetDstNId ());
+      _path->m_node_vec.push_back (graph.get_id (
+        graph.get_endpoints (graph.get_link (links_ptr[i])).second));
     }
 
   auto *_p_path
@@ -3768,13 +3824,14 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   int *links_ptr_bustransit = (int *) links_buf_bustransit.ptr;
 
   auto *_path_driving = new MNM_Path ();
-  _path_driving->m_node_vec.push_back (
-    m_mmdta->m_graph->GetEI (links_ptr_driving[0]).GetSrcNId ());
+  auto &&graph = m_mmdta->m_graph;
+  _path_driving->m_node_vec.push_back (graph.get_id (
+    graph.get_endpoints (graph.get_link (links_ptr_driving[0])).first));
   for (int i = 0; i < m_driving; ++i)
     {
       _path_driving->m_link_vec.push_back (links_ptr_driving[i]);
-      _path_driving->m_node_vec.push_back (
-        m_mmdta->m_graph->GetEI (links_ptr_driving[i]).GetDstNId ());
+      _path_driving->m_node_vec.push_back (graph.get_id (
+        graph.get_endpoints (graph.get_link (links_ptr_driving[i])).second));
     }
   TInt _mid_dest_node_ID = _path_driving->m_node_vec.back ();
   auto *_mid_dest = dynamic_cast<MNM_Destination_Multimodal *> (
@@ -3783,14 +3840,14 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   Assert (_mid_dest->m_parking_lot != nullptr);
 
   auto *_path_bustransit = new MNM_Path ();
-  _path_bustransit->m_node_vec.push_back (
-    m_mmdta->m_bus_transit_graph->GetEI (links_ptr_bustransit[0]).GetSrcNId ());
+  graph = m_mmdta->m_bus_transit_graph;
+  _path_bustransit->m_node_vec.push_back (graph.get_id (
+    graph.get_endpoints (graph.get_link (links_ptr_bustransit[0])).first));
   for (int i = 0; i < m_bustransit; ++i)
     {
       _path_bustransit->m_link_vec.push_back (links_ptr_bustransit[i]);
-      _path_bustransit->m_node_vec.push_back (
-        m_mmdta->m_bus_transit_graph->GetEI (links_ptr_bustransit[i])
-          .GetDstNId ());
+      _path_bustransit->m_node_vec.push_back (graph.get_id (
+        graph.get_endpoints (graph.get_link (links_ptr_bustransit[i])).second));
     }
 
   auto *_path_pnr
@@ -4503,8 +4560,9 @@ Mmdta::update_tdsp_tree ()
       Assert (m_tdsp_tree_map_driving.find (_dest_node_ID)->second != nullptr);
 
       // for bus transit
-      if (m_mmdta->m_bus_transit_graph->IsNode (_dest_node_ID))
+      try
         {
+          std::ignore = m_mmdta->m_bus_transit_graph.get_node (_dest_node_ID);
           _tdsp_tree
             = new MNM_TDSP_Tree (_dest_node_ID, m_mmdta->m_bus_transit_graph,
                                  m_mmdue->m_total_loading_inter);
@@ -4515,6 +4573,9 @@ Mmdta::update_tdsp_tree ()
             std::pair<TInt, MNM_TDSP_Tree *> (_dest_node_ID, _tdsp_tree));
           _tdsp_tree = nullptr;
           Assert (m_tdsp_tree_map_bus.find (_dest_node_ID)->second != nullptr);
+        }
+      catch (const std::out_of_range &)
+        {
         }
     }
   return 0;
@@ -8088,7 +8149,7 @@ Mmdta::get_car_ltg_matrix_driving (py::array_t<int> start_intervals,
               else
                 {
                   Assert (dynamic_cast<MNM_Dlink_Ctm_Multimodal *> (_link)
-                           != nullptr);
+                          != nullptr);
                   Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
@@ -8460,7 +8521,7 @@ Mmdta::get_truck_ltg_matrix_driving (py::array_t<int> start_intervals,
               else
                 {
                   Assert (dynamic_cast<MNM_Dlink_Ctm_Multimodal *> (_link)
-                           != nullptr);
+                          != nullptr);
                   Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
