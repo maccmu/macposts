@@ -21,10 +21,10 @@ namespace mcdta
 void init (py::module &m);
 }
 
-// namespace mmdta
-// {
-// void init (py::module &m);
-// }
+namespace mmdta
+{
+void init (py::module &m);
+}
 }
 
 PYBIND11_MODULE (_macposts_ext, m)
@@ -44,5 +44,5 @@ simulation.
   macposts::tdsp::init (m);
   macposts::dta::init (m);
   macposts::mcdta::init (m);
-  // macposts::mmdta::init (m);
+  macposts::mmdta::init (m);
 }

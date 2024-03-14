@@ -12,4 +12,4 @@ except ImportError:
 
 from _macposts_ext import set_random_state, Tdsp  # noqa: F401
 from ._compat import *  # noqa: F401,F403
-from .dta import Dta, Mcdta  # noqa: F401
+from .dta import Dta, Mcdta, Mmdta  # noqa: F401
