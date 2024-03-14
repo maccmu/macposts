@@ -5,7 +5,7 @@
 **************************************************************************/
 
 MNM_Routing_Predetermined::MNM_Routing_Predetermined (
-  PNEGraph &graph, MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
+  macposts::Graph &graph, MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
   MNM_Link_Factory *link_factory, Path_Table *p_table,
   MNM_Pre_Routing *pre_routing, TInt max_int)
     : MNM_Routing::MNM_Routing (graph, od_factory, node_factory, link_factory)

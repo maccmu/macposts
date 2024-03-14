@@ -3,9 +3,25 @@
 //
 
 #include "multimodal.h"
+using macposts::graph::Direction;
 
 static_assert (std::numeric_limits<double>::is_iec559,
                "No iec559 infinity implementation for this compiler!\n");
+
+static bool
+is_node (const macposts::Graph &g, TInt id)
+{
+  try
+    {
+      std::ignore = g.get_node (id);
+      return true;
+    }
+  catch (const std::out_of_range &)
+    {
+      return false;
+    }
+}
+
 /******************************************************************************************************************
 *******************************************************************************************************************
                                                                                                 Bus Stop Models
@@ -5296,7 +5312,7 @@ MNM_PnR_Pathset::is_in (MNM_Path *path)
 /**************************************************************************
                           Bus Fixed Routing
 **************************************************************************/
-MNM_Routing_Bus::MNM_Routing_Bus (PNEGraph &driving_graph,
+MNM_Routing_Bus::MNM_Routing_Bus (macposts::Graph &driving_graph,
                                   MNM_OD_Factory *od_factory,
                                   MNM_Node_Factory *node_factory,
                                   MNM_Link_Factory *link_factory,
@@ -5509,7 +5525,7 @@ MNM_Routing_Bus::remove_finished (MNM_Veh *veh, bool del)
                           PnR Fixed Vehicle Routing
 **************************************************************************/
 MNM_Routing_PnR_Fixed::MNM_Routing_PnR_Fixed (
-  PNEGraph &driving_graph, MNM_OD_Factory *od_factory,
+  macposts::Graph &driving_graph, MNM_OD_Factory *od_factory,
   MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
   PnR_Path_Table *pnr_path_table, TInt route_frq, TInt buffer_length,
   TInt veh_class)
@@ -5779,12 +5795,12 @@ MNM_Routing_PnR_Fixed::remove_finished (MNM_Veh *veh, bool del)
                   Passenger Bus Transit Routing
 **************************************************************************/
 MNM_Routing_PassengerBusTransit::MNM_Routing_PassengerBusTransit (
-  PNEGraph &transit_graph, MNM_OD_Factory *od_factory,
+  macposts::Graph &transit_graph, MNM_OD_Factory *od_factory,
   MNM_Node_Factory *node_factory, MNM_Busstop_Factory *busstop_factory,
   MNM_Parking_Lot_Factory *parkinglot_factory,
   MNM_Transit_Link_Factory *transitlink_factory)
+    : m_graph (transit_graph)
 {
-  m_graph = transit_graph;
   m_od_factory = od_factory;
   m_node_factory = node_factory;
   m_transitlink_factory = transitlink_factory;
@@ -5798,7 +5814,7 @@ MNM_Routing_PassengerBusTransit::~MNM_Routing_PassengerBusTransit () { ; }
                   Passenger Bus Transit Fixed Routing
 **************************************************************************/
 MNM_Routing_PassengerBusTransit_Fixed::MNM_Routing_PassengerBusTransit_Fixed (
-  PNEGraph &transit_graph, MNM_OD_Factory *od_factory,
+  macposts::Graph &transit_graph, MNM_OD_Factory *od_factory,
   MNM_Node_Factory *node_factory, MNM_Busstop_Factory *busstop_factory,
   MNM_Parking_Lot_Factory *parkinglot_factory,
   MNM_Transit_Link_Factory *transitlink_factory,
@@ -6292,12 +6308,13 @@ MNM_Routing_PassengerBusTransit_Fixed::update_routing (TInt timestamp)
                   Passenger and Vehicle Adaptive Routing
 **************************************************************************/
 MNM_Routing_Multimodal_Adaptive::MNM_Routing_Multimodal_Adaptive (
-  const std::string &file_folder, PNEGraph &driving_graph,
-  PNEGraph &transit_graph, MNM_Statistics *statistics,
+  const std::string &file_folder, macposts::Graph &driving_graph,
+  macposts::Graph &transit_graph, MNM_Statistics *statistics,
   MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
   MNM_Busstop_Factory *busstop_factory,
   MNM_Parking_Lot_Factory *parkinglot_factory, MNM_Link_Factory *link_factory,
   MNM_Transit_Link_Factory *transitlink_factory)
+    : m_driving_graph (driving_graph), m_transit_graph (transit_graph)
 {
   m_statistics = dynamic_cast<MNM_Statistics_Lrn_Multimodal *> (statistics);
   IAssert (m_statistics != nullptr);
@@ -6320,8 +6337,6 @@ MNM_Routing_Multimodal_Adaptive::MNM_Routing_Multimodal_Adaptive (
 
   m_driving_table = new Routing_Table ();
   m_transit_table = new Routing_Table ();
-  m_driving_graph = driving_graph;
-  m_transit_graph = transit_graph;
   m_od_factory = od_factory;
   m_node_factory = node_factory;
   m_busstop_factory = busstop_factory;
@@ -6350,7 +6365,7 @@ MNM_Routing_Multimodal_Adaptive::~MNM_Routing_Multimodal_Adaptive ()
           m_driving_table->find (_it.second)->second->clear ();
           delete m_driving_table->find (_it.second)->second;
         }
-      if (m_transit_graph->IsNode (_it.second->m_dest_node->m_node_ID)
+      if (is_node (m_transit_graph, _it.second->m_dest_node->m_node_ID)
           && m_transit_table->find (_it.second) != m_transit_table->end ())
         {
           m_transit_table->find (_it.second)->second->clear ();
@@ -6381,7 +6396,7 @@ MNM_Routing_Multimodal_Adaptive::init_routing ()
         std::pair<MNM_Destination *,
                   std::unordered_map<TInt, TInt> *> (_it.second,
                                                      _shortest_path_tree));
-      if (m_transit_graph->IsNode (_it.second->m_dest_node->m_node_ID))
+      if (is_node (m_transit_graph, _it.second->m_dest_node->m_node_ID))
         {
           _shortest_path_tree = new std::unordered_map<TInt, TInt> ();
           if (m_transit_table->find (_it.second) != m_transit_table->end ())
@@ -6459,7 +6474,7 @@ MNM_Routing_Multimodal_Adaptive::update_routing (TInt timestamp)
           // *_shortest_path_tree);
 
           // passenger
-          if (m_transit_graph->IsNode (_dest_node_ID))
+          if (is_node (m_transit_graph, _dest_node_ID))
             {
               _shortest_path_tree = m_transit_table->find (_dest)->second;
               MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID,
@@ -6624,12 +6639,19 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
                                   (int) _node_ID,
                                   (int) _dest->m_dest_node->m_node_ID);
                           // exit(-1);
-                          auto _node_I = m_transit_graph->GetNI (_node_ID);
-                          if (_node_I.GetOutDeg () > 0)
+                          const auto &n = m_transit_graph.get_node (_node_ID);
+                          auto &&outs
+                            = m_transit_graph.connections (n,
+                                                           Direction::Outgoing);
+                          int deg = std::distance (outs.begin (), outs.end ());
+                          if (deg > 0)
                             {
                               printf ("Assign randomly!\n");
-                              _next_link_ID = _node_I.GetOutEId (
-                                MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+                              auto it = outs.begin ();
+                              int idx = MNM_Ults::mod (rand (), deg);
+                              while (idx--)
+                                it++;
+                              _next_link_ID = m_transit_graph.get_id (*it);
                             }
                           else
                             {
@@ -6712,12 +6734,18 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
                               (int) _node_ID,
                               (int) _dest->m_dest_node->m_node_ID);
                       // exit(-1);
-                      auto _node_I = m_transit_graph->GetNI (_node_ID);
-                      if (_node_I.GetOutDeg () > 0)
+                      const auto &n = m_transit_graph.get_node (_node_ID);
+                      auto &&outs
+                        = m_transit_graph.connections (n, Direction::Outgoing);
+                      int deg = std::distance (outs.begin (), outs.end ());
+                      if (deg > 0)
                         {
                           printf ("Assign randomly!\n");
-                          _next_link_ID = _node_I.GetOutEId (
-                            MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+                          auto it = outs.begin ();
+                          int idx = MNM_Ults::mod (rand (), deg);
+                          while (idx--)
+                            it++;
+                          _next_link_ID = m_transit_graph.get_id (*it);
                         }
                       else
                         {
@@ -6820,12 +6848,18 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_busstop (
                   printf ("The node is %d, the passenger should head to %d\n",
                           (int) _node_ID, (int) _dest->m_dest_node->m_node_ID);
                   // exit(-1);
-                  auto _node_I = m_transit_graph->GetNI (_node_ID);
-                  if (_node_I.GetOutDeg () > 0)
+                  const auto &n = m_transit_graph.get_node (_node_ID);
+                  auto &&outs
+                    = m_transit_graph.connections (n, Direction::Outgoing);
+                  int deg = std::distance (outs.begin (), outs.end ());
+                  if (deg > 0)
                     {
                       printf ("Assign randomly!\n");
-                      _next_link_ID = _node_I.GetOutEId (
-                        MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+                      auto it = outs.begin ();
+                      int idx = MNM_Ults::mod (rand (), deg);
+                      while (idx--)
+                        it++;
+                      _next_link_ID = m_transit_graph.get_id (*it);
                     }
                   else
                     {
@@ -7167,12 +7201,18 @@ MNM_Routing_Multimodal_Adaptive::update_routing_vehicle (TInt timestamp)
                               (int) _node_ID,
                               (int) _final_dest->m_dest_node->m_node_ID);
                       // exit(-1);
-                      auto _node_I = m_driving_graph->GetNI (_node_ID);
-                      if (_node_I.GetOutDeg () > 0)
+                      const auto &n = m_driving_graph.get_node (_node_ID);
+                      auto &&outs
+                        = m_driving_graph.connections (n, Direction::Outgoing);
+                      int deg = std::distance (outs.begin (), outs.end ());
+                      if (deg > 0)
                         {
                           printf ("Assign randomly!\n");
-                          _next_link_ID = _node_I.GetOutEId (
-                            MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+                          auto it = outs.begin ();
+                          int idx = MNM_Ults::mod (rand (), deg);
+                          while (idx--)
+                            it++;
+                          _next_link_ID = m_driving_graph.get_id (*it);
                         }
                       else
                         {
@@ -7228,8 +7268,8 @@ MNM_Routing_Multimodal_Adaptive::update_routing_vehicle (TInt timestamp)
                           Multimodal_Hybrid Routing
 **************************************************************************/
 MNM_Routing_Multimodal_Hybrid::MNM_Routing_Multimodal_Hybrid (
-  const std::string &file_folder, PNEGraph &driving_graph,
-  PNEGraph &transit_graph, MNM_Statistics *statistics,
+  const std::string &file_folder, macposts::Graph &driving_graph,
+  macposts::Graph &transit_graph, MNM_Statistics *statistics,
   MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
   MNM_Link_Factory *link_factory, MNM_Busstop_Factory *busstop_factory,
   MNM_Parking_Lot_Factory *parkinglot_factory,
@@ -8362,6 +8402,50 @@ MNM_IO_Multimodal::build_bus_transit_graph (
   return _graph;
 }
 
+macposts::Graph
+MNM_IO_Multimodal::build_bus_transit_graph (
+  MNM_ConfReader *conf_reader, MNM_Transit_Link_Factory *transit_link_factory,
+  int _phantom)
+{
+  (void) _phantom;
+  TInt _num_buslinks = conf_reader->get_int ("num_of_bus_link");
+  TInt _num_walkinglinks = conf_reader->get_int ("num_of_walking_link");
+  IAssert (_num_buslinks + _num_walkinglinks
+           == (int) transit_link_factory->m_transit_link_map.size ());
+
+  // multigraph, more than one link can exist between two nodes
+  macposts::Graph _graph;
+  int _link_ID, _from_ID, _to_ID;
+
+  for (auto _it : transit_link_factory->m_transit_link_map)
+    {
+      _link_ID = _it.first;
+      _from_ID = _it.second->m_from_node_ID;
+      _to_ID = _it.second->m_to_node_ID;
+      IAssert (_from_ID != _to_ID);
+      try
+        {
+          _graph.add_node (_from_ID);
+        }
+      // FIXME: This could be overly generic. Maybe we should use a more
+      // specific exception type.
+      catch (const std::runtime_error &)
+        {
+        }
+      try
+        {
+          _graph.add_node (_to_ID);
+        }
+      // FIXME: This could be overly generic. Maybe we should use a more
+      // specific exception type.
+      catch (const std::runtime_error &)
+        {
+        }
+      _graph.add_link (_from_ID, _to_ID, _link_ID);
+    }
+  return _graph;
+}
+
 int
 MNM_IO_Multimodal::build_passenger_demand (
   const std::string &file_folder, MNM_ConfReader *conf_reader,
@@ -8893,12 +8977,10 @@ MNM_IO_Multimodal::build_bustransit_demand (const std::string &file_folder,
 }
 
 Bus_Path_Table *
-MNM_IO_Multimodal::load_bus_path_table (const PNEGraph &graph, TInt num_path,
-                                        MNM_Node_Factory *node_factory,
-                                        MNM_Busstop_Factory *busstop_factory,
-                                        TInt num_release_interval,
-                                        const std::string &path_file_name,
-                                        const std::string &route_file_name)
+MNM_IO_Multimodal::load_bus_path_table (
+  const macposts::Graph &graph, TInt num_path, MNM_Node_Factory *node_factory,
+  MNM_Busstop_Factory *busstop_factory, TInt num_release_interval,
+  const std::string &path_file_name, const std::string &route_file_name)
 {
   printf ("Loading Bus Path Table!\n");
   TInt Num_Path = num_path;
@@ -9046,9 +9128,17 @@ MNM_IO_Multimodal::load_bus_path_table (const PNEGraph &graph, TInt num_path,
                     {
                       _from_ID = _path->m_node_vec[j];
                       _to_ID = _path->m_node_vec[j + 1];
-                      _link_ID = graph->GetEI (_from_ID, _to_ID)
-                                   .GetId (); // for driving graph, at most one
-                                              // edge exists between two nodes
+                      const auto &from = graph.get_node (_from_ID);
+                      for (const auto &l :
+                           graph.connections (from, Direction::Outgoing))
+                        {
+                          if (graph.get_id (graph.get_endpoints (l).second)
+                              == _to_ID)
+                            {
+                              _link_ID = graph.get_id (l);
+                              break;
+                            }
+                        }
                       _path->m_link_vec.push_back (_link_ID);
                     }
 
@@ -9075,8 +9165,8 @@ MNM_IO_Multimodal::load_bus_path_table (const PNEGraph &graph, TInt num_path,
 }
 
 PnR_Path_Table *
-MNM_IO_Multimodal::load_pnr_path_table (const PNEGraph &driving_graph,
-                                        const PNEGraph &transit_graph,
+MNM_IO_Multimodal::load_pnr_path_table (const macposts::Graph &driving_graph,
+                                        const macposts::Graph &transit_graph,
                                         TInt num_path,
                                         const std::string &file_name,
                                         bool w_buffer, bool w_ID)
@@ -9177,9 +9267,18 @@ MNM_IO_Multimodal::load_pnr_path_table (const PNEGraph &driving_graph,
                 {
                   _from_ID = _driving_path->m_node_vec[j];
                   _to_ID = _driving_path->m_node_vec[j + 1];
-                  _link_ID
-                    = driving_graph->GetEI (_from_ID, _to_ID)
-                        .GetId (); // assume driving_graph is not a MultiGraph
+                  const auto &from = driving_graph.get_node (_from_ID);
+                  for (const auto &l :
+                       driving_graph.connections (from, Direction::Outgoing))
+                    {
+                      if (driving_graph.get_id (
+                            driving_graph.get_endpoints (l).second)
+                          == _to_ID)
+                        {
+                          _link_ID = driving_graph.get_id (l);
+                          break;
+                        }
+                    }
                   _driving_path->m_link_vec.push_back (_link_ID);
                 }
               IAssert (_driving_path->m_node_vec.front () == _origin_node_ID);
@@ -9197,8 +9296,10 @@ MNM_IO_Multimodal::load_pnr_path_table (const PNEGraph &driving_graph,
               for (size_t j = 0; j < _transit_path->m_link_vec.size (); ++j)
                 {
                   _link_ID = _transit_path->m_link_vec[j];
-                  _from_ID = transit_graph->GetEI (_link_ID).GetSrcNId ();
-                  _to_ID = transit_graph->GetEI (_link_ID).GetDstNId ();
+                  const auto &l = transit_graph.get_link (_link_ID);
+                  auto &&sd = transit_graph.get_endpoints (l);
+                  _from_ID = transit_graph.get_id (sd.first);
+                  _to_ID = transit_graph.get_id (sd.second);
                   _transit_path->m_node_vec.push_back (_from_ID);
                   if (j == _transit_path->m_link_vec.size () - 1)
                     _transit_path->m_node_vec.push_back (_to_ID);
@@ -9246,10 +9347,9 @@ MNM_IO_Multimodal::load_pnr_path_table (const PNEGraph &driving_graph,
 }
 
 Path_Table *
-MNM_IO_Multimodal::load_bustransit_path_table (const PNEGraph &transit_graph,
-                                               TInt num_path,
-                                               const std::string &file_name,
-                                               bool w_buffer, bool w_ID)
+MNM_IO_Multimodal::load_bustransit_path_table (
+  const macposts::Graph &transit_graph, TInt num_path,
+  const std::string &file_name, bool w_buffer, bool w_ID)
 {
   if (w_ID)
     {
@@ -9334,8 +9434,10 @@ MNM_IO_Multimodal::load_bustransit_path_table (const PNEGraph &transit_graph,
               for (size_t j = 0; j < _path->m_link_vec.size (); ++j)
                 {
                   _link_ID = _path->m_link_vec[j];
-                  _from_ID = transit_graph->GetEI (_link_ID).GetSrcNId ();
-                  _to_ID = transit_graph->GetEI (_link_ID).GetDstNId ();
+                  const auto &l = transit_graph.get_link (_link_ID);
+                  auto &&sd = transit_graph.get_endpoints (l);
+                  _from_ID = transit_graph.get_id (sd.first);
+                  _to_ID = transit_graph.get_id (sd.second);
                   _path->m_node_vec.push_back (_from_ID);
                   if (j == _path->m_link_vec.size () - 1)
                     _path->m_node_vec.push_back (_to_ID);
@@ -9405,7 +9507,6 @@ MNM_Dta_Multimodal::~MNM_Dta_Multimodal ()
   delete m_busstop_factory;
   delete m_parkinglot_factory;
   delete m_transitlink_factory;
-  m_bus_transit_graph->Clr ();
 
   m_enroute_passenger_num.clear ();
   m_queue_passenger_num.clear ();
@@ -9664,10 +9765,10 @@ MNM_Dta_Multimodal::build_from_files ()
                                             m_busstop_factory, m_link_factory,
                                             "bus_link");
 
-  m_graph = MNM_IO_Multimodal::build_graph (m_file_folder, m_config);
+  m_graph = MNM_IO_Multimodal::build_graph (m_file_folder, m_config, 0);
   m_bus_transit_graph
     = MNM_IO_Multimodal::build_bus_transit_graph (m_config,
-                                                  m_transitlink_factory);
+                                                  m_transitlink_factory, 0);
 
   MNM_IO_Multimodal::build_vehicle_demand_multimodal (m_file_folder, m_config,
                                                       m_od_factory,
@@ -9717,7 +9818,7 @@ MNM_Dta_Multimodal::find_connected_pnr_parkinglot_for_destination ()
     {
       _dest = dynamic_cast<MNM_Destination_Multimodal *> (_it.second);
       _dest_node_ID = _dest->m_dest_node->m_node_ID;
-      if (!m_bus_transit_graph->IsNode (_dest_node_ID))
+      if (!is_node (m_bus_transit_graph, _dest_node_ID))
         continue;
       _shortest_path_tree.clear ();
       MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_bus_transit_graph,
@@ -9730,7 +9831,7 @@ MNM_Dta_Multimodal::find_connected_pnr_parkinglot_for_destination ()
           _mid_dest_node_ID = _parkinglot->m_dest_node->m_node_ID;
           printf ("connected ");
           if (_dest_node_ID != _mid_dest_node_ID
-              && m_bus_transit_graph->IsNode (_mid_dest_node_ID)
+              && is_node (m_bus_transit_graph, _mid_dest_node_ID)
               && _shortest_path_tree.find (_mid_dest_node_ID)->second > 0)
             {
               // connected
@@ -9763,7 +9864,7 @@ MNM_Dta_Multimodal::check_bus_transit_connectivity ()
     {
       _dest = dynamic_cast<MNM_Destination_Multimodal *> (_it.second);
       _dest_node_ID = _dest->m_dest_node->m_node_ID;
-      if (!m_bus_transit_graph->IsNode (_dest_node_ID))
+      if (!is_node (m_bus_transit_graph, _dest_node_ID))
         continue;
       _shortest_path_tree.clear ();
       MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_bus_transit_graph,
@@ -9778,8 +9879,8 @@ MNM_Dta_Multimodal::check_bus_transit_connectivity ()
           if (_origin->m_demand_passenger_bus.find (_dest)
               != _origin->m_demand_passenger_bus.end ())
             {
-              if (!m_bus_transit_graph->IsNode (_origin_node_ID)
-                  || !m_bus_transit_graph->IsNode (_dest_node_ID)
+              if (!is_node (m_bus_transit_graph, _origin_node_ID)
+                  || !is_node (m_bus_transit_graph, _dest_node_ID)
                   || _shortest_path_tree.find (_origin_node_ID)->second == -1)
                 {
                   printf ("Direct bus transit for origin node %d and "
@@ -9795,7 +9896,7 @@ MNM_Dta_Multimodal::check_bus_transit_connectivity ()
             {
               // the connectivity of driving part has been checked in
               // dta::is_ok()
-              if (!m_bus_transit_graph->IsNode (_dest_node_ID)
+              if (!is_node (m_bus_transit_graph, _dest_node_ID)
                   || _dest->m_connected_pnr_parkinglot_vec.empty ())
                 {
                   printf ("PnR mode for origin node %d and destination node %d "
@@ -10180,23 +10281,25 @@ MNM_Dta_Multimodal::is_ok ()
 {
   // Driving
   bool _flag = MNM_Dta::is_ok ();
-
   bool _temp_flag = true;
+
+  // TODO: Port this to the builtin graph (if necessary).
+  //
   // Checks the graph data structure for internal consistency.
   // For each node in the graph check that its neighbors are also nodes in the
   // graph.
-  printf ("Checking......Bus Transit Graph consistent!\n");
-  _temp_flag = m_bus_transit_graph->IsOk ();
-  _flag = _flag && _temp_flag;
-  if (_temp_flag)
-    printf ("Passed!\n");
+  // printf ("Checking......Bus Transit Graph consistent!\n");
+  // _temp_flag = m_bus_transit_graph->IsOk ();
+  // _flag = _flag && _temp_flag;
+  // if (_temp_flag)
+  //   printf ("Passed!\n");
 
   // check node
   printf ("Checking......Bus Transit Node consistent!\n");
-  _temp_flag = (m_bus_transit_graph->GetNodes ()
+  _temp_flag = (m_bus_transit_graph.size_nodes ()
                 >= m_config->get_int ("num_of_bus_stop_physical")
                      + m_config->get_int ("num_of_bus_stop_virtual"))
-               && (m_bus_transit_graph->GetNodes ()
+               && (m_bus_transit_graph.size_nodes ()
                    >= TInt (m_busstop_factory->m_busstop_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
@@ -10204,10 +10307,10 @@ MNM_Dta_Multimodal::is_ok ()
 
   // check link
   printf ("Checking......Bus Transit Link consistent!\n");
-  _temp_flag = (m_bus_transit_graph->GetEdges ()
+  _temp_flag = (m_bus_transit_graph.size_links ()
                 == m_config->get_int ("num_of_bus_link")
                      + m_config->get_int ("num_of_walking_link"))
-               && (m_bus_transit_graph->GetEdges ()
+               && (m_bus_transit_graph.size_links ()
                    == TInt (m_transitlink_factory->m_transit_link_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
@@ -10228,12 +10331,18 @@ MNM_Dta_Multimodal::is_ok ()
       _node_ID = _origin->m_origin_node->m_node_ID;
       if (!(_origin->m_demand_passenger_bus.empty ()))
         {
+          _temp_flag = _temp_flag && is_node (m_bus_transit_graph, _node_ID);
+          const auto &n = m_bus_transit_graph.get_node (_node_ID);
           _temp_flag
-            = _temp_flag && (m_bus_transit_graph->IsNode (_node_ID))
-              && ((m_bus_transit_graph->GetNI (_node_ID)).GetId () == _node_ID)
-              && (m_bus_transit_graph->GetNI (_node_ID).GetOutDeg () >= 1)
-              && (m_bus_transit_graph->GetNI (_node_ID).GetInDeg () == 0)
-              && !(_origin->m_walking_out_links_vec.empty ());
+            = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID);
+          auto &&outs
+            = m_bus_transit_graph.connections (n, Direction::Outgoing);
+          _temp_flag
+            = _temp_flag && (std::distance (outs.begin (), outs.end ()) >= 1);
+          auto &&ins = m_bus_transit_graph.connections (n, Direction::Incoming);
+          _temp_flag
+            = _temp_flag && (std::distance (ins.begin (), ins.end ()) == 0);
+          _temp_flag = _temp_flag && !_origin->m_walking_out_links_vec.empty ();
         }
     }
   _flag = _flag && _temp_flag;
@@ -10250,11 +10359,17 @@ MNM_Dta_Multimodal::is_ok ()
           || (_dest->m_parking_lot != nullptr
               && !(_dest->m_parking_lot->m_walking_out_links_vec.empty ())))
         {
+          _temp_flag = _temp_flag && is_node (m_bus_transit_graph, _node_ID);
+          const auto &n = m_bus_transit_graph.get_node (_node_ID);
           _temp_flag
-            = _temp_flag && (m_bus_transit_graph->IsNode (_node_ID))
-              && ((m_bus_transit_graph->GetNI (_node_ID)).GetId () == _node_ID)
-              && (m_bus_transit_graph->GetNI (_node_ID).GetOutDeg () >= 0)
-              && (m_bus_transit_graph->GetNI (_node_ID).GetInDeg () >= 0);
+            = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID);
+          auto &&outs
+            = m_bus_transit_graph.connections (n, Direction::Outgoing);
+          _temp_flag
+            = _temp_flag && (std::distance (outs.begin (), outs.end ()) == 0);
+          auto &&ins = m_bus_transit_graph.connections (n, Direction::Incoming);
+          _temp_flag
+            = _temp_flag && (std::distance (ins.begin (), ins.end ()) >= 1);
         }
     }
   _flag = _flag && _temp_flag;
@@ -10267,12 +10382,16 @@ MNM_Dta_Multimodal::is_ok ()
     {
       _busstop = _busstop_map_it.second;
       _node_ID = _busstop->m_busstop_ID;
+      _temp_flag = _temp_flag && (_busstop->m_link_ID != TInt (-1));
+      const auto &n = m_bus_transit_graph.get_node (_node_ID);
+      _temp_flag = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID);
+      auto &&outs = m_bus_transit_graph.connections (n, Direction::Outgoing);
       _temp_flag
-        = _temp_flag
-          && ((m_bus_transit_graph->GetNI (_node_ID)).GetId () == _node_ID)
-          && (m_bus_transit_graph->GetNI (_node_ID).GetOutDeg () >= 0)
-          && (m_bus_transit_graph->GetNI (_node_ID).GetInDeg () >= 0)
-          && (_busstop->m_link_ID != TInt (-1));
+        = _temp_flag && (std::distance (outs.begin (), outs.end ()) >= 0);
+      auto &&ins = m_bus_transit_graph.connections (n, Direction::Incoming);
+      _temp_flag
+        = _temp_flag && (std::distance (ins.begin (), ins.end ()) >= 0);
+
       if (dynamic_cast<MNM_Busstop_Physical *> (_busstop) != nullptr)
         {
           _temp_flag = _temp_flag
@@ -12585,6 +12704,331 @@ build_shortest_passenger_pathset (
   std::unordered_map<TInt,
                      std::unordered_map<TInt, std::unordered_map<int, bool>>>
     &od_mode_connectivity,
+  MNM_MM_Due *mmdue, macposts::Graph &driving_graph,
+  macposts::Graph &bustransit_graph, MNM_OD_Factory *od_factory,
+  MNM_Link_Factory *link_factory, MNM_Transit_Link_Factory *transitlink_factory,
+  MNM_Busstop_Factory *busstop_factory)
+{
+  // create an empty passenger path table, only for connected OD pairs with
+  // demand
+  auto *_path_table = new Passenger_Path_Table ();
+  for (auto _o_it : passenger_demand)
+    {
+      auto *_new_map_1 = new std::unordered_map<
+        TInt, std::unordered_map<TInt, MNM_Passenger_Pathset *> *> ();
+      _path_table->insert (
+        std::pair<TInt,
+                  std::unordered_map<
+                    TInt, std::unordered_map<TInt, MNM_Passenger_Pathset *> *>
+                    *> (_o_it.first, _new_map_1));
+      for (auto _d_it : _o_it.second)
+        {
+          auto *_new_map_2
+            = new std::unordered_map<TInt, MNM_Passenger_Pathset *> ();
+          _new_map_1->insert (
+            std::pair<TInt, std::unordered_map<TInt, MNM_Passenger_Pathset *>
+                              *> (_d_it.first, _new_map_2));
+          for (auto _mode : mode_vec)
+            {
+              if (od_mode_connectivity.find (_o_it.first)
+                    ->second.find (_d_it.first)
+                    ->second.find (_mode)
+                    ->second)
+                {
+                  auto _pathset = new MNM_Passenger_Pathset (_mode);
+                  _new_map_2->insert (
+                    std::pair<TInt, MNM_Passenger_Pathset *> (_mode, _pathset));
+                }
+            }
+        }
+    }
+
+  // driving
+  MNM_Passenger_Path_Driving *_p_path_driving;
+  // bus
+  MNM_Passenger_Path_Bus *_p_path_bus;
+  // pnr
+  MNM_Passenger_Path_PnR *_p_path_pnr;
+
+  MNM_Parking_Lot *_best_mid_parkinglot;
+  MNM_Destination_Multimodal *_dest;
+  TInt _dest_node_ID, _origin_node_ID, _mid_dest_node_ID;
+
+  TFlt _cur_best_path_tt, _path_tt;
+
+  // <d_node_ID, <node_ID, out_link_ID>>
+  std::unordered_map<TInt, std::unordered_map<TInt, TInt>> _driving_table
+    = std::unordered_map<TInt, std::unordered_map<TInt, TInt>> ();
+  std::unordered_map<TInt, std::unordered_map<TInt, TInt>> _bustransit_table
+    = std::unordered_map<TInt, std::unordered_map<TInt, TInt>> ();
+  std::unordered_map<TInt, TInt> _free_shortest_path_tree_driving;
+  std::unordered_map<TInt, TInt> _free_shortest_path_tree_bustransit;
+  std::unordered_map<TInt, TInt> _free_shortest_path_tree_pnr;
+  std::unordered_map<TInt, TFlt> _free_cost_map_driving
+    = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, TFlt> _free_cost_map_bustransit
+    = std::unordered_map<TInt, TFlt> ();
+
+  MNM_Path *_path;
+  MNM_Path *_driving_path;
+  MNM_Path *_transit_path;
+  MNM_PnR_Path *_pnr_path;
+
+  // TODO: use link cost instead of link travel time
+  for (auto _link_it : link_factory->m_link_map)
+    {
+      _free_cost_map_driving.insert (
+        std::pair<TInt, TFlt> (_link_it.first, _link_it.second->get_link_tt ()
+                                                 / mmdue->m_unit_time));
+    }
+  for (auto _link_it : transitlink_factory->m_transit_link_map)
+    {
+      _free_cost_map_bustransit.insert (
+        std::pair<TInt, TFlt> (_link_it.first,
+                               _link_it.second->m_fftt / mmdue->m_unit_time));
+    }
+
+  for (auto _d_it : od_factory->m_destination_map)
+    {
+      _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
+
+      _free_shortest_path_tree_driving = std::unordered_map<TInt, TInt> ();
+      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, driving_graph,
+                                          _free_cost_map_driving,
+                                          _free_shortest_path_tree_driving);
+      _driving_table.insert (
+        std::pair<TInt, std::unordered_map<
+                          TInt, TInt>> (_dest_node_ID,
+                                        _free_shortest_path_tree_driving));
+
+      if (is_node (bustransit_graph, _dest_node_ID))
+        {
+          _free_shortest_path_tree_bustransit
+            = std::unordered_map<TInt, TInt> ();
+          MNM_Shortest_Path::
+            all_to_one_FIFO (_dest_node_ID, bustransit_graph,
+                             _free_cost_map_bustransit,
+                             _free_shortest_path_tree_bustransit);
+          _bustransit_table.insert (
+            std::pair<TInt,
+                      std::unordered_map<
+                        TInt, TInt>> (_dest_node_ID,
+                                      _free_shortest_path_tree_bustransit));
+        }
+    }
+
+  for (auto _d_it : od_factory->m_destination_map)
+    {
+      _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
+      _dest = dynamic_cast<MNM_Destination_Multimodal *> (_d_it.second);
+
+      for (auto _o_it : od_factory->m_origin_map)
+        {
+          _origin_node_ID = _o_it.second->m_origin_node->m_node_ID;
+
+          // only process OD pairs with demand
+          if (passenger_demand.find (_origin_node_ID) == passenger_demand.end ()
+              || passenger_demand.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                   == passenger_demand.find (_origin_node_ID)->second.end ())
+            {
+              continue;
+            }
+
+          _free_shortest_path_tree_driving
+            = _driving_table.find (_dest_node_ID)->second;
+          if (is_node (bustransit_graph, _dest_node_ID))
+            {
+              _free_shortest_path_tree_bustransit
+                = _bustransit_table.find (_dest_node_ID)->second;
+            }
+
+          // driving
+          if (od_mode_connectivity.find (_origin_node_ID)
+                  ->second.find (_dest_node_ID)
+                  ->second.find (driving)
+                != od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                     ->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                   ->second.find (_dest_node_ID)
+                   ->second.find (driving)
+                   ->second)
+            {
+              _path = MNM::extract_path (_origin_node_ID, _dest_node_ID,
+                                         _free_shortest_path_tree_driving,
+                                         driving_graph);
+              IAssert (_path != nullptr);
+              _p_path_driving = new MNM_Passenger_Path_Driving (
+                driving, _path, mmdue->m_vot, mmdue->m_early_penalty,
+                mmdue->m_late_penalty, mmdue->m_target_time, 1,
+                mmdue->m_carpool_cost_multiplier, 0.0, _dest->m_parking_lot,
+                mmdue->m_parking_lot_to_destination_walking_time);
+              printf ("Adding driving path to path table\n");
+              _path = nullptr;
+              IAssert (_p_path_driving->m_path != nullptr);
+              std::cout << _p_path_driving->info2str ();
+              _path_table->find (_origin_node_ID)
+                ->second->find (_dest_node_ID)
+                ->second->find (driving)
+                ->second->m_path_vec.push_back (_p_path_driving);
+              _p_path_driving->m_path->m_path_ID
+                = (int) _path_table->find (_origin_node_ID)
+                    ->second->find (_dest_node_ID)
+                    ->second->find (driving)
+                    ->second->m_path_vec.size ()
+                  - 1;
+            }
+
+          // bus transit
+          if (od_mode_connectivity.find (_origin_node_ID)
+                  ->second.find (_dest_node_ID)
+                  ->second.find (transit)
+                != od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                     ->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                   ->second.find (_dest_node_ID)
+                   ->second.find (transit)
+                   ->second)
+            {
+              _path = MNM::extract_path (_origin_node_ID, _dest_node_ID,
+                                         _free_shortest_path_tree_bustransit,
+                                         bustransit_graph);
+              IAssert (_path != nullptr);
+              _p_path_bus
+                = new MNM_Passenger_Path_Bus (transit, _path, mmdue->m_vot,
+                                              mmdue->m_early_penalty,
+                                              mmdue->m_late_penalty,
+                                              mmdue->m_target_time,
+                                              mmdue->m_bus_fare,
+                                              mmdue->m_bus_inconvenience);
+              printf ("Adding bus transit path to path table\n");
+              _path = nullptr;
+              IAssert (_p_path_bus->m_path != nullptr);
+              std::cout << _p_path_bus->info2str ();
+              _path_table->find (_origin_node_ID)
+                ->second->find (_dest_node_ID)
+                ->second->find (transit)
+                ->second->m_path_vec.push_back (_p_path_bus);
+              _p_path_bus->m_path->m_path_ID
+                = (int) _path_table->find (_origin_node_ID)
+                    ->second->find (_dest_node_ID)
+                    ->second->find (transit)
+                    ->second->m_path_vec.size ()
+                  - 1;
+            }
+
+          // pnr
+          if (od_mode_connectivity.find (_origin_node_ID)
+                  ->second.find (_dest_node_ID)
+                  ->second.find (pnr)
+                != od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                     ->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                   ->second.find (_dest_node_ID)
+                   ->second.find (pnr)
+                   ->second)
+            {
+              _cur_best_path_tt = DBL_MAX;
+              _best_mid_parkinglot = nullptr;
+              _pnr_path = nullptr;
+              for (auto _parkinglot : _dest->m_connected_pnr_parkinglot_vec)
+                {
+                  _mid_dest_node_ID = _parkinglot->m_dest_node->m_node_ID;
+                  _path_tt = 0.;
+                  _free_shortest_path_tree_pnr
+                    = _driving_table.find (_mid_dest_node_ID)->second;
+                  _driving_path
+                    = MNM::extract_path (_origin_node_ID, _mid_dest_node_ID,
+                                         _free_shortest_path_tree_pnr,
+                                         driving_graph);
+                  IAssert (_driving_path != nullptr);
+                  _path_tt
+                    += MNM::get_path_tt_snapshot (_driving_path,
+                                                  _free_cost_map_driving);
+
+                  _transit_path
+                    = MNM::extract_path (_mid_dest_node_ID, _dest_node_ID,
+                                         _free_shortest_path_tree_bustransit,
+                                         bustransit_graph);
+                  IAssert (_transit_path != nullptr);
+                  _path_tt
+                    += MNM::get_path_tt_snapshot (_transit_path,
+                                                  _free_cost_map_bustransit);
+
+                  if (_cur_best_path_tt > _path_tt)
+                    {
+                      _cur_best_path_tt = _path_tt;
+                      _best_mid_parkinglot = _parkinglot;
+                      delete _pnr_path;
+                      _pnr_path
+                        = new MNM_PnR_Path (0, _best_mid_parkinglot->m_ID,
+                                            _mid_dest_node_ID, _driving_path,
+                                            _transit_path);
+                      _driving_path = nullptr;
+                      _transit_path = nullptr;
+                    }
+                  else
+                    {
+                      delete _driving_path;
+                      delete _transit_path;
+                    }
+                }
+              IAssert (_pnr_path != nullptr && _best_mid_parkinglot != nullptr);
+              _p_path_pnr
+                = new MNM_Passenger_Path_PnR (pnr, _pnr_path, mmdue->m_vot,
+                                              mmdue->m_early_penalty,
+                                              mmdue->m_late_penalty,
+                                              mmdue->m_target_time, 0.0,
+                                              _best_mid_parkinglot,
+                                              mmdue->m_bus_fare,
+                                              mmdue->m_pnr_inconvenience);
+              printf ("Adding pnr path to path table\n");
+              _pnr_path = nullptr;
+              IAssert (_p_path_pnr->m_path != nullptr);
+              std::cout << _p_path_pnr->info2str ();
+              _path_table->find (_origin_node_ID)
+                ->second->find (_dest_node_ID)
+                ->second->find (pnr)
+                ->second->m_path_vec.push_back (_p_path_pnr);
+              _p_path_pnr->m_path->m_path_ID
+                = (int) _path_table->find (_origin_node_ID)
+                    ->second->find (_dest_node_ID)
+                    ->second->find (pnr)
+                    ->second->m_path_vec.size ()
+                  - 1;
+            }
+        }
+    }
+
+  for (auto _d_it : _driving_table)
+    {
+      _d_it.second.clear ();
+    }
+  _driving_table.clear ();
+  for (auto _d_it : _bustransit_table)
+    {
+      _d_it.second.clear ();
+    }
+  _bustransit_table.clear ();
+
+  _free_shortest_path_tree_driving.clear ();
+  _free_shortest_path_tree_bustransit.clear ();
+  _free_shortest_path_tree_pnr.clear ();
+  _free_cost_map_driving.clear ();
+  _free_cost_map_bustransit.clear ();
+  return _path_table;
+}
+
+Passenger_Path_Table *
+build_shortest_passenger_pathset (
+  std::vector<MMDue_mode> &mode_vec,
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>> &passenger_demand,
+  std::unordered_map<TInt,
+                     std::unordered_map<TInt, std::unordered_map<int, bool>>>
+    &od_mode_connectivity,
   MNM_MM_Due *mmdue, PNEGraph &driving_graph, PNEGraph &bustransit_graph,
   MNM_OD_Factory *od_factory, MNM_Link_Factory *link_factory,
   MNM_Transit_Link_Factory *transitlink_factory,
@@ -13178,6 +13622,259 @@ build_existing_passenger_pathset (
 
 Path_Table *
 build_shortest_driving_pathset (
+  macposts::Graph &graph, MNM_OD_Factory *od_factory,
+  std::unordered_map<TInt,
+                     std::unordered_map<TInt, std::unordered_map<int, bool>>>
+    &od_mode_connectivity,
+  MNM_Link_Factory *link_factory, TFlt min_path_length, size_t MaxIter,
+  TFlt Mid_Scale, TFlt Heavy_Scale, TInt buffer_length)
+{
+  // MaxIter: maximum iteration to find alternative shortest path, when MaxIter
+  // = 0, just shortest path Mid_Scale and Heavy_Scale are different penalties
+  // to the travel cost of links in existing paths
+  printf ("build_shortest_driving_pathset, start finding driving_pathset with "
+          "number of paths up to %d\n",
+          (int) MaxIter + 1);
+  /* initialize data structure */
+  TInt _dest_node_ID, _origin_node_ID;
+  Path_Table *_path_table = new Path_Table ();
+  std::unordered_map<TInt, MNM_Pathset *> *_new_map = nullptr;
+  for (auto _o_it = od_factory->m_origin_map.begin ();
+       _o_it != od_factory->m_origin_map.end (); _o_it++)
+    {
+      _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+      _new_map = new std::unordered_map<TInt, MNM_Pathset *> ();
+      _path_table->insert (
+        std::pair<TInt,
+                  std::unordered_map<TInt, MNM_Pathset *> *> (_origin_node_ID,
+                                                              _new_map));
+      for (auto _d_it = od_factory->m_destination_map.begin ();
+           _d_it != od_factory->m_destination_map.end (); _d_it++)
+        {
+          _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+          if (od_mode_connectivity.find (_origin_node_ID)
+                != od_mode_connectivity.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                   != od_mode_connectivity.find (_origin_node_ID)->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                     ->second.find (driving)
+                   != od_mode_connectivity.find (_origin_node_ID)
+                        ->second.find (_dest_node_ID)
+                        ->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                   ->second.find (_dest_node_ID)
+                   ->second.find (driving)
+                   ->second)
+            {
+              MNM_Pathset *_pathset = new MNM_Pathset ();
+              _new_map->insert (
+                std::pair<TInt, MNM_Pathset *> (_dest_node_ID, _pathset));
+            }
+        }
+    }
+
+  // printf("111\n");
+  std::unordered_map<TInt, TInt> _mid_shortest_path_tree
+    = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _mid_cost_map
+    = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, TInt> _heavy_shortest_path_tree
+    = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _heavy_cost_map
+    = std::unordered_map<TInt, TFlt> ();
+
+  std::unordered_map<TInt, TFlt> _free_cost_map
+    = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, TInt> _free_shortest_path_tree
+    = std::unordered_map<TInt, TInt> ();
+  MNM_Path *_path;
+  // TODO: use link cost instead of link travel time
+  for (auto _link_it = link_factory->m_link_map.begin ();
+       _link_it != link_factory->m_link_map.end (); _link_it++)
+    {
+      _free_cost_map.insert (
+        std::pair<TInt, TFlt> (_link_it->first,
+                               _link_it->second->get_link_tt ()));
+    }
+  // printf("1111\n");
+  for (auto _d_it = od_factory->m_destination_map.begin ();
+       _d_it != od_factory->m_destination_map.end (); _d_it++)
+    {
+      _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
+                                          _free_shortest_path_tree);
+      for (auto _o_it = od_factory->m_origin_map.begin ();
+           _o_it != od_factory->m_origin_map.end (); _o_it++)
+        {
+          _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+          if (od_mode_connectivity.find (_origin_node_ID)
+                != od_mode_connectivity.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                   != od_mode_connectivity.find (_origin_node_ID)->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                     ->second.find (driving)
+                   != od_mode_connectivity.find (_origin_node_ID)
+                        ->second.find (_dest_node_ID)
+                        ->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                   ->second.find (_dest_node_ID)
+                   ->second.find (driving)
+                   ->second)
+            {
+              _path = MNM::extract_path (_origin_node_ID, _dest_node_ID,
+                                         _free_shortest_path_tree, graph);
+              if (_path != nullptr)
+                {
+                  _path->allocate_buffer (buffer_length);
+                  _path_table->find (_origin_node_ID)
+                    ->second->find (_dest_node_ID)
+                    ->second->m_path_vec.push_back (_path);
+                }
+              else
+                {
+                  printf ("No driving path found to connect origin node ID %d "
+                          "and destination node ID %d\n",
+                          _origin_node_ID (), _dest_node_ID ());
+                  throw std::runtime_error ("No path connecting OD");
+                }
+            }
+        }
+    }
+  // printf("22\n");
+  _mid_cost_map.insert (_free_cost_map.begin (), _free_cost_map.end ());
+  _heavy_cost_map.insert (_free_cost_map.begin (), _free_cost_map.end ());
+
+  MNM_Dlink *_link;
+  MNM_Path *_path_mid, *_path_heavy;
+  TFlt _path_tt;
+  size_t _CurIter = 0;
+  while (_CurIter < MaxIter)
+    {
+      printf ("Current trial %d\n", (int) _CurIter);
+      for (auto _o_it : *_path_table)
+        {
+          for (auto _d_it : *_o_it.second)
+            {
+              for (auto &_path : _d_it.second->m_path_vec)
+                {
+                  for (auto &_link_ID : _path->m_link_vec)
+                    {
+                      _link = link_factory->get_link (_link_ID);
+                      // TODO: use link cost instead of link travel time
+                      _mid_cost_map.find (_link_ID)->second
+                        = _link->get_link_tt () * Mid_Scale;
+                      _heavy_cost_map.find (_link_ID)->second
+                        = _link->get_link_tt () * Heavy_Scale;
+                    }
+                }
+            }
+        }
+
+      for (auto _d_it = od_factory->m_destination_map.begin ();
+           _d_it != od_factory->m_destination_map.end (); _d_it++)
+        {
+          _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+                                              _mid_cost_map,
+                                              _mid_shortest_path_tree);
+          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+                                              _heavy_cost_map,
+                                              _heavy_shortest_path_tree);
+          for (auto _o_it = od_factory->m_origin_map.begin ();
+               _o_it != od_factory->m_origin_map.end (); _o_it++)
+            {
+              _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+              if (od_mode_connectivity.find (_origin_node_ID)
+                    != od_mode_connectivity.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                         ->second.find (driving)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.find (_dest_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                       ->second.find (_dest_node_ID)
+                       ->second.find (driving)
+                       ->second)
+                {
+                  _path_mid
+                    = MNM::extract_path (_origin_node_ID, _dest_node_ID,
+                                         _mid_shortest_path_tree, graph);
+                  _path_heavy
+                    = MNM::extract_path (_origin_node_ID, _dest_node_ID,
+                                         _heavy_shortest_path_tree, graph);
+                  if (_path_mid != nullptr)
+                    {
+                      if (!_path_table->find (_origin_node_ID)
+                             ->second->find (_dest_node_ID)
+                             ->second->is_in (_path_mid))
+                        {
+                          _path_tt = MNM::get_path_tt_snapshot (_path_mid,
+                                                                _free_cost_map);
+                          if (_path_tt > min_path_length)
+                            {
+                              _path_mid->allocate_buffer (buffer_length);
+                              _path_table->find (_origin_node_ID)
+                                ->second->find (_dest_node_ID)
+                                ->second->m_path_vec.push_back (_path_mid);
+                            }
+                        }
+                      else
+                        {
+                          delete _path_mid;
+                        }
+                    }
+                  if (_path_heavy != nullptr)
+                    {
+                      if (!_path_table->find (_origin_node_ID)
+                             ->second->find (_dest_node_ID)
+                             ->second->is_in (_path_heavy))
+                        {
+                          _path_tt = MNM::get_path_tt_snapshot (_path_heavy,
+                                                                _free_cost_map);
+                          if (_path_tt > min_path_length)
+                            {
+                              _path_heavy->allocate_buffer (buffer_length);
+                              _path_table->find (_origin_node_ID)
+                                ->second->find (_dest_node_ID)
+                                ->second->m_path_vec.push_back (_path_heavy);
+                            }
+                        }
+                      else
+                        {
+                          delete _path_heavy;
+                        }
+                    }
+                }
+            }
+        }
+      _CurIter += 1;
+    }
+
+  _mid_shortest_path_tree.clear ();
+  _mid_cost_map.clear ();
+  _heavy_shortest_path_tree.clear ();
+  _heavy_cost_map.clear ();
+
+  _free_cost_map.clear ();
+  _free_shortest_path_tree.clear ();
+
+  printf ("build_shortest_driving_pathset, finish finding driving_pathset with "
+          "number of paths up to %d\n",
+          (int) MaxIter + 1);
+  return _path_table;
+}
+
+Path_Table *
+build_shortest_driving_pathset (
   PNEGraph &graph, MNM_OD_Factory *od_factory,
   std::unordered_map<TInt,
                      std::unordered_map<TInt, std::unordered_map<int, bool>>>
@@ -13425,6 +14122,309 @@ build_shortest_driving_pathset (
 
   printf ("build_shortest_driving_pathset, finish finding driving_pathset with "
           "number of paths up to %d\n",
+          (int) MaxIter + 1);
+  return _path_table;
+}
+
+Path_Table *
+build_shortest_bustransit_pathset (
+  macposts::Graph &graph, MNM_OD_Factory *od_factory,
+  std::unordered_map<TInt,
+                     std::unordered_map<TInt, std::unordered_map<int, bool>>>
+    &od_mode_connectivity,
+  MNM_Transit_Link_Factory *link_factory, TFlt min_path_length, size_t MaxIter,
+  TFlt Mid_Scale, TFlt Heavy_Scale, TInt buffer_length)
+{
+  // MaxIter: maximum iteration to find alternative shortest path, when MaxIter
+  // = 0, just shortest path Mid_Scale and Heavy_Scale are different penalties
+  // to the travel cost of links in existing paths
+  printf ("build_shortest_bustransit_pathset, start finding bustransit_pathset "
+          "with number of paths up to %d\n",
+          (int) MaxIter + 1);
+  /* initialize data structure */
+  TInt _dest_node_ID, _origin_node_ID;
+  Path_Table *_path_table = new Path_Table ();
+  std::unordered_map<TInt, MNM_Pathset *> *_new_map = nullptr;
+  for (auto _o_it = od_factory->m_origin_map.begin ();
+       _o_it != od_factory->m_origin_map.end (); _o_it++)
+    {
+      _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+      if (is_node (graph, _origin_node_ID)
+          && (graph
+                .connections (graph.get_node (_origin_node_ID),
+                              Direction::Outgoing)
+                .begin ()
+              != graph
+                   .connections (graph.get_node (_origin_node_ID),
+                                 Direction::Outgoing)
+                   .end ()))
+        {
+          _new_map = new std::unordered_map<TInt, MNM_Pathset *> ();
+          _path_table->insert (
+            std::pair<
+              TInt, std::unordered_map<TInt, MNM_Pathset *> *> (_origin_node_ID,
+                                                                _new_map));
+        }
+      else
+        {
+          _new_map = nullptr;
+          continue;
+        }
+      for (auto _d_it = od_factory->m_destination_map.begin ();
+           _d_it != od_factory->m_destination_map.end (); _d_it++)
+        {
+          _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+          if (is_node (graph, _dest_node_ID)
+              && (graph
+                    .connections (graph.get_node (_dest_node_ID),
+                                  Direction::Incoming)
+                    .begin ()
+                  != graph
+                       .connections (graph.get_node (_dest_node_ID),
+                                     Direction::Incoming)
+                       .end ()))
+            {
+              if (od_mode_connectivity.find (_origin_node_ID)
+                    != od_mode_connectivity.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                         ->second.find (transit)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.find (_dest_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                       ->second.find (_dest_node_ID)
+                       ->second.find (transit)
+                       ->second)
+                {
+                  MNM_Pathset *_pathset = new MNM_Pathset ();
+                  IAssert (_new_map != nullptr);
+                  _new_map->insert (
+                    std::pair<TInt, MNM_Pathset *> (_dest_node_ID, _pathset));
+                }
+            }
+        }
+    }
+
+  // printf("111\n");
+  std::unordered_map<TInt, TInt> _mid_shortest_path_tree
+    = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _mid_cost_map
+    = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, TInt> _heavy_shortest_path_tree
+    = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _heavy_cost_map
+    = std::unordered_map<TInt, TFlt> ();
+
+  std::unordered_map<TInt, TFlt> _free_cost_map
+    = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, TInt> _free_shortest_path_tree
+    = std::unordered_map<TInt, TInt> ();
+  MNM_Path *_path;
+  // TODO: use link cost instead of link travel time
+  for (auto _link_it : link_factory->m_transit_link_map)
+    {
+      _free_cost_map.insert (
+        std::pair<TInt, TFlt> (_link_it.first, _link_it.second->m_fftt));
+    }
+  // printf("1111\n");
+  for (auto _d_it = od_factory->m_destination_map.begin ();
+       _d_it != od_factory->m_destination_map.end (); _d_it++)
+    {
+      _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+      if (is_node (graph, _dest_node_ID)
+          && (graph
+                .connections (graph.get_node (_dest_node_ID),
+                              Direction::Incoming)
+                .begin ()
+              != graph
+                   .connections (graph.get_node (_dest_node_ID),
+                                 Direction::Incoming)
+                   .end ()))
+        {
+          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+                                              _free_cost_map,
+                                              _free_shortest_path_tree);
+        }
+      else
+        {
+          continue;
+        }
+      for (auto _o_it = od_factory->m_origin_map.begin ();
+           _o_it != od_factory->m_origin_map.end (); _o_it++)
+        {
+          _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+          if (od_mode_connectivity.find (_origin_node_ID)
+                != od_mode_connectivity.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                   != od_mode_connectivity.find (_origin_node_ID)->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                     ->second.find (transit)
+                   != od_mode_connectivity.find (_origin_node_ID)
+                        ->second.find (_dest_node_ID)
+                        ->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                   ->second.find (_dest_node_ID)
+                   ->second.find (transit)
+                   ->second)
+            {
+              _path = MNM::extract_path (_origin_node_ID, _dest_node_ID,
+                                         _free_shortest_path_tree, graph);
+              if (_path != nullptr)
+                {
+                  _path->allocate_buffer (buffer_length);
+                  _path_table->find (_origin_node_ID)
+                    ->second->find (_dest_node_ID)
+                    ->second->m_path_vec.push_back (_path);
+                }
+              else
+                {
+                  printf ("No bus transit path found to connect origin node ID "
+                          "%d and destination node ID %d\n",
+                          _origin_node_ID (), _dest_node_ID ());
+                  throw std::runtime_error (
+                    "No bus transit path connecting OD");
+                }
+            }
+        }
+    }
+  // printf("22\n");
+  _mid_cost_map.insert (_free_cost_map.begin (), _free_cost_map.end ());
+  _heavy_cost_map.insert (_free_cost_map.begin (), _free_cost_map.end ());
+
+  MNM_Transit_Link *_link;
+  MNM_Path *_path_mid, *_path_heavy;
+  TFlt _path_tt;
+  size_t _CurIter = 0;
+  while (_CurIter < MaxIter)
+    {
+      printf ("Current trial %d\n", (int) _CurIter);
+      for (auto _o_it : *_path_table)
+        {
+          for (auto _d_it : *_o_it.second)
+            {
+              for (auto &_path : _d_it.second->m_path_vec)
+                {
+                  for (auto &_link_ID : _path->m_link_vec)
+                    {
+                      _link = link_factory->get_transit_link (_link_ID);
+                      // TODO: use link cost instead of link travel time
+                      _mid_cost_map.find (_link_ID)->second
+                        = _link->m_fftt * Mid_Scale;
+                      _heavy_cost_map.find (_link_ID)->second
+                        = _link->m_fftt * Heavy_Scale;
+                    }
+                }
+            }
+        }
+
+      for (auto _d_it = od_factory->m_destination_map.begin ();
+           _d_it != od_factory->m_destination_map.end (); _d_it++)
+        {
+          _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+          if (is_node (graph, _dest_node_ID)
+              && (graph
+                    .connections (graph.get_node (_dest_node_ID),
+                                  Direction::Incoming)
+                    .begin ()
+                  != graph
+                       .connections (graph.get_node (_dest_node_ID),
+                                     Direction::Incoming)
+                       .end ()))
+            {
+              MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+                                                  _mid_cost_map,
+                                                  _mid_shortest_path_tree);
+              MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+                                                  _heavy_cost_map,
+                                                  _heavy_shortest_path_tree);
+            }
+          else
+            {
+              continue;
+            }
+          for (auto _o_it = od_factory->m_origin_map.begin ();
+               _o_it != od_factory->m_origin_map.end (); _o_it++)
+            {
+              _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+              if (od_mode_connectivity.find (_origin_node_ID)
+                    != od_mode_connectivity.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                         ->second.find (transit)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.find (_dest_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                       ->second.find (_dest_node_ID)
+                       ->second.find (transit)
+                       ->second)
+                {
+                  _path_mid
+                    = MNM::extract_path (_origin_node_ID, _dest_node_ID,
+                                         _mid_shortest_path_tree, graph);
+                  _path_heavy
+                    = MNM::extract_path (_origin_node_ID, _dest_node_ID,
+                                         _heavy_shortest_path_tree, graph);
+                  if (_path_mid != nullptr)
+                    {
+                      if (!_path_table->find (_origin_node_ID)
+                             ->second->find (_dest_node_ID)
+                             ->second->is_in (_path_mid))
+                        {
+                          _path_tt = MNM::get_path_tt_snapshot (_path_mid,
+                                                                _free_cost_map);
+                          if (_path_tt > min_path_length)
+                            {
+                              _path_mid->allocate_buffer (buffer_length);
+                              _path_table->find (_origin_node_ID)
+                                ->second->find (_dest_node_ID)
+                                ->second->m_path_vec.push_back (_path_mid);
+                            }
+                        }
+                      else
+                        {
+                          delete _path_mid;
+                        }
+                    }
+                  if (_path_heavy != nullptr)
+                    {
+                      if (!_path_table->find (_origin_node_ID)
+                             ->second->find (_dest_node_ID)
+                             ->second->is_in (_path_heavy))
+                        {
+                          _path_tt = MNM::get_path_tt_snapshot (_path_heavy,
+                                                                _free_cost_map);
+                          if (_path_tt > min_path_length)
+                            {
+                              _path_heavy->allocate_buffer (buffer_length);
+                              _path_table->find (_origin_node_ID)
+                                ->second->find (_dest_node_ID)
+                                ->second->m_path_vec.push_back (_path_heavy);
+                            }
+                        }
+                      else
+                        {
+                          delete _path_heavy;
+                        }
+                    }
+                }
+            }
+        }
+      _CurIter += 1;
+    }
+  printf ("build_shortest_bustransit_pathset, finish finding "
+          "bustransit_pathset with number of paths up to %d\n",
           (int) MaxIter + 1);
   return _path_table;
 }
@@ -13706,6 +14706,579 @@ build_shortest_bustransit_pathset (
 
 PnR_Path_Table *
 build_shortest_pnr_pathset (
+  macposts::Graph &driving_graph, macposts::Graph &bustransit_graph,
+  MNM_OD_Factory *od_factory,
+  std::unordered_map<TInt,
+                     std::unordered_map<TInt, std::unordered_map<int, bool>>>
+    &od_mode_connectivity,
+  MNM_Link_Factory *link_factory,
+  MNM_Transit_Link_Factory *bus_transitlink_factory, TFlt min_path_length,
+  size_t MaxIter, TFlt Mid_Scale, TFlt Heavy_Scale, TInt buffer_length)
+{
+  printf ("build_shortest_pnr_pathset, start finding pnr_pathset with number "
+          "of paths up to %d\n",
+          (int) MaxIter + 1);
+  /* initialize data structure */
+  TInt _dest_node_ID, _origin_node_ID;
+  MNM_Destination_Multimodal *_dest;
+  PnR_Path_Table *_path_table = new PnR_Path_Table ();
+  std::unordered_map<TInt, MNM_PnR_Pathset *> *_new_map = nullptr;
+  for (auto _o_it = od_factory->m_origin_map.begin ();
+       _o_it != od_factory->m_origin_map.end (); _o_it++)
+    {
+      _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+      _new_map = new std::unordered_map<TInt, MNM_PnR_Pathset *> ();
+      _path_table->insert (
+        std::pair<
+          TInt, std::unordered_map<TInt, MNM_PnR_Pathset *> *> (_origin_node_ID,
+                                                                _new_map));
+      for (auto _d_it = od_factory->m_destination_map.begin ();
+           _d_it != od_factory->m_destination_map.end (); _d_it++)
+        {
+          _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+          _dest = dynamic_cast<MNM_Destination_Multimodal *> (_d_it->second);
+          if (is_node (bustransit_graph, _dest_node_ID)
+              && (bustransit_graph
+                    .connections (bustransit_graph.get_node (_dest_node_ID),
+                                  Direction::Incoming)
+                    .begin ()
+                  != bustransit_graph
+                       .connections (bustransit_graph.get_node (_dest_node_ID),
+                                     Direction::Incoming)
+                       .end ())
+              && !_dest->m_connected_pnr_parkinglot_vec.empty ())
+            {
+              if (od_mode_connectivity.find (_origin_node_ID)
+                    != od_mode_connectivity.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                         ->second.find (pnr)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.find (_dest_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                       ->second.find (_dest_node_ID)
+                       ->second.find (pnr)
+                       ->second)
+                {
+                  MNM_PnR_Pathset *_pathset = new MNM_PnR_Pathset ();
+                  IAssert (_new_map != nullptr);
+                  _new_map->insert (
+                    std::pair<TInt, MNM_PnR_Pathset *> (_dest_node_ID,
+                                                        _pathset));
+                }
+            }
+        }
+    }
+
+  // for (auto _o_it : od_mode_connectivity) {
+  //     _origin_node_ID = _o_it.first;
+  //     _new_map = new std::unordered_map<TInt, MNM_PnR_Pathset *>();
+  //     _path_table->insert(std::pair<TInt, std::unordered_map<TInt,
+  //     MNM_PnR_Pathset *> *>(_origin_node_ID, _new_map)); for (auto _d_it :
+  //     _o_it.second) {
+  //         _dest_node_ID = _d_it.first;
+  //         if (_d_it.second.find(pnr) != _d_it.second.end() &&
+  //         _d_it.second.find(pnr) -> second) {
+  //             MNM_PnR_Pathset *_pathset = new MNM_PnR_Pathset();
+  //             _new_map->insert(std::pair<TInt, MNM_PnR_Pathset
+  //             *>(_dest_node_ID, _pathset));
+  //         }
+  //     }
+  // }
+
+  MNM_Parking_Lot *_best_mid_parkinglot, *_best_mid_parkinglot_mid,
+    *_best_mid_parkinglot_heavy;
+  TInt _mid_dest_node_ID;
+
+  TFlt _cur_best_path_tt, _path_tt, _cur_best_path_tt_mid,
+    _cur_best_path_tt_heavy;
+
+  // <d_node_ID, <node_ID, out_link_ID>>
+  std::unordered_map<TInt, std::unordered_map<TInt, TInt>> _driving_table
+    = std::unordered_map<TInt, std::unordered_map<TInt, TInt>> ();
+  std::unordered_map<TInt, std::unordered_map<TInt, TInt>> _bustransit_table
+    = std::unordered_map<TInt, std::unordered_map<TInt, TInt>> ();
+  std::unordered_map<TInt, TInt> _free_shortest_path_tree_driving;
+  std::unordered_map<TInt, TInt> _free_shortest_path_tree_bustransit;
+  std::unordered_map<TInt, TFlt> _free_cost_map_driving
+    = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, TFlt> _free_cost_map_bustransit
+    = std::unordered_map<TInt, TFlt> ();
+
+  MNM_Path *_driving_path;
+  MNM_Path *_transit_path;
+  MNM_PnR_Path *_pnr_path;
+  // TODO: use link cost instead of link travel time
+  for (auto _link_it : link_factory->m_link_map)
+    {
+      _free_cost_map_driving.insert (
+        std::pair<TInt, TFlt> (_link_it.first,
+                               _link_it.second->get_link_tt ()));
+    }
+  for (auto _link_it : bus_transitlink_factory->m_transit_link_map)
+    {
+      _free_cost_map_bustransit.insert (
+        std::pair<TInt, TFlt> (_link_it.first, _link_it.second->m_fftt));
+    }
+
+  for (auto _d_it : od_factory->m_destination_map)
+    {
+      _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
+      _dest = dynamic_cast<MNM_Destination_Multimodal *> (_d_it.second);
+      if (is_node (bustransit_graph, _dest_node_ID))
+        {
+          _free_shortest_path_tree_driving = std::unordered_map<TInt, TInt> ();
+          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, driving_graph,
+                                              _free_cost_map_driving,
+                                              _free_shortest_path_tree_driving);
+          _driving_table.insert (
+            std::pair<TInt, std::unordered_map<
+                              TInt, TInt>> (_dest_node_ID,
+                                            _free_shortest_path_tree_driving));
+
+          if ((bustransit_graph
+                 .connections (bustransit_graph.get_node (_dest_node_ID),
+                               Direction::Incoming)
+                 .begin ()
+               != bustransit_graph
+                    .connections (bustransit_graph.get_node (_dest_node_ID),
+                                  Direction::Incoming)
+                    .end ())
+              && !_dest->m_connected_pnr_parkinglot_vec.empty ())
+            {
+              _free_shortest_path_tree_bustransit
+                = std::unordered_map<TInt, TInt> ();
+              MNM_Shortest_Path::
+                all_to_one_FIFO (_dest_node_ID, bustransit_graph,
+                                 _free_cost_map_bustransit,
+                                 _free_shortest_path_tree_bustransit);
+              _bustransit_table.insert (
+                std::pair<TInt,
+                          std::unordered_map<
+                            TInt, TInt>> (_dest_node_ID,
+                                          _free_shortest_path_tree_bustransit));
+            }
+        }
+    }
+
+  std::unordered_map<TInt, TInt> _mid_shortest_path_tree_driving
+    = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _mid_cost_map_driving
+    = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, TInt> _heavy_shortest_path_tree_driving
+    = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _heavy_cost_map_driving
+    = std::unordered_map<TInt, TFlt> ();
+
+  std::unordered_map<TInt, TInt> _mid_shortest_path_tree_bustransit
+    = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _mid_cost_map_bustransit
+    = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, TInt> _heavy_shortest_path_tree_bustransit
+    = std::unordered_map<TInt, TInt> ();
+  std::unordered_map<TInt, TFlt> _heavy_cost_map_bustransit
+    = std::unordered_map<TInt, TFlt> ();
+
+  for (auto _d_it : od_factory->m_destination_map)
+    {
+      _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
+      _dest = dynamic_cast<MNM_Destination_Multimodal *> (_d_it.second);
+      if (!is_node (bustransit_graph, _dest_node_ID)
+          || (bustransit_graph
+                .connections (bustransit_graph.get_node (_dest_node_ID),
+                              Direction::Incoming)
+                .begin ()
+              == bustransit_graph
+                   .connections (bustransit_graph.get_node (_dest_node_ID),
+                                 Direction::Incoming)
+                   .end ())
+          || _dest->m_connected_pnr_parkinglot_vec.empty ())
+        {
+          continue;
+        }
+      _free_shortest_path_tree_bustransit
+        = _bustransit_table.find (_dest_node_ID)->second;
+      for (auto _o_it : od_factory->m_origin_map)
+        {
+          _origin_node_ID = _o_it.second->m_origin_node->m_node_ID;
+
+          // pnr
+          if (od_mode_connectivity.find (_origin_node_ID)
+                != od_mode_connectivity.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                   != od_mode_connectivity.find (_origin_node_ID)->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                     ->second.find (_dest_node_ID)
+                     ->second.find (pnr)
+                   != od_mode_connectivity.find (_origin_node_ID)
+                        ->second.find (_dest_node_ID)
+                        ->second.end ()
+              && od_mode_connectivity.find (_origin_node_ID)
+                   ->second.find (_dest_node_ID)
+                   ->second.find (pnr)
+                   ->second)
+            {
+              _cur_best_path_tt = DBL_MAX;
+              _best_mid_parkinglot = nullptr;
+              _pnr_path = nullptr;
+              for (auto _parkinglot : _dest->m_connected_pnr_parkinglot_vec)
+                {
+                  _mid_dest_node_ID = _parkinglot->m_dest_node->m_node_ID;
+                  _path_tt = 0.;
+                  _free_shortest_path_tree_driving
+                    = _driving_table.find (_mid_dest_node_ID)->second;
+                  _driving_path
+                    = MNM::extract_path (_origin_node_ID, _mid_dest_node_ID,
+                                         _free_shortest_path_tree_driving,
+                                         driving_graph);
+                  IAssert (_driving_path != nullptr);
+                  _path_tt
+                    += MNM::get_path_tt_snapshot (_driving_path,
+                                                  _free_cost_map_driving);
+
+                  _transit_path
+                    = MNM::extract_path (_mid_dest_node_ID, _dest_node_ID,
+                                         _free_shortest_path_tree_bustransit,
+                                         bustransit_graph);
+                  IAssert (_transit_path != nullptr);
+                  _path_tt
+                    += MNM::get_path_tt_snapshot (_transit_path,
+                                                  _free_cost_map_bustransit);
+
+                  if (_cur_best_path_tt > _path_tt)
+                    {
+                      _cur_best_path_tt = _path_tt;
+                      _best_mid_parkinglot = _parkinglot;
+                      delete _pnr_path;
+                      _pnr_path
+                        = new MNM_PnR_Path (0, _best_mid_parkinglot->m_ID,
+                                            _mid_dest_node_ID, _driving_path,
+                                            _transit_path);
+                      _driving_path = nullptr;
+                      _transit_path = nullptr;
+                    }
+                  else
+                    {
+                      delete _driving_path;
+                      delete _transit_path;
+                    }
+                }
+              if (_pnr_path != nullptr && _best_mid_parkinglot != nullptr)
+                {
+                  _pnr_path->allocate_buffer (buffer_length);
+                  _path_table->find (_origin_node_ID)
+                    ->second->find (_dest_node_ID)
+                    ->second->m_path_vec.push_back (_pnr_path);
+                }
+              else
+                {
+                  printf ("No PnR path found to connect origin node ID %d "
+                          "and "
+                          "destination node ID %d\n",
+                          _origin_node_ID (), _dest_node_ID ());
+                  throw std::runtime_error ("No PnR path connecting OD");
+                }
+            }
+        }
+    }
+
+  _mid_cost_map_driving.insert (_free_cost_map_driving.begin (),
+                                _free_cost_map_driving.end ());
+  _heavy_cost_map_driving.insert (_free_cost_map_driving.begin (),
+                                  _free_cost_map_driving.end ());
+  _mid_cost_map_bustransit.insert (_free_cost_map_bustransit.begin (),
+                                   _free_cost_map_bustransit.end ());
+  _heavy_cost_map_bustransit.insert (_free_cost_map_bustransit.begin (),
+                                     _free_cost_map_bustransit.end ());
+
+  MNM_Dlink *_link;
+  MNM_Transit_Link *_transit_link;
+  MNM_Path *_driving_path_mid, *_driving_path_heavy;
+  MNM_Path *_bustransit_path_mid, *_bustransit_path_heavy;
+  MNM_PnR_Path *_pnr_path_mid, *_pnr_path_heavy;
+  size_t _CurIter = 0;
+  while (_CurIter < MaxIter)
+    {
+      printf ("Current trial %d\n", (int) _CurIter);
+
+      for (auto _o_it : *_path_table)
+        {
+          for (auto _d_it : *_o_it.second)
+            {
+              for (auto &_path : _d_it.second->m_path_vec)
+                {
+                  for (auto &_link_ID : dynamic_cast<MNM_PnR_Path *> (_path)
+                                          ->m_driving_path->m_link_vec)
+                    {
+                      _link = link_factory->get_link (_link_ID);
+                      // TODO: use link cost instead of link travel time
+                      _mid_cost_map_driving.find (_link_ID)->second
+                        = _link->get_link_tt () * Mid_Scale;
+                      _heavy_cost_map_driving.find (_link_ID)->second
+                        = _link->get_link_tt () * Heavy_Scale;
+                    }
+                  for (auto &_link_ID : dynamic_cast<MNM_PnR_Path *> (_path)
+                                          ->m_transit_path->m_link_vec)
+                    {
+                      _transit_link
+                        = bus_transitlink_factory->get_transit_link (_link_ID);
+                      // TODO: use link cost instead of link travel time
+                      _mid_cost_map_bustransit.find (_link_ID)->second
+                        = _transit_link->m_fftt * Mid_Scale;
+                      _heavy_cost_map_bustransit.find (_link_ID)->second
+                        = _transit_link->m_fftt * Heavy_Scale;
+                    }
+                }
+            }
+        }
+
+      for (auto _d_it = od_factory->m_destination_map.begin ();
+           _d_it != od_factory->m_destination_map.end (); _d_it++)
+        {
+          _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
+          _dest = dynamic_cast<MNM_Destination_Multimodal *> (_d_it->second);
+          if (!is_node (bustransit_graph, _dest_node_ID)
+              || (bustransit_graph
+                    .connections (bustransit_graph.get_node (_dest_node_ID),
+                                  Direction::Incoming)
+                    .begin ()
+                  == bustransit_graph
+                       .connections (bustransit_graph.get_node (_dest_node_ID),
+                                     Direction::Incoming)
+                       .end ())
+              || _dest->m_connected_pnr_parkinglot_vec.empty ())
+            {
+              continue;
+            }
+          MNM_Shortest_Path::
+            all_to_one_FIFO (_dest_node_ID, bustransit_graph,
+                             _mid_cost_map_bustransit,
+                             _mid_shortest_path_tree_bustransit);
+          MNM_Shortest_Path::
+            all_to_one_FIFO (_dest_node_ID, bustransit_graph,
+                             _heavy_cost_map_bustransit,
+                             _heavy_shortest_path_tree_bustransit);
+          for (auto _o_it = od_factory->m_origin_map.begin ();
+               _o_it != od_factory->m_origin_map.end (); _o_it++)
+            {
+              _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
+              if (od_mode_connectivity.find (_origin_node_ID)
+                    != od_mode_connectivity.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                         ->second.find (_dest_node_ID)
+                         ->second.find (transit)
+                       != od_mode_connectivity.find (_origin_node_ID)
+                            ->second.find (_dest_node_ID)
+                            ->second.end ()
+                  && od_mode_connectivity.find (_origin_node_ID)
+                       ->second.find (_dest_node_ID)
+                       ->second.find (transit)
+                       ->second)
+                {
+                  _cur_best_path_tt_mid = DBL_MAX;
+                  _best_mid_parkinglot_mid = nullptr;
+                  _pnr_path_mid = nullptr;
+
+                  _cur_best_path_tt_heavy = DBL_MAX;
+                  _best_mid_parkinglot_heavy = nullptr;
+                  _pnr_path_heavy = nullptr;
+
+                  for (auto _parkinglot : _dest->m_connected_pnr_parkinglot_vec)
+                    {
+                      _mid_dest_node_ID = _parkinglot->m_dest_node->m_node_ID;
+
+                      MNM_Shortest_Path::
+                        all_to_one_FIFO (_mid_dest_node_ID, driving_graph,
+                                         _mid_cost_map_driving,
+                                         _mid_shortest_path_tree_driving);
+                      _driving_path_mid
+                        = MNM::extract_path (_origin_node_ID, _mid_dest_node_ID,
+                                             _mid_shortest_path_tree_driving,
+                                             driving_graph);
+                      IAssert (_driving_path_mid != nullptr);
+                      _bustransit_path_mid
+                        = MNM::extract_path (_mid_dest_node_ID, _dest_node_ID,
+                                             _mid_shortest_path_tree_bustransit,
+                                             bustransit_graph);
+                      IAssert (_bustransit_path_mid != nullptr);
+
+                      MNM_Shortest_Path::
+                        all_to_one_FIFO (_mid_dest_node_ID, driving_graph,
+                                         _heavy_cost_map_driving,
+                                         _heavy_shortest_path_tree_driving);
+                      _driving_path_heavy
+                        = MNM::extract_path (_origin_node_ID, _mid_dest_node_ID,
+                                             _heavy_shortest_path_tree_driving,
+                                             driving_graph);
+                      IAssert (_driving_path_heavy != nullptr);
+                      _bustransit_path_heavy = MNM::
+                        extract_path (_mid_dest_node_ID, _dest_node_ID,
+                                      _heavy_shortest_path_tree_bustransit,
+                                      bustransit_graph);
+                      IAssert (_bustransit_path_heavy != nullptr);
+
+                      _path_tt = 0.;
+                      _path_tt
+                        += MNM::get_path_tt_snapshot (_driving_path_mid,
+                                                      _free_cost_map_driving);
+                      _path_tt += MNM::
+                        get_path_tt_snapshot (_bustransit_path_mid,
+                                              _free_cost_map_bustransit);
+
+                      if (_cur_best_path_tt_mid > _path_tt)
+                        {
+                          _cur_best_path_tt_mid = _path_tt;
+                          _best_mid_parkinglot_mid = _parkinglot;
+                          delete _pnr_path_mid;
+                          _pnr_path_mid
+                            = new MNM_PnR_Path (0,
+                                                _best_mid_parkinglot_mid->m_ID,
+                                                _mid_dest_node_ID,
+                                                _driving_path_mid,
+                                                _bustransit_path_mid);
+                          _driving_path_mid = nullptr;
+                          _bustransit_path_mid = nullptr;
+                        }
+                      else
+                        {
+                          delete _driving_path_mid;
+                          delete _bustransit_path_mid;
+                        }
+
+                      _path_tt = 0.;
+                      _path_tt
+                        += MNM::get_path_tt_snapshot (_driving_path_heavy,
+                                                      _free_cost_map_driving);
+                      _path_tt += MNM::
+                        get_path_tt_snapshot (_bustransit_path_heavy,
+                                              _free_cost_map_bustransit);
+
+                      if (_cur_best_path_tt_heavy > _path_tt)
+                        {
+                          _cur_best_path_tt_heavy = _path_tt;
+                          _best_mid_parkinglot_heavy = _parkinglot;
+                          delete _pnr_path_heavy;
+                          _pnr_path_heavy
+                            = new MNM_PnR_Path (0,
+                                                _best_mid_parkinglot_heavy
+                                                  ->m_ID,
+                                                _mid_dest_node_ID,
+                                                _driving_path_heavy,
+                                                _bustransit_path_heavy);
+                          _driving_path_heavy = nullptr;
+                          _bustransit_path_heavy = nullptr;
+                        }
+                      else
+                        {
+                          delete _driving_path_heavy;
+                          delete _bustransit_path_heavy;
+                        }
+                    }
+
+                  if (_pnr_path_mid != nullptr)
+                    {
+                      if (!_path_table->find (_origin_node_ID)
+                             ->second->find (_dest_node_ID)
+                             ->second->is_in (_pnr_path_mid))
+                        {
+                          TFlt _tot_tt
+                            = MNM::get_path_tt_snapshot (_pnr_path_mid
+                                                           ->m_driving_path,
+                                                         _free_cost_map_driving)
+                              + MNM::get_path_tt_snapshot (
+                                _pnr_path_mid->m_transit_path,
+                                _free_cost_map_bustransit);
+                          if (_tot_tt > min_path_length)
+                            {
+                              _pnr_path_mid->allocate_buffer (buffer_length);
+                              _path_table->find (_origin_node_ID)
+                                ->second->find (_dest_node_ID)
+                                ->second->m_path_vec.push_back (_pnr_path_mid);
+                            }
+                        }
+                      else
+                        {
+                          delete _pnr_path_mid;
+                        }
+                    }
+                  if (_pnr_path_heavy != nullptr)
+                    {
+                      if (!_path_table->find (_origin_node_ID)
+                             ->second->find (_dest_node_ID)
+                             ->second->is_in (_pnr_path_heavy))
+                        {
+                          TFlt _tot_tt
+                            = MNM::get_path_tt_snapshot (_pnr_path_heavy
+                                                           ->m_driving_path,
+                                                         _free_cost_map_driving)
+                              + MNM::get_path_tt_snapshot (
+                                _pnr_path_heavy->m_transit_path,
+                                _free_cost_map_bustransit);
+                          if (_tot_tt > min_path_length)
+                            {
+                              _pnr_path_heavy->allocate_buffer (buffer_length);
+                              _path_table->find (_origin_node_ID)
+                                ->second->find (_dest_node_ID)
+                                ->second->m_path_vec.push_back (
+                                  _pnr_path_heavy);
+                            }
+                        }
+                      else
+                        {
+                          delete _pnr_path_heavy;
+                        }
+                    }
+                }
+            }
+        }
+      _CurIter += 1;
+    }
+
+  for (auto _d_it : _driving_table)
+    {
+      _d_it.second.clear ();
+    }
+  _driving_table.clear ();
+  for (auto _d_it : _bustransit_table)
+    {
+      _d_it.second.clear ();
+    }
+  _bustransit_table.clear ();
+
+  _free_shortest_path_tree_driving.clear ();
+  _free_shortest_path_tree_bustransit.clear ();
+  _free_cost_map_driving.clear ();
+  _free_cost_map_bustransit.clear ();
+
+  _mid_shortest_path_tree_driving.clear ();
+  _mid_cost_map_driving.clear ();
+  _heavy_shortest_path_tree_driving.clear ();
+  _heavy_cost_map_driving.clear ();
+
+  _mid_shortest_path_tree_bustransit.clear ();
+  _mid_cost_map_bustransit.clear ();
+  _heavy_shortest_path_tree_bustransit.clear ();
+  _heavy_cost_map_bustransit.clear ();
+
+  printf ("build_shortest_pnr_pathset, finish finding pnr_pathset with "
+          "number "
+          "of paths up to %d\n",
+          (int) MaxIter + 1);
+  return _path_table;
+}
+
+PnR_Path_Table *
+build_shortest_pnr_pathset (
   PNEGraph &driving_graph, PNEGraph &bustransit_graph,
   MNM_OD_Factory *od_factory,
   std::unordered_map<TInt,
@@ -13957,7 +15530,8 @@ build_shortest_pnr_pathset (
                 }
               else
                 {
-                  printf ("No PnR path found to connect origin node ID %d and "
+                  printf ("No PnR path found to connect origin node ID %d "
+                          "and "
                           "destination node ID %d\n",
                           _origin_node_ID (), _dest_node_ID ());
                   throw std::runtime_error ("No PnR path connecting OD");
@@ -14241,7 +15815,8 @@ build_shortest_pnr_pathset (
   _heavy_shortest_path_tree_bustransit.clear ();
   _heavy_cost_map_bustransit.clear ();
 
-  printf ("build_shortest_pnr_pathset, finish finding pnr_pathset with number "
+  printf ("build_shortest_pnr_pathset, finish finding pnr_pathset with "
+          "number "
           "of paths up to %d\n",
           (int) MaxIter + 1);
   return _path_table;
@@ -14708,14 +16283,15 @@ get_ID_path_mapping_all_mode (
   Passenger_Path_Table *passenger_path_table, TInt num_path_driving,
   TInt num_path_bustransit, TInt num_path_pnr, TInt num_path_bus)
 {
-  // NOTE: be careful with the construction of m_mmdue -> m_passenger_path_table
-  // in MNM::build_existing_passenger_pathset() the path in passenger_path_table
-  // and that in path_table from m_mmdta SHOULD BE in the same memory address
-  // because the registered link's cc_tree stored the path in path_table in
-  // m_mmdta This is to ensure the correctness of DAR extraction
+  // NOTE: be careful with the construction of m_mmdue ->
+  // m_passenger_path_table in MNM::build_existing_passenger_pathset() the
+  // path in passenger_path_table and that in path_table from m_mmdta SHOULD
+  // BE in the same memory address because the registered link's cc_tree
+  // stored the path in path_table in m_mmdta This is to ensure the
+  // correctness of DAR extraction
 
-  // the original path ID is based on the order of paths in the path_file input
-  // reorder all path IDs starting from 0
+  // the original path ID is based on the order of paths in the path_file
+  // input reorder all path IDs starting from 0
   TInt _path_count = 0;
   MNM_Passenger_Pathset *_p_pathset;
   // MNM_PnR_Path* _pnr_path;
@@ -14748,8 +16324,9 @@ get_ID_path_mapping_all_mode (
                         = std::make_pair (_p_path->m_path, _p_path);
                       _path_count += 1;
                     }
-                  // for (auto *_path : driving_path_table -> find(_it.first) ->
-                  // second -> find(_it_it.first) -> second -> m_path_vec) {
+                  // for (auto *_path : driving_path_table -> find(_it.first)
+                  // -> second -> find(_it_it.first) -> second -> m_path_vec)
+                  // {
                   //     IAssert(_path -> m_path_type == driving);
                   // }
                 }
@@ -14778,8 +16355,10 @@ get_ID_path_mapping_all_mode (
                         = std::make_pair (_p_path->m_path, _p_path);
                       _path_count += 1;
                     }
-                  // for (auto *_path : bustransit_path_table -> find(_it.first)
-                  // -> second -> find(_it_it.first) -> second -> m_path_vec) {
+                  // for (auto *_path : bustransit_path_table ->
+                  // find(_it.first)
+                  // -> second -> find(_it_it.first) -> second -> m_path_vec)
+                  // {
                   //     IAssert(_path -> m_path_type == transit);
                   // }
                 }
@@ -14864,7 +16443,6 @@ get_ID_path_mapping_all_mode (
     }
   return _path_count;
 }
-
 }
 
 /******************************************************************************************************************
@@ -15221,7 +16799,7 @@ MNM_MM_Due::check_od_mode_connectivity ()
     {
       _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
       _dest_node_in_transit_graph
-        = m_mmdta->m_bus_transit_graph->IsNode (_dest_node_ID);
+        = is_node (m_mmdta->m_bus_transit_graph, _dest_node_ID);
       _shortest_path_tree_driving.clear ();
       _shortest_path_tree_bustransit.clear ();
       _shortest_path_tree_pnr.clear ();
@@ -15239,7 +16817,7 @@ MNM_MM_Due::check_od_mode_connectivity ()
         {
           _origin_node_ID = _o_it.second->m_origin_node->m_node_ID;
           _origin_node_in_transit_graph
-            = m_mmdta->m_bus_transit_graph->IsNode (_origin_node_ID);
+            = is_node (m_mmdta->m_bus_transit_graph, _origin_node_ID);
 
           if (m_passenger_demand.find (_origin_node_ID)
                 != m_passenger_demand.end ()
@@ -16569,7 +18147,7 @@ MNM_MM_Due::get_mode_split_snapshot (MNM_Dta_Multimodal *mmdta,
 
   _shortest_path_tree_driving
     = m_driving_table_snapshot.find (d_node_ID)->second;
-  if (mmdta->m_bus_transit_graph->IsNode (d_node_ID))
+  if (is_node (mmdta->m_bus_transit_graph, d_node_ID))
     {
       _shortest_path_tree_bustransit
         = m_bustransit_table_snapshot.find (d_node_ID)->second;
@@ -16998,7 +18576,7 @@ MNM_MM_Due::update_snapshot_route_table (MNM_Dta_Multimodal *mmdta,
           TInt, std::unordered_map<TInt, TInt>> (_dest_node_ID,
                                                  _shortest_path_tree_driving));
 
-      if (mmdta->m_bus_transit_graph->IsNode (_dest_node_ID))
+      if (is_node (mmdta->m_bus_transit_graph, _dest_node_ID))
         {
           if (!_shortest_path_tree_bustransit.empty ())
             {
@@ -17109,7 +18687,7 @@ MNM_MM_Due::get_lowest_cost_path_snapshot (int start_interval, int o_node_ID,
 
   _shortest_path_tree_driving
     = m_driving_table_snapshot.find (d_node_ID)->second;
-  if (mmdta->m_bus_transit_graph->IsNode (d_node_ID))
+  if (is_node (mmdta->m_bus_transit_graph, d_node_ID))
     {
       _shortest_path_tree_bustransit
         = m_bustransit_table_snapshot.find (d_node_ID)->second;
@@ -20397,7 +21975,7 @@ MNM_MM_Due::update_path_table (MNM_Dta_Multimodal *mmdta, int iter)
                    != nullptr);
 
           // for bus transit
-          if (mmdta->m_bus_transit_graph->IsNode (_dest_node_ID))
+          if (is_node (mmdta->m_bus_transit_graph, _dest_node_ID))
             {
               _tdsp_tree
                 = new MNM_TDSP_Tree (_dest_node_ID, mmdta->m_bus_transit_graph,
@@ -20735,7 +22313,7 @@ MNM_MM_Due::update_path_table_fixed_departure_time_choice (
                    != nullptr);
 
           // for bus transit
-          if (mmdta->m_bus_transit_graph->IsNode (_dest_node_ID))
+          if (is_node (mmdta->m_bus_transit_graph, _dest_node_ID))
             {
               _tdsp_tree
                 = new MNM_TDSP_Tree (_dest_node_ID, mmdta->m_bus_transit_graph,
@@ -21043,7 +22621,7 @@ MNM_MM_Due::update_path_table_gp_fixed_departure_time_choice (
                    != nullptr);
 
           // for bus transit
-          if (mmdta->m_bus_transit_graph->IsNode (_dest_node_ID))
+          if (is_node (mmdta->m_bus_transit_graph, _dest_node_ID))
             {
               _tdsp_tree
                 = new MNM_TDSP_Tree (_dest_node_ID, mmdta->m_bus_transit_graph,

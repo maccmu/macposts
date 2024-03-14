@@ -146,13 +146,11 @@ typedef std::unordered_map<MNM_Dnode *, std::unordered_map<TInt, TInt> *>
 class MNM_Routing_Adaptive_With_POIs : public MNM_Routing_Adaptive
 {
 public:
-  MNM_Routing_Adaptive_With_POIs (const std::string &file_folder,
-                                  PNEGraph &graph, MNM_Statistics *statistics,
-                                  MNM_OD_Factory *od_factory,
-                                  MNM_Node_Factory *node_factory,
-                                  MNM_Link_Factory *link_factory,
-                                  OD_Candidate_POI_Table *od_candidate_poi_table
-                                  = nullptr);
+  MNM_Routing_Adaptive_With_POIs (
+    const std::string &file_folder, macposts::Graph &graph,
+    MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
+    MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
+    OD_Candidate_POI_Table *od_candidate_poi_table = nullptr);
   virtual ~MNM_Routing_Adaptive_With_POIs () override;
   virtual int init_routing (Path_Table *path_table = nullptr) override;
   virtual int update_link_cost () override;
@@ -176,7 +174,7 @@ public:
 class MNM_Routing_Hybrid_EV : public MNM_Routing
 {
 public:
-  MNM_Routing_Hybrid_EV (const std::string &file_folder, PNEGraph &graph,
+  MNM_Routing_Hybrid_EV (const std::string &file_folder, macposts::Graph &graph,
                          MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
                          MNM_Node_Factory *node_factory,
                          MNM_Link_Factory *link_factory,

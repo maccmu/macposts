@@ -1338,23 +1338,22 @@ MNM_Shortest_Path::is_FIFO (const macposts::Graph &graph,
 /*------------------------------------------------------------
                   TDSP  one destination tree
 -------------------------------------------------------------*/
-MNM_TDSP_Tree::MNM_TDSP_Tree (TInt dest_node_ID, const PNEGraph &graph,
+MNM_TDSP_Tree::MNM_TDSP_Tree (TInt dest_node_ID, macposts::Graph &graph,
                               TInt max_interval)
+    : m_graph (graph)
 {
   m_dist = std::unordered_map<TInt, TFlt *> ();
   m_tree = std::unordered_map<TInt, TInt *> ();
   m_dest_node_ID = dest_node_ID;
-  m_graph = graph;
   m_max_interval = max_interval;
 }
 
 MNM_TDSP_Tree::~MNM_TDSP_Tree ()
 {
   TInt _node_ID;
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
-      _node_ID = _node_it.GetId ();
+      _node_ID = m_graph.get_id (n);
       if (m_dist[_node_ID] != nullptr)
         delete m_dist[_node_ID];
       if (m_tree[_node_ID] != nullptr)
@@ -1368,10 +1367,9 @@ int
 MNM_TDSP_Tree::initialize ()
 {
   TInt _node_ID;
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
-      _node_ID = _node_it.GetId ();
+      _node_ID = m_graph.get_id (n);
       m_dist.insert ({ _node_ID, new TFlt[m_max_interval] });
       m_tree.insert ({ _node_ID, new TInt[m_max_interval] });
     }
@@ -1387,12 +1385,11 @@ MNM_TDSP_Tree::update_tree (
   // init tree and cost
 
   TInt _node_ID;
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
       for (int t = 0; t < m_max_interval; ++t)
         {
-          _node_ID = _node_it.GetId ();
+          _node_ID = m_graph.get_id (n);
           m_dist[_node_ID][t]
             = _node_ID == m_dest_node_ID
                 ? TFlt (0)
@@ -1432,13 +1429,13 @@ MNM_TDSP_Tree::update_tree (
       // that this while loop may not be able to break if many links have short
       // travel time
 
-      for (auto _edge_it = m_graph->BegEI (); _edge_it < m_graph->EndEI ();
-           _edge_it++)
+      for (const auto &l : m_graph.links ())
         {
-          _dst_node = _edge_it.GetDstNId ();
-          _src_node = _edge_it.GetSrcNId ();
-          _edge_cost = link_cost_map.find (_edge_it.GetId ())->second[t];
-          _edge_tt = link_tt_map.find (_edge_it.GetId ())->second[t];
+          auto &&sd = m_graph.get_endpoints (l);
+          _dst_node = m_graph.get_id (sd.first);
+          _src_node = m_graph.get_id (sd.second);
+          _edge_cost = link_cost_map.find (m_graph.get_id (l))->second[t];
+          _edge_tt = link_tt_map.find (m_graph.get_id (l))->second[t];
           if (std::isinf (_edge_cost))
             {
               continue;
@@ -1453,7 +1450,7 @@ MNM_TDSP_Tree::update_tree (
               //        _edge_it.GetDstNId(), (float) m_dist[_src_node][t],
               //        (float) _temp_cost);
               m_dist[_src_node][t] = _temp_cost;
-              m_tree[_src_node][t] = _edge_it.GetId ();
+              m_tree[_src_node][t] = m_graph.get_id (l);
             }
         }
     }
@@ -1473,12 +1470,11 @@ MNM_TDSP_Tree::update_tree (
   // init tree and cost
 
   TInt _node_ID, _in_edge_ID, _out_edge_ID;
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
       for (int t = 0; t < m_max_interval; ++t)
         {
-          _node_ID = _node_it.GetId ();
+          _node_ID = m_graph.get_id (n);
           m_dist[_node_ID][t]
             = _node_ID == m_dest_node_ID
                 ? TFlt (0)
@@ -1516,16 +1512,16 @@ MNM_TDSP_Tree::update_tree (
       // travel time
 
       // m_dist stores the distance to the dest node after traversing this node
-      for (auto _edge_it = m_graph->BegEI (); _edge_it < m_graph->EndEI ();
-           _edge_it++)
+      for (const auto &l : m_graph.links ())
         {
-          _in_edge_ID = _edge_it.GetId ();
-          _dst_node = _edge_it.GetDstNId ();
-          _src_node = _edge_it.GetSrcNId ();
+          _in_edge_ID = m_graph.get_id (l);
+          auto &&sd = m_graph.get_endpoints (l);
+          _dst_node = m_graph.get_id (sd.first);
+          _src_node = m_graph.get_id (sd.second);
           // _src_node -> _edge_cost -> _dst_node -> node_cost -> the beigining
           // of next link after _dst_node
-          _edge_cost = link_cost_map.find (_edge_it.GetId ())->second[t];
-          _edge_tt = link_tt_map.find (_edge_it.GetId ())->second[t];
+          _edge_cost = link_cost_map.find (m_graph.get_id (l))->second[t];
+          _edge_tt = link_tt_map.find (m_graph.get_id (l))->second[t];
           if (std::isinf (_edge_cost))
             {
               continue;
@@ -1561,7 +1557,7 @@ MNM_TDSP_Tree::update_tree (
               //        _edge_it.GetDstNId(), (float) m_dist[_src_node][t],
               //        (float) _temp_cost);
               m_dist[_src_node][t] = _temp_cost;
-              m_tree[_src_node][t] = _edge_it.GetId ();
+              m_tree[_src_node][t] = m_graph.get_id (l);
             }
         }
     }
@@ -1596,7 +1592,8 @@ MNM_TDSP_Tree::get_tdsp (TInt src_node_ID, TInt time,
       _cur_time
         = round_time (_cur_time,
                       link_tt_map.find (_cur_link_ID)->second[_cur_time]);
-      _cur_node_ID = m_graph->GetEI (_cur_link_ID).GetDstNId ();
+      _cur_node_ID = m_graph.get_id (
+        m_graph.get_endpoints (m_graph.get_link (_cur_link_ID)).second);
     }
   path->m_node_vec.push_back (m_dest_node_ID);
   return _tt;
@@ -1652,7 +1649,8 @@ MNM_TDSP_Tree::get_tdsp (
       _cur_time = round_time (_cur_time,
                               link_tt_map.find (_cur_link_ID)
                                 ->second[_cur_time]); // link tt cannot be zero
-      _cur_node_ID = m_graph->GetEI (_cur_link_ID).GetDstNId ();
+      _cur_node_ID = m_graph.get_id (
+        m_graph.get_endpoints (m_graph.get_link (_cur_link_ID)).second);
     }
   path->m_node_vec.push_back (m_dest_node_ID);
   return _tt;

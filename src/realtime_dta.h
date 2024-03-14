@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "io.h"
 #include "marginal_cost.h"
 #include "od.h"
@@ -49,7 +49,7 @@ public:
   std::unordered_map<TInt, TFlt> m_link_tt_difference; // only used in
                                                        // estimation
   std::string m_file_folder;
-  PNEGraph m_graph;
+  macposts::Graph m_graph;
   MNM_OD_Factory *m_od_factory;
   MNM_ConfReader *m_dta_config;
   MNM_ConfReader *m_realtime_dta_config;
@@ -63,11 +63,11 @@ class MNM_Dta_Screenshot
 {
 public:
   MNM_Dta_Screenshot (const std::string &file_folder, MNM_ConfReader *config,
-                      PNEGraph graph, MNM_OD_Factory *od_factory);
+                      macposts::Graph &graph, MNM_OD_Factory *od_factory);
   ~MNM_Dta_Screenshot ();
   int build_static_network ();
   int hook_up_node_and_link ();
-  PNEGraph m_graph;
+  macposts::Graph &m_graph;
   std::string m_file_folder;
   MNM_ConfReader *m_config;
   MNM_OD_Factory *m_od_factory;
@@ -87,13 +87,13 @@ int run_from_screenshot (MNM_Dta_Screenshot *screenshot,
 MNM_Dta_Screenshot *
 make_screenshot (const std::string &file_folder, MNM_ConfReader *config,
                  MNM_OD_Factory *od_factory, MNM_Link_Factory *link_factory,
-                 MNM_Node_Factory *node_factory, const PNEGraph &graph,
+                 MNM_Node_Factory *node_factory, macposts::Graph &graph,
                  MNM_Routing_Fixed *old_routing);
 MNM_Dta_Screenshot *make_screenshot (MNM_Dta_Screenshot *screenshot);
 MNM_Dta_Screenshot *make_empty_screenshot (const std::string &file_folder,
                                            MNM_ConfReader *config,
                                            MNM_OD_Factory *od_factory,
-                                           PNEGraph graph);
+                                           macposts::Graph &graph);
 
 int update_path_p (Path_Table *path_table, TInt col, TFlt step_size);
 }

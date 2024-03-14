@@ -144,7 +144,7 @@ bool is_FIFO (const macposts::Graph &graph,
 class MNM_TDSP_Tree
 {
 public:
-  MNM_TDSP_Tree (TInt dest_node_ID, const PNEGraph &graph, TInt max_interval);
+  MNM_TDSP_Tree (TInt dest_node_ID, macposts::Graph &graph, TInt max_interval);
   ~MNM_TDSP_Tree ();
 
   int initialize ();
@@ -174,7 +174,7 @@ public:
   std::unordered_map<TInt, TFlt *> m_dist;
   std::unordered_map<TInt, TInt *> m_tree;
   TInt m_dest_node_ID;
-  PNEGraph m_graph;
+  macposts::Graph &m_graph;
   TInt m_max_interval;
 };
 

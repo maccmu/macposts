@@ -1,5 +1,7 @@
 #include "ev_traffic.h"
 
+using macposts::graph::Direction;
+
 //#################################################################
 //                       Electrified Vehicle
 //#################################################################
@@ -755,9 +757,9 @@ MNM_Node_Factory_EV::make_charging_station (TInt ID, TFlt flow_scalar,
 //#################################################################
 
 MNM_Routing_Adaptive_With_POIs::MNM_Routing_Adaptive_With_POIs (
-  const std::string &file_folder, PNEGraph &graph, MNM_Statistics *statistics,
-  MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
-  MNM_Link_Factory *link_factory,
+  const std::string &file_folder, macposts::Graph &graph,
+  MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
+  MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
   OD_Candidate_POI_Table *od_candidate_poi_table)
     : MNM_Routing_Adaptive::MNM_Routing_Adaptive (file_folder, graph,
                                                   statistics, od_factory,
@@ -1290,13 +1292,19 @@ MNM_Routing_Adaptive_With_POIs::update_routing (TInt timestamp)
                               (int) _node_ID,
                               (int) _veh_dest->m_dest_node->m_node_ID);
                       // exit(-1);
-                      auto _node_I = m_graph->GetNI (_node_ID);
-                      if (_node_I.GetOutDeg () > 0)
+                      const auto &n = m_graph.get_node (_node_ID);
+                      auto &&outs
+                        = m_graph.connections (n, Direction::Outgoing);
+                      int deg = std::distance (outs.begin (), outs.end ());
+                      if (deg > 0)
                         {
                           printf ("MNM_Routing_Adaptive_With_POIs::update_"
                                   "routing, Assign randomly a next link!\n");
-                          _next_link_ID = _node_I.GetOutEId (
-                            MNM_Ults::mod (rand (), _node_I.GetOutDeg ()));
+                          auto &&it = outs.begin ();
+                          int idx = MNM_Ults::mod (rand (), deg);
+                          while (idx--)
+                            it++;
+                          _next_link_ID = m_graph.get_id (*it);
                         }
                       else
                         {
@@ -1503,9 +1511,9 @@ MNM_Routing_Adaptive_With_POIs::update_best_POI2 ()
 //#################################################################
 
 MNM_Routing_Hybrid_EV::MNM_Routing_Hybrid_EV (
-  const std::string &file_folder, PNEGraph &graph, MNM_Statistics *statistics,
-  MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
-  MNM_Link_Factory *link_factory,
+  const std::string &file_folder, macposts::Graph &graph,
+  MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
+  MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
   OD_Candidate_POI_Table *od_candidate_poi_table, TInt route_frq_fixed,
   TInt buffer_len)
     : MNM_Routing::MNM_Routing (graph, od_factory, node_factory, link_factory)
@@ -1963,7 +1971,7 @@ MNM_Dta_EV::build_from_files ()
                                   m_node_factory);
   std::cout << "# of OD pairs: " << m_od_factory->m_origin_map.size () << "\n";
 
-  m_graph = MNM_IO::build_graph (m_file_folder, m_config);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_config, 0);
 
   dynamic_cast<MNM_Veh_Factory_EV *> (m_veh_factory)
     ->set_ev_range (m_config->get_float ("EV_starting_range_roadside_charging"),
@@ -2029,22 +2037,25 @@ MNM_Dta_EV::is_ok ()
 {
   bool _flag = true;
   bool _temp_flag = true;
+
+  // TODO: Port this to the builtin graph (if necessary).
+  //
   // Checks the graph data structure for internal consistency.
   // For each node in the graph check that its neighbors are also nodes in the
   // graph.
-  printf ("\nChecking......Driving Graph consistent!\n");
-  _temp_flag = m_graph->IsOk ();
-  _flag = _flag && _temp_flag;
-  if (_temp_flag)
-    printf ("Passed!\n");
+  // printf ("\nChecking......Driving Graph consistent!\n");
+  // _temp_flag = m_graph->IsOk ();
+  // _flag = _flag && _temp_flag;
+  // if (_temp_flag)
+  //   printf ("Passed!\n");
 
   // check node
   printf ("Checking......Driving Node consistent!\n");
   _temp_flag
-    = (m_graph->GetNodes ()
+    = (m_graph.size_nodes ()
        == m_config->get_int ("num_of_node")
             + m_config->get_int ("num_of_charging_station"))
-      && (m_graph->GetNodes () == TInt (m_node_factory->m_node_map.size ()));
+      && (m_graph.size_nodes () == TInt (m_node_factory->m_node_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
@@ -2052,8 +2063,8 @@ MNM_Dta_EV::is_ok ()
   // check link
   printf ("Checking......Driving Link consistent!\n");
   _temp_flag
-    = (m_graph->GetEdges () == m_config->get_int ("num_of_link"))
-      && (m_graph->GetEdges () == TInt (m_link_factory->m_link_map.size ()));
+    = (m_graph.size_links () == m_config->get_int ("num_of_link"))
+      && (m_graph.size_links () == TInt (m_link_factory->m_link_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
@@ -2070,20 +2081,28 @@ MNM_Dta_EV::is_ok ()
        _origin_map_it != m_od_factory->m_origin_map.end (); _origin_map_it++)
     {
       _node_ID = _origin_map_it->second->m_origin_node->m_node_ID;
-      _temp_flag = _temp_flag
-                   && ((m_graph->GetNI (_node_ID)).GetId () == _node_ID)
-                   && (m_graph->GetNI (_node_ID).GetOutDeg () >= 1)
-                   && (m_graph->GetNI (_node_ID).GetInDeg () == 0);
+      const auto &n = m_graph.get_node (_node_ID);
+      _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID);
+      auto &&outs = m_graph.connections (n, Direction::Outgoing);
+      _temp_flag
+        = _temp_flag && (std::distance (outs.begin (), outs.end ()) >= 1);
+      auto &&ins = m_graph.connections (n, Direction::Incoming);
+      _temp_flag
+        = _temp_flag && (std::distance (ins.begin (), ins.end ()) == 0);
     }
   std::unordered_map<TInt, MNM_Destination *>::iterator _dest_map_it;
   for (_dest_map_it = m_od_factory->m_destination_map.begin ();
        _dest_map_it != m_od_factory->m_destination_map.end (); _dest_map_it++)
     {
       _node_ID = _dest_map_it->second->m_dest_node->m_node_ID;
-      _temp_flag = _temp_flag
-                   && ((m_graph->GetNI (_node_ID)).GetId () == _node_ID)
-                   && (m_graph->GetNI (_node_ID).GetOutDeg () == 0)
-                   && (m_graph->GetNI (_node_ID).GetInDeg () >= 1);
+      const auto &n = m_graph.get_node (_node_ID);
+      _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID);
+      auto &&outs = m_graph.connections (n, Direction::Outgoing);
+      _temp_flag
+        = _temp_flag && (std::distance (outs.begin (), outs.end ()) == 0);
+      auto &&ins = m_graph.connections (n, Direction::Incoming);
+      _temp_flag
+        = _temp_flag && (std::distance (ins.begin (), ins.end ()) >= 1);
     }
   _flag = _flag && _temp_flag;
   if (_temp_flag)
