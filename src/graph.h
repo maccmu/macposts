@@ -28,6 +28,7 @@
 #include <array>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
