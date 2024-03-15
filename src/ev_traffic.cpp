@@ -1292,9 +1292,8 @@ MNM_Routing_Adaptive_With_POIs::update_routing (TInt timestamp)
                               (int) _node_ID,
                               (int) _veh_dest->m_dest_node->m_node_ID);
                       // exit(-1);
-                      const auto &n = m_graph.get_node (_node_ID);
                       auto &&outs
-                        = m_graph.connections (n, Direction::Outgoing);
+                        = m_graph.connections (_node_ID, Direction::Outgoing);
                       int deg = std::distance (outs.begin (), outs.end ());
                       if (deg > 0)
                         {
@@ -2082,13 +2081,9 @@ MNM_Dta_EV::is_ok ()
     {
       _node_ID = _origin_map_it->second->m_origin_node->m_node_ID;
       const auto &n = m_graph.get_node (_node_ID);
-      _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID);
-      auto &&outs = m_graph.connections (n, Direction::Outgoing);
-      _temp_flag
-        = _temp_flag && (std::distance (outs.begin (), outs.end ()) >= 1);
-      auto &&ins = m_graph.connections (n, Direction::Incoming);
-      _temp_flag
-        = _temp_flag && (std::distance (ins.begin (), ins.end ()) == 0);
+      _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID)
+        && !m_graph.connections (n, Direction::Outgoing).empty()
+        && m_graph.connections (n, Direction::Incoming).empty();
     }
   std::unordered_map<TInt, MNM_Destination *>::iterator _dest_map_it;
   for (_dest_map_it = m_od_factory->m_destination_map.begin ();
@@ -2096,13 +2091,9 @@ MNM_Dta_EV::is_ok ()
     {
       _node_ID = _dest_map_it->second->m_dest_node->m_node_ID;
       const auto &n = m_graph.get_node (_node_ID);
-      _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID);
-      auto &&outs = m_graph.connections (n, Direction::Outgoing);
-      _temp_flag
-        = _temp_flag && (std::distance (outs.begin (), outs.end ()) == 0);
-      auto &&ins = m_graph.connections (n, Direction::Incoming);
-      _temp_flag
-        = _temp_flag && (std::distance (ins.begin (), ins.end ()) >= 1);
+      _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID)
+        && m_graph.connections (n, Direction::Outgoing).empty()
+        && !m_graph.connections (n, Direction::Incoming).empty();
     }
   _flag = _flag && _temp_flag;
   if (_temp_flag)

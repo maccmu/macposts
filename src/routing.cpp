@@ -54,8 +54,7 @@ MNM_Routing_Random::update_routing (TInt timestamp)
       for (auto _veh_it = _origin_node->m_in_veh_queue.begin ();
            _veh_it != _origin_node->m_in_veh_queue.end (); _veh_it++)
         {
-          const auto &n = m_graph.get_node (_node_ID);
-          auto &&outs = m_graph.connections (n, Direction::Outgoing);
+          auto &&outs = m_graph.connections (_node_ID, Direction::Outgoing);
           int idx = MNM_Ults::mod (rand (),
                                    std::distance (outs.begin (), outs.end ()));
           auto it = outs.begin ();
@@ -77,8 +76,7 @@ MNM_Routing_Random::update_routing (TInt timestamp)
       for (auto _veh_it = _link->m_finished_array.begin ();
            _veh_it != _link->m_finished_array.end (); _veh_it++)
         {
-          const auto &n = m_graph.get_node (_node_ID);
-          auto &&outs = m_graph.connections (n, Direction::Outgoing);
+          auto &&outs = m_graph.connections (_node_ID, Direction::Outgoing);
           int deg = std::distance (outs.begin (), outs.end ());
           if (deg > 0)
             {
@@ -301,9 +299,8 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
                       printf ("The node is %d, the vehicle should head to %d\n",
                               (int) _node_ID,
                               (int) _veh_dest->m_dest_node->m_node_ID);
-                      const auto &n = m_graph.get_node (_node_ID);
                       auto &&outs
-                        = m_graph.connections (n, Direction::Outgoing);
+                        = m_graph.connections (_node_ID, Direction::Outgoing);
                       int deg = std::distance (outs.begin (), outs.end ());
                       if (deg > 0)
                         {

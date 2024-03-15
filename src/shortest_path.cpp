@@ -1592,8 +1592,8 @@ MNM_TDSP_Tree::get_tdsp (TInt src_node_ID, TInt time,
       _cur_time
         = round_time (_cur_time,
                       link_tt_map.find (_cur_link_ID)->second[_cur_time]);
-      _cur_node_ID = m_graph.get_id (
-        m_graph.get_endpoints (m_graph.get_link (_cur_link_ID)).second);
+      _cur_node_ID
+        = m_graph.get_id (m_graph.get_endpoints (_cur_link_ID).second);
     }
   path->m_node_vec.push_back (m_dest_node_ID);
   return _tt;
@@ -1649,8 +1649,8 @@ MNM_TDSP_Tree::get_tdsp (
       _cur_time = round_time (_cur_time,
                               link_tt_map.find (_cur_link_ID)
                                 ->second[_cur_time]); // link tt cannot be zero
-      _cur_node_ID = m_graph.get_id (
-        m_graph.get_endpoints (m_graph.get_link (_cur_link_ID)).second);
+      _cur_node_ID
+        = m_graph.get_id (m_graph.get_endpoints (_cur_link_ID).second);
     }
   path->m_node_vec.push_back (m_dest_node_ID);
   return _tt;
