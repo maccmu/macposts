@@ -1398,8 +1398,7 @@ Dta::generate_paths_to_cover_registered_links ()
       if (!_link_existing[i])
         {
           // generate new path including this link
-          auto &&sd = m_dta->m_graph.get_endpoints (
-            m_dta->m_graph.get_link (m_link_vec[i]->m_link_ID));
+          auto &&sd = m_dta->m_graph.get_endpoints (m_link_vec[i]->m_link_ID);
           _from_node_ID = m_dta->m_graph.get_id (sd.first);
           _to_node_ID = m_dta->m_graph.get_id (sd.second);
 

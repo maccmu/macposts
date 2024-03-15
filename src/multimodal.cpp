@@ -6639,9 +6639,8 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
                                   (int) _node_ID,
                                   (int) _dest->m_dest_node->m_node_ID);
                           // exit(-1);
-                          const auto &n = m_transit_graph.get_node (_node_ID);
                           auto &&outs
-                            = m_transit_graph.connections (n,
+                            = m_transit_graph.connections (_node_ID,
                                                            Direction::Outgoing);
                           int deg = std::distance (outs.begin (), outs.end ());
                           if (deg > 0)
@@ -6734,9 +6733,9 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_link (
                               (int) _node_ID,
                               (int) _dest->m_dest_node->m_node_ID);
                       // exit(-1);
-                      const auto &n = m_transit_graph.get_node (_node_ID);
                       auto &&outs
-                        = m_transit_graph.connections (n, Direction::Outgoing);
+                        = m_transit_graph.connections (_node_ID,
+                                                       Direction::Outgoing);
                       int deg = std::distance (outs.begin (), outs.end ());
                       if (deg > 0)
                         {
@@ -6848,9 +6847,9 @@ MNM_Routing_Multimodal_Adaptive::update_routing_passenger_one_busstop (
                   printf ("The node is %d, the passenger should head to %d\n",
                           (int) _node_ID, (int) _dest->m_dest_node->m_node_ID);
                   // exit(-1);
-                  const auto &n = m_transit_graph.get_node (_node_ID);
                   auto &&outs
-                    = m_transit_graph.connections (n, Direction::Outgoing);
+                    = m_transit_graph.connections (_node_ID,
+                                                   Direction::Outgoing);
                   int deg = std::distance (outs.begin (), outs.end ());
                   if (deg > 0)
                     {
@@ -7201,9 +7200,9 @@ MNM_Routing_Multimodal_Adaptive::update_routing_vehicle (TInt timestamp)
                               (int) _node_ID,
                               (int) _final_dest->m_dest_node->m_node_ID);
                       // exit(-1);
-                      const auto &n = m_driving_graph.get_node (_node_ID);
                       auto &&outs
-                        = m_driving_graph.connections (n, Direction::Outgoing);
+                        = m_driving_graph.connections (_node_ID,
+                                                       Direction::Outgoing);
                       int deg = std::distance (outs.begin (), outs.end ());
                       if (deg > 0)
                         {
@@ -10334,15 +10333,12 @@ MNM_Dta_Multimodal::is_ok ()
           _temp_flag = _temp_flag && is_node (m_bus_transit_graph, _node_ID);
           const auto &n = m_bus_transit_graph.get_node (_node_ID);
           _temp_flag
-            = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID);
-          auto &&outs
-            = m_bus_transit_graph.connections (n, Direction::Outgoing);
-          _temp_flag
-            = _temp_flag && (std::distance (outs.begin (), outs.end ()) >= 1);
-          auto &&ins = m_bus_transit_graph.connections (n, Direction::Incoming);
-          _temp_flag
-            = _temp_flag && (std::distance (ins.begin (), ins.end ()) == 0);
-          _temp_flag = _temp_flag && !_origin->m_walking_out_links_vec.empty ();
+            = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID)
+              && !m_bus_transit_graph.connections (n, Direction::Outgoing)
+                    .empty ()
+              && m_bus_transit_graph.connections (n, Direction::Incoming)
+                   .empty ()
+              && !_origin->m_walking_out_links_vec.empty ();
         }
     }
   _flag = _flag && _temp_flag;
@@ -10362,14 +10358,11 @@ MNM_Dta_Multimodal::is_ok ()
           _temp_flag = _temp_flag && is_node (m_bus_transit_graph, _node_ID);
           const auto &n = m_bus_transit_graph.get_node (_node_ID);
           _temp_flag
-            = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID);
-          auto &&outs
-            = m_bus_transit_graph.connections (n, Direction::Outgoing);
-          _temp_flag
-            = _temp_flag && (std::distance (outs.begin (), outs.end ()) == 0);
-          auto &&ins = m_bus_transit_graph.connections (n, Direction::Incoming);
-          _temp_flag
-            = _temp_flag && (std::distance (ins.begin (), ins.end ()) >= 1);
+            = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID)
+              && m_bus_transit_graph.connections (n, Direction::Outgoing)
+                   .empty ()
+              && !m_bus_transit_graph.connections (n, Direction::Incoming)
+                    .empty ();
         }
     }
   _flag = _flag && _temp_flag;
@@ -10384,13 +10377,10 @@ MNM_Dta_Multimodal::is_ok ()
       _node_ID = _busstop->m_busstop_ID;
       _temp_flag = _temp_flag && (_busstop->m_link_ID != TInt (-1));
       const auto &n = m_bus_transit_graph.get_node (_node_ID);
-      _temp_flag = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID);
-      auto &&outs = m_bus_transit_graph.connections (n, Direction::Outgoing);
       _temp_flag
-        = _temp_flag && (std::distance (outs.begin (), outs.end ()) >= 0);
-      auto &&ins = m_bus_transit_graph.connections (n, Direction::Incoming);
-      _temp_flag
-        = _temp_flag && (std::distance (ins.begin (), ins.end ()) >= 0);
+        = _temp_flag && (m_bus_transit_graph.get_id (n) == _node_ID)
+          && !m_bus_transit_graph.connections (n, Direction::Outgoing).empty ()
+          && !m_bus_transit_graph.connections (n, Direction::Incoming).empty ();
 
       if (dynamic_cast<MNM_Busstop_Physical *> (_busstop) != nullptr)
         {
@@ -14150,14 +14140,7 @@ build_shortest_bustransit_pathset (
     {
       _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
       if (is_node (graph, _origin_node_ID)
-          && (graph
-                .connections (graph.get_node (_origin_node_ID),
-                              Direction::Outgoing)
-                .begin ()
-              != graph
-                   .connections (graph.get_node (_origin_node_ID),
-                                 Direction::Outgoing)
-                   .end ()))
+          && !graph.connections (_origin_node_ID, Direction::Outgoing).empty ())
         {
           _new_map = new std::unordered_map<TInt, MNM_Pathset *> ();
           _path_table->insert (
@@ -14175,14 +14158,8 @@ build_shortest_bustransit_pathset (
         {
           _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
           if (is_node (graph, _dest_node_ID)
-              && (graph
-                    .connections (graph.get_node (_dest_node_ID),
-                                  Direction::Incoming)
-                    .begin ()
-                  != graph
-                       .connections (graph.get_node (_dest_node_ID),
-                                     Direction::Incoming)
-                       .end ()))
+              && !graph.connections (_dest_node_ID, Direction::Incoming)
+                    .empty ())
             {
               if (od_mode_connectivity.find (_origin_node_ID)
                     != od_mode_connectivity.end ()
@@ -14237,14 +14214,7 @@ build_shortest_bustransit_pathset (
     {
       _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
       if (is_node (graph, _dest_node_ID)
-          && (graph
-                .connections (graph.get_node (_dest_node_ID),
-                              Direction::Incoming)
-                .begin ()
-              != graph
-                   .connections (graph.get_node (_dest_node_ID),
-                                 Direction::Incoming)
-                   .end ()))
+          && !graph.connections (_dest_node_ID, Direction::Incoming).empty ())
         {
           MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
                                               _free_cost_map,
@@ -14329,14 +14299,8 @@ build_shortest_bustransit_pathset (
         {
           _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
           if (is_node (graph, _dest_node_ID)
-              && (graph
-                    .connections (graph.get_node (_dest_node_ID),
-                                  Direction::Incoming)
-                    .begin ()
-                  != graph
-                       .connections (graph.get_node (_dest_node_ID),
-                                     Direction::Incoming)
-                       .end ()))
+              && !graph.connections (_dest_node_ID, Direction::Incoming)
+                    .empty ())
             {
               MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
                                                   _mid_cost_map,
@@ -14738,14 +14702,9 @@ build_shortest_pnr_pathset (
           _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
           _dest = dynamic_cast<MNM_Destination_Multimodal *> (_d_it->second);
           if (is_node (bustransit_graph, _dest_node_ID)
-              && (bustransit_graph
-                    .connections (bustransit_graph.get_node (_dest_node_ID),
-                                  Direction::Incoming)
-                    .begin ()
-                  != bustransit_graph
-                       .connections (bustransit_graph.get_node (_dest_node_ID),
-                                     Direction::Incoming)
-                       .end ())
+              && !bustransit_graph
+                    .connections (_dest_node_ID, Direction::Incoming)
+                    .empty ()
               && !_dest->m_connected_pnr_parkinglot_vec.empty ())
             {
               if (od_mode_connectivity.find (_origin_node_ID)
@@ -14841,14 +14800,8 @@ build_shortest_pnr_pathset (
                               TInt, TInt>> (_dest_node_ID,
                                             _free_shortest_path_tree_driving));
 
-          if ((bustransit_graph
-                 .connections (bustransit_graph.get_node (_dest_node_ID),
-                               Direction::Incoming)
-                 .begin ()
-               != bustransit_graph
-                    .connections (bustransit_graph.get_node (_dest_node_ID),
-                                  Direction::Incoming)
-                    .end ())
+          if (!bustransit_graph.connections (_dest_node_ID, Direction::Incoming)
+                 .empty ()
               && !_dest->m_connected_pnr_parkinglot_vec.empty ())
             {
               _free_shortest_path_tree_bustransit
@@ -14889,14 +14842,8 @@ build_shortest_pnr_pathset (
       _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
       _dest = dynamic_cast<MNM_Destination_Multimodal *> (_d_it.second);
       if (!is_node (bustransit_graph, _dest_node_ID)
-          || (bustransit_graph
-                .connections (bustransit_graph.get_node (_dest_node_ID),
-                              Direction::Incoming)
-                .begin ()
-              == bustransit_graph
-                   .connections (bustransit_graph.get_node (_dest_node_ID),
-                                 Direction::Incoming)
-                   .end ())
+          || bustransit_graph.connections (_dest_node_ID, Direction::Incoming)
+               .empty ()
           || _dest->m_connected_pnr_parkinglot_vec.empty ())
         {
           continue;
@@ -15044,14 +14991,9 @@ build_shortest_pnr_pathset (
           _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
           _dest = dynamic_cast<MNM_Destination_Multimodal *> (_d_it->second);
           if (!is_node (bustransit_graph, _dest_node_ID)
-              || (bustransit_graph
-                    .connections (bustransit_graph.get_node (_dest_node_ID),
-                                  Direction::Incoming)
-                    .begin ()
-                  == bustransit_graph
-                       .connections (bustransit_graph.get_node (_dest_node_ID),
-                                     Direction::Incoming)
-                       .end ())
+              || bustransit_graph
+                   .connections (_dest_node_ID, Direction::Incoming)
+                   .empty ()
               || _dest->m_connected_pnr_parkinglot_vec.empty ())
             {
               continue;

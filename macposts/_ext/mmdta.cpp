@@ -2452,9 +2452,8 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
       if (!_link_existing_driving[i])
         {
           // generate new path including this link
-          const auto &l
-            = m_mmdta->m_graph.get_link (m_link_vec_driving[i]->m_link_ID);
-          auto &&sd = m_mmdta->m_graph.get_endpoints (l);
+          auto &&sd
+            = m_mmdta->m_graph.get_endpoints (m_link_vec_driving[i]->m_link_ID);
           _from_node_ID = m_mmdta->m_graph.get_id (sd.first);
           _to_node_ID = m_mmdta->m_graph.get_id (sd.second);
 
@@ -2736,9 +2735,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           _is_pnr = false;
 
           // generate new path including this link
-          const auto &l
-            = m_mmdta->m_graph.get_link (m_link_vec_bus[i]->m_link_ID);
-          auto &&sd = m_mmdta->m_graph.get_endpoints (l);
+          auto &&sd
+            = m_mmdta->m_graph.get_endpoints (m_link_vec_bus[i]->m_link_ID);
           _from_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.first);
           _to_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.second);
 
@@ -2747,12 +2745,9 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               _shortest_path_tree.clear ();
             }
-          auto &&ins = m_mmdta->m_bus_transit_graph
-                         .connections (m_mmdta->m_bus_transit_graph.get_node (
-                                         _from_node_ID),
-                                       Direction::Incoming);
-
-          if (std::distance (ins.begin (), ins.end ()) == 0)
+          if (m_mmdta->m_bus_transit_graph
+                .connections (_from_node_ID, Direction::Incoming)
+                .empty ())
             {
               _path_1 = new MNM_Path ();
               _path_1->m_node_vec.push_back (_from_node_ID);
@@ -2770,11 +2765,9 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               _shortest_path_tree_reversed.clear ();
             }
-          auto &&outs = m_mmdta->m_bus_transit_graph
-                          .connections (m_mmdta->m_bus_transit_graph.get_node (
-                                          _from_node_ID),
-                                        Direction::Outgoing);
-          if (std::distance (outs.begin (), outs.end ()) == 0)
+          if (m_mmdta->m_bus_transit_graph
+                .connections (_from_node_ID, Direction::Outgoing)
+                .empty ())
             {
               _path_2 = new MNM_Path ();
               _path_2->m_node_vec.push_back (_to_node_ID);
@@ -3077,9 +3070,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           _is_pnr = false;
 
           // generate new path including this link
-          const auto &l = m_mmdta->m_bus_transit_graph.get_link (
-            m_link_vec_walking[i]->m_link_ID);
-          auto &&sd = m_mmdta->m_graph.get_endpoints (l);
+          auto &&sd
+            = m_mmdta->m_graph.get_endpoints (m_link_vec_walking[i]->m_link_ID);
           _from_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.first);
           _to_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.second);
 
@@ -3088,12 +3080,9 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               _shortest_path_tree.clear ();
             }
-          auto &&ins = m_mmdta->m_bus_transit_graph
-                         .connections (m_mmdta->m_bus_transit_graph.get_node (
-                                         _from_node_ID),
-                                       Direction::Incoming);
-
-          if (std::distance (ins.begin (), ins.end ()) == 0)
+          if (m_mmdta->m_bus_transit_graph
+                .connections (_from_node_ID, Direction::Incoming)
+                .empty ())
             {
               _path_1 = new MNM_Path ();
               _path_1->m_node_vec.push_back (_from_node_ID);
@@ -3111,11 +3100,9 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               _shortest_path_tree_reversed.clear ();
             }
-          auto &&outs = m_mmdta->m_bus_transit_graph
-                          .connections (m_mmdta->m_bus_transit_graph.get_node (
-                                          _from_node_ID),
-                                        Direction::Outgoing);
-          if (std::distance (outs.begin (), outs.end ()) == 0)
+          if (m_mmdta->m_bus_transit_graph
+                .connections (_from_node_ID, Direction::Outgoing)
+                .empty ())
             {
               _path_2 = new MNM_Path ();
               _path_2->m_node_vec.push_back (_to_node_ID);
@@ -3497,14 +3484,12 @@ Mmdta::link_seq_to_node_seq_driving (py::array_t<int> link_IDs)
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
 
-  const auto &l = m_mmdta->m_graph.get_link (links_ptr[0]);
-  result_ptr[0]
-    = m_mmdta->m_graph.get_id (m_mmdta->m_graph.get_endpoints (l).first);
+  result_ptr[0] = m_mmdta->m_graph.get_id (
+    m_mmdta->m_graph.get_endpoints (links_ptr[0]).first);
   for (int i = 0; i < m; ++i)
     {
-      const auto &l = m_mmdta->m_graph.get_link (links_ptr[i]);
-      result_ptr[i + 1]
-        = m_mmdta->m_graph.get_id (m_mmdta->m_graph.get_endpoints (l).second);
+      result_ptr[i + 1] = m_mmdta->m_graph.get_id (
+        m_mmdta->m_graph.get_endpoints (links_ptr[i]).second);
     }
 
   return result;
@@ -3528,13 +3513,12 @@ Mmdta::link_seq_to_node_seq_bustransit (py::array_t<int> link_IDs)
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
 
-  const auto &l = m_mmdta->m_bus_transit_graph.get_link (links_ptr[0]);
   result_ptr[0] = m_mmdta->m_bus_transit_graph.get_id (
-    m_mmdta->m_bus_transit_graph.get_endpoints (l).first);
+    m_mmdta->m_bus_transit_graph.get_endpoints (links_ptr[0]).first);
   for (int i = 0; i < m; ++i)
     {
       result_ptr[i + 1] = m_mmdta->m_bus_transit_graph.get_id (
-        m_mmdta->m_bus_transit_graph.get_endpoints (l).second);
+        m_mmdta->m_bus_transit_graph.get_endpoints (links_ptr[i]).second);
     }
 
   return result;
@@ -3566,9 +3550,8 @@ Mmdta::node_seq_to_link_seq_driving (py::array_t<int> node_IDs)
 
   for (int i = 0; i < m - 1; ++i)
     {
-      const auto &n = m_mmdta->m_graph.get_node (nodes_ptr[i]);
       for (const auto &l :
-           m_mmdta->m_graph.connections (n, Direction::Outgoing))
+           m_mmdta->m_graph.connections (nodes_ptr[i], Direction::Outgoing))
         {
           if (m_mmdta->m_graph.get_id (
                 m_mmdta->m_graph.get_endpoints (l).second)
@@ -3615,9 +3598,9 @@ Mmdta::node_seq_to_link_seq_bustransit (py::array_t<int> node_IDs)
 
   for (int i = 0; i < m - 1; ++i)
     {
-      const auto &n = m_mmdta->m_bus_transit_graph.get_node (nodes_ptr[i]);
       for (const auto &l :
-           m_mmdta->m_bus_transit_graph.connections (n, Direction::Outgoing))
+           m_mmdta->m_bus_transit_graph.connections (nodes_ptr[i],
+                                                     Direction::Outgoing))
         {
           if (m_mmdta->m_bus_transit_graph.get_id (
                 m_mmdta->m_bus_transit_graph.get_endpoints (l).second)
@@ -3665,12 +3648,12 @@ Mmdta::get_passenger_path_cost_driving (py::array_t<int> link_IDs,
   auto *_path = new MNM_Path ();
   auto &&graph = m_mmdta->m_graph;
   _path->m_node_vec.push_back (
-    graph.get_id (graph.get_endpoints (graph.get_link (links_ptr[0])).first));
+    graph.get_id (graph.get_endpoints (links_ptr[0]).first));
   for (int i = 0; i < m; ++i)
     {
       _path->m_link_vec.push_back (links_ptr[i]);
-      _path->m_node_vec.push_back (graph.get_id (
-        graph.get_endpoints (graph.get_link (links_ptr[i])).second));
+      _path->m_node_vec.push_back (
+        graph.get_id (graph.get_endpoints (links_ptr[i]).second));
     }
   TInt _dest_node_ID = _path->m_node_vec.back ();
   auto *_dest = dynamic_cast<MNM_Destination_Multimodal *> (
@@ -3744,12 +3727,12 @@ Mmdta::get_passenger_path_cost_bus (py::array_t<int> link_IDs,
   auto *_path = new MNM_Path ();
   auto &&graph = m_mmdta->m_bus_transit_graph;
   _path->m_node_vec.push_back (
-    graph.get_id (graph.get_endpoints (graph.get_link (links_ptr[0])).first));
+    graph.get_id (graph.get_endpoints (links_ptr[0]).first));
   for (int i = 0; i < m; ++i)
     {
       _path->m_link_vec.push_back (links_ptr[i]);
-      _path->m_node_vec.push_back (graph.get_id (
-        graph.get_endpoints (graph.get_link (links_ptr[i])).second));
+      _path->m_node_vec.push_back (
+        graph.get_id (graph.get_endpoints (links_ptr[i]).second));
     }
 
   auto *_p_path
@@ -3826,13 +3809,13 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   auto *_path_driving = new MNM_Path ();
   {
     auto &&graph = m_mmdta->m_graph;
-    _path_driving->m_node_vec.push_back (graph.get_id (
-      graph.get_endpoints (graph.get_link (links_ptr_driving[0])).first));
+    _path_driving->m_node_vec.push_back (
+      graph.get_id (graph.get_endpoints (links_ptr_driving[0]).first));
     for (int i = 0; i < m_driving; ++i)
       {
         _path_driving->m_link_vec.push_back (links_ptr_driving[i]);
-        _path_driving->m_node_vec.push_back (graph.get_id (
-          graph.get_endpoints (graph.get_link (links_ptr_driving[i])).second));
+        _path_driving->m_node_vec.push_back (
+          graph.get_id (graph.get_endpoints (links_ptr_driving[i]).second));
       }
   }
   TInt _mid_dest_node_ID = _path_driving->m_node_vec.back ();
@@ -3844,14 +3827,13 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   auto *_path_bustransit = new MNM_Path ();
   {
     auto &&graph = m_mmdta->m_bus_transit_graph;
-    _path_bustransit->m_node_vec.push_back (graph.get_id (
-      graph.get_endpoints (graph.get_link (links_ptr_bustransit[0])).first));
+    _path_bustransit->m_node_vec.push_back (
+      graph.get_id (graph.get_endpoints (links_ptr_bustransit[0]).first));
     for (int i = 0; i < m_bustransit; ++i)
       {
         _path_bustransit->m_link_vec.push_back (links_ptr_bustransit[i]);
-        _path_bustransit->m_node_vec.push_back (graph.get_id (
-          graph.get_endpoints (graph.get_link (links_ptr_bustransit[i]))
-            .second));
+        _path_bustransit->m_node_vec.push_back (
+          graph.get_id (graph.get_endpoints (links_ptr_bustransit[i]).second));
       }
   }
   auto *_path_pnr
