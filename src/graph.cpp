@@ -55,6 +55,7 @@ main (void)
 
       std::unordered_set<const Node *> ns;
       auto &&nodes = g.nodes ();
+      assert (!nodes.empty ());
       assert (std::distance (nodes.begin (), nodes.end ()) == 3);
       assert (std::distance (nodes.cbegin (), nodes.cend ()) == 3);
       for (const auto &n : nodes)
@@ -67,11 +68,13 @@ main (void)
       ns.clear ();
       for (const auto &n : g.neighbors (n0, Direction::Outgoing))
         ns.insert (&n);
+      assert (!g.neighbors (n0, Direction::Outgoing).empty ());
       assert (ns.count (&n1));
       assert (ns.size () == 1);
       ns.clear ();
       for (const auto &n : g.neighbors (n0, Direction::Incoming))
         ns.insert (&n);
+      assert (g.neighbors (n0, Direction::Incoming).empty ());
       assert (ns.size () == 0);
 
       ns.clear ();
@@ -86,6 +89,7 @@ main (void)
 
       std::unordered_set<const Link *> ls;
       auto &&links = g.links ();
+      assert (!links.empty ());
       assert (std::distance (links.begin (), links.end ()) == 2);
       assert (std::distance (links.cbegin (), links.cend ()) == 2);
       for (const auto &l : g.links ())
@@ -97,6 +101,7 @@ main (void)
       ls.clear ();
       for (const auto &l : g.connections (n1, Direction::Outgoing))
         ls.insert (&l);
+      assert (!g.connections (n1, Direction::Outgoing).empty ());
       assert (ls.count (&l1));
       assert (ls.size () == 1);
       ls.clear ();
@@ -112,6 +117,7 @@ main (void)
       ls.clear ();
       for (const auto &l : g.connections (n0, Direction::Incoming))
         ls.insert (&l);
+      assert (g.connections (n0, Direction::Incoming).empty ());
       assert (ls.size () == 0);
 
       ls.clear ();
