@@ -50,6 +50,8 @@ main (void)
       assert (&endpoints.second == &n1);
       assert (&g.get_endpoints (l1).first == &n1);
       assert (&g.get_endpoints (l1).second == &n2);
+      assert (&endpoints.first == &g.get_endpoints (0).first);
+      assert (&endpoints.second == &g.get_endpoints (0).second);
 
       std::unordered_set<const Node *> ns;
       auto &&nodes = g.nodes ();
@@ -69,6 +71,16 @@ main (void)
       assert (ns.size () == 1);
       ns.clear ();
       for (const auto &n : g.neighbors (n0, Direction::Incoming))
+        ns.insert (&n);
+      assert (ns.size () == 0);
+
+      ns.clear ();
+      for (const auto &n : g.neighbors (0, Direction::Outgoing))
+        ns.insert (&n);
+      assert (ns.count (&n1));
+      assert (ns.size () == 1);
+      ns.clear ();
+      for (const auto &n : g.neighbors (0, Direction::Incoming))
         ns.insert (&n);
       assert (ns.size () == 0);
 
@@ -99,6 +111,26 @@ main (void)
       assert (ls.size () == 1);
       ls.clear ();
       for (const auto &l : g.connections (n0, Direction::Incoming))
+        ls.insert (&l);
+      assert (ls.size () == 0);
+
+      ls.clear ();
+      for (const auto &l : g.connections (1, Direction::Outgoing))
+        ls.insert (&l);
+      assert (ls.count (&l1));
+      assert (ls.size () == 1);
+      ls.clear ();
+      for (const auto &l : g.connections (1, Direction::Incoming))
+        ls.insert (&l);
+      assert (ls.count (&l0));
+      assert (ls.size () == 1);
+      ls.clear ();
+      for (const auto &l : g.connections (0, Direction::Outgoing))
+        ls.insert (&l);
+      assert (ls.count (&l0));
+      assert (ls.size () == 1);
+      ls.clear ();
+      for (const auto &l : g.connections (0, Direction::Incoming))
         ls.insert (&l);
       assert (ls.size () == 0);
 

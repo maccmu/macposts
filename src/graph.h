@@ -570,6 +570,26 @@ public:
   {
     return Neighbors<true> (node, Direction::Outgoing);
   }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Neighbors<false> neighbors (NId id, Direction direction)
+  {
+    return neighbors (get_node (id), direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Neighbors<false> neighbors (NId id)
+  {
+    return neighbors (get_node (id));
+  }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Neighbors<true> neighbors (NId id, Direction direction) const
+  {
+    return neighbors (get_node (id), direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Neighbors<true> neighbors (NId id) const
+  {
+    return neighbors (get_node (id));
+  }
 
   template <bool d = directed, typename std::enable_if<d, int>::type = 0>
   Connections<false> connections (const Node &node, Direction direction)
@@ -591,6 +611,26 @@ public:
   {
     return Connections<true> (node, Direction::Incoming);
   }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Connections<false> connections (NId id, Direction direction)
+  {
+    return connections (get_node (id), direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Connections<false> connections (NId id)
+  {
+    return connections (get_node (id));
+  }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Connections<true> connections (NId id, Direction direction) const
+  {
+    return connections (get_node (id));
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Connections<true> connections (NId id) const
+  {
+    return connections (get_node (id));
+  }
 
   std::pair<Node &, Node &> get_endpoints (const Link &link)
   {
@@ -608,6 +648,16 @@ public:
         throw std::runtime_error ("invalid link");
       }
     return { *from, *to };
+  }
+  std::pair<Node &, Node &> get_endpoints (LId id)
+  {
+    const auto &link = get_link (id);
+    return get_endpoints (link);
+  }
+  std::pair<const Node &, const Node &> get_endpoints (LId id) const
+  {
+    const auto &link = get_link (id);
+    return get_endpoints (link);
   }
 
 protected:
