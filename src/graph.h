@@ -226,6 +226,8 @@ public:
     {
       return static_cast<const_iterator> (end ());
     }
+
+    bool empty () const { return begin () == end (); };
   };
 
   template <bool readonly> class Neighbors
@@ -338,6 +340,8 @@ public:
     {
       return static_cast<const_iterator> (end ());
     }
+
+    bool empty () const { return begin () == end (); };
   };
 
   template <bool readonly> class Links
@@ -382,6 +386,8 @@ public:
     {
       return static_cast<const_iterator> (end ());
     }
+
+    bool empty () const { return begin () == end (); };
   };
 
   template <bool readonly> class Connections
@@ -466,6 +472,8 @@ public:
     {
       return static_cast<const_iterator> (end ());
     }
+
+    bool empty () const { return begin () == end (); };
   };
 
   // Graph methods
