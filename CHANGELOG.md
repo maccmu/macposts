@@ -3,6 +3,20 @@
 All notable changes for each released versions (since v0.3.1) will be documented
 here.
 
+## v0.4.2 (2024-03-18)
+
+Routine maintenance and add a new graph module to prepare for droping SNAP
+
+### Added
+
+- Enable infering version from Git tags ([GH-45]).
+- Add a new graph module ([GH-46]).
+- Add more options to output vehicle trajectories ([GH-48]).
+
+[GH-45]: https://github.com/maccmu/macposts/pull/45
+[GH-46]: https://github.com/maccmu/macposts/pull/46
+[GH-48]: https://github.com/maccmu/macposts/pull/48
+
 ## v0.4.1 (2023-11-07)
 
 This is a hot fix release to address two issues with the Python package.

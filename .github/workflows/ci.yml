@@ -17,8 +17,12 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
+        # Not necessary because wrong version numbers do no harm in testing, but
+        # may be useful in the future.
+        fetch-depth: 0
+        fetch-tags: true
         submodules: true
         persist-credentials: false
 

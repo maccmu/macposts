@@ -40,7 +40,7 @@ public:
   int run_dso (int max_iter, const std::string &folder, bool verbose = true,
                bool with_dtc = false, const std::string &method = "MSA");
   int run_dnl_delivery_traffic(const std::string &folder, bool verbose = false, bool skip_check = false, int cong_frequency = 180);
-  int run_dnl_electrified_traffic(const std::string &folder, bool verbose = false, bool skip_check = false, int cong_frequency = 180);
+  int run_dnl_electrified_traffic(const std::string &folder, bool verbose = false, bool skip_check = false, int cong_frequency = 180, const std::string &result_folder = "");
   py::array_t<double> get_travel_stats ();
   std::string print_emission_stats ();
   int print_simulation_results (const std::string &folder,
@@ -114,8 +114,8 @@ init (py::module &m)
     .def ("run_whole", &Dta::run_whole, py::arg ("verbose") = false)
     .def ("run_due", &Dta::run_due)
     .def ("run_dso", &Dta::run_dso)
-    .def("run_dnl_delivery_traffic", &Dta::run_dnl_delivery_traffic)
-    .def("run_dnl_electrified_traffic", &Dta::run_dnl_electrified_traffic)
+    .def ("run_dnl_delivery_traffic", &Dta::run_dnl_delivery_traffic)
+    .def ("run_dnl_electrified_traffic", &Dta::run_dnl_electrified_traffic)
     .def ("install_cc", &Dta::install_cc)
     .def ("install_cc_tree", &Dta::install_cc_tree)
     .def ("get_travel_stats", &Dta::get_travel_stats)
@@ -594,11 +594,11 @@ Dta::run_dnl_delivery_traffic(const std::string &folder, bool verbose, bool skip
 }
 
 int 
-Dta::run_dnl_electrified_traffic(const std::string &folder, bool verbose, bool skip_check, int cong_frequency)
+Dta::run_dnl_electrified_traffic(const std::string &folder, bool verbose, bool skip_check, int cong_frequency, const std::string &result_folder)
 {
   Assert (m_dta == nullptr);
   MNM_ConfReader *_config = new MNM_ConfReader(folder + "/config.conf", "STAT");
-  std::string _rec_folder = _config -> get_string("rec_folder");
+  std::string _rec_folder = (result_folder == "") ? _config -> get_string("rec_folder") : result_folder;
 	delete _config;
 
 	m_dta = new MNM_Dta_EV(folder);
