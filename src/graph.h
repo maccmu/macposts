@@ -114,15 +114,18 @@ private:
     // are almost the same, and such conversions are quite common and somewhat
     // expected (all STL containers support implicit conversion from `iterator'
     // to `const_iterator').
+    //
+    // HACK: This is really ugly, and relies on some (maybe false) assumptions
+    // on the compiler and the implementation of the concrete iterator type --
+    // the memory layout of a const iterator is the same as the non-const
+    // counter part. Perhaps we should define this method individually.
     template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
     operator Type<true> () const
     {
-      // HACK: This is really ugly, and is very prone to error. This works
-      // safely because the difference between a non-const iterator and a const
-      // one *only* lies on the `const' specifier on the value, pointer, and
-      // reference types. When modifying this template, please be sure to not
-      // violate that contract.
       auto r = reinterpret_cast<const Type<true> *> (this);
+      // HACK: This is to circumvent strict aliasing violation. We should really
+      // use `std::launder' but that requires C++17.
+      asm ("" : "+r"(r));
       return *r;
     }
 
