@@ -108,27 +108,6 @@ private:
     }
     reference operator* () const { return *current; }
 
-    // Convert from a non-const iterator to a const one
-    //
-    // NOTE: Implicit conversion is fine here because the two types of iterators
-    // are almost the same, and such conversions are quite common and somewhat
-    // expected (all STL containers support implicit conversion from `iterator'
-    // to `const_iterator').
-    //
-    // HACK: This is really ugly, and relies on some (maybe false) assumptions
-    // on the compiler and the implementation of the concrete iterator type --
-    // the memory layout of a const iterator is the same as the non-const
-    // counter part. Perhaps we should define this method individually.
-    template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
-    operator Type<true> () const
-    {
-      auto r = reinterpret_cast<const Type<true> *> (this);
-      // HACK: This is to circumvent strict aliasing violation. We should really
-      // use `std::launder' but that requires C++17.
-      asm ("" : "+r"(r));
-      return *r;
-    }
-
   protected:
     State current;
     const Direction direction;
@@ -203,6 +182,13 @@ public:
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
 
+      template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<true> () const
+      {
+        auto r = Iterator_<true> (this->current);
+        return r;
+      }
+
       typename Base::reference operator* () const
       {
         return *this->current->second;
@@ -248,6 +234,13 @@ public:
       explicit Iterator_ (Link *state, Direction direction, Link *refill)
           : Base (state, direction), seen (), refill (refill)
       {
+      }
+
+      template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<true> () const
+      {
+        auto r = Iterator_<true> (this->current, this->direction, refill);
+        return r;
       }
 
       void step ()
@@ -363,6 +356,13 @@ public:
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
 
+      template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<true> () const
+      {
+        auto r = Iterator_<true> (this->current);
+        return r;
+      }
+
       typename Base::reference operator* () const
       {
         return *this->current->second;
@@ -407,6 +407,13 @@ public:
       explicit Iterator_ (Link *state, Direction direction, Link *refill)
           : Base (state, direction), refill (refill)
       {
+      }
+
+      template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<true> () const
+      {
+        auto r = Iterator_<true> (this->current, this->direction, refill);
+        return r;
       }
 
       void step ()
