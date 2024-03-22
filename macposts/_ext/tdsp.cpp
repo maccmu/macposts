@@ -127,7 +127,7 @@ Tdsp::initialize (const std::string &folder, int max_interval,
 
   MNM_ConfReader *conf_reader
     = new MNM_ConfReader (folder + "/config.conf", "Network");
-  m_graph = MNM_IO::build_graph (folder, conf_reader, 0);
+  m_graph = MNM_IO::build_graph (folder, conf_reader);
 
   delete conf_reader;
   return 0;

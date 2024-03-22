@@ -1967,7 +1967,7 @@ MNM_Dta_EV::build_from_files ()
                                   m_node_factory);
   std::cout << "# of OD pairs: " << m_od_factory->m_origin_map.size () << "\n";
 
-  m_graph = MNM_IO::build_graph (m_file_folder, m_config, 0);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_config);
 
   dynamic_cast<MNM_Veh_Factory_EV *> (m_veh_factory)
     ->set_ev_range (m_config->get_float ("EV_starting_range_roadside_charging"),

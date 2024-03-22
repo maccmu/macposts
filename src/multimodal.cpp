@@ -8367,10 +8367,8 @@ MNM_IO_Multimodal::build_buslink_factory (
 
 macposts::Graph
 MNM_IO_Multimodal::build_bus_transit_graph (
-  MNM_ConfReader *conf_reader, MNM_Transit_Link_Factory *transit_link_factory,
-  int _phantom)
+  MNM_ConfReader *conf_reader, MNM_Transit_Link_Factory *transit_link_factory)
 {
-  (void) _phantom;
   TInt _num_buslinks = conf_reader->get_int ("num_of_bus_link");
   TInt _num_walkinglinks = conf_reader->get_int ("num_of_walking_link");
   IAssert (_num_buslinks + _num_walkinglinks
@@ -9728,10 +9726,10 @@ MNM_Dta_Multimodal::build_from_files ()
                                             m_busstop_factory, m_link_factory,
                                             "bus_link");
 
-  m_graph = MNM_IO_Multimodal::build_graph (m_file_folder, m_config, 0);
+  m_graph = MNM_IO_Multimodal::build_graph (m_file_folder, m_config);
   m_bus_transit_graph
     = MNM_IO_Multimodal::build_bus_transit_graph (m_config,
-                                                  m_transitlink_factory, 0);
+                                                  m_transitlink_factory);
 
   MNM_IO_Multimodal::build_vehicle_demand_multimodal (m_file_folder, m_config,
                                                       m_od_factory,

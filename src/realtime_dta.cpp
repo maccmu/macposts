@@ -26,7 +26,7 @@ MNM_Realtime_Dta::initialize ()
   m_dta_config = new MNM_ConfReader (m_file_folder + "/config.conf", "DTA");
   m_realtime_dta_config
     = new MNM_ConfReader (m_file_folder + "/config.conf", "REALTIME_DTA");
-  m_graph = MNM_IO::build_graph (m_file_folder, m_dta_config, 0);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_dta_config);
   MNM_IO::build_od_factory (m_file_folder, m_dta_config, m_od_factory);
   MNM_IO::build_demand (m_file_folder, m_dta_config, m_od_factory);
   // m_path_table = MNM_IO::load_path_table(m_file_name, m_graph, TInt

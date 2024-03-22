@@ -328,7 +328,7 @@ MNM_Dta::build_from_files ()
                             m_node_factory);
   std::cout << "# of OD pairs: " << m_od_factory->m_origin_map.size () << "\n";
   // std::cout << m_od_factory -> m_destination_map.size() << "\n";
-  m_graph = MNM_IO::build_graph (m_file_folder, m_config, 0);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_config);
   MNM_IO::build_demand (m_file_folder, m_config, m_od_factory);
   MNM_IO::read_origin_vehicle_label_ratio (m_file_folder, m_config,
                                            m_od_factory);
