@@ -56,10 +56,10 @@ MNM_Tree_Cumulative_Curve::print_out ()
 {
   for (auto outer_it : m_record)
     {
-      printf ("For path id %d\n", outer_it.first->m_path_ID ());
+      printf ("For path id %d\n", outer_it.first->m_path_ID);
       for (auto inner_it : outer_it.second)
         {
-          printf ("For departing time %d\n", inner_it.first ());
+          printf ("For departing time %d\n", inner_it.first);
           std::cout << inner_it.second->to_string () << std::endl;
         }
     }

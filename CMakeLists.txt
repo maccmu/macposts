@@ -16,9 +16,6 @@ set(EIGEN_BUILD_DOC OFF CACHE BOOL "Build Eigen documentation" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "Build Eigen tests" FORCE)
 add_subdirectory(lib/eigen)
 
-add_subdirectory(lib/snap)
-set_property(TARGET snap PROPERTY POSITION_INDEPENDENT_CODE ON)
-
 # NOTE: Do not use glob here. Always list source files explicitly. See the style
 # guide at the top of this file.
 add_library(macposts STATIC
@@ -55,9 +52,6 @@ target_link_libraries(macposts
   # TODO: Some header files in src expose Eigen. Check if they can be eliminated
   # and maybe make this private.
   PUBLIC Eigen3::Eigen
-  # We expose many SNAP data structures and functions in the interface so this
-  # needs to be public.
-  PUBLIC snap
   )
 target_include_directories(macposts INTERFACE src)
 set_property(TARGET macposts PROPERTY POSITION_INDEPENDENT_CODE ON)

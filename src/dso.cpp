@@ -37,7 +37,7 @@ MNM_Dso::build_link_cost_map (MNM_Dta *dta)
         {
           m_link_congested[_link_it.first] = new bool[m_total_loading_inter];
         }
-      std::cout << "********************** link " << _link_it.first ()
+      std::cout << "********************** link " << _link_it.first
                 << " **********************\n";
       for (int i = 0; i < m_total_loading_inter; i++)
         {

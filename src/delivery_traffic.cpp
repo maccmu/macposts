@@ -1,4 +1,5 @@
 #include "delivery_traffic.h"
+#include <cstring>
 
 //#################################################################
 //                       Delivery Vehicle

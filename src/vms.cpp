@@ -1,17 +1,7 @@
 #include "vms.h"
+#include <cfloat>
 
 using macposts::graph::Direction;
-
-MNM_Link_Vms::MNM_Link_Vms (TInt ID, TInt link_ID, PNEGraph graph)
-{
-  m_ID = ID;
-  m_my_link_ID = link_ID;
-  m_detour_link_ID = -1;
-  m_compliance_ratio = TFlt (1);
-  m_out_link_vec = std::vector<TInt> ();
-  m_link_path_map = std::unordered_map<TInt, std::vector<MNM_Path *> *> ();
-  hook_link (graph);
-}
 
 MNM_Link_Vms::MNM_Link_Vms (TInt ID, TInt link_ID, const macposts::Graph &graph)
 {
@@ -32,21 +22,6 @@ MNM_Link_Vms::~MNM_Link_Vms ()
     }
   m_link_path_map.clear ();
   m_out_link_vec.clear ();
-}
-
-int
-MNM_Link_Vms::hook_link (PNEGraph graph)
-{
-  auto _node_it = graph->GetNI (graph->GetEI (m_my_link_ID).GetSrcNId ());
-  for (int e = 0; e < _node_it.GetOutDeg (); ++e)
-    {
-      m_out_link_vec.push_back (_node_it.GetOutEId (e));
-      std::vector<MNM_Path *> *_v = new std::vector<MNM_Path *> ();
-      m_link_path_map.insert (
-        std::pair<TInt, std::vector<MNM_Path *> *> (_node_it.GetOutEId (e),
-                                                    _v));
-    }
-  return 0;
 }
 
 void
@@ -146,14 +121,6 @@ MNM_Vms_Factory::~MNM_Vms_Factory ()
       delete _it.second;
     }
   m_link_vms_map.clear ();
-}
-
-MNM_Link_Vms *
-MNM_Vms_Factory::make_link_vms (TInt ID, TInt link_ID, PNEGraph graph)
-{
-  MNM_Link_Vms *_vms = new MNM_Link_Vms (ID, link_ID, graph);
-  m_link_vms_map.insert (std::pair<TInt, MNM_Link_Vms *> (ID, _vms));
-  return _vms;
 }
 
 MNM_Link_Vms *

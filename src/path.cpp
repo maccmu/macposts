@@ -346,39 +346,6 @@ namespace MNM
 {
 MNM_Path *
 extract_path (TInt origin_node_ID, TInt dest_node_ID,
-              std::unordered_map<TInt, TInt> &output_map, PNEGraph &graph)
-{
-  // output_map[node_ID][edge_ID], tdsp tree
-  // printf("Entering extract_path\n");
-  TInt _current_node_ID = origin_node_ID;
-  TInt _current_link_ID = -1;
-  MNM_Path *_path = new MNM_Path ();
-  while (_current_node_ID != dest_node_ID)
-    {
-      if (output_map.find (_current_node_ID) == output_map.end ())
-        {
-          // printf("Cannot extract path\n");
-          return nullptr;
-        }
-      _current_link_ID = output_map[_current_node_ID];
-      if (_current_link_ID == -1)
-        {
-          printf ("Cannot extract path from origin node %d to destination node "
-                  "%d\n",
-                  origin_node_ID (), dest_node_ID ());
-          return nullptr;
-        }
-      _path->m_node_vec.push_back (_current_node_ID);
-      _path->m_link_vec.push_back (_current_link_ID);
-      _current_node_ID = graph->GetEI (_current_link_ID).GetDstNId ();
-    }
-  _path->m_node_vec.push_back (_current_node_ID);
-  // printf("Exiting extract_path\n");
-  return _path;
-}
-
-MNM_Path *
-extract_path (TInt origin_node_ID, TInt dest_node_ID,
               std::unordered_map<TInt, TInt> &output_map,
               macposts::Graph &graph)
 {
@@ -399,7 +366,7 @@ extract_path (TInt origin_node_ID, TInt dest_node_ID,
         {
           printf ("Cannot extract path from origin node %d to destination node "
                   "%d\n",
-                  origin_node_ID (), dest_node_ID ());
+                  origin_node_ID, dest_node_ID);
           return nullptr;
         }
       _path->m_node_vec.push_back (_current_node_ID);
@@ -446,76 +413,6 @@ get_path_tt (TFlt start_time, MNM_Path *path,
                                                      : (int) max_interval - 1];
     }
   return TFlt (_end_time - start_time);
-}
-
-Path_Table *
-build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
-                        MNM_Link_Factory *link_factory)
-{
-  // this build for each OD pair, no matter this OD pair exists in demand file
-  // or not
-  Path_Table *_path_table = new Path_Table ();
-  for (auto _o_it = od_factory->m_origin_map.begin ();
-       _o_it != od_factory->m_origin_map.end (); _o_it++)
-    {
-      std::unordered_map<TInt, MNM_Pathset *> *_new_map
-        = new std::unordered_map<TInt, MNM_Pathset *> ();
-      _path_table->insert (
-        std::pair<TInt, std::unordered_map<TInt, MNM_Pathset *>
-                          *> (_o_it->second->m_origin_node->m_node_ID,
-                              _new_map));
-      for (auto _d_it = od_factory->m_destination_map.begin ();
-           _d_it != od_factory->m_destination_map.end (); _d_it++)
-        {
-          MNM_Pathset *_pathset = new MNM_Pathset ();
-          _new_map->insert (
-            std::pair<TInt, MNM_Pathset *> (_d_it->second->m_dest_node
-                                              ->m_node_ID,
-                                            _pathset));
-        }
-    }
-  TInt _dest_node_ID, _origin_node_ID;
-  std::unordered_map<TInt, TFlt> _free_cost_map
-    = std::unordered_map<TInt, TFlt> ();
-  std::unordered_map<TInt, TInt> _free_shortest_path_tree;
-  MNM_Path *_path;
-  for (auto _link_it = link_factory->m_link_map.begin ();
-       _link_it != link_factory->m_link_map.end (); _link_it++)
-    {
-      _free_cost_map.insert (
-        std::pair<TInt, TFlt> (_link_it->first,
-                               _link_it->second->get_link_tt ()));
-    }
-  for (auto _d_it = od_factory->m_destination_map.begin ();
-       _d_it != od_factory->m_destination_map.end (); _d_it++)
-    {
-      _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
-                                          _free_shortest_path_tree);
-      for (auto _o_it = od_factory->m_origin_map.begin ();
-           _o_it != od_factory->m_origin_map.end (); _o_it++)
-        {
-          _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
-          _path = MNM::extract_path (_origin_node_ID, _dest_node_ID,
-                                     _free_shortest_path_tree, graph);
-          if (_path != nullptr)
-            {
-              // printf("Adding to path table\n");
-              // std::cout << _path -> node_vec_to_string();
-              // std::cout << _path -> link_vec_to_string();
-              _path_table->find (_origin_node_ID)
-                ->second->find (_dest_node_ID)
-                ->second->m_path_vec.push_back (_path);
-            }
-          else
-            {
-              throw std::runtime_error (
-                "no path between origin " + std::to_string (_origin_node_ID ())
-                + " and destination " + std::to_string (_dest_node_ID ()));
-            }
-        }
-    }
-  return _path_table;
 }
 
 Path_Table *
@@ -580,228 +477,11 @@ build_shortest_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
           else
             {
               throw std::runtime_error (
-                "no path between origin " + std::to_string (_origin_node_ID ())
-                + " and destination " + std::to_string (_dest_node_ID ()));
+                "no path between origin " + std::to_string (_origin_node_ID)
+                + " and destination " + std::to_string (_dest_node_ID));
             }
         }
     }
-  return _path_table;
-}
-
-Path_Table *
-build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
-               MNM_Link_Factory *link_factory, TFlt min_path_length,
-               size_t MaxIter, TFlt vot, TFlt Mid_Scale, TFlt Heavy_Scale,
-               TInt buffer_length)
-{
-  // printf("11\n");
-  // MaxIter: maximum iteration to find alternative shortest path, when MaxIter
-  // = 0, just shortest path Mid_Scale and Heavy_Scale are different penalties
-  // to the travel cost of links in existing paths
-  IAssert (vot > 0);
-  /* initialize data structure */
-  TInt _dest_node_ID, _origin_node_ID;
-  Path_Table *_path_table = new Path_Table ();
-  for (auto _o_it = od_factory->m_origin_map.begin ();
-       _o_it != od_factory->m_origin_map.end (); _o_it++)
-    {
-      _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
-      std::unordered_map<TInt, MNM_Pathset *> *_new_map
-        = new std::unordered_map<TInt, MNM_Pathset *> ();
-      _path_table->insert (
-        std::pair<TInt,
-                  std::unordered_map<TInt, MNM_Pathset *> *> (_origin_node_ID,
-                                                              _new_map));
-      for (auto _d_it = od_factory->m_destination_map.begin ();
-           _d_it != od_factory->m_destination_map.end (); _d_it++)
-        {
-          // assume build_demand is called before this function
-          if (_o_it->second->m_demand.find (_d_it->second)
-              != _o_it->second->m_demand.end ())
-            {
-              _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-              MNM_Pathset *_pathset = new MNM_Pathset ();
-              _new_map->insert (
-                std::pair<TInt, MNM_Pathset *> (_dest_node_ID, _pathset));
-            }
-        }
-    }
-
-  // printf("111\n");
-  std::unordered_map<TInt, TInt> _mid_shortest_path_tree
-    = std::unordered_map<TInt, TInt> ();
-  std::unordered_map<TInt, TFlt> _mid_cost_map
-    = std::unordered_map<TInt, TFlt> ();
-  std::unordered_map<TInt, TInt> _heavy_shortest_path_tree
-    = std::unordered_map<TInt, TInt> ();
-  std::unordered_map<TInt, TFlt> _heavy_cost_map
-    = std::unordered_map<TInt, TFlt> ();
-
-  std::unordered_map<TInt, TFlt> _free_cost_map
-    = std::unordered_map<TInt, TFlt> ();
-  std::unordered_map<TInt, TInt> _free_shortest_path_tree
-    = std::unordered_map<TInt, TInt> ();
-  MNM_Path *_path;
-  for (auto _link_it = link_factory->m_link_map.begin ();
-       _link_it != link_factory->m_link_map.end (); _link_it++)
-    {
-      _free_cost_map.insert (
-        std::pair<TInt, TFlt> (_link_it->first,
-                               vot * _link_it->second->get_link_tt ()
-                                 + _link_it->second->m_toll));
-    }
-  // printf("1111\n");
-  for (auto _d_it = od_factory->m_destination_map.begin ();
-       _d_it != od_factory->m_destination_map.end (); _d_it++)
-    {
-      _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
-                                          _free_shortest_path_tree);
-      for (auto _o_it = od_factory->m_origin_map.begin ();
-           _o_it != od_factory->m_origin_map.end (); _o_it++)
-        {
-          if (_o_it->second->m_demand.find (_d_it->second)
-              == _o_it->second->m_demand.end ())
-            {
-              continue;
-            }
-          _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
-          _path = MNM::extract_path (_origin_node_ID, _dest_node_ID,
-                                     _free_shortest_path_tree, graph);
-          if (_path != nullptr)
-            {
-              if (_path->get_path_length (link_factory) > min_path_length)
-                {
-                  if (buffer_length > 0)
-                    {
-                      _path->allocate_buffer (buffer_length);
-                    }
-                  _path_table->find (_origin_node_ID)
-                    ->second->find (_dest_node_ID)
-                    ->second->m_path_vec.push_back (_path);
-                }
-            }
-          else
-            {
-              throw std::runtime_error (
-                "no path between origin " + std::to_string (_origin_node_ID ())
-                + " and destination " + std::to_string (_dest_node_ID ()));
-            }
-        }
-    }
-  // printf("22\n");
-  _mid_cost_map.insert (_free_cost_map.begin (), _free_cost_map.end ());
-  _heavy_cost_map.insert (_free_cost_map.begin (), _free_cost_map.end ());
-
-  MNM_Dlink *_link;
-  MNM_Path *_path_mid, *_path_heavy;
-  size_t _CurIter = 0;
-  while (_CurIter < MaxIter)
-    {
-      printf ("Current trial %d\n", (int) _CurIter);
-      for (auto _o_it : *_path_table)
-        {
-          for (auto _d_it : *_o_it.second)
-            {
-              for (auto &_path : _d_it.second->m_path_vec)
-                {
-                  for (auto &_link_ID : _path->m_link_vec)
-                    {
-                      _link = link_factory->get_link (_link_ID);
-                      _mid_cost_map.find (_link_ID)->second
-                        = vot * _link->get_link_tt () * Mid_Scale
-                          + _link->m_toll;
-                      _heavy_cost_map.find (_link_ID)->second
-                        = vot * _link->get_link_tt () * Heavy_Scale
-                          + _link->m_toll;
-                    }
-                }
-            }
-        }
-
-      for (auto _d_it = od_factory->m_destination_map.begin ();
-           _d_it != od_factory->m_destination_map.end (); _d_it++)
-        {
-          _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                              _mid_cost_map,
-                                              _mid_shortest_path_tree);
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                              _heavy_cost_map,
-                                              _heavy_shortest_path_tree);
-          for (auto _o_it = od_factory->m_origin_map.begin ();
-               _o_it != od_factory->m_origin_map.end (); _o_it++)
-            {
-              if (_o_it->second->m_demand.find (_d_it->second)
-                  == _o_it->second->m_demand.end ())
-                {
-                  continue;
-                }
-              _origin_node_ID = _o_it->second->m_origin_node->m_node_ID;
-              _path_mid = MNM::extract_path (_origin_node_ID, _dest_node_ID,
-                                             _mid_shortest_path_tree, graph);
-              _path_heavy
-                = MNM::extract_path (_origin_node_ID, _dest_node_ID,
-                                     _heavy_shortest_path_tree, graph);
-              if (_path_mid != nullptr)
-                {
-                  if (!_path_table->find (_origin_node_ID)
-                         ->second->find (_dest_node_ID)
-                         ->second->is_in (_path_mid))
-                    {
-                      if (_path_mid->get_path_length (link_factory)
-                          > min_path_length)
-                        {
-                          if (buffer_length > 0)
-                            {
-                              _path_mid->allocate_buffer (buffer_length);
-                            }
-                          _path_table->find (_origin_node_ID)
-                            ->second->find (_dest_node_ID)
-                            ->second->m_path_vec.push_back (_path_mid);
-                        }
-                    }
-                  else
-                    {
-                      delete _path_mid;
-                    }
-                }
-              if (_path_heavy != nullptr)
-                {
-                  if (!_path_table->find (_origin_node_ID)
-                         ->second->find (_dest_node_ID)
-                         ->second->is_in (_path_heavy))
-                    {
-                      if (_path_heavy->get_path_length (link_factory)
-                          > min_path_length)
-                        {
-                          if (buffer_length > 0)
-                            {
-                              _path_heavy->allocate_buffer (buffer_length);
-                            }
-                          _path_table->find (_origin_node_ID)
-                            ->second->find (_dest_node_ID)
-                            ->second->m_path_vec.push_back (_path_heavy);
-                        }
-                    }
-                  else
-                    {
-                      delete _path_heavy;
-                    }
-                }
-            }
-        }
-      _CurIter += 1;
-    }
-
-  _mid_shortest_path_tree.clear ();
-  _mid_cost_map.clear ();
-  _heavy_shortest_path_tree.clear ();
-  _heavy_cost_map.clear ();
-
-  _free_cost_map.clear ();
-  _free_shortest_path_tree.clear ();
-
   return _path_table;
 }
 
@@ -901,8 +581,8 @@ build_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
           else
             {
               throw std::runtime_error (
-                "no path between origin " + std::to_string (_origin_node_ID ())
-                + " and destination " + std::to_string (_dest_node_ID ()));
+                "no path between origin " + std::to_string (_origin_node_ID)
+                + " and destination " + std::to_string (_dest_node_ID));
             }
         }
     }

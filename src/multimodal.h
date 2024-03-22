@@ -1042,9 +1042,6 @@ public:
     MNM_Transit_Link_Factory *transit_link_factory,
     MNM_Busstop_Factory *busstop_factory, MNM_Link_Factory *link_factory,
     const std::string &file_name = "bus_link");
-  static PNEGraph
-  build_bus_transit_graph (MNM_ConfReader *conf_reader,
-                           MNM_Transit_Link_Factory *transit_link_factory);
   static macposts::Graph
   build_bus_transit_graph (MNM_ConfReader *conf_reader,
                            MNM_Transit_Link_Factory *transit_link_factory,

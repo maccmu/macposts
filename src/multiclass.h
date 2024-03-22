@@ -442,7 +442,7 @@ class MNM_Veh_Multiclass : public MNM_Veh
 {
 public:
   MNM_Veh_Multiclass (TInt ID, TInt vehicle_class, TInt start_time);
-  virtual ~MNM_Veh_Multiclass () override;
+  virtual ~MNM_Veh_Multiclass ();
 
   virtual TInt get_class () override { return m_class; }; // virtual getter
   virtual TInt get_bus_route_ID () override

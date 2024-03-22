@@ -443,7 +443,7 @@ MNM_Charging_Station::print_info ()
 {
   printf ("Charging station %d, Time-dependent cumulative number of charged "
           "vehicles:\n",
-          m_node_ID ());
+          m_node_ID);
   std::cout << m_N_out->to_string () << std::endl;
   printf ("####################################################################"
           "######\n");
@@ -584,8 +584,8 @@ MNM_Charging_Station::evolve (TInt timestamp)
                       "node, no exit!\n");
               printf ("MNM_Charging_Station::evolve, vehicle is on link %d, "
                       "node %d, next link ID is: %d\n",
-                      _in_link->m_link_ID (), m_node_ID (),
-                      (*_veh_it)->get_next_link ()->m_link_ID ());
+                      _in_link->m_link_ID, m_node_ID,
+                      (*_veh_it)->get_next_link ()->m_link_ID);
               exit (-1);
             }
           auto _veh = dynamic_cast<MNM_Veh_Electrified *> (*_veh_it);
@@ -920,12 +920,10 @@ MNM_Routing_Adaptive_With_POIs::check_od_candidate_poi_table_connectivity ()
                   printf ("Disconnectivity in Origin %d (Node: %d) - "
                           "Destination %d (Node: %d) pair, cannot travel from "
                           "Origin %d (Node: %d) to POI Node %d",
-                          _origin->m_Origin_ID (),
-                          _origin->m_origin_node->m_node_ID (),
-                          _dest->m_Dest_ID (), _dest->m_dest_node->m_node_ID (),
-                          _origin->m_Origin_ID (),
-                          _origin->m_origin_node->m_node_ID (),
-                          _node->m_node_ID ());
+                          _origin->m_Origin_ID,
+                          _origin->m_origin_node->m_node_ID, _dest->m_Dest_ID,
+                          _dest->m_dest_node->m_node_ID, _origin->m_Origin_ID,
+                          _origin->m_origin_node->m_node_ID, _node->m_node_ID);
                   _node_it = _it_it.second->erase (_node_it);
                   continue;
                 }
@@ -941,11 +939,10 @@ MNM_Routing_Adaptive_With_POIs::check_od_candidate_poi_table_connectivity ()
                   printf ("Disconnectivity in Origin %d (Node: %d) - "
                           "Destination %d (Node: %d) pair, cannot travel from "
                           "POI Node %d to Destination %d (Node: %d)",
-                          _origin->m_Origin_ID (),
-                          _origin->m_origin_node->m_node_ID (),
-                          _dest->m_Dest_ID (), _dest->m_dest_node->m_node_ID (),
-                          _node->m_node_ID (), _dest->m_Dest_ID (),
-                          _dest->m_dest_node->m_node_ID ());
+                          _origin->m_Origin_ID,
+                          _origin->m_origin_node->m_node_ID, _dest->m_Dest_ID,
+                          _dest->m_dest_node->m_node_ID, _node->m_node_ID,
+                          _dest->m_Dest_ID, _dest->m_dest_node->m_node_ID);
                   _node_it = _it_it.second->erase (_node_it);
                   continue;
                 }
@@ -1882,10 +1879,10 @@ MNM_IO_EV::save_charging_station_record (const std::string &file_folder,
         {
           _charging_station->save_cc (
             file_folder + "/charging_station_"
-            + std::to_string (_charging_station->m_node_ID ()) + "_cc.txt");
+            + std::to_string (_charging_station->m_node_ID) + "_cc.txt");
           _charging_station->save_waiting_time_record (
             file_folder + "/charging_station_"
-            + std::to_string (_charging_station->m_node_ID ()) + "_wt.txt");
+            + std::to_string (_charging_station->m_node_ID) + "_wt.txt");
         }
     }
   return 0;

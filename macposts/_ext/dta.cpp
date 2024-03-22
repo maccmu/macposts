@@ -782,7 +782,7 @@ Dta::run_dnl_electrified_traffic (const std::string &folder, bool verbose,
 int
 Dta::get_cur_loading_interval ()
 {
-  return m_dta->m_current_loading_interval ();
+  return m_dta->m_current_loading_interval;
 }
 
 py::array_t<int>
@@ -890,7 +890,7 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
                 {
                   _link = _link_it.second;
                   _str1 = std::to_string (int (_iter)) + " ";
-                  _str1 += std::to_string (_link->m_link_ID ()) + " ";
+                  _str1 += std::to_string (_link->m_link_ID) + " ";
                   _str1
                     += std::to_string (
                          MNM_DTA_GRADIENT::get_link_inflow (_link, _iter,
@@ -1024,7 +1024,7 @@ Dta::build_link_cost_map (bool with_congestion_indicator)
         }
 
       std::cout << "********************** build_link_cost_map link "
-                << _link->m_link_ID () << " **********************\n";
+                << _link->m_link_ID << " **********************\n";
       for (int i = 0; i < get_cur_loading_interval (); i++)
         {
           m_link_tt_map[_link_it.first][i] = MNM_DTA_GRADIENT::
@@ -1673,7 +1673,7 @@ Dta::get_link_inflow (py::array_t<int> start_intervals,
           result_ptr[i * l + t]
             = MNM_DTA_GRADIENT::get_link_inflow (m_link_vec[i],
                                                  TFlt (start_ptr[t]),
-                                                 TFlt (end_ptr[t])) ();
+                                                 TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -1711,7 +1711,7 @@ Dta::get_link_tt_FD (py::array_t<int> start_intervals)
           result_ptr[i * l + t]
             = MNM_DTA_GRADIENT::get_travel_time_from_FD (m_link_vec[i],
                                                          TFlt (start_ptr[t]),
-                                                         m_dta->m_unit_time) ()
+                                                         m_dta->m_unit_time)
               * m_dta->m_unit_time; // second
         }
     }
@@ -1748,10 +1748,11 @@ Dta::get_link_tt (py::array_t<int> start_intervals, bool return_inf)
           // time for vehicles arriving at the beginning of interval
           // start_ptr[t]
           result_ptr[i * l + t]
-            = MNM_DTA_GRADIENT::
-                get_travel_time (m_link_vec[i], TFlt (start_ptr[t] + 1),
-                                 m_dta->m_unit_time,
-                                 m_dta->m_current_loading_interval) ()
+            = MNM_DTA_GRADIENT::get_travel_time (m_link_vec[i],
+                                                 TFlt (start_ptr[t] + 1),
+                                                 m_dta->m_unit_time,
+                                                 m_dta
+                                                   ->m_current_loading_interval)
               * m_dta->m_unit_time; // second
           if (result_ptr[i * l + t]
               > TT_UPPER_BOUND * m_link_vec[i]->m_length / m_link_vec[i]->m_ffs)
@@ -1824,7 +1825,7 @@ Dta::get_link_tt_robust (py::array_t<double> start_intervals,
             get_travel_time_robust (m_link_vec[i], TFlt (start_ptr[t] + 1),
                                     TFlt (end_ptr[t] + 1), m_dta->m_unit_time,
                                     m_dta->m_current_loading_interval,
-                                    num_trials) ();
+                                    num_trials);
           result_ptr[i * l + t] = _tmp * m_dta->m_unit_time; // second
           if (result_ptr[i * l + t]
               > TT_UPPER_BOUND * m_link_vec[i]->m_length / m_link_vec[i]->m_ffs)
@@ -1881,7 +1882,7 @@ Dta::get_registered_path_tt (py::array_t<int> start_intervals)
             = MNM_DTA_GRADIENT::
                 get_path_travel_time (m_path_vec[i], TFlt (start_ptr[t]),
                                       m_link_tt_map,
-                                      get_cur_loading_interval ()) ()
+                                      get_cur_loading_interval ())
               * m_dta->m_unit_time; // seconds
         }
     }
@@ -1966,8 +1967,8 @@ Dta::get_link_in_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -1988,8 +1989,8 @@ Dta::get_link_out_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -2020,7 +2021,7 @@ Dta::get_dar_matrix (py::array_t<int> start_intervals,
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
-      std::cout << "************ DAR link " << m_link_vec[i]->m_link_ID ()
+      std::cout << "************ DAR link " << m_link_vec[i]->m_link_ID
                 << " ************\n";
       for (int t = 0; t < l; ++t)
         {
@@ -2057,13 +2058,13 @@ Dta::get_dar_matrix (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 15 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
     }
   for (size_t i = 0; i < _record.size (); ++i)
     {
@@ -2122,7 +2123,7 @@ Dta::save_dar_matrix (py::array_t<int> start_intervals,
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
-      std::cout << "************ DAR link " << m_link_vec[i]->m_link_ID ()
+      std::cout << "************ DAR link " << m_link_vec[i]->m_link_ID
                 << " ************\n";
       for (int t = 0; t < l; ++t)
         {
@@ -2156,11 +2157,10 @@ Dta::save_dar_matrix (py::array_t<int> start_intervals,
               // assume path_ID starts from zero
               _y = tmp_record->path_ID
                    + _num_path
-                       * tmp_record
-                           ->assign_int (); // # of paths * # of intervals
+                       * tmp_record->assign_int; // # of paths * # of intervals
               _str = std::to_string (_x) + ",";
               _str += std::to_string (_y) + ",";
-              _str += std::to_string (tmp_record->flow () / f_ptr[_y]) + "\n";
+              _str += std::to_string (tmp_record->flow / f_ptr[_y]) + "\n";
 
               // _str = std::to_string(tmp_record -> path_ID()) + ","
               // // the count of 15 min interval
