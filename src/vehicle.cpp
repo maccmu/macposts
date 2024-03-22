@@ -14,7 +14,8 @@ MNM_Veh::MNM_Veh (TInt ID, TInt start_time)
   m_bus_route_ID = TInt (-1);
   m_pnr = false;
   m_tracked = false;
-  m_visual_position_on_link = 0.5; // default: visualize veh as at the middle point of link
+  m_visual_position_on_link
+    = 0.5; // default: visualize veh as at the middle point of link
 }
 
 MNM_Veh::~MNM_Veh ()
@@ -89,11 +90,12 @@ MNM_Veh::set_origin (MNM_Origin *origin)
   return 0;
 }
 
-int 
-MNM_Veh::update_miles_traveled(MNM_Dlink *link)
+int
+MNM_Veh::update_miles_traveled (MNM_Dlink *link)
 {
-  if (dynamic_cast<MNM_Dlink_Pq*>(link) == nullptr) {
-    m_miles_traveled += link -> m_length / 1600.;  // meter -> mile
-  }
+  if (dynamic_cast<MNM_Dlink_Pq *> (link) == nullptr)
+    {
+      m_miles_traveled += link->m_length / 1600.; // meter -> mile
+    }
   return 0;
 }

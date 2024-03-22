@@ -2082,8 +2082,8 @@ MNM_Dta_EV::is_ok ()
       _node_ID = _origin_map_it->second->m_origin_node->m_node_ID;
       const auto &n = m_graph.get_node (_node_ID);
       _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID)
-        && !m_graph.connections (n, Direction::Outgoing).empty()
-        && m_graph.connections (n, Direction::Incoming).empty();
+                   && !m_graph.connections (n, Direction::Outgoing).empty ()
+                   && m_graph.connections (n, Direction::Incoming).empty ();
     }
   std::unordered_map<TInt, MNM_Destination *>::iterator _dest_map_it;
   for (_dest_map_it = m_od_factory->m_destination_map.begin ();
@@ -2092,8 +2092,8 @@ MNM_Dta_EV::is_ok ()
       _node_ID = _dest_map_it->second->m_dest_node->m_node_ID;
       const auto &n = m_graph.get_node (_node_ID);
       _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID)
-        && m_graph.connections (n, Direction::Outgoing).empty()
-        && !m_graph.connections (n, Direction::Incoming).empty();
+                   && m_graph.connections (n, Direction::Outgoing).empty ()
+                   && !m_graph.connections (n, Direction::Incoming).empty ();
     }
   _flag = _flag && _temp_flag;
   if (_temp_flag)

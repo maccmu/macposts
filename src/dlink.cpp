@@ -103,7 +103,8 @@ MNM_Dlink::move_veh_queue (std::deque<MNM_Veh *> *from_queue,
     {
       _veh = from_queue->front ();
       from_queue->pop_front ();
-      // TODO: update _veh->m_visual_position_on_link for different link types as in multiclass
+      // TODO: update _veh->m_visual_position_on_link for different link types
+      // as in multiclass
       to_queue->push_back (_veh);
     }
   return 0;
@@ -348,9 +349,12 @@ MNM_Dlink_Ctm::Ctm_Cell::Ctm_Cell (TFlt hold_cap, TFlt flow_cap,
   m_hold_cap = hold_cap;
   m_flow_cap = flow_cap;
   m_flow_scalar = flow_scalar;
-  if (m_flow_cap * flow_scalar < 1.) {
-    m_flow_cap = 1. / flow_scalar;  // the design capacity allows at least one car to pass
-  }
+  if (m_flow_cap * flow_scalar < 1.)
+    {
+      m_flow_cap
+        = 1.
+          / flow_scalar; // the design capacity allows at least one car to pass
+    }
   m_wave_ratio = wave_ratio;
   m_volume = TInt (0);
   m_veh_queue = std::deque<MNM_Veh *> ();
@@ -707,10 +711,13 @@ MNM_Dlink_Lq::MNM_Dlink_Lq (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
   m_veh_queue = std::deque<MNM_Veh *> ();
   m_volume = TInt (0);
   m_C = m_lane_flow_cap * TFlt (m_number_of_lane);
-  if (m_C * unit_time * flow_scalar < 1.) {
-    m_lane_flow_cap = 1. /  (TFlt (m_number_of_lane) * unit_time * flow_scalar);
-    m_C = 1. / (unit_time * flow_scalar);  // the design capacity allows at least one car to pass
-  }
+  if (m_C * unit_time * flow_scalar < 1.)
+    {
+      m_lane_flow_cap
+        = 1. / (TFlt (m_number_of_lane) * unit_time * flow_scalar);
+      m_C = 1. / (unit_time * flow_scalar); // the design capacity allows at
+                                            // least one car to pass
+    }
   m_k_c = m_lane_flow_cap / m_ffs * TFlt (m_number_of_lane);
   m_unit_time = unit_time;
 }
@@ -1294,10 +1301,12 @@ MNM_Cumulative_Curve::to_string ()
 {
   std::string _output = "";
   arrange ();
-  for (size_t i = 0; i < m_recorder.size(); ++i) {
-      _output += std::to_string(int(m_recorder[i].first)) + "," + std::to_string(m_recorder[i].second) + "\n";
-  }
-  _output.pop_back();  // remove last "\n"
+  for (size_t i = 0; i < m_recorder.size (); ++i)
+    {
+      _output += std::to_string (int (m_recorder[i].first)) + ","
+                 + std::to_string (m_recorder[i].second) + "\n";
+    }
+  _output.pop_back (); // remove last "\n"
   return _output;
 }
 
@@ -1310,9 +1319,10 @@ MNM_Dlink_Ltm::MNM_Dlink_Ltm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
     : MNM_Dlink::MNM_Dlink (ID, number_of_lane, length, ffs)
 {
   m_lane_hold_cap = lane_hold_cap;
-  if (m_lane_flow_cap * TFlt (number_of_lane) * unit_time * flow_scalar < 1.) {
-    m_lane_flow_cap = 1. / (TFlt (number_of_lane) * unit_time * flow_scalar);
-  }
+  if (m_lane_flow_cap * TFlt (number_of_lane) * unit_time * flow_scalar < 1.)
+    {
+      m_lane_flow_cap = 1. / (TFlt (number_of_lane) * unit_time * flow_scalar);
+    }
   m_lane_flow_cap = lane_flow_cap;
   m_flow_scalar = flow_scalar;
   m_hold_cap = m_lane_hold_cap * TFlt (number_of_lane) * m_length;

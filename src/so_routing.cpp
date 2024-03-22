@@ -5,9 +5,9 @@
 **************************************************************************/
 
 MNM_Routing_Predetermined::MNM_Routing_Predetermined (
-  macposts::Graph &graph, MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
-  MNM_Link_Factory *link_factory, Path_Table *p_table,
-  MNM_Pre_Routing *pre_routing, TInt max_int)
+  macposts::Graph &graph, MNM_OD_Factory *od_factory,
+  MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
+  Path_Table *p_table, MNM_Pre_Routing *pre_routing, TInt max_int)
     : MNM_Routing::MNM_Routing (graph, od_factory, node_factory, link_factory)
 {
   m_tracker = std::unordered_map<MNM_Veh *, std::deque<TInt> *> ();

@@ -743,9 +743,9 @@ Dta::run_dnl_electrified_traffic (const std::string &folder, bool verbose,
 
   //     throw std::runtime_error("Error happens when open _vis_file2\n");
   //   }
-	// 	TInt _iter = 0;
-	// 	_str = "timestamp(intervals) link_ID car_inflow car_tt(s) car_fftt(s) car_speed(mph)\n";
-	// 	_vis_file2 << _str;
+  // 	TInt _iter = 0;
+  // 	_str = "timestamp(intervals) link_ID car_inflow car_tt(s) car_fftt(s)
+  // car_speed(mph)\n"; 	_vis_file2 << _str;
   //   while (_iter < m_dta -> m_current_loading_interval){
   //       if (_iter % cong_frequency == 0){
   //           // printf("Current loading interval: %d\n", int(_iter));
@@ -753,21 +753,29 @@ Dta::run_dnl_electrified_traffic (const std::string &folder, bool verbose,
   //               _link = _link_it.second;
   //               _str = std::to_string(int(_iter)) + " ";
   //               _str += std::to_string(_link -> m_link_ID()) + " ";
-  //               _str += std::to_string(MNM_DTA_GRADIENT::get_link_inflow(_link, _iter, _iter + cong_frequency)) + " ";
-  //               _str += std::to_string(MNM_DTA_GRADIENT::get_travel_time(_link, TFlt(_iter + 1), m_dta -> m_unit_time, m_dta -> m_current_loading_interval) * m_dta -> m_unit_time) + " ";
-  //               _str += std::to_string(_link -> get_link_freeflow_tt()) + " ";
-  //               _str += std::to_string(_link -> m_length/(MNM_DTA_GRADIENT::get_travel_time(_link, TFlt(_iter + 1), m_dta -> m_unit_time, m_dta -> m_current_loading_interval) * m_dta -> m_unit_time) * 3600 / 1600) + "\n";
-  //               _vis_file2 << _str;
+  //               _str +=
+  //               std::to_string(MNM_DTA_GRADIENT::get_link_inflow(_link,
+  //               _iter, _iter + cong_frequency)) + " "; _str +=
+  //               std::to_string(MNM_DTA_GRADIENT::get_travel_time(_link,
+  //               TFlt(_iter + 1), m_dta -> m_unit_time, m_dta ->
+  //               m_current_loading_interval) * m_dta -> m_unit_time) + " ";
+  //               _str += std::to_string(_link -> get_link_freeflow_tt()) + "
+  //               "; _str += std::to_string(_link ->
+  //               m_length/(MNM_DTA_GRADIENT::get_travel_time(_link, TFlt(_iter
+  //               + 1), m_dta -> m_unit_time, m_dta ->
+  //               m_current_loading_interval) * m_dta -> m_unit_time) * 3600 /
+  //               1600) + "\n"; _vis_file2 << _str;
   //           }
   //       }
   //       _iter += 1;
   //   }
-	// 	if (_vis_file2.is_open()) _vis_file2.close();
-	// }
+  // 	if (_vis_file2.is_open()) _vis_file2.close();
+  // }
 
-	MNM_IO_EV::save_charging_station_record(folder + "/" + _rec_folder, m_dta ->m_node_factory);
+  MNM_IO_EV::save_charging_station_record (folder + "/" + _rec_folder,
+                                           m_dta->m_node_factory);
 
-  printf("Finished DNL!\n");
+  printf ("Finished DNL!\n");
   return 0;
 }
 

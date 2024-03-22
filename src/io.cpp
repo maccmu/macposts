@@ -464,60 +464,72 @@ MNM_IO::read_origin_vehicle_label_ratio (const std::string &file_folder,
 }
 
 int
-MNM_IO::read_vehicle_tracking_setting (const std::string &file_folder,
-                                      std::vector<std::pair<int, int>> *od_pair_tracked,
-                                      std::vector<int> *interval_tracked,
-                                      const std::string &od_tracking_file_name,
-                                      const std::string &interval_tracking_file_name)
+MNM_IO::read_vehicle_tracking_setting (
+  const std::string &file_folder,
+  std::vector<std::pair<int, int>> *od_pair_tracked,
+  std::vector<int> *interval_tracked, const std::string &od_tracking_file_name,
+  const std::string &interval_tracking_file_name)
 {
   int _origin_ID, _dest_ID;
   std::string _line;
   std::vector<std::string> _words;
 
   /* find file */
-  std::string _od_pair_tracked_file_name = file_folder + "/" + od_tracking_file_name;
+  std::string _od_pair_tracked_file_name
+    = file_folder + "/" + od_tracking_file_name;
   std::ifstream _od_pair_tracked_file;
   _od_pair_tracked_file.open (_od_pair_tracked_file_name, std::ios::in);
 
-  if (_od_pair_tracked_file.is_open ()) {
-    std::getline(_od_pair_tracked_file, _line);
-    while (std::getline(_od_pair_tracked_file, _line)) {
-      _words = split (_line, ' ');
-      if ((int) _words.size () == 2) {
-        _origin_ID = std::stoi (_words[0]);
-        _dest_ID = std::stoi (_words[1]);
-        od_pair_tracked -> push_back(std::make_pair(_origin_ID, _dest_ID));
-      }
-      else {
-        throw std::runtime_error("Wrong OD tracking file");
-      }
+  if (_od_pair_tracked_file.is_open ())
+    {
+      std::getline (_od_pair_tracked_file, _line);
+      while (std::getline (_od_pair_tracked_file, _line))
+        {
+          _words = split (_line, ' ');
+          if ((int) _words.size () == 2)
+            {
+              _origin_ID = std::stoi (_words[0]);
+              _dest_ID = std::stoi (_words[1]);
+              od_pair_tracked->push_back (
+                std::make_pair (_origin_ID, _dest_ID));
+            }
+          else
+            {
+              throw std::runtime_error ("Wrong OD tracking file");
+            }
+        }
     }
-  }
-  else {
-    printf ("No OD pair tracking file\n");
-  }
+  else
+    {
+      printf ("No OD pair tracking file\n");
+    }
   _od_pair_tracked_file.close ();
 
-
-  std::string _interval_tracked_file_name = file_folder + "/" + interval_tracking_file_name;
+  std::string _interval_tracked_file_name
+    = file_folder + "/" + interval_tracking_file_name;
   std::ifstream _interval_tracked_file;
   _interval_tracked_file.open (_interval_tracked_file_name, std::ios::in);
 
-  if (_interval_tracked_file.is_open ()) {
-    std::getline(_interval_tracked_file, _line);
-    while (std::getline(_interval_tracked_file, _line)) {
-      _words = split (_line, ' ');
-      if ((int) _words.size () == 1) {
-        interval_tracked -> push_back(std::stoi(_words[0]));
-      }
-      else {
-        throw std::runtime_error("Wrong interval tracking file");
-      }
+  if (_interval_tracked_file.is_open ())
+    {
+      std::getline (_interval_tracked_file, _line);
+      while (std::getline (_interval_tracked_file, _line))
+        {
+          _words = split (_line, ' ');
+          if ((int) _words.size () == 1)
+            {
+              interval_tracked->push_back (std::stoi (_words[0]));
+            }
+          else
+            {
+              throw std::runtime_error ("Wrong interval tracking file");
+            }
+        }
     }
-  }
-  else {
-    printf ("No interval tracking file\n");
-  }
+  else
+    {
+      printf ("No interval tracking file\n");
+    }
   _interval_tracked_file.close ();
   return 0;
 }
