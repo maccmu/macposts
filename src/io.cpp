@@ -537,9 +537,8 @@ MNM_IO::read_vehicle_tracking_setting (
 
 macposts::Graph
 MNM_IO::build_graph (const std::string &file_folder,
-                     MNM_ConfReader *conf_reader, int _phantom)
+                     MNM_ConfReader *conf_reader)
 {
-  (void) _phantom;
   /* find file */
   std::string _network_name = conf_reader->get_string ("network_name");
   std::string _graph_file_name = file_folder + "/" + _network_name;

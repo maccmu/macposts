@@ -1044,8 +1044,7 @@ public:
     const std::string &file_name = "bus_link");
   static macposts::Graph
   build_bus_transit_graph (MNM_ConfReader *conf_reader,
-                           MNM_Transit_Link_Factory *transit_link_factory,
-                           int _phantom);
+                           MNM_Transit_Link_Factory *transit_link_factory);
   static int build_passenger_demand (
     const std::string &file_folder, MNM_ConfReader *conf_reader,
     MNM_OD_Factory *od_factory,

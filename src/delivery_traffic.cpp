@@ -865,7 +865,7 @@ MNM_Dta_Delivery::build_from_files ()
                                               m_od_factory, m_node_factory);
   std::cout << "# of OD pairs: " << m_od_factory->m_origin_map.size () << "\n";
 
-  m_graph = MNM_IO::build_graph (m_file_folder, m_config, 0);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_config);
 
   MNM_IO::build_demand (m_file_folder, m_config, m_od_factory);
   MNM_IO_Delivery::build_demand_multi_OD_seq (m_file_folder, m_config,

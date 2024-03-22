@@ -41,12 +41,8 @@ public:
                               MNM_OD_Factory *od_factory,
                               MNM_Node_Factory *node_factory,
                               const std::string &file_name = "MNM_input_od");
-  // FIXME: Currently we use a phantom argument for function resolution. This is
-  // only temporary and we should remove it (and the above overlord) once we
-  // have successfully migrated to `macposts::Graph'.
   static macposts::Graph build_graph (const std::string &file_folder,
-                                      MNM_ConfReader *conf_reader,
-                                      int _phantom);
+                                      MNM_ConfReader *conf_reader);
   static int build_demand (const std::string &file_folder,
                            MNM_ConfReader *conf_reader,
                            MNM_OD_Factory *od_factory,
