@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
 
     name: Release wheels on ${{ matrix.platform }}
     runs-on: ${{ matrix.platform }}

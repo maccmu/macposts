@@ -32,6 +32,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+#include <cassert>
 
 namespace macposts
 {
@@ -250,13 +251,7 @@ public:
 
         // Invariant: before stepping to the next neighbor, the current one
         // should have never been seen.
-        //
-        // TODO: Switch to `assert'.
-#ifndef NDEBUG
-        if (current && seen.count (current->endpoints[direction]))
-          __builtin_trap ();
-#endif
-
+        assert (!(current && seen.count (current->endpoints[direction])));
         while (current || refill)
           {
             if (!current)
