@@ -95,19 +95,18 @@ public:
     const TInt num_rows, const TInt num_timestamps,
     const std::string &file_name = "tdsp_node_cost");
 
-  static int read_origin_vehicle_label_ratio (const std::string &file_folder,
-                                              MNM_ConfReader *conf_reader,
-                                              MNM_OD_Factory *od_factory,
-                                              const std::string &file_name
-                                              = "MNM_input_origin_vehicle_label");
+  static int read_origin_vehicle_label_ratio (
+    const std::string &file_folder, MNM_ConfReader *conf_reader,
+    MNM_OD_Factory *od_factory,
+    const std::string &file_name = "MNM_input_origin_vehicle_label");
 
-  static int read_vehicle_tracking_setting (const std::string &file_folder,
-                                              std::vector<std::pair<int, int>> *od_pair_tracked,
-                                              std::vector<int> *interval_tracked,
-                                              const std::string &od_tracking_file_name
-                                              = "MNM_input_od_tracking",
-                                              const std::string &interval_tracking_file_name
-                                              = "MNM_input_interval_tracking");
+  static int read_vehicle_tracking_setting (
+    const std::string &file_folder,
+    std::vector<std::pair<int, int>> *od_pair_tracked,
+    std::vector<int> *interval_tracked,
+    const std::string &od_tracking_file_name = "MNM_input_od_tracking",
+    const std::string &interval_tracking_file_name
+    = "MNM_input_interval_tracking");
 
   // private:
   static std::vector<std::string> split (const std::string &text, char sep);

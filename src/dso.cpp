@@ -62,130 +62,221 @@ MNM_Dso::build_link_cost_map (MNM_Dta *dta)
   return 0;
 }
 
-int MNM_Dso::get_link_marginal_cost(MNM_Dta *dta)
+int
+MNM_Dso::get_link_marginal_cost (MNM_Dta *dta)
 {
-    // suppose m_link_congested is constructed already in build_link_cost_map()
-    MNM_Dlink *_link;
-    int _total_loading_inter = m_total_loading_inter; // dta -> m_current_loading_interval;
-    IAssert(_total_loading_inter > 0);
-    int _link_fft, _actual_lift_up_time;  // intervals
-    bool _flg;
-    std::cout << "\n********************** Begin MNM_Dso::get_link_marginal_cost **********************\n";
-    for (auto _link_it : dta->m_link_factory->m_link_map) {
-        if (m_queue_dissipated_time.find(_link_it.first) == m_queue_dissipated_time.end()) {
-            m_queue_dissipated_time[_link_it.first] = new int[_total_loading_inter];
+  // suppose m_link_congested is constructed already in build_link_cost_map()
+  MNM_Dlink *_link;
+  int _total_loading_inter
+    = m_total_loading_inter; // dta -> m_current_loading_interval;
+  IAssert (_total_loading_inter > 0);
+  int _link_fft, _actual_lift_up_time; // intervals
+  bool _flg;
+  std::cout << "\n********************** Begin MNM_Dso::get_link_marginal_cost "
+               "**********************\n";
+  for (auto _link_it : dta->m_link_factory->m_link_map)
+    {
+      if (m_queue_dissipated_time.find (_link_it.first)
+          == m_queue_dissipated_time.end ())
+        {
+          m_queue_dissipated_time[_link_it.first]
+            = new int[_total_loading_inter];
         }
-        _link = dynamic_cast<MNM_Dlink*>(_link_it.second);
-        _link_fft = _link -> get_link_freeflow_tt_loading();
-        // std::cout << "********************** get_link_queue_dissipated_time link " << _link_it.first << " **********************\n";
-        for (int i = 0; i < _total_loading_inter; i++ ) {
+      _link = dynamic_cast<MNM_Dlink *> (_link_it.second);
+      _link_fft = _link->get_link_freeflow_tt_loading ();
+      // std::cout << "********************** get_link_queue_dissipated_time
+      // link " << _link_it.first << " **********************\n";
+      for (int i = 0; i < _total_loading_inter; i++)
+        {
+          _actual_lift_up_time = _total_loading_inter;
+          for (int j = i; j < _total_loading_inter; j++)
+            {
+              if (dynamic_cast<MNM_Dlink_Ctm *> (_link) != nullptr)
+                {
+                  TFlt _inflow_rate
+                    = MNM_DTA_GRADIENT::get_arrival_cc_slope (_link, TFlt (j),
+                                                              TFlt (
+                                                                j + 1)); // veh
+                                                                         // / 5s
+                  TFlt _cap = dynamic_cast<MNM_Dlink_Ctm *> (_link)
+                                ->m_cell_array.front ()
+                                ->m_flow_cap
+                              * dta->m_unit_time; // veh / 5s
+                  if (MNM_Ults::approximate_less_than (_inflow_rate
+                                                         * dta->m_flow_scalar,
+                                                       floor (
+                                                         _cap
+                                                         * dta->m_flow_scalar)))
+                    {
+                      _actual_lift_up_time = j;
+                      break;
+                    }
+                }
+              else if (dynamic_cast<MNM_Dlink_Pq *> (_link) != nullptr)
+                {
+                  // PQ link as OD connectors always has sufficient capacity
+                  _actual_lift_up_time = j;
+                  break;
+                }
+              else
+                {
+                  throw std::runtime_error ("MNM_Dso::get_link_marginal_cost, "
+                                            "Link type not implemented");
+                }
+            }
 
-            _actual_lift_up_time = _total_loading_inter;
-            for (int j = i; j < _total_loading_inter; j++) {
-                if (dynamic_cast<MNM_Dlink_Ctm*>(_link) != nullptr) {
-                    TFlt _inflow_rate = MNM_DTA_GRADIENT::get_arrival_cc_slope(_link,
-                                                                        TFlt(j),
-                                                                        TFlt(j + 1));  // veh / 5s
-                    TFlt _cap = dynamic_cast<MNM_Dlink_Ctm*>(_link) -> m_cell_array.front() -> m_flow_cap * dta -> m_unit_time;  // veh / 5s
-                    if (MNM_Ults::approximate_less_than(_inflow_rate * dta -> m_flow_scalar, floor(_cap * dta -> m_flow_scalar))) {
-                        _actual_lift_up_time = j;
-                        break;
-                    }
-                }
-                else if (dynamic_cast<MNM_Dlink_Pq*>(_link) != nullptr) {
-                    // PQ link as OD connectors always has sufficient capacity
-                    _actual_lift_up_time = j;
-                    break;
-                }
-                else {
-                    throw std::runtime_error("MNM_Dso::get_link_marginal_cost, Link type not implemented");
-                }
+          if (_actual_lift_up_time == _total_loading_inter)
+            {
+              m_queue_dissipated_time[_link_it.first][i]
+                = 2 * _total_loading_inter;
             }
-            
-            if (_actual_lift_up_time == _total_loading_inter) {
-                m_queue_dissipated_time[_link_it.first][i] = 2 * _total_loading_inter;
-            }
-            else {
-                // ************************** car **************************
-                if (m_link_congested[_link_it.first][_actual_lift_up_time]) {
-                    if (_actual_lift_up_time == _total_loading_inter - 1) {
-                        m_queue_dissipated_time[_link_it.first][i] = 2 * _total_loading_inter;
+          else
+            {
+              // ************************** car **************************
+              if (m_link_congested[_link_it.first][_actual_lift_up_time])
+                {
+                  if (_actual_lift_up_time == _total_loading_inter - 1)
+                    {
+                      m_queue_dissipated_time[_link_it.first][i]
+                        = 2 * _total_loading_inter;
                     }
-                    else {
-                        _flg = false;
-                        for (int k = _actual_lift_up_time + 1; k < _total_loading_inter; k++) {
-                            if (m_link_congested[_link_it.first][k - 1] && !m_link_congested[_link_it.first][k]) {
-                                m_queue_dissipated_time[_link_it.first][i] = k;
-                                _flg = true;
-                                break;
+                  else
+                    {
+                      _flg = false;
+                      for (int k = _actual_lift_up_time + 1;
+                           k < _total_loading_inter; k++)
+                        {
+                          if (m_link_congested[_link_it.first][k - 1]
+                              && !m_link_congested[_link_it.first][k])
+                            {
+                              m_queue_dissipated_time[_link_it.first][i] = k;
+                              _flg = true;
+                              break;
                             }
                         }
-                        if (!_flg) {
-                            m_queue_dissipated_time[_link_it.first][i] = 2 * _total_loading_inter;
+                      if (!_flg)
+                        {
+                          m_queue_dissipated_time[_link_it.first][i]
+                            = 2 * _total_loading_inter;
                         }
                     }
                 }
-                else {
-                    if (MNM_Ults::approximate_equal(m_link_tt_map[_link_it.first][_actual_lift_up_time], (float)_link_fft)) {
-                        // based on subgradient paper, when out flow = capacity and link tt = fftt, this is critical state where the subgradient applies
-                        if (dynamic_cast<MNM_Dlink_Ctm*>(_link) != nullptr) {
-                            // TODO: use spline to interpolate the N_out and extract the deriviative (out flow rate) and compare it with the capacity
-                            // https://kluge.in-chemnitz.de/opensource/spline/spline.h
-                            // tk::spline s;
-                            // s.set_boundary(tk::spline::second_deriv, 0.0,
-                            //                tk::spline::second_deriv, 0.0);
-                            // s.set_points(X,Y,tk::spline::cspline);
-                            // s.make_monotonic();
-                            // s.deriv(1, X[i])
-                            TFlt _outflow_rate = MNM_DTA_GRADIENT::get_departure_cc_slope(_link, 
-                                                                                        TFlt(_actual_lift_up_time + (int)_link_fft), 
-                                                                                        TFlt(_actual_lift_up_time + (int)_link_fft + 1));  // veh / 5s
-                            TFlt _cap = dynamic_cast<MNM_Dlink_Ctm*>(_link) -> m_cell_array.back() -> m_flow_cap * dta -> m_unit_time;  // veh / 5s
-                            if (MNM_Ults::approximate_equal(_outflow_rate * dta -> m_flow_scalar, floor(_cap * dta -> m_flow_scalar))) {
-                                if (_actual_lift_up_time == _total_loading_inter - 1) {
-                                    m_queue_dissipated_time[_link_it.first][i] = 2 * _total_loading_inter;
+              else
+                {
+                  if (MNM_Ults::
+                        approximate_equal (m_link_tt_map[_link_it.first]
+                                                        [_actual_lift_up_time],
+                                           (float) _link_fft))
+                    {
+                      // based on subgradient paper, when out flow = capacity
+                      // and link tt = fftt, this is critical state where the
+                      // subgradient applies
+                      if (dynamic_cast<MNM_Dlink_Ctm *> (_link) != nullptr)
+                        {
+                          // TODO: use spline to interpolate the N_out and
+                          // extract the deriviative (out flow rate) and compare
+                          // it with the capacity
+                          // https://kluge.in-chemnitz.de/opensource/spline/spline.h
+                          // tk::spline s;
+                          // s.set_boundary(tk::spline::second_deriv, 0.0,
+                          //                tk::spline::second_deriv, 0.0);
+                          // s.set_points(X,Y,tk::spline::cspline);
+                          // s.make_monotonic();
+                          // s.deriv(1, X[i])
+                          TFlt _outflow_rate = MNM_DTA_GRADIENT::
+                            get_departure_cc_slope (_link,
+                                                    TFlt (_actual_lift_up_time
+                                                          + (int) _link_fft),
+                                                    TFlt (_actual_lift_up_time
+                                                          + (int) _link_fft
+                                                          + 1)); // veh / 5s
+                          TFlt _cap = dynamic_cast<MNM_Dlink_Ctm *> (_link)
+                                        ->m_cell_array.back ()
+                                        ->m_flow_cap
+                                      * dta->m_unit_time; // veh / 5s
+                          if (MNM_Ults::
+                                approximate_equal (_outflow_rate
+                                                     * dta->m_flow_scalar,
+                                                   floor (
+                                                     _cap
+                                                     * dta->m_flow_scalar)))
+                            {
+                              if (_actual_lift_up_time
+                                  == _total_loading_inter - 1)
+                                {
+                                  m_queue_dissipated_time[_link_it.first][i]
+                                    = 2 * _total_loading_inter;
                                 }
-                                else {
-                                    // to compute lift up time for the departure cc
-                                    _flg = false;
-                                    for (int k = _actual_lift_up_time + 1; k < _total_loading_inter; k++) {
-                                        if (m_link_congested[_link_it.first][k - 1] && !m_link_congested[_link_it.first][k]) {
-                                            m_queue_dissipated_time[_link_it.first][i] = k;
-                                            _flg = true;
-                                            break;
+                              else
+                                {
+                                  // to compute lift up time for the departure
+                                  // cc
+                                  _flg = false;
+                                  for (int k = _actual_lift_up_time + 1;
+                                       k < _total_loading_inter; k++)
+                                    {
+                                      if (m_link_congested[_link_it.first]
+                                                          [k - 1]
+                                          && !m_link_congested[_link_it.first]
+                                                              [k])
+                                        {
+                                          m_queue_dissipated_time[_link_it
+                                                                    .first][i]
+                                            = k;
+                                          _flg = true;
+                                          break;
                                         }
                                     }
-                                    if (!_flg) {
-                                        m_queue_dissipated_time[_link_it.first][i] = 2 * _total_loading_inter;
+                                  if (!_flg)
+                                    {
+                                      m_queue_dissipated_time[_link_it.first][i]
+                                        = 2 * _total_loading_inter;
                                     }
                                 }
-                            } 
-                            else {
-                                // TODO: boundary condition
-                                m_queue_dissipated_time[_link_it.first][i] = _actual_lift_up_time;
+                            }
+                          else
+                            {
+                              // TODO: boundary condition
+                              m_queue_dissipated_time[_link_it.first][i]
+                                = _actual_lift_up_time;
                             }
                         }
-                        else if (dynamic_cast<MNM_Dlink_Pq*>(_link) != nullptr) {
-                            // PQ link as OD connectors always has sufficient capacity
-                            m_queue_dissipated_time[_link_it.first][i] = _actual_lift_up_time;
+                      else if (dynamic_cast<MNM_Dlink_Pq *> (_link) != nullptr)
+                        {
+                          // PQ link as OD connectors always has sufficient
+                          // capacity
+                          m_queue_dissipated_time[_link_it.first][i]
+                            = _actual_lift_up_time;
                         }
-                        else {
-                            throw std::runtime_error("MNM_Dso::get_link_marginal_cost, Link type not implemented");
+                      else
+                        {
+                          throw std::runtime_error (
+                            "MNM_Dso::get_link_marginal_cost, Link type not "
+                            "implemented");
                         }
                     }
-                    else {
-                        // m_queue_dissipated_time[_link_it.first][i] = _actual_lift_up_time;
-                        throw std::runtime_error("MNM_Dso::get_link_marginal_cost, Link travel time less than fftt");
+                  else
+                    {
+                      // m_queue_dissipated_time[_link_it.first][i] =
+                      // _actual_lift_up_time;
+                      throw std::runtime_error (
+                        "MNM_Dso::get_link_marginal_cost, Link travel time "
+                        "less than fftt");
                     }
-                    // m_queue_dissipated_time[_link_it.first][i] = _actual_lift_up_time;
+                  // m_queue_dissipated_time[_link_it.first][i] =
+                  // _actual_lift_up_time;
                 }
             }
-            IAssert(m_queue_dissipated_time[_link_it.first][i] >= _actual_lift_up_time);
-            // reuse m_link_tt_map and m_link_cost_map
-            m_link_tt_map[_link_it.first][i] = m_queue_dissipated_time[_link_it.first][i] - _actual_lift_up_time + _link_fft;
-            m_link_cost_map[_link_it.first][i] = m_link_tt_map[_link_it.first][i];
+          IAssert (m_queue_dissipated_time[_link_it.first][i]
+                   >= _actual_lift_up_time);
+          // reuse m_link_tt_map and m_link_cost_map
+          m_link_tt_map[_link_it.first][i]
+            = m_queue_dissipated_time[_link_it.first][i] - _actual_lift_up_time
+              + _link_fft;
+          m_link_cost_map[_link_it.first][i] = m_link_tt_map[_link_it.first][i];
         }
     }
-    std::cout << "********************** End MNM_Dso::get_link_marginal_cost **********************\n";
-    return 0;
+  std::cout << "********************** End MNM_Dso::get_link_marginal_cost "
+               "**********************\n";
+  return 0;
 }

@@ -404,8 +404,8 @@ extract_path (TInt origin_node_ID, TInt dest_node_ID,
         }
       _path->m_node_vec.push_back (_current_node_ID);
       _path->m_link_vec.push_back (_current_link_ID);
-      _current_node_ID = graph.get_id (
-        graph.get_endpoints (_current_link_ID).second);
+      _current_node_ID
+        = graph.get_id (graph.get_endpoints (_current_link_ID).second);
     }
   _path->m_node_vec.push_back (_current_node_ID);
   // printf("Exiting extract_path\n");
