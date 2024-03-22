@@ -1,4 +1,5 @@
 #include "dlink.h"
+#include <cfloat>
 
 MNM_Dlink::MNM_Dlink (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs)
 {
@@ -6,21 +7,21 @@ MNM_Dlink::MNM_Dlink (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs)
   if (ffs < 0)
     {
       throw std::runtime_error ("negative link speed for link "
-                                + std::to_string (m_link_ID ()));
+                                + std::to_string (m_link_ID));
     }
   m_ffs = ffs;
 
   if (number_of_lane < 0)
     {
       throw std::runtime_error ("negative number of lanes for link "
-                                + std::to_string (m_link_ID ()));
+                                + std::to_string (m_link_ID));
     }
   m_number_of_lane = number_of_lane;
 
   if (length < 0)
     {
       throw std::runtime_error ("negative length for link "
-                                + std::to_string (m_link_ID ()));
+                                + std::to_string (m_link_ID));
     }
   m_length = length;
 
@@ -119,7 +120,7 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
   if (lane_hold_cap < 0)
     {
       throw std::runtime_error ("negative lane_hold_cap for link "
-                                + std::to_string (m_link_ID ()));
+                                + std::to_string (m_link_ID));
     }
   if (lane_hold_cap > TFlt (300) / TFlt (1600))
     {
@@ -132,7 +133,7 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
   if (lane_flow_cap < 0)
     {
       throw std::runtime_error ("negative lane_flow_cap for link "
-                                + std::to_string (m_link_ID ()));
+                                + std::to_string (m_link_ID));
     }
   if (lane_flow_cap > TFlt (3500) / TFlt (3600))
     {
@@ -150,10 +151,10 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
       m_num_cells = 1;
     }
   TFlt _lane_hold_cap_last_cell
-    = MNM_Ults::max (((m_length - TFlt (m_num_cells - 1) * _std_cell_length)
-                      / _std_cell_length)
-                       * m_lane_hold_cap,
-                     m_lane_hold_cap);
+    = std::max (((m_length - TFlt (m_num_cells - 1) * _std_cell_length)
+                 / _std_cell_length)
+                  * m_lane_hold_cap,
+                m_lane_hold_cap);
   TFlt _wave_speed
     = m_lane_flow_cap
       / (m_lane_hold_cap
@@ -165,7 +166,7 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
   if (m_wave_ratio < 0)
     {
       throw std::runtime_error ("negative wave ratio for link "
-                                + std::to_string (m_link_ID ()));
+                                + std::to_string (m_link_ID));
     }
   m_last_wave_ratio
     = (m_lane_flow_cap / (_lane_hold_cap_last_cell - m_lane_flow_cap / m_ffs))
@@ -173,7 +174,7 @@ MNM_Dlink_Ctm::MNM_Dlink_Ctm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
   if (m_last_wave_ratio < 0)
     {
       throw std::runtime_error ("negative last cell wave ratio for link "
-                                + std::to_string (m_link_ID ()));
+                                + std::to_string (m_link_ID));
     }
   init_cell_array (unit_time, _std_cell_length, _lane_hold_cap_last_cell);
 }
@@ -252,7 +253,7 @@ MNM_Dlink_Ctm::update_out_veh ()
         {
           _demand = m_cell_array[i]->get_demand ();
           _supply = m_cell_array[i + 1]->get_supply ();
-          _temp_out_flux = MNM_Ults::min (_demand, _supply) * m_flow_scalar;
+          _temp_out_flux = std::min (_demand, _supply) * m_flow_scalar;
           m_cell_array[i]->m_out_veh = MNM_Ults::round (_temp_out_flux);
         }
     }
@@ -457,8 +458,8 @@ MNM_Dlink_Ctm::get_link_tt ()
         }
       else
         {
-          _spd = MNM_Ults::max (0.001 * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
-                                                 / ((_rhoj - _rhok) * _rho));
+          _spd = std::max (0.001 * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                            / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -486,8 +487,8 @@ MNM_Dlink_Ctm::get_link_tt_from_flow (TFlt flow)
         }
       else
         {
-          _spd = MNM_Ults::max (0.001 * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
-                                                 / ((_rhoj - _rhok) * _rho));
+          _spd = std::max (0.001 * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                            / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -571,7 +572,7 @@ MNM_Dlink_Pq::evolve (TInt timestamp)
   auto _que_it = m_veh_queue.begin ();
   while (_que_it != m_veh_queue.end ())
     {
-      if (_que_it->second >= MNM_Ults::max (0, m_max_stamp - 1))
+      if (_que_it->second >= std::max (0, m_max_stamp - 1))
         {
           m_finished_array.push_back (_que_it->first);
           _que_it = m_veh_queue.erase (_que_it); // c++ 11
@@ -650,9 +651,8 @@ MNM_Dlink_Pq::get_link_tt ()
         }
       else
         {
-          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
-                                m_lane_flow_cap * (_rhoj - _rho)
-                                  / ((_rhoj - _rhok) * _rho));
+          _spd = std::max (DBL_EPSILON * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -680,9 +680,8 @@ MNM_Dlink_Pq::get_link_tt_from_flow (TFlt flow)
         }
       else
         {
-          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
-                                m_lane_flow_cap * (_rhoj - _rho)
-                                  / ((_rhoj - _rhok) * _rho));
+          _spd = std::max (DBL_EPSILON * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -861,9 +860,8 @@ MNM_Dlink_Lq::get_link_tt ()
         }
       else
         {
-          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
-                                m_lane_flow_cap * (_rhoj - _rho)
-                                  / ((_rhoj - _rhok) * _rho));
+          _spd = std::max (DBL_EPSILON * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -891,9 +889,8 @@ MNM_Dlink_Lq::get_link_tt_from_flow (TFlt flow)
         }
       else
         {
-          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
-                                m_lane_flow_cap * (_rhoj - _rho)
-                                  / ((_rhoj - _rhok) * _rho));
+          _spd = std::max (DBL_EPSILON * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -1335,7 +1332,7 @@ MNM_Dlink_Ltm::MNM_Dlink_Ltm (TInt ID, TFlt lane_hold_cap, TFlt lane_flow_cap,
   m_N_out2 = MNM_Cumulative_Curve ();
   m_previous_finished_flow = TFlt (0);
   m_record_size
-    = TInt (MNM_Ults::max (m_length / m_w, m_length / m_ffs) / m_unit_time) + 1;
+    = TInt (std::max (m_length / m_w, m_length / m_ffs) / m_unit_time) + 1;
 }
 
 MNM_Dlink_Ltm::~MNM_Dlink_Ltm () { m_veh_queue.clear (); }
@@ -1401,9 +1398,8 @@ MNM_Dlink_Ltm::get_link_tt ()
         }
       else
         {
-          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
-                                m_lane_flow_cap * (_rhoj - _rho)
-                                  / ((_rhoj - _rhok) * _rho));
+          _spd = std::max (DBL_EPSILON * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -1431,9 +1427,8 @@ MNM_Dlink_Ltm::get_link_tt_from_flow (TFlt flow)
         }
       else
         {
-          _spd = MNM_Ults::max (DBL_EPSILON * m_ffs,
-                                m_lane_flow_cap * (_rhoj - _rho)
-                                  / ((_rhoj - _rhok) * _rho));
+          _spd = std::max (DBL_EPSILON * m_ffs, m_lane_flow_cap * (_rhoj - _rho)
+                                                  / ((_rhoj - _rhok) * _rho));
         }
       _cost = m_length / _spd;
     }
@@ -1485,9 +1480,9 @@ MNM_Dlink_Ltm::get_link_supply ()
     = m_N_out2.get_result (
         TFlt (m_current_timestamp * m_unit_time + m_unit_time) - m_length / m_w)
       + m_hold_cap - m_N_in2.get_result (TFlt (m_current_timestamp));
-  TFlt _res = MNM_Ults::min (_recv, m_lane_flow_cap * TFlt (m_number_of_lane)
-                                      * m_unit_time);
-  return MNM_Ults::max (_res, TFlt (0));
+  TFlt _res
+    = std::min (_recv, m_lane_flow_cap * TFlt (m_number_of_lane) * m_unit_time);
+  return std::max (_res, TFlt (0));
 }
 
 int
@@ -1557,6 +1552,6 @@ MNM_Dlink_Ltm::get_demand ()
     = m_N_in2.get_result (TFlt (m_current_timestamp * m_unit_time + m_unit_time)
                           - m_length / m_ffs)
       - m_N_out2.get_result (TFlt (m_current_timestamp * m_unit_time));
-  return MNM_Ults::min (_send, m_lane_flow_cap * TFlt (m_number_of_lane)
-                                 * m_unit_time);
+  return std::min (_send,
+                   m_lane_flow_cap * TFlt (m_number_of_lane) * m_unit_time);
 }

@@ -41,8 +41,6 @@ public:
                               MNM_OD_Factory *od_factory,
                               MNM_Node_Factory *node_factory,
                               const std::string &file_name = "MNM_input_od");
-  static PNEGraph build_graph (const std::string &file_folder,
-                               MNM_ConfReader *conf_reader);
   // FIXME: Currently we use a phantom argument for function resolution. This is
   // only temporary and we should remove it (and the above overlord) once we
   // have successfully migrated to `macposts::Graph'.
@@ -54,16 +52,9 @@ public:
                            MNM_OD_Factory *od_factory,
                            const std::string &file_name = "MNM_input_demand");
   static Path_Table *load_path_table (const std::string &file_name,
-                                      const PNEGraph &graph, TInt num_path,
-                                      bool w_buffer = false, bool w_ID = false);
-  static Path_Table *load_path_table (const std::string &file_name,
                                       const macposts::Graph &graph,
                                       TInt num_path, bool w_buffer = false,
                                       bool w_ID = false);
-  static int build_vms_facotory (const std::string &file_folder, PNEGraph graph,
-                                 TInt num_vms, MNM_Vms_Factory *vms_factory,
-                                 const std::string &file_name
-                                 = "MNM_input_vms");
   static int build_vms_facotory (const std::string &file_folder,
                                  const macposts::Graph &graph, TInt num_vms,
                                  MNM_Vms_Factory *vms_factory,

@@ -1,4 +1,5 @@
 #include "io.h"
+#include <cstring>
 
 using macposts::graph::Direction;
 
@@ -534,56 +535,6 @@ MNM_IO::read_vehicle_tracking_setting (
   return 0;
 }
 
-PNEGraph
-MNM_IO::build_graph (const std::string &file_folder,
-                     MNM_ConfReader *conf_reader)
-{
-  /* find file */
-  std::string _network_name = conf_reader->get_string ("network_name");
-  std::string _graph_file_name = file_folder + "/" + _network_name;
-  std::ifstream _graph_file;
-  _graph_file.open (_graph_file_name, std::ios::in);
-
-  TInt _num_of_link = conf_reader->get_int ("num_of_link");
-
-  // printf("Start build graph.\n");
-  PNEGraph _graph = PNEGraph::TObj::New ();
-
-  int _link_ID, _from_ID, _to_ID;
-  std::string _line;
-  std::vector<std::string> _words;
-  for (int i = 0; i < _num_of_link;)
-    {
-      std::getline (_graph_file, _line);
-      _line = trim (_line);
-      if (_line.empty () || _line[0] == '#')
-        {
-          continue;
-        }
-      ++i;
-      _words = split (_line, ' ');
-      if (_words.size () == 3)
-        {
-          // std::cout << "Processing: " << _line << "\n";
-          _link_ID = TInt (std::stoi (_words[0]));
-          _from_ID = TInt (std::stoi (_words[1]));
-          _to_ID = TInt (std::stoi (_words[2]));
-          if (!_graph->IsNode (_from_ID))
-            {
-              _graph->AddNode (_from_ID);
-            }
-          if (!_graph->IsNode (_to_ID))
-            {
-              _graph->AddNode (_to_ID);
-            }
-          _graph->AddEdge (_from_ID, _to_ID, _link_ID);
-        }
-    }
-  _graph->Defrag ();
-  IAssert (_graph->GetEdges () == _num_of_link);
-  return _graph;
-}
-
 macposts::Graph
 MNM_IO::build_graph (const std::string &file_folder,
                      MNM_ConfReader *conf_reader, int _phantom)
@@ -706,142 +657,6 @@ MNM_IO::build_demand (const std::string &file_folder,
 }
 
 Path_Table *
-MNM_IO::load_path_table (const std::string &file_name, const PNEGraph &graph,
-                         TInt num_path, bool w_buffer, bool w_ID)
-{
-  if (w_ID)
-    {
-      throw std::runtime_error (
-        "Error, MNM_IO::load_path_table, with ID loading not implemented");
-    }
-  printf ("Loading Path Table for Driving!\n");
-  TInt Num_Path = num_path;
-  printf ("Number of path %d\n", Num_Path ());
-
-  if (Num_Path <= 0)
-    {
-      printf ("Finish Loading Path Table for Driving, which is nullptr!\n");
-      return nullptr;
-    }
-
-  std::ifstream _path_table_file, _buffer_file;
-  std::string _buffer_file_name;
-  if (w_buffer)
-    {
-      _buffer_file_name = file_name + "_buffer";
-      _buffer_file.open (_buffer_file_name, std::ios::in);
-    }
-  _path_table_file.open (file_name, std::ios::in);
-  Path_Table *_path_table = new Path_Table ();
-
-  /* read file */
-  std::string _line, _buffer_line;
-  std::vector<std::string> _words, _buffer_words;
-  TInt _origin_node_ID, _dest_node_ID, _node_ID;
-  std::unordered_map<TInt, MNM_Pathset *> *_new_map;
-  MNM_Pathset *_pathset;
-  MNM_Path *_path;
-  TInt _from_ID, _to_ID, _link_ID;
-  TInt _path_ID_counter = 0;
-  if (_path_table_file.is_open ())
-    {
-      for (int i = 0; i < Num_Path;)
-        {
-          std::getline (_path_table_file, _line);
-          _line = trim (_line);
-          if (_line.empty () || _line[0] == '#')
-            {
-              continue;
-            }
-          ++i;
-          if (w_buffer)
-            {
-              while (1)
-                {
-                  std::getline (_buffer_file, _buffer_line);
-                  _buffer_line = trim (_buffer_line);
-                  if (!_line.empty () && _line[0] != '#')
-                    {
-                      break;
-                    }
-                }
-              _buffer_words = split (_buffer_line, ' ');
-            }
-          // std::cout << "Processing: " << _line << "\n";
-          _words = split (_line, ' ');
-          if (_words.size () >= 2)
-            {
-              _origin_node_ID = TInt (std::stoi (_words[0]));
-              _dest_node_ID = TInt (std::stoi (_words.back ()));
-              if (_path_table->find (_origin_node_ID) == _path_table->end ())
-                {
-                  _new_map = new std::unordered_map<TInt, MNM_Pathset *> ();
-                  _path_table->insert (
-                    std::pair<TInt, std::unordered_map<TInt, MNM_Pathset *>
-                                      *> (_origin_node_ID, _new_map));
-                }
-              if (_path_table->find (_origin_node_ID)
-                    ->second->find (_dest_node_ID)
-                  == _path_table->find (_origin_node_ID)->second->end ())
-                {
-                  _pathset = new MNM_Pathset ();
-                  _path_table->find (_origin_node_ID)
-                    ->second->insert (
-                      std::pair<TInt, MNM_Pathset *> (_dest_node_ID, _pathset));
-                }
-              _path = new MNM_Path ();
-              _path->m_path_ID = _path_ID_counter;
-              _path_ID_counter += 1;
-              for (std::string _s_node_ID : _words)
-                {
-                  _node_ID = TInt (std::stoi (_s_node_ID));
-                  _path->m_node_vec.push_back (_node_ID);
-                }
-              for (size_t j = 0; j < _path->m_node_vec.size () - 1; ++j)
-                {
-                  _from_ID = _path->m_node_vec[j];
-                  _to_ID = _path->m_node_vec[j + 1];
-                  _link_ID = graph->GetEI (_from_ID, _to_ID)
-                               .GetId (); // assume this is not a MultiGraph
-                  _path->m_link_vec.push_back (_link_ID);
-                }
-
-              if (w_buffer && (_buffer_words.size () > 0))
-                {
-                  TInt _buffer_len = TInt (_buffer_words.size ());
-                  // printf("Buffer len %d\n", _buffer_len());
-                  _path->allocate_buffer (_buffer_len);
-                  for (int j = 0; j < _buffer_len (); ++j)
-                    {
-                      _path->m_buffer[j]
-                        = TFlt (std::stof (trim (_buffer_words[j])));
-                    }
-                }
-
-              _path_table->find (_origin_node_ID)
-                ->second->find (_dest_node_ID)
-                ->second->m_path_vec.push_back (_path);
-            }
-        }
-      _path_table_file.close ();
-      if (w_buffer)
-        {
-          _buffer_file.close ();
-        }
-    }
-  else
-    {
-      throw std::runtime_error ("failed to open path table file");
-    }
-  printf ("Finish Loading Path Table for Driving!\n");
-  // printf("path table %p\n", _path_table);
-  // printf("path table %s\n", _path_table -> find(100283) -> second ->
-  // find(150153) -> second
-  //                           -> m_path_vec.front() -> node_vec_to_string());
-  return _path_table;
-}
-
-Path_Table *
 MNM_IO::load_path_table (const std::string &file_name,
                          const macposts::Graph &graph, TInt num_path,
                          bool w_buffer, bool w_ID)
@@ -853,7 +668,7 @@ MNM_IO::load_path_table (const std::string &file_name,
     }
   printf ("Loading Path Table for Driving!\n");
   TInt Num_Path = num_path;
-  printf ("Number of path %d\n", Num_Path ());
+  printf ("Number of path %d\n", Num_Path);
 
   if (Num_Path <= 0)
     {
@@ -956,7 +771,7 @@ MNM_IO::load_path_table (const std::string &file_name,
                   TInt _buffer_len = TInt (_buffer_words.size ());
                   // printf("Buffer len %d\n", _buffer_len());
                   _path->allocate_buffer (_buffer_len);
-                  for (int j = 0; j < _buffer_len (); ++j)
+                  for (int j = 0; j < _buffer_len; ++j)
                     {
                       _path->m_buffer[j]
                         = TFlt (std::stof (trim (_buffer_words[j])));
@@ -984,48 +799,6 @@ MNM_IO::load_path_table (const std::string &file_name,
   // find(150153) -> second
   //                           -> m_path_vec.front() -> node_vec_to_string());
   return _path_table;
-}
-
-int
-MNM_IO::build_vms_facotory (const std::string &file_folder, PNEGraph graph,
-                            TInt num_vms, MNM_Vms_Factory *vms_factory,
-                            const std::string &file_name)
-{
-  /* find file */
-  std::string _vms_file_name = file_folder + "/" + file_name;
-  std::ifstream _vms_file;
-  _vms_file.open (_vms_file_name, std::ios::in);
-
-  std::string _line;
-  std::vector<std::string> _words;
-  TInt _vms_ID, _link_ID;
-  if (_vms_file.is_open ())
-    {
-      // printf("Start build demand profile.\n");
-      for (int i = 0; i < num_vms;)
-        {
-          std::getline (_vms_file, _line);
-          _line = trim (_line);
-          if (_line.empty () || _line[0] == '#')
-            {
-              continue;
-            }
-          ++i;
-          _words = split (_line, ' ');
-          if (TInt (_words.size ()) == 2)
-            {
-              _vms_ID = TInt (std::stoi (trim (_words[0])));
-              _link_ID = TInt (std::stoi (trim (_words[1])));
-              vms_factory->make_link_vms (_vms_ID, _link_ID, graph);
-            }
-          else
-            {
-              throw std::runtime_error ("failed to build vms");
-            }
-        }
-      _vms_file.close ();
-    }
-  return 0;
 }
 
 int
@@ -1089,7 +862,7 @@ MNM_IO::read_int_float (const std::string &file_name,
       std::getline (_file, _line);
       std::cout << "Processing: " << _line << "\n";
       TInt num_record = TInt (std::stoi (trim (_line)));
-      printf ("Total is %d\n", num_record ());
+      printf ("Total is %d\n", num_record);
       for (int i = 0; i < num_record; ++i)
         {
           std::getline (_file, _line);
@@ -1126,7 +899,7 @@ MNM_IO::read_int (const std::string &file_name, std::vector<TInt> *reader)
       std::getline (_file, _line);
       std::cout << "Processing: " << _line << "\n";
       TInt num_record = TInt (std::stoi (trim (_line)));
-      printf ("Total is %d\n", num_record ());
+      printf ("Total is %d\n", num_record);
       for (int i = 0; i < num_record; ++i)
         {
           std::getline (_file, _line);
@@ -1157,7 +930,7 @@ MNM_IO::read_float (const std::string &file_name, std::vector<TFlt *> *reader)
       std::getline (_file, _line);
       std::cout << "Processing: " << _line << "\n";
       TInt num_record = TInt (std::stoi (trim (_line)));
-      printf ("Total is %d\n", num_record ());
+      printf ("Total is %d\n", num_record);
       for (int i = 0; i < num_record; ++i)
         {
           std::getline (_file, _line);

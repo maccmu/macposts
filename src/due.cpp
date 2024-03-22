@@ -1,4 +1,5 @@
 #include "due.h"
+#include <cfloat>
 
 MNM_Due::MNM_Due (std::string file_folder)
 {
@@ -142,7 +143,7 @@ MNM_Due::compute_total_demand (MNM_Origin *orig, MNM_Destination *dest,
                                TInt total_assign_inter)
 {
   TFlt _tot_dmd = 0.0;
-  for (int i = 0; i < total_assign_inter (); ++i)
+  for (int i = 0; i < total_assign_inter; ++i)
     {
       _tot_dmd += orig->m_demand[dest][i];
     }
@@ -314,7 +315,7 @@ MNM_Due::build_link_cost_map (MNM_Dta *dta)
   MNM_Dlink *_link;
   for (auto _link_it : dta->m_link_factory->m_link_map)
     {
-      std::cout << "********************** link " << _link_it.first ()
+      std::cout << "********************** link " << _link_it.first
                 << " **********************\n";
       for (int i = 0; i < m_total_loading_inter; i++)
         {
@@ -614,9 +615,9 @@ MNM_Due_Msa::update_path_table (MNM_Dta *dta, int iter)
                           // printf("iter %d\n", iter);
                           // Original
                           _tmp_change
-                            = MNM_Ults::min (_tmp_path->m_buffer[_col],
-                                             _tot_oneOD_demand * m_step_size
-                                               / TFlt (iter + 1));
+                            = std::min (_tmp_path->m_buffer[_col],
+                                        _tot_oneOD_demand * m_step_size
+                                          / TFlt (iter + 1));
                           // Modified by Zou
                           // _tmp_change = _tmp_path->m_buffer[_col] *
                           // m_step_size / TFlt(iter + 1); printf("tmp change
@@ -937,8 +938,8 @@ MNM_Due_Msa::update_path_table_gp_fixed_departure_time_choice (MNM_Dta *dta,
                       _tmp_change
                         = _tmp_cost - _tot_path_cost / _tot_nonzero_path;
                       _tmp_path->m_buffer[_col]
-                        -= MNM_Ults::min (_tmp_path->m_buffer[_col],
-                                          _tau * _tmp_change);
+                        -= std::min (_tmp_path->m_buffer[_col],
+                                     _tau * _tmp_change);
                     }
                 }
               if (_exist)

@@ -85,9 +85,6 @@ namespace MNM
 {
 MNM_Path *extract_path (TInt origin_ID, TInt dest_ID,
                         std::unordered_map<TInt, TInt> &output_map,
-                        PNEGraph &graph);
-MNM_Path *extract_path (TInt origin_ID, TInt dest_ID,
-                        std::unordered_map<TInt, TInt> &output_map,
                         macposts::Graph &graph);
 // one-shot cost
 TFlt get_path_tt_snapshot (MNM_Path *path,
@@ -96,11 +93,6 @@ TFlt get_path_tt_snapshot (MNM_Path *path,
 TFlt get_path_tt (TFlt start_time, MNM_Path *path,
                   const std::unordered_map<TInt, TFlt *> &link_cost_map,
                   TInt max_interval);
-Path_Table *build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
-                           MNM_Link_Factory *link_factory,
-                           TFlt min_path_length = 0.0, size_t MaxIter = 10,
-                           TFlt vot = 3., TFlt Mid_Scale = 3,
-                           TFlt Heavy_Scale = 6, TInt buffer_length = -1);
 Path_Table *build_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                            MNM_Link_Factory *link_factory,
                            TFlt min_path_length = 0.0, size_t MaxIter = 10,
@@ -111,8 +103,6 @@ int save_path_table (const std::string &file_folder, Path_Table *path_table,
                      bool w_cost = false);
 int print_path_table (Path_Table *path_table, MNM_OD_Factory *m_od_factory,
                       bool w_buffer = false, bool w_cost = false);
-Path_Table *build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
-                                    MNM_Link_Factory *link_factory);
 Path_Table *build_shortest_pathset (macposts::Graph &graph,
                                     MNM_OD_Factory *od_factory,
                                     MNM_Link_Factory *link_factory);

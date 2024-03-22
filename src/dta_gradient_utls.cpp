@@ -1,4 +1,5 @@
 #include "dta_gradient_utls.h"
+#include <cfloat>
 
 namespace MNM_DTA_GRADIENT
 {
@@ -62,8 +63,8 @@ get_last_valid_time (MNM_Cumulative_Curve *N_in, MNM_Cumulative_Curve *N_out,
                                        N_out->m_recorder.back ().second))
     {
       printf ("max in cc flow: %lf, max out cc flow: %lf\n",
-              N_in->m_recorder.back ().second (),
-              N_out->m_recorder.back ().second ());
+              N_in->m_recorder.back ().second,
+              N_out->m_recorder.back ().second);
       printf ("diff: %lf\n", N_in->m_recorder.back ().second
                                - N_out->m_recorder.back ().second);
       std::cout << s << std::endl;
@@ -114,8 +115,8 @@ get_last_valid_time_bus (MNM_Cumulative_Curve *N_in,
                                        N_out->m_recorder.back ().second))
     {
       printf ("max in cc flow: %lf, max out cc flow: %lf\n",
-              N_in->m_recorder.back ().second (),
-              N_out->m_recorder.back ().second ());
+              N_in->m_recorder.back ().second,
+              N_out->m_recorder.back ().second);
       printf ("diff: %lf\n", N_in->m_recorder.back ().second
                                - N_out->m_recorder.back ().second);
       std::cout << s << std::endl;
@@ -188,7 +189,7 @@ get_travel_time_from_cc (TFlt start_time, MNM_Cumulative_Curve *N_in,
   // as the end_time
   TFlt _end_time = N_out->get_time (_cc_flow, rounding_up);
 
-  if (_end_time () < 0 || (_end_time - start_time < 0)
+  if (_end_time < 0 || (_end_time - start_time < 0)
       || (_end_time - start_time < fftt))
     {
       return fftt; // in intervals
@@ -255,7 +256,7 @@ get_travel_time_robust (MNM_Dlink *link, TFlt start_time, TFlt end_time,
   TFlt _delta = (end_time - start_time) / TFlt (num_trials);
   TFlt _ave_tt = TFlt (0);
   // will not use end_time
-  for (int i = 0; i < num_trials (); ++i)
+  for (int i = 0; i < num_trials; ++i)
     {
       _ave_tt += get_travel_time (link, start_time + TFlt (i) * _delta,
                                   unit_interval, end_loading_timestamp);
@@ -436,7 +437,7 @@ add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
                   // (row index, col index, value)
                   record.push_back (
                     Eigen::Triplet<double> ((double) _x, (double) _y,
-                                            tmp_flow () / f_ptr[_y]));
+                                            tmp_flow / f_ptr[_y]));
                 }
             }
         }

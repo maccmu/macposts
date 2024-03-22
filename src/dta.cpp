@@ -797,8 +797,8 @@ print_vehicle_statistics (MNM_Veh_Factory *veh_factory)
   Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d\n \
   Total Travel Time: %.2f intervals\n \
   ############################################### Vehicle Statistics ###############################################\n",
-    veh_factory->m_num_veh (), veh_factory->m_enroute (),
-    veh_factory->m_finished (), veh_factory->m_total_time ());
+    veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
+    veh_factory->m_total_time);
   return 0;
 }
 
@@ -811,11 +811,10 @@ print_vehicle_info (MNM_Veh_Factory *veh_factory)
       _veh = _map_it.second;
       printf ("Vehicle ID %d, from origin node %d to destination node %d, is "
               "current on link %d and heads to link %d\n",
-              _veh->m_veh_ID (),
-              _veh->get_origin ()->m_origin_node->m_node_ID (),
-              _veh->get_destination ()->m_dest_node->m_node_ID (),
-              _veh->get_current_link ()->m_link_ID (),
-              _veh->get_next_link ()->m_link_ID ());
+              _veh->m_veh_ID, _veh->get_origin ()->m_origin_node->m_node_ID,
+              _veh->get_destination ()->m_dest_node->m_node_ID,
+              _veh->get_current_link ()->m_link_ID,
+              _veh->get_next_link ()->m_link_ID);
     }
   return 0;
 }

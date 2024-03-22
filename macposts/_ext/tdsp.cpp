@@ -326,7 +326,7 @@ Tdsp::extract_tdsp (int origin_node_ID, int timestamp)
                ->m_dist[origin_node_ID][timestamp < m_tdsp_tree->m_max_interval
                                           ? timestamp
                                           : m_tdsp_tree->m_max_interval - 1];
-  printf ("At time %d, minimum cost is %f\n", timestamp, tmp_cost ());
+  printf ("At time %d, minimum cost is %f\n", timestamp, tmp_cost);
   _path = new MNM_Path ();
   TFlt _tt;
   if (m_num_rows_node_file != -1)
@@ -339,7 +339,7 @@ Tdsp::extract_tdsp (int origin_node_ID, int timestamp)
       _tt = m_tdsp_tree->get_tdsp (origin_node_ID, timestamp, m_td_link_tt,
                                    _path);
     }
-  printf ("travel time: %f\n", _tt ());
+  printf ("travel time: %f\n", _tt);
   printf ("number of nodes: %d\n", int (_path->m_node_vec.size ()));
   _str = _path->node_vec_to_string ();
   std::cout << "path: " << _str << "\n";

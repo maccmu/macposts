@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "dlink.h"
 #include "factory.h"
 #include <algorithm>
@@ -16,12 +16,12 @@ class MNM_Workzone
 {
 public:
   MNM_Workzone (MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
-                PNEGraph graph);
+                macposts::Graph &graph);
   ~MNM_Workzone ();
 
   MNM_Link_Factory *m_link_factory;
   MNM_Node_Factory *m_node_factory;
-  PNEGraph m_graph;
+  macposts::Graph &m_graph;
   int init_workzone ();
   int update_workzone (TInt timestamp);
   int add_workzone_link (TInt link_ID);

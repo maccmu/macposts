@@ -1,4 +1,5 @@
 #include "ults.h"
+#include <cmath>
 
 namespace MNM_Ults
 {
@@ -6,11 +7,6 @@ void
 set_random_state (unsigned int s)
 {
   std::srand (s);
-  // HACK: SNAP random number generators use a signed integer as seed, and
-  // require it to be non-negative.
-  TInt::Rnd.PutSeed (s >> 1);
-  TUInt::Rnd.PutSeed (s >> 1);
-  TFlt::Rnd.PutSeed (s >> 1);
 }
 
 TInt
@@ -22,24 +18,6 @@ round (TFlt in)
     return TInt (floorN + 1);
   else
     return TInt (floorN);
-}
-
-TInt
-min (TInt a, TInt b)
-{
-  return a < b ? a : b;
-}
-
-TFlt
-min (TFlt a, TFlt b)
-{
-  return a < b ? a : b;
-}
-
-TFlt
-max (TFlt a, TFlt b)
-{
-  return a > b ? a : b;
 }
 
 TFlt
@@ -99,7 +77,7 @@ approximate_equal (TFlt a, TFlt b, float p)
 {
   // approximately equal,
   // https://stackoverflow.com/questions/17333/what-is-the-most-effective-way-for-float-and-double-comparison
-  if (fabs (a - b) <= p * max (fabs (a), fabs (b)))
+  if (fabs (a - b) <= p * std::max (fabs (a), fabs (b)))
     {
       return true;
     }
@@ -112,7 +90,7 @@ approximate_equal (TFlt a, TFlt b, float p)
 bool
 approximate_less_than (TFlt a, TFlt b, float p)
 {
-  return a + p * max (abs (a), abs (b)) < b;
+  return a + p * std::max (fabs (a), fabs (b)) < b;
 }
 
 int
@@ -149,33 +127,6 @@ round_down_time (TFlt time)
       IAssert (int (time) >= 1);
       return int (time);
     }
-}
-
-PNEGraph
-reverse_graph (const PNEGraph &graph)
-{
-  PNEGraph reversed_graph = PNEGraph::TObj::New ();
-  if (graph->GetEdges () > 0)
-    {
-      int _link_ID, _from_node_ID, _to_node_ID;
-      for (auto _edge_it = graph->BegEI (); _edge_it < graph->EndEI ();
-           _edge_it++)
-        {
-          _link_ID = _edge_it.GetId ();
-          _from_node_ID = _edge_it.GetSrcNId ();
-          _to_node_ID = _edge_it.GetDstNId ();
-          if (!reversed_graph->IsNode (_from_node_ID))
-            {
-              reversed_graph->AddNode (_from_node_ID);
-            }
-          if (!reversed_graph->IsNode (_to_node_ID))
-            {
-              reversed_graph->AddNode (_to_node_ID);
-            }
-          reversed_graph->AddEdge (_to_node_ID, _from_node_ID, _link_ID);
-        }
-    }
-  return reversed_graph;
 }
 
 macposts::Graph

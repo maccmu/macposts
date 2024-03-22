@@ -1,5 +1,6 @@
 #include "dnode.h"
 #include "path.h"
+#include <cstring>
 
 MNM_Dnode::MNM_Dnode (TInt ID, TFlt flow_scalar)
 {
@@ -537,7 +538,7 @@ MNM_Dnode_FWJ::compute_flow ()
           // printf("Portion is %.4f, sum in flow is %.4f, demand is %.4f\n",
           // _portion, _sum_in_flow, m_demand[i * _offset + j]);
           m_veh_flow[i * _offset + j]
-            = MNM_Ults::min (m_demand[i * _offset + j], _portion * m_supply[j]);
+            = std::min (m_demand[i * _offset + j], _portion * m_supply[j]);
           // printf("to link %d the flow is %.4f\n", m_out_link_array[j] ->
           // m_link_ID, m_veh_flow[i * _offset + j]);
         }
@@ -595,7 +596,7 @@ MNM_Dnode_GRJ::compute_flow ()
   for (size_t i = 0; i < m_in_link_array.size (); ++i)
     {
       // printf("3\n");
-      _f_a = MNM_Ults::min (m_d_a[i], _theta * m_C_a[i]);
+      _f_a = std::min (m_d_a[i], _theta * m_C_a[i]);
       // printf("f_a is %lf\n", _f_a);
       for (size_t j = 0; j < m_out_link_array.size (); ++j)
         {
@@ -617,7 +618,7 @@ MNM_Dnode_GRJ::prepare_outflux ()
     {
       _link = m_in_link_array[i];
       m_d_a[i] = TFlt (_link->m_finished_array.size ()) / m_flow_scalar;
-      m_C_a[i] = MNM_Ults::max (m_d_a[i], _link->get_link_supply ());
+      m_C_a[i] = std::max (m_d_a[i], _link->get_link_supply ());
       // printf("mda is %lf, mca is %lf\n", m_d_a[i](), m_C_a[i]());
     }
   return 0;
@@ -723,7 +724,7 @@ MNM_Dnode_GRJ::get_theta ()
 
   // printf("e1 is %lf, e2 is %lf\n", _e1(), _e2());
   // total
-  TFlt _theta = MNM_Ults::min (_e1, _e2);
+  TFlt _theta = std::min (_e1, _e2);
   // printf("return\n");
   return _theta;
 }
