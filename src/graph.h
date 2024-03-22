@@ -182,7 +182,7 @@ public:
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
 
-      template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
       operator Iterator_<true> () const
       {
         auto r = Iterator_<true> (this->current);
@@ -236,7 +236,7 @@ public:
       {
       }
 
-      template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
       operator Iterator_<true> () const
       {
         auto r = Iterator_<true> (this->current, this->direction, refill);
@@ -356,7 +356,7 @@ public:
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
 
-      template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
       operator Iterator_<true> () const
       {
         auto r = Iterator_<true> (this->current);
@@ -409,7 +409,7 @@ public:
       {
       }
 
-      template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
       operator Iterator_<true> () const
       {
         auto r = Iterator_<true> (this->current, this->direction, refill);
