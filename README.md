@@ -7,12 +7,11 @@ Analytics Center (MAC)][mac] at Carnegie Mellon University.
 
 ## Installation
 
-MAC-POSTS works as a Python library. It currently supports Linux and macOS
-platforms. Windows is not supported due to some compilation issues with MSVC and
-we appreciate any help on the Windows build.
+MAC-POSTS works as a Python library. It currently supports Linux, Windows, and
+macOS platforms.
 
-To install from the repository, first ensure a working C++ toolchain and CMake ≥
-3.10. Then clone this repository, initialize and clone all submodules,
+To install from the repository, first ensure a working C++ toolchain. Then clone
+this repository, initialize and clone all submodules,
 
 ```sh
 git clone --recurse-submodules https://github.com/maccmu/macposts.git
@@ -37,7 +36,7 @@ debugging), set the environment variable `DEBUG` to `1` before installation.
 For normal users, you can instead use the precompiled wheels of tagged releases
 for certain platforms and Python versions on the GitHub [releases] page. There
 are “sdist” packages on the [releases] page as well. To install an sdist
-package, a C++ toolchain and CMake are required.
+package, a C++ toolchain are required.
 
 ## Usage
 
@@ -95,12 +94,11 @@ including remote code execution (RCE).*
 
 MAC-POSTS is licensed under MIT license. See also the LICENSE file.
 
-MAC-POSTS depends on three external libraries under the lib directory. You may
+MAC-POSTS depends on two external libraries under the lib directory. You may
 want to check their licenses as well:
 
 - pybind11: lib/pybinb11/LICENSE
 - Eigen: lib/eigen/COPYING.* (multiple licenses)
-- SNAP: lib/snap/License.txt
 
 ## Acknowledgment
 
