@@ -10,15 +10,17 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(macposts_warning_flags INTERFACE)
-string(JOIN ";" MACPOSTS_GCC_WARNING_FLAGS
-  "-Wall" "-Wextra" "-Wpedantic"
+# GCC and Clang
+set(MACPOSTS_GCC_WARNING_FLAGS
+  -Wall -Wextra -Wpedantic
   # There are too many, and they are mostly benign. We will fix them later™.
-  "-Wno-unused-parameter"
+  -Wno-unused-parameter
 )
-string(JOIN ";" MACPOSTS_MSVC_WARNING_FLAGS
-  "-W4"
+# MSVC
+set(MACPOSTS_MSVC_WARNING_FLAGS
+  -W4
   # `-Wno-unused-parameter'
-  "-wd4100"
+  -wd4100
 )
 target_compile_options(macposts_warning_flags INTERFACE
   "$<$<CXX_COMPILER_ID:MSVC>:${MACPOSTS_MSVC_WARNING_FLAGS}>"
