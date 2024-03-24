@@ -15,5 +15,5 @@ struct Empty
 {
 };
 
-using Graph = graph::Graph<TInt, TInt, Empty, Empty, true>;
+using Graph = graph::Graph<int, int, Empty, Empty, true>;
 }
