@@ -40,7 +40,7 @@ MNM_Veh_Delivery::get_current_od ()
 int
 MNM_Veh_Delivery::move_to_next_od ()
 {
-  if (m_current_OD_index < m_multi_od_seq->size () - 1)
+  if (m_current_OD_index < (std::ptrdiff_t) m_multi_od_seq->size () - 1)
     {
       m_current_OD_index += 1;
       set_origin (m_multi_od_seq->at (m_current_OD_index).first);

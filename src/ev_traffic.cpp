@@ -82,11 +82,11 @@ MNM_Veh_Electrified::update_miles_traveled (MNM_Dlink *link)
 MNM_Veh_Electrified_Delivery::MNM_Veh_Electrified_Delivery (
   TInt ID, TInt start_time, TFlt starting_range, bool using_roadside_charging,
   TFlt full_range)
-    : MNM_Veh_Electrified::MNM_Veh_Electrified (ID, start_time, starting_range,
+    : MNM_Veh::MNM_Veh (ID, start_time),
+      MNM_Veh_Electrified::MNM_Veh_Electrified (ID, start_time, starting_range,
                                                 using_roadside_charging,
                                                 full_range),
-      MNM_Veh_Delivery::MNM_Veh_Delivery (ID, start_time),
-      MNM_Veh::MNM_Veh (ID, start_time)
+      MNM_Veh_Delivery::MNM_Veh_Delivery (ID, start_time)
 {
   ;
 }
@@ -2047,20 +2047,20 @@ MNM_Dta_EV::is_ok ()
 
   // check node
   printf ("Checking......Driving Node consistent!\n");
-  _temp_flag
-    = (m_graph.size_nodes ()
-       == m_config->get_int ("num_of_node")
-            + m_config->get_int ("num_of_charging_station"))
-      && (m_graph.size_nodes () == TInt (m_node_factory->m_node_map.size ()));
+  _temp_flag = ((std::ptrdiff_t) m_graph.size_nodes ()
+                == m_config->get_int ("num_of_node")
+                     + m_config->get_int ("num_of_charging_station"))
+               && ((std::ptrdiff_t) m_graph.size_nodes ()
+                   == TInt (m_node_factory->m_node_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
 
   // check link
   printf ("Checking......Driving Link consistent!\n");
-  _temp_flag
-    = (m_graph.size_links () == m_config->get_int ("num_of_link"))
-      && (m_graph.size_links () == TInt (m_link_factory->m_link_map.size ()));
+  _temp_flag = ((std::ptrdiff_t) m_graph.size_links ()
+                == m_config->get_int ("num_of_link"))
+               && (m_graph.size_links () == m_link_factory->m_link_map.size ());
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");

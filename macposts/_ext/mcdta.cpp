@@ -550,7 +550,7 @@ Mcdta::get_registered_links ()
   auto results = py::array_t<int> (m_link_vec.size ());
   auto results_buf = results.request ();
   int *results_ptr = static_cast<int *> (results_buf.ptr);
-  for (int idx = 0; idx < m_link_vec.size (); idx++)
+  for (std::size_t idx = 0; idx < m_link_vec.size (); idx++)
     results_ptr[idx] = (int) m_link_vec[idx]->m_link_ID;
   return results;
 }
@@ -2748,12 +2748,12 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
   std::vector<std::pair<MNM_Destination *, TFlt *>> pair_ptrs_2
     = std::vector<std::pair<MNM_Destination *, TFlt *>> ();
 
-  for (size_t i = 0; i < num_links; ++i)
+  for (int i = 0; i < num_links; ++i)
     {
       result_ptr[i] = 0;
     }
 
-  for (size_t i = 0; i < num_links; ++i)
+  for (int i = 0; i < num_links; ++i)
     {
       // generate new path including this link
       auto &&sd = m_mcdta->m_graph.get_endpoints (m_link_vec[i]->m_link_ID);
@@ -2797,7 +2797,7 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
                                               _shortest_path_tree_reversed);
         }
 
-      for (size_t k = 0; k < max_iter; ++k)
+      for (int k = 0; k < max_iter; ++k)
         {
           _origin = nullptr;
           _dest = nullptr;
@@ -2905,7 +2905,7 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
               m_path_vec.push_back (_path);
 
               // check if this new path cover other links
-              for (size_t j = 0; j < num_links; ++j)
+              for (int j = 0; j < num_links; ++j)
                 {
                   if (i != j && _path->is_link_in (links_ptr[j]))
                     {
