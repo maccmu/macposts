@@ -11,7 +11,6 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
   const std::unordered_map<TInt, TFlt> &cost_map,
   std::unordered_map<TInt, TInt> &output_map)
 {
-  TInt _node_id;
   std::unordered_map<TInt, TFlt> dist_to_dest
     = std::unordered_map<TInt, TFlt> ();
   return all_to_one_Dijkstra (dest_node_ID, graph, dist_to_dest, cost_map,
@@ -495,7 +494,6 @@ MNM_Shortest_Path::all_to_one_LIFO (
       _tmp_ID = m_Q.front ();
       m_Q.pop_front ();
       m_Q_support.find (_tmp_ID)->second = false;
-      const auto &node = graph.get_node (_tmp_ID);
       _tmp_dist = _dist.find (_tmp_ID)->second;
       for (const auto &link : graph.links ())
         {

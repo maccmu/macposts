@@ -1638,8 +1638,7 @@ Mcdta::get_path_tt_car (py::array_t<int> link_IDs,
   for (int i = 0; i < links_buf.shape[0]; i++)
     {
       _link = m_mcdta->m_link_factory->get_link (TInt (links_ptr[i]));
-      if (MNM_Dlink_Multiclass *_mclink
-          = dynamic_cast<MNM_Dlink_Multiclass *> (_link))
+      if (dynamic_cast<MNM_Dlink_Multiclass *> (_link))
         {
           _path->m_link_vec.push_back (links_ptr[i]);
           _path->m_node_vec.push_back (_link->m_from_node->m_node_ID);
@@ -1709,8 +1708,7 @@ Mcdta::get_path_tt_truck (py::array_t<int> link_IDs,
   for (int i = 0; i < links_buf.shape[0]; i++)
     {
       _link = m_mcdta->m_link_factory->get_link (TInt (links_ptr[i]));
-      if (MNM_Dlink_Multiclass *_mclink
-          = dynamic_cast<MNM_Dlink_Multiclass *> (_link))
+      if (dynamic_cast<MNM_Dlink_Multiclass *> (_link))
         {
           _path->m_link_vec.push_back (links_ptr[i]);
           _path->m_node_vec.push_back (_link->m_from_node->m_node_ID);

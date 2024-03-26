@@ -15,9 +15,6 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
     TInt, std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>> ();
   m_path_table = path_table;
   TInt _dest_node_ID, _origin_node_ID;
-  TInt _oid;
-  TInt _did;
-  MNM_Pathset *_pset;
 
   // for (auto _ops = _path_table -> begin();_ops != _path_table ->end();
   // _ops++){ 	_oid = _ops -> first; 	for (auto _dps = _ops -> second ->

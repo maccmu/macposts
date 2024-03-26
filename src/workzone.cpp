@@ -20,7 +20,6 @@ MNM_Workzone::~MNM_Workzone ()
 int
 MNM_Workzone::init_workzone ()
 {
-  Link_Workzone _workzone;
   for (Link_Workzone _workzone : m_workzone_list)
     {
       add_workzone_link (_workzone.m_link_ID);
