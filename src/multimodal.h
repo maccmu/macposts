@@ -385,6 +385,7 @@ public:
   virtual ~MNM_Destination_Multimodal () override;
   int evolve (TInt timestamp);
   virtual int receive (TInt timestamp) override;
+  using MNM_Destination_Multiclass::receive;
   int receive (TInt timestamp, MNM_Routing_Multimodal_Hybrid *routing,
                MNM_Veh_Factory *veh_factory,
                MNM_Passenger_Factory *passenger_factory, bool del = true);
