@@ -589,7 +589,7 @@ MNM_IO::build_graph (const std::string &file_folder,
           _graph.add_link (_from_ID, _to_ID, _link_ID);
         }
     }
-  assert (_graph.size_links () == _num_of_link);
+  assert ((std::ptrdiff_t) _graph.size_links () == _num_of_link);
   return _graph;
 }
 

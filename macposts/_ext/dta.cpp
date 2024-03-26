@@ -1251,7 +1251,7 @@ Dta::get_registered_links ()
   auto results = py::array_t<int> (m_link_vec.size ());
   auto results_buf = results.request ();
   int *results_ptr = static_cast<int *> (results_buf.ptr);
-  for (int idx = 0; idx < m_link_vec.size (); idx++)
+  for (std::size_t idx = 0; idx < m_link_vec.size (); idx++)
     results_ptr[idx] = (int) m_link_vec[idx]->m_link_ID;
   return results;
 }

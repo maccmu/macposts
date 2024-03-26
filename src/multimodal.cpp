@@ -10256,22 +10256,22 @@ MNM_Dta_Multimodal::is_ok ()
 
   // check node
   printf ("Checking......Bus Transit Node consistent!\n");
-  _temp_flag = (m_bus_transit_graph.size_nodes ()
+  _temp_flag = ((std::ptrdiff_t) m_bus_transit_graph.size_nodes ()
                 >= m_config->get_int ("num_of_bus_stop_physical")
                      + m_config->get_int ("num_of_bus_stop_virtual"))
                && (m_bus_transit_graph.size_nodes ()
-                   >= TInt (m_busstop_factory->m_busstop_map.size ()));
+                   >= m_busstop_factory->m_busstop_map.size ());
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
 
   // check link
   printf ("Checking......Bus Transit Link consistent!\n");
-  _temp_flag = (m_bus_transit_graph.size_links ()
+  _temp_flag = ((std::ptrdiff_t) m_bus_transit_graph.size_links ()
                 == m_config->get_int ("num_of_bus_link")
                      + m_config->get_int ("num_of_walking_link"))
                && (m_bus_transit_graph.size_links ()
-                   == TInt (m_transitlink_factory->m_transit_link_map.size ()));
+                   == m_transitlink_factory->m_transit_link_map.size ());
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
