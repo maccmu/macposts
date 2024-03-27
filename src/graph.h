@@ -246,17 +246,17 @@ public:
 
       void step ()
       {
-        Link *current = this->current;
+        Link *cur = this->current;
         int direction = static_cast<int> (this->direction);
 
         // Invariant: before stepping to the next neighbor, the current one
         // should have never been seen.
-        assert (!(current && seen.count (current->endpoints[direction])));
-        while (current || refill)
+        assert (!(cur && seen.count (cur->endpoints[direction])));
+        while (cur || refill)
           {
-            if (!current)
+            if (!cur)
               {
-                current = refill;
+                cur = refill;
                 refill = nullptr;
                 const_cast<Direction &> (this->direction)
                   = invert (this->direction);
@@ -264,15 +264,15 @@ public:
               }
             else
               {
-                seen.insert (current->endpoints[direction]);
+                seen.insert (cur->endpoints[direction]);
               }
 
-            if (!seen.count (current->endpoints[direction]))
+            if (!seen.count (cur->endpoints[direction]))
               break;
             else
-              current = current->next[direction];
+              cur = cur->next[direction];
           }
-        this->current = current;
+        this->current = cur;
       }
 
       typename Base::reference operator* () const
@@ -413,17 +413,17 @@ public:
 
       void step ()
       {
-        Link *current = this->current;
-        if (current)
-          current = current->next[static_cast<int> (this->direction)];
-        if (!current && refill)
+        Link *cur = this->current;
+        if (cur)
+          cur = cur->next[static_cast<int> (this->direction)];
+        if (!cur && refill)
           {
-            current = refill;
+            cur = refill;
             refill = nullptr;
             const_cast<Direction &> (this->direction)
               = invert (this->direction);
           }
-        this->current = current;
+        this->current = cur;
       }
 
       bool operator== (const Iterator_ &other) const
