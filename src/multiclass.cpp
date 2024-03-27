@@ -1356,17 +1356,15 @@ MNM_Dlink_Lq_Multiclass::MNM_Dlink_Lq_Multiclass (
   m_k_j_truck = lane_hold_cap_truck * number_of_lane;
   m_C_car = lane_flow_cap_car * number_of_lane;
   m_C_truck = lane_flow_cap_truck * number_of_lane;
-  if (m_C_car * m_unit_time * m_flow_scalar < 1.)
+  if (m_C_car * unit_time * flow_scalar < 1.)
     {
-      m_C_car
-        = 1. / (m_unit_time * m_flow_scalar); // the design capacity allows at
-                                              // least one car to pass
+      m_C_car = 1. / (unit_time * flow_scalar); // the design capacity allows at
+                                                // least one car to pass
     }
-  if (m_C_truck * m_unit_time * m_flow_scalar < 1.)
+  if (m_C_truck * unit_time * flow_scalar < 1.)
     {
-      m_C_truck
-        = 1. / (m_unit_time * m_flow_scalar); // the design capacity allows at
-                                              // least one truck to pass
+      m_C_truck = 1. / (unit_time * flow_scalar); // the design capacity allows
+                                                  // at least one truck to pass
     }
   m_k_C_car = m_C_car / ffs_car;
   m_k_C_truck = m_C_truck / ffs_truck;
@@ -1570,12 +1568,13 @@ MNM_Dlink_Lq_Multiclass::evolve (TInt timestamp)
   // Move vehicle from queue to buffer
   MNM_Veh *_v;
   TInt _veh_to_move_car
-    = MNM_Ults::round (_veh_to_move * (_demand_car / _demand));
+    = MNM_Ults::round (_veh_to_move * MNM_Ults::divide (_demand_car, _demand));
   _veh_to_move_car
     = std::min (_veh_to_move_car, TInt (m_veh_queue_car.size ()));
 
   TInt _veh_to_move_truck = MNM_Ults::round (
-    _veh_to_move * (m_veh_convert_factor * _demand_truck / _demand)
+    _veh_to_move
+    * MNM_Ults::divide (m_veh_convert_factor * _demand_truck, _demand)
     / m_veh_convert_factor);
 
   _veh_to_move_truck
