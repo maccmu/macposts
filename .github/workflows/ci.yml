@@ -31,6 +31,12 @@ jobs:
         python-version: ${{ matrix.python }}
         allow-prereleases: true
 
+    - name: Enable UBSan
+      run: echo "CXXFLAGS=$UBSAN_FLAGS $CXXFLAGS" >> "$GITHUB_ENV"
+      if: runner.os != 'Windows'
+      env:
+        UBSAN_FLAGS: -fsanitize=undefined -fsanitize-undefined-trap-on-error
+
     - name: Build and install
       run: pip install --verbose .[test]
 
