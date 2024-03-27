@@ -13,13 +13,17 @@ the seemingly unmaintained SNAP library.
 
 ### Added
 
-- Windows support and compiled binary releases for Windows.
+- Windows support and compiled binary releases for Windows ([GH-55]).
 - Compiled binaries for musl. Binaries with musl should be more compatible, but
-  if the 'manylinux' build works for you, that version is still recommended.
+  if the 'manylinux' build works for you, that version is still recommended
+  ([GH-55]).
 
 ### Removed
 
-- Dependency on the SNAP library.
+- Dependency on the SNAP library ([GH-50], [GH-55]).
+
+[GH-50]: https://github.com/maccmu/macposts/pull/50
+[GH-55]: https://github.com/maccmu/macposts/pull/55
 
 ## v0.4.2 (2024-03-18)
 
