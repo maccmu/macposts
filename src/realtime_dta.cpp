@@ -1,4 +1,5 @@
 #include "realtime_dta.h"
+#include <cstring>
 
 using macposts::graph::Direction;
 
@@ -25,7 +26,7 @@ MNM_Realtime_Dta::initialize ()
   m_dta_config = new MNM_ConfReader (m_file_folder + "/config.conf", "DTA");
   m_realtime_dta_config
     = new MNM_ConfReader (m_file_folder + "/config.conf", "REALTIME_DTA");
-  m_graph = MNM_IO::build_graph (m_file_folder, m_dta_config, 0);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_dta_config);
   MNM_IO::build_od_factory (m_file_folder, m_dta_config, m_od_factory);
   MNM_IO::build_demand (m_file_folder, m_dta_config, m_od_factory);
   // m_path_table = MNM_IO::load_path_table(m_file_name, m_graph, TInt
@@ -514,12 +515,10 @@ MNM_Realtime_Dta::update_compliance_ratio (TInt assign_inter)
                 }
             }
         }
-      _tmp_ratio
-        = MNM_Ults::max (MNM_Ults::min (MNM_Ults::divide (_est_flow
-                                                            - _real_flow,
-                                                          _est_flow),
-                                        0),
-                         1);
+      _tmp_ratio = std::max (std::min (MNM_Ults::divide (_est_flow - _real_flow,
+                                                         _est_flow),
+                                       0.0),
+                             1.0);
       _vms->m_compliance_ratio = _vms->m_compliance_ratio * (1 - Learning_Rate)
                                  + _tmp_ratio * Learning_Rate;
     }
@@ -1053,8 +1052,8 @@ update_path_p (Path_Table *path_table, TInt col, TFlt step_size)
                 }
               // _path -> m_p -= step_size * _path -> buffer[col];
               // printf("Now m_p is %lf\n", _path -> m_p);
-              _path->m_p = MNM_Ults::max (_path->m_p, -Possible_Large);
-              _path->m_p = MNM_Ults::min (_path->m_p, Possible_Large);
+              _path->m_p = std::max (_path->m_p, -Possible_Large);
+              _path->m_p = std::min (_path->m_p, Possible_Large);
             }
           _it_it.second->normalize_p ();
         }

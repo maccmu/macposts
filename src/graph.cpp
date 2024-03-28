@@ -3,9 +3,7 @@
 // clang-format off
 #include "graph.h"
 #include <vector>
-
-#define assert(c) if (!(c)) __builtin_trap ()
-// clang-format on
+#include <cassert>
 
 // TODO: Turn those into real unit test cases.
 

@@ -328,7 +328,7 @@ MNM_Dta::build_from_files ()
                             m_node_factory);
   std::cout << "# of OD pairs: " << m_od_factory->m_origin_map.size () << "\n";
   // std::cout << m_od_factory -> m_destination_map.size() << "\n";
-  m_graph = MNM_IO::build_graph (m_file_folder, m_config, 0);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_config);
   MNM_IO::build_demand (m_file_folder, m_config, m_od_factory);
   MNM_IO::read_origin_vehicle_label_ratio (m_file_folder, m_config,
                                            m_od_factory);
@@ -400,18 +400,18 @@ MNM_Dta::is_ok ()
 
   // check node
   printf ("Checking......Driving Node consistent!\n");
-  _temp_flag
-    = (m_graph.size_nodes () == m_config->get_int ("num_of_node"))
-      && (m_graph.size_nodes () == TInt (m_node_factory->m_node_map.size ()));
+  _temp_flag = ((std::ptrdiff_t) m_graph.size_nodes ()
+                == m_config->get_int ("num_of_node"))
+               && (m_graph.size_nodes () == m_node_factory->m_node_map.size ());
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
 
   // check link
   printf ("Checking......Driving Link consistent!\n");
-  _temp_flag
-    = (m_graph.size_links () == m_config->get_int ("num_of_link"))
-      && (m_graph.size_links () == TInt (m_link_factory->m_link_map.size ()));
+  _temp_flag = ((std::ptrdiff_t) m_graph.size_links ()
+                == m_config->get_int ("num_of_link"))
+               && (m_graph.size_links () == m_link_factory->m_link_map.size ());
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
@@ -797,8 +797,8 @@ print_vehicle_statistics (MNM_Veh_Factory *veh_factory)
   Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d\n \
   Total Travel Time: %.2f intervals\n \
   ############################################### Vehicle Statistics ###############################################\n",
-    veh_factory->m_num_veh (), veh_factory->m_enroute (),
-    veh_factory->m_finished (), veh_factory->m_total_time ());
+    veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
+    veh_factory->m_total_time);
   return 0;
 }
 
@@ -811,11 +811,10 @@ print_vehicle_info (MNM_Veh_Factory *veh_factory)
       _veh = _map_it.second;
       printf ("Vehicle ID %d, from origin node %d to destination node %d, is "
               "current on link %d and heads to link %d\n",
-              _veh->m_veh_ID (),
-              _veh->get_origin ()->m_origin_node->m_node_ID (),
-              _veh->get_destination ()->m_dest_node->m_node_ID (),
-              _veh->get_current_link ()->m_link_ID (),
-              _veh->get_next_link ()->m_link_ID ());
+              _veh->m_veh_ID, _veh->get_origin ()->m_origin_node->m_node_ID,
+              _veh->get_destination ()->m_dest_node->m_node_ID,
+              _veh->get_current_link ()->m_link_ID,
+              _veh->get_next_link ()->m_link_ID);
     }
   return 0;
 }

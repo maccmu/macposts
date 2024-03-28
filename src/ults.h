@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Snap.h>
-
 #include <cstdlib>
 #include <fstream>
 #include <map>
@@ -10,21 +8,10 @@
 
 #include "common.h"
 
-template <> struct std::hash<TInt>
-{
-  std::size_t operator() (const TInt &s) const
-  {
-    return std::hash<int> () (s ());
-  }
-};
-
 namespace MNM_Ults
 {
 void set_random_state (unsigned int s);
 TInt round (TFlt in);
-TFlt min (TFlt a, TFlt b);
-TInt min (TInt a, TInt b);
-TFlt max (TFlt a, TFlt b);
 TFlt divide (TFlt a, TFlt b);
 TInt mod (TInt a, TInt b);
 TFlt rand_flt ();
@@ -39,7 +26,6 @@ bool approximate_less_than (TFlt a, TFlt b, float p = 1e-4);
 int round_up_time (TFlt time, float p = 1e-4);
 int round_down_time (TFlt time);
 
-PNEGraph reverse_graph (const PNEGraph &graph);
 macposts::Graph reverse_graph (const macposts::Graph &graph);
 }
 

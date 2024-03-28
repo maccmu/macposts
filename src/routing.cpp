@@ -40,7 +40,6 @@ MNM_Routing_Random::update_routing (TInt timestamp)
   MNM_Origin *_origin;
   MNM_DMOND *_origin_node;
   TInt _node_ID;
-  TInt _out_ID;
   MNM_Dlink *_next_link;
   MNM_Dlink *_link;
   // printf("MNM_Routing: route the origin vehciles.\n");

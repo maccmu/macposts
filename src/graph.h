@@ -26,6 +26,7 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -108,27 +109,6 @@ private:
     }
     reference operator* () const { return *current; }
 
-    // Convert from a non-const iterator to a const one
-    //
-    // NOTE: Implicit conversion is fine here because the two types of iterators
-    // are almost the same, and such conversions are quite common and somewhat
-    // expected (all STL containers support implicit conversion from `iterator'
-    // to `const_iterator').
-    //
-    // HACK: This is really ugly, and relies on some (maybe false) assumptions
-    // on the compiler and the implementation of the concrete iterator type --
-    // the memory layout of a const iterator is the same as the non-const
-    // counter part. Perhaps we should define this method individually.
-    template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
-    operator Type<true> () const
-    {
-      auto r = reinterpret_cast<const Type<true> *> (this);
-      // HACK: This is to circumvent strict aliasing violation. We should really
-      // use `std::launder' but that requires C++17.
-      asm ("" : "+r"(r));
-      return *r;
-    }
-
   protected:
     State current;
     const Direction direction;
@@ -203,6 +183,13 @@ public:
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
 
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<!c> () const
+      {
+        auto r = Iterator_<!c> (this->current);
+        return r;
+      }
+
       typename Base::reference operator* () const
       {
         return *this->current->second;
@@ -250,25 +237,26 @@ public:
       {
       }
 
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<!c> () const
+      {
+        auto r = Iterator_<!c> (this->current, this->direction, refill);
+        return r;
+      }
+
       void step ()
       {
-        Link *current = this->current;
+        Link *cur = this->current;
         int direction = static_cast<int> (this->direction);
 
         // Invariant: before stepping to the next neighbor, the current one
         // should have never been seen.
-        //
-        // TODO: Switch to `assert'.
-#ifndef NDEBUG
-        if (current && seen.count (current->endpoints[direction]))
-          __builtin_trap ();
-#endif
-
-        while (current || refill)
+        assert (!(cur && seen.count (cur->endpoints[direction])));
+        while (cur || refill)
           {
-            if (!current)
+            if (!cur)
               {
-                current = refill;
+                cur = refill;
                 refill = nullptr;
                 const_cast<Direction &> (this->direction)
                   = invert (this->direction);
@@ -276,15 +264,15 @@ public:
               }
             else
               {
-                seen.insert (current->endpoints[direction]);
+                seen.insert (cur->endpoints[direction]);
               }
 
-            if (!seen.count (current->endpoints[direction]))
+            if (!seen.count (cur->endpoints[direction]))
               break;
             else
-              current = current->next[direction];
+              cur = cur->next[direction];
           }
-        this->current = current;
+        this->current = cur;
       }
 
       typename Base::reference operator* () const
@@ -363,6 +351,13 @@ public:
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
 
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<!c> () const
+      {
+        auto r = Iterator_<!c> (this->current);
+        return r;
+      }
+
       typename Base::reference operator* () const
       {
         return *this->current->second;
@@ -409,19 +404,26 @@ public:
       {
       }
 
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<!c> () const
+      {
+        auto r = Iterator_<!c> (this->current, this->direction, refill);
+        return r;
+      }
+
       void step ()
       {
-        Link *current = this->current;
-        if (current)
-          current = current->next[static_cast<int> (this->direction)];
-        if (!current && refill)
+        Link *cur = this->current;
+        if (cur)
+          cur = cur->next[static_cast<int> (this->direction)];
+        if (!cur && refill)
           {
-            current = refill;
+            cur = refill;
             refill = nullptr;
             const_cast<Direction &> (this->direction)
               = invert (this->direction);
           }
-        this->current = current;
+        this->current = cur;
       }
 
       bool operator== (const Iterator_ &other) const

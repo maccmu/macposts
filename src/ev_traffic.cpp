@@ -82,11 +82,11 @@ MNM_Veh_Electrified::update_miles_traveled (MNM_Dlink *link)
 MNM_Veh_Electrified_Delivery::MNM_Veh_Electrified_Delivery (
   TInt ID, TInt start_time, TFlt starting_range, bool using_roadside_charging,
   TFlt full_range)
-    : MNM_Veh_Electrified::MNM_Veh_Electrified (ID, start_time, starting_range,
+    : MNM_Veh::MNM_Veh (ID, start_time),
+      MNM_Veh_Electrified::MNM_Veh_Electrified (ID, start_time, starting_range,
                                                 using_roadside_charging,
                                                 full_range),
-      MNM_Veh_Delivery::MNM_Veh_Delivery (ID, start_time),
-      MNM_Veh::MNM_Veh (ID, start_time)
+      MNM_Veh_Delivery::MNM_Veh_Delivery (ID, start_time)
 {
   ;
 }
@@ -443,7 +443,7 @@ MNM_Charging_Station::print_info ()
 {
   printf ("Charging station %d, Time-dependent cumulative number of charged "
           "vehicles:\n",
-          m_node_ID ());
+          m_node_ID);
   std::cout << m_N_out->to_string () << std::endl;
   printf ("####################################################################"
           "######\n");
@@ -584,8 +584,8 @@ MNM_Charging_Station::evolve (TInt timestamp)
                       "node, no exit!\n");
               printf ("MNM_Charging_Station::evolve, vehicle is on link %d, "
                       "node %d, next link ID is: %d\n",
-                      _in_link->m_link_ID (), m_node_ID (),
-                      (*_veh_it)->get_next_link ()->m_link_ID ());
+                      _in_link->m_link_ID, m_node_ID,
+                      (*_veh_it)->get_next_link ()->m_link_ID);
               exit (-1);
             }
           auto _veh = dynamic_cast<MNM_Veh_Electrified *> (*_veh_it);
@@ -920,12 +920,10 @@ MNM_Routing_Adaptive_With_POIs::check_od_candidate_poi_table_connectivity ()
                   printf ("Disconnectivity in Origin %d (Node: %d) - "
                           "Destination %d (Node: %d) pair, cannot travel from "
                           "Origin %d (Node: %d) to POI Node %d",
-                          _origin->m_Origin_ID (),
-                          _origin->m_origin_node->m_node_ID (),
-                          _dest->m_Dest_ID (), _dest->m_dest_node->m_node_ID (),
-                          _origin->m_Origin_ID (),
-                          _origin->m_origin_node->m_node_ID (),
-                          _node->m_node_ID ());
+                          _origin->m_Origin_ID,
+                          _origin->m_origin_node->m_node_ID, _dest->m_Dest_ID,
+                          _dest->m_dest_node->m_node_ID, _origin->m_Origin_ID,
+                          _origin->m_origin_node->m_node_ID, _node->m_node_ID);
                   _node_it = _it_it.second->erase (_node_it);
                   continue;
                 }
@@ -941,11 +939,10 @@ MNM_Routing_Adaptive_With_POIs::check_od_candidate_poi_table_connectivity ()
                   printf ("Disconnectivity in Origin %d (Node: %d) - "
                           "Destination %d (Node: %d) pair, cannot travel from "
                           "POI Node %d to Destination %d (Node: %d)",
-                          _origin->m_Origin_ID (),
-                          _origin->m_origin_node->m_node_ID (),
-                          _dest->m_Dest_ID (), _dest->m_dest_node->m_node_ID (),
-                          _node->m_node_ID (), _dest->m_Dest_ID (),
-                          _dest->m_dest_node->m_node_ID ());
+                          _origin->m_Origin_ID,
+                          _origin->m_origin_node->m_node_ID, _dest->m_Dest_ID,
+                          _dest->m_dest_node->m_node_ID, _node->m_node_ID,
+                          _dest->m_Dest_ID, _dest->m_dest_node->m_node_ID);
                   _node_it = _it_it.second->erase (_node_it);
                   continue;
                 }
@@ -1882,10 +1879,10 @@ MNM_IO_EV::save_charging_station_record (const std::string &file_folder,
         {
           _charging_station->save_cc (
             file_folder + "/charging_station_"
-            + std::to_string (_charging_station->m_node_ID ()) + "_cc.txt");
+            + std::to_string (_charging_station->m_node_ID) + "_cc.txt");
           _charging_station->save_waiting_time_record (
             file_folder + "/charging_station_"
-            + std::to_string (_charging_station->m_node_ID ()) + "_wt.txt");
+            + std::to_string (_charging_station->m_node_ID) + "_wt.txt");
         }
     }
   return 0;
@@ -1970,7 +1967,7 @@ MNM_Dta_EV::build_from_files ()
                                   m_node_factory);
   std::cout << "# of OD pairs: " << m_od_factory->m_origin_map.size () << "\n";
 
-  m_graph = MNM_IO::build_graph (m_file_folder, m_config, 0);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_config);
 
   dynamic_cast<MNM_Veh_Factory_EV *> (m_veh_factory)
     ->set_ev_range (m_config->get_float ("EV_starting_range_roadside_charging"),
@@ -2050,20 +2047,20 @@ MNM_Dta_EV::is_ok ()
 
   // check node
   printf ("Checking......Driving Node consistent!\n");
-  _temp_flag
-    = (m_graph.size_nodes ()
-       == m_config->get_int ("num_of_node")
-            + m_config->get_int ("num_of_charging_station"))
-      && (m_graph.size_nodes () == TInt (m_node_factory->m_node_map.size ()));
+  _temp_flag = ((std::ptrdiff_t) m_graph.size_nodes ()
+                == m_config->get_int ("num_of_node")
+                     + m_config->get_int ("num_of_charging_station"))
+               && ((std::ptrdiff_t) m_graph.size_nodes ()
+                   == TInt (m_node_factory->m_node_map.size ()));
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
 
   // check link
   printf ("Checking......Driving Link consistent!\n");
-  _temp_flag
-    = (m_graph.size_links () == m_config->get_int ("num_of_link"))
-      && (m_graph.size_links () == TInt (m_link_factory->m_link_map.size ()));
+  _temp_flag = ((std::ptrdiff_t) m_graph.size_links ()
+                == m_config->get_int ("num_of_link"))
+               && (m_graph.size_links () == m_link_factory->m_link_map.size ());
   _flag = _flag && _temp_flag;
   if (_temp_flag)
     printf ("Passed!\n");
@@ -2082,8 +2079,8 @@ MNM_Dta_EV::is_ok ()
       _node_ID = _origin_map_it->second->m_origin_node->m_node_ID;
       const auto &n = m_graph.get_node (_node_ID);
       _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID)
-        && !m_graph.connections (n, Direction::Outgoing).empty()
-        && m_graph.connections (n, Direction::Incoming).empty();
+                   && !m_graph.connections (n, Direction::Outgoing).empty ()
+                   && m_graph.connections (n, Direction::Incoming).empty ();
     }
   std::unordered_map<TInt, MNM_Destination *>::iterator _dest_map_it;
   for (_dest_map_it = m_od_factory->m_destination_map.begin ();
@@ -2092,8 +2089,8 @@ MNM_Dta_EV::is_ok ()
       _node_ID = _dest_map_it->second->m_dest_node->m_node_ID;
       const auto &n = m_graph.get_node (_node_ID);
       _temp_flag = _temp_flag && (m_graph.get_id (n) == _node_ID)
-        && m_graph.connections (n, Direction::Outgoing).empty()
-        && !m_graph.connections (n, Direction::Incoming).empty();
+                   && m_graph.connections (n, Direction::Outgoing).empty ()
+                   && !m_graph.connections (n, Direction::Incoming).empty ();
     }
   _flag = _flag && _temp_flag;
   if (_temp_flag)

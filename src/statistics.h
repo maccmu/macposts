@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "dlink.h"
 #include "dnode.h"
 #include "enum.h"
@@ -70,7 +70,7 @@ public:
   virtual int init_record () override;
   TInt m_n;
 
-// private:
+  // private:
   std::unordered_map<TInt, TFlt> m_to_be_volume;
   std::unordered_map<TInt, TFlt> m_to_be_tt;
 };

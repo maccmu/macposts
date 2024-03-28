@@ -1,4 +1,5 @@
 #include "delivery_traffic.h"
+#include <cstring>
 
 //#################################################################
 //                       Delivery Vehicle
@@ -39,7 +40,7 @@ MNM_Veh_Delivery::get_current_od ()
 int
 MNM_Veh_Delivery::move_to_next_od ()
 {
-  if (m_current_OD_index < m_multi_od_seq->size () - 1)
+  if (m_current_OD_index < (std::ptrdiff_t) m_multi_od_seq->size () - 1)
     {
       m_current_OD_index += 1;
       set_origin (m_multi_od_seq->at (m_current_OD_index).first);
@@ -864,7 +865,7 @@ MNM_Dta_Delivery::build_from_files ()
                                               m_od_factory, m_node_factory);
   std::cout << "# of OD pairs: " << m_od_factory->m_origin_map.size () << "\n";
 
-  m_graph = MNM_IO::build_graph (m_file_folder, m_config, 0);
+  m_graph = MNM_IO::build_graph (m_file_folder, m_config);
 
   MNM_IO::build_demand (m_file_folder, m_config, m_od_factory);
   MNM_IO_Delivery::build_demand_multi_OD_seq (m_file_folder, m_config,

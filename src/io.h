@@ -41,29 +41,16 @@ public:
                               MNM_OD_Factory *od_factory,
                               MNM_Node_Factory *node_factory,
                               const std::string &file_name = "MNM_input_od");
-  static PNEGraph build_graph (const std::string &file_folder,
-                               MNM_ConfReader *conf_reader);
-  // FIXME: Currently we use a phantom argument for function resolution. This is
-  // only temporary and we should remove it (and the above overlord) once we
-  // have successfully migrated to `macposts::Graph'.
   static macposts::Graph build_graph (const std::string &file_folder,
-                                      MNM_ConfReader *conf_reader,
-                                      int _phantom);
+                                      MNM_ConfReader *conf_reader);
   static int build_demand (const std::string &file_folder,
                            MNM_ConfReader *conf_reader,
                            MNM_OD_Factory *od_factory,
                            const std::string &file_name = "MNM_input_demand");
   static Path_Table *load_path_table (const std::string &file_name,
-                                      const PNEGraph &graph, TInt num_path,
-                                      bool w_buffer = false, bool w_ID = false);
-  static Path_Table *load_path_table (const std::string &file_name,
                                       const macposts::Graph &graph,
                                       TInt num_path, bool w_buffer = false,
                                       bool w_ID = false);
-  static int build_vms_facotory (const std::string &file_folder, PNEGraph graph,
-                                 TInt num_vms, MNM_Vms_Factory *vms_factory,
-                                 const std::string &file_name
-                                 = "MNM_input_vms");
   static int build_vms_facotory (const std::string &file_folder,
                                  const macposts::Graph &graph, TInt num_vms,
                                  MNM_Vms_Factory *vms_factory,
@@ -95,19 +82,18 @@ public:
     const TInt num_rows, const TInt num_timestamps,
     const std::string &file_name = "tdsp_node_cost");
 
-  static int read_origin_vehicle_label_ratio (const std::string &file_folder,
-                                              MNM_ConfReader *conf_reader,
-                                              MNM_OD_Factory *od_factory,
-                                              const std::string &file_name
-                                              = "MNM_input_origin_vehicle_label");
+  static int read_origin_vehicle_label_ratio (
+    const std::string &file_folder, MNM_ConfReader *conf_reader,
+    MNM_OD_Factory *od_factory,
+    const std::string &file_name = "MNM_input_origin_vehicle_label");
 
-  static int read_vehicle_tracking_setting (const std::string &file_folder,
-                                              std::vector<std::pair<int, int>> *od_pair_tracked,
-                                              std::vector<int> *interval_tracked,
-                                              const std::string &od_tracking_file_name
-                                              = "MNM_input_od_tracking",
-                                              const std::string &interval_tracking_file_name
-                                              = "MNM_input_interval_tracking");
+  static int read_vehicle_tracking_setting (
+    const std::string &file_folder,
+    std::vector<std::pair<int, int>> *od_pair_tracked,
+    std::vector<int> *interval_tracked,
+    const std::string &od_tracking_file_name = "MNM_input_od_tracking",
+    const std::string &interval_tracking_file_name
+    = "MNM_input_interval_tracking");
 
   // private:
   static std::vector<std::string> split (const std::string &text, char sep);

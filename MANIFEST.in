@@ -16,12 +16,6 @@ graft lib/eigen/cmake
 include lib/eigen/CMakeLists.txt
 include lib/eigen/COPYING.*
 
-# SNAP
-graft lib/snap/snap-core
-graft lib/snap/glib-core
-include lib/snap/CMakeLists.txt
-include lib/snap/License.txt
-
 # macposts
 include src/*.h src/*.cpp
 include macposts/_ext/*.h macposts/_ext/*.cpp

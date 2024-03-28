@@ -385,6 +385,7 @@ public:
   virtual ~MNM_Destination_Multimodal () override;
   int evolve (TInt timestamp);
   virtual int receive (TInt timestamp) override;
+  using MNM_Destination_Multiclass::receive;
   int receive (TInt timestamp, MNM_Routing_Multimodal_Hybrid *routing,
                MNM_Veh_Factory *veh_factory,
                MNM_Passenger_Factory *passenger_factory, bool del = true);
@@ -1042,13 +1043,9 @@ public:
     MNM_Transit_Link_Factory *transit_link_factory,
     MNM_Busstop_Factory *busstop_factory, MNM_Link_Factory *link_factory,
     const std::string &file_name = "bus_link");
-  static PNEGraph
-  build_bus_transit_graph (MNM_ConfReader *conf_reader,
-                           MNM_Transit_Link_Factory *transit_link_factory);
   static macposts::Graph
   build_bus_transit_graph (MNM_ConfReader *conf_reader,
-                           MNM_Transit_Link_Factory *transit_link_factory,
-                           int _phantom);
+                           MNM_Transit_Link_Factory *transit_link_factory);
   static int build_passenger_demand (
     const std::string &file_folder, MNM_ConfReader *conf_reader,
     MNM_OD_Factory *od_factory,

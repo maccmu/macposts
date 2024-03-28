@@ -1,5 +1,6 @@
 // Bi-class DTA
 
+#include <cfloat>
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -7,7 +8,7 @@
 #include <unordered_map>
 
 #include "utils.h"
-#include <Snap.h>
+#include <common.h>
 #include <multiclass.h>
 #include <multimodal.h>
 
@@ -549,7 +550,7 @@ Mcdta::get_registered_links ()
   auto results = py::array_t<int> (m_link_vec.size ());
   auto results_buf = results.request ();
   int *results_ptr = static_cast<int *> (results_buf.ptr);
-  for (int idx = 0; idx < m_link_vec.size (); idx++)
+  for (std::size_t idx = 0; idx < m_link_vec.size (); idx++)
     results_ptr[idx] = (int) m_link_vec[idx]->m_link_ID;
   return results;
 }
@@ -557,7 +558,7 @@ Mcdta::get_registered_links ()
 int
 Mcdta::get_cur_loading_interval ()
 {
-  return m_mcdta->m_current_loading_interval ();
+  return m_mcdta->m_current_loading_interval;
 }
 
 std::string
@@ -612,7 +613,7 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   _link = _link_it.second;
                   _link_m = dynamic_cast<MNM_Dlink_Multiclass *> (_link);
                   _str1 = std::to_string (int (_iter)) + " ";
-                  _str1 += std::to_string (_link->m_link_ID ()) + " ";
+                  _str1 += std::to_string (_link->m_link_ID) + " ";
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
                                get_link_inflow_car (_link_m, _iter,
@@ -904,7 +905,7 @@ Mcdta::build_link_cost_map (bool with_congestion_indicator)
         }
 
       std::cout << "********************** build_link_cost_map link "
-                << _link->m_link_ID () << " **********************\n";
+                << _link->m_link_ID << " **********************\n";
       for (int i = 0; i < get_cur_loading_interval (); i++)
         {
           m_link_tt_map[_link_it.first][i] = MNM_DTA_GRADIENT::
@@ -1433,7 +1434,7 @@ Mcdta::get_waiting_time_at_intersections ()
     {
       result_ptr[i]
         = MNM_DTA_GRADIENT::get_average_waiting_time_at_intersection (
-          m_link_vec[i]) (); // seconds
+          m_link_vec[i]); // seconds
     }
 
   return result;
@@ -1450,7 +1451,7 @@ Mcdta::get_waiting_time_at_intersections_car ()
     {
       result_ptr[i]
         = MNM_DTA_GRADIENT::get_average_waiting_time_at_intersection_car (
-          m_link_vec[i]) (); // seconds
+          m_link_vec[i]); // seconds
     }
 
   return result;
@@ -1467,7 +1468,7 @@ Mcdta::get_waiting_time_at_intersections_truck ()
     {
       result_ptr[i]
         = MNM_DTA_GRADIENT::get_average_waiting_time_at_intersection_truck (
-          m_link_vec[i]) (); // seconds
+          m_link_vec[i]); // seconds
     }
 
   return result;
@@ -1482,7 +1483,7 @@ Mcdta::get_link_spillback ()
   int *result_ptr = (int *) result_buf.ptr;
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
-      result_ptr[i] = MNM_DTA_GRADIENT::get_is_spillback (m_link_vec[i]) ();
+      result_ptr[i] = MNM_DTA_GRADIENT::get_is_spillback (m_link_vec[i]);
     }
 
   return result;
@@ -1527,7 +1528,7 @@ Mcdta::get_avg_link_on_path_tt_car (py::array_t<int> link_IDs,
                 = MNM_DTA_GRADIENT::
                     get_travel_time_car (_mclink, TFlt (start_ptr[t] + 1),
                                          m_mcdta->m_unit_time,
-                                         m_mcdta->m_current_loading_interval) ()
+                                         m_mcdta->m_current_loading_interval)
                   * m_mcdta->m_unit_time;
               if (_tmp
                   > TT_UPPER_BOUND * (_mclink->m_length / _mclink->m_ffs_car))
@@ -1589,8 +1590,7 @@ Mcdta::get_avg_link_on_path_tt_truck (py::array_t<int> link_IDs,
                 = MNM_DTA_GRADIENT::
                     get_travel_time_truck (_mclink, TFlt (start_ptr[t] + 1),
                                            m_mcdta->m_unit_time,
-                                           m_mcdta
-                                             ->m_current_loading_interval) ()
+                                           m_mcdta->m_current_loading_interval)
                   * m_mcdta->m_unit_time;
               if (_tmp
                   > TT_UPPER_BOUND * (_mclink->m_length / _mclink->m_ffs_truck))
@@ -1638,8 +1638,7 @@ Mcdta::get_path_tt_car (py::array_t<int> link_IDs,
   for (int i = 0; i < links_buf.shape[0]; i++)
     {
       _link = m_mcdta->m_link_factory->get_link (TInt (links_ptr[i]));
-      if (MNM_Dlink_Multiclass *_mclink
-          = dynamic_cast<MNM_Dlink_Multiclass *> (_link))
+      if (dynamic_cast<MNM_Dlink_Multiclass *> (_link))
         {
           _path->m_link_vec.push_back (links_ptr[i]);
           _path->m_node_vec.push_back (_link->m_from_node->m_node_ID);
@@ -1709,8 +1708,7 @@ Mcdta::get_path_tt_truck (py::array_t<int> link_IDs,
   for (int i = 0; i < links_buf.shape[0]; i++)
     {
       _link = m_mcdta->m_link_factory->get_link (TInt (links_ptr[i]));
-      if (MNM_Dlink_Multiclass *_mclink
-          = dynamic_cast<MNM_Dlink_Multiclass *> (_link))
+      if (dynamic_cast<MNM_Dlink_Multiclass *> (_link))
         {
           _path->m_link_vec.push_back (links_ptr[i]);
           _path->m_node_vec.push_back (_link->m_from_node->m_node_ID);
@@ -1922,7 +1920,7 @@ Mcdta::get_car_link_tt (py::array_t<double> start_intervals, bool return_inf)
           double _tmp = MNM_DTA_GRADIENT::
             get_travel_time_car (m_link_vec[i], TFlt (start_ptr[t] + 1),
                                  m_mcdta->m_unit_time,
-                                 m_mcdta->m_current_loading_interval) ();
+                                 m_mcdta->m_current_loading_interval);
           if (_tmp * m_mcdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec[i]->m_length / m_link_vec[i]->m_ffs_car))
@@ -1995,7 +1993,7 @@ Mcdta::get_car_link_tt_robust (py::array_t<double> start_intervals,
                                         TFlt (end_ptr[t] + 1),
                                         m_mcdta->m_unit_time,
                                         m_mcdta->m_current_loading_interval,
-                                        num_trials) ();
+                                        num_trials);
           if (_tmp * m_mcdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec[i]->m_length / m_link_vec[i]->m_ffs_car))
@@ -2045,7 +2043,7 @@ Mcdta::get_truck_link_tt (py::array_t<double> start_intervals, bool return_inf)
           double _tmp = MNM_DTA_GRADIENT::
             get_travel_time_truck (m_link_vec[i], TFlt (start_ptr[t] + 1),
                                    m_mcdta->m_unit_time,
-                                   m_mcdta->m_current_loading_interval) ();
+                                   m_mcdta->m_current_loading_interval);
           if (_tmp * m_mcdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec[i]->m_length / m_link_vec[i]->m_ffs_truck))
@@ -2119,7 +2117,7 @@ Mcdta::get_truck_link_tt_robust (py::array_t<double> start_intervals,
                                           TFlt (end_ptr[t] + 1),
                                           m_mcdta->m_unit_time,
                                           m_mcdta->m_current_loading_interval,
-                                          num_trials) ();
+                                          num_trials);
           if (_tmp * m_mcdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec[i]->m_length / m_link_vec[i]->m_ffs_truck))
@@ -2170,7 +2168,7 @@ Mcdta::get_car_link_speed (py::array_t<double> start_intervals)
             = MNM_DTA_GRADIENT::
                 get_travel_time_car (m_link_vec[i], TFlt (start_ptr[t] + 1),
                                      m_mcdta->m_unit_time,
-                                     m_mcdta->m_current_loading_interval) ()
+                                     m_mcdta->m_current_loading_interval)
               * m_mcdta->m_unit_time; // seconds
           result_ptr[i * l + t]
             = (m_link_vec[i]->m_length) / _tt * 3600 / 1600; // mile per hour
@@ -2209,7 +2207,7 @@ Mcdta::get_truck_link_speed (py::array_t<double> start_intervals)
             = MNM_DTA_GRADIENT::
                 get_travel_time_truck (m_link_vec[i], TFlt (start_ptr[t] + 1),
                                        m_mcdta->m_unit_time,
-                                       m_mcdta->m_current_loading_interval) ()
+                                       m_mcdta->m_current_loading_interval)
               * m_mcdta->m_unit_time; // seconds
           result_ptr[i * l + t]
             = (m_link_vec[i]->m_length) / _tt * 3600 / 1600; // mile per hour
@@ -2266,7 +2264,7 @@ Mcdta::get_link_car_inflow (py::array_t<int> start_intervals,
           result_ptr[i * l + t]
             = MNM_DTA_GRADIENT::get_link_inflow_car (m_link_vec[i],
                                                      TFlt (start_ptr[t]),
-                                                     TFlt (end_ptr[t])) ();
+                                                     TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -2321,7 +2319,7 @@ Mcdta::get_link_truck_inflow (py::array_t<int> start_intervals,
           result_ptr[i * l + t]
             = MNM_DTA_GRADIENT::get_link_inflow_truck (m_link_vec[i],
                                                        TFlt (start_ptr[t]),
-                                                       TFlt (end_ptr[t])) ();
+                                                       TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -2748,12 +2746,12 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
   std::vector<std::pair<MNM_Destination *, TFlt *>> pair_ptrs_2
     = std::vector<std::pair<MNM_Destination *, TFlt *>> ();
 
-  for (size_t i = 0; i < num_links; ++i)
+  for (int i = 0; i < num_links; ++i)
     {
       result_ptr[i] = 0;
     }
 
-  for (size_t i = 0; i < num_links; ++i)
+  for (int i = 0; i < num_links; ++i)
     {
       // generate new path including this link
       auto &&sd = m_mcdta->m_graph.get_endpoints (m_link_vec[i]->m_link_ID);
@@ -2797,7 +2795,7 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
                                               _shortest_path_tree_reversed);
         }
 
-      for (size_t k = 0; k < max_iter; ++k)
+      for (int k = 0; k < max_iter; ++k)
         {
           _origin = nullptr;
           _dest = nullptr;
@@ -2905,7 +2903,7 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
               m_path_vec.push_back (_path);
 
               // check if this new path cover other links
-              for (size_t j = 0; j < num_links; ++j)
+              for (int j = 0; j < num_links; ++j)
                 {
                   if (i != j && _path->is_link_in (links_ptr[j]))
                     {
@@ -2961,8 +2959,8 @@ Mcdta::get_car_link_out_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -2986,8 +2984,8 @@ Mcdta::get_car_link_in_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -3011,8 +3009,8 @@ Mcdta::get_truck_link_out_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -3036,8 +3034,8 @@ Mcdta::get_truck_link_in_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -3069,11 +3067,11 @@ Mcdta::get_enroute_and_queue_veh_stats_agg ()
       for (int i = 0; i < _tot_interval; ++i)
         {
           result_ptr[i * 3]
-            = (m_mcdta->m_enroute_veh_num[i]()) / (m_mcdta->m_flow_scalar);
+            = (m_mcdta->m_enroute_veh_num[i]) / (m_mcdta->m_flow_scalar);
           result_ptr[i * 3 + 1]
-            = (m_mcdta->m_queue_veh_num[i]()) / (m_mcdta->m_flow_scalar);
+            = (m_mcdta->m_queue_veh_num[i]) / (m_mcdta->m_flow_scalar);
           result_ptr[i * 3 + 2]
-            = (m_mcdta->m_enroute_veh_num[i]() - m_mcdta->m_queue_veh_num[i]())
+            = (m_mcdta->m_enroute_veh_num[i] - m_mcdta->m_queue_veh_num[i])
               / (m_mcdta->m_flow_scalar);
         }
     }
@@ -3146,7 +3144,7 @@ Mcdta::get_car_link_out_num (int link_ID, double time)
   // printf("1\n");
   TFlt result = _link->m_N_out_car->get_result (TFlt (time));
   // printf("%lf\n", result());
-  return result ();
+  return result;
 }
 
 double
@@ -3161,7 +3159,7 @@ Mcdta::get_truck_link_out_num (int link_ID, double time)
         "Error, Mcdta::get_truck_link_out_num, cc not installed");
     }
   TFlt result = _link->m_N_out_truck->get_result (TFlt (time));
-  return result ();
+  return result;
 }
 
 py::array_t<double>
@@ -3191,7 +3189,7 @@ Mcdta::get_car_dar_matrix (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
       // printf("Current processing time: %d\n", t);
-      std::cout << "************ Car DAR link " << m_link_vec[i]->m_link_ID ()
+      std::cout << "************ Car DAR link " << m_link_vec[i]->m_link_ID
                 << " ************\n";
       for (int t = 0; t < l; ++t)
         {
@@ -3229,13 +3227,13 @@ Mcdta::get_car_dar_matrix (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
     }
   for (size_t i = 0; i < _record.size (); ++i)
     {
@@ -3271,7 +3269,7 @@ Mcdta::get_truck_dar_matrix (py::array_t<int> start_intervals,
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
-      std::cout << "************ Truck DAR link " << m_link_vec[i]->m_link_ID ()
+      std::cout << "************ Truck DAR link " << m_link_vec[i]->m_link_ID
                 << " ************\n";
       for (int t = 0; t < l; ++t)
         {
@@ -3308,13 +3306,13 @@ Mcdta::get_truck_dar_matrix (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
     }
   for (size_t i = 0; i < _record.size (); ++i)
     {
@@ -3373,7 +3371,7 @@ Mcdta::save_car_dar_matrix (py::array_t<int> start_intervals,
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
-      std::cout << "************ Car DAR link " << m_link_vec[i]->m_link_ID ()
+      std::cout << "************ Car DAR link " << m_link_vec[i]->m_link_ID
                 << " ************\n";
       for (int t = 0; t < l; ++t)
         {
@@ -3408,11 +3406,10 @@ Mcdta::save_car_dar_matrix (py::array_t<int> start_intervals,
               // assume path_ID starts from zero
               _y = tmp_record->path_ID
                    + _num_path
-                       * tmp_record
-                           ->assign_int (); // # of paths * # of intervals
+                       * tmp_record->assign_int; // # of paths * # of intervals
               _str = std::to_string (_x) + ",";
               _str += std::to_string (_y) + ",";
-              _str += std::to_string (tmp_record->flow () / f_ptr[_y]) + "\n";
+              _str += std::to_string (tmp_record->flow / f_ptr[_y]) + "\n";
 
               // _str = std::to_string(tmp_record -> path_ID()) + ","
               // // the count of 15 min interval
@@ -3487,7 +3484,7 @@ Mcdta::save_truck_dar_matrix (py::array_t<int> start_intervals,
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
-      std::cout << "************ Truck DAR link " << m_link_vec[i]->m_link_ID ()
+      std::cout << "************ Truck DAR link " << m_link_vec[i]->m_link_ID
                 << " ************\n";
       for (int t = 0; t < l; ++t)
         {
@@ -3522,11 +3519,10 @@ Mcdta::save_truck_dar_matrix (py::array_t<int> start_intervals,
               // assume path_ID starts from zero
               _y = tmp_record->path_ID
                    + _num_path
-                       * tmp_record
-                           ->assign_int (); // # of paths * # of intervals
+                       * tmp_record->assign_int; // # of paths * # of intervals
               _str = std::to_string (_x) + ",";
               _str += std::to_string (_y) + ",";
-              _str += std::to_string (tmp_record->flow () / f_ptr[_y]) + "\n";
+              _str += std::to_string (tmp_record->flow / f_ptr[_y]) + "\n";
 
               // _str = std::to_string(tmp_record -> path_ID()) + ","
               // // the count of 15 min interval
@@ -4083,13 +4079,13 @@ Mcdta::get_car_ltg_matrix (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
       result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
-      result_ptr[i * 5 + 4] = tmp_record->gradient ();
+      result_ptr[i * 5 + 4] = tmp_record->gradient;
       // printf("path ID: %f, departure assign interval (5 s): %f, link ID: %f,
       // time interval (5 s): %f, gradient: %f\n",
       //         result_ptr[i * 5 + 0], result_ptr[i * 5 + 1], result_ptr[i * 5
@@ -4401,13 +4397,13 @@ Mcdta::get_truck_ltg_matrix (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
       result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
-      result_ptr[i * 5 + 4] = tmp_record->gradient ();
+      result_ptr[i * 5 + 4] = tmp_record->gradient;
       // printf("path ID: %f, departure assign interval (5 s): %f, link ID: %f,
       // time interval (5 s): %f, gradient: %f\n",
       //         result_ptr[i * 5 + 0], result_ptr[i * 5 + 1], result_ptr[i * 5

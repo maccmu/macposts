@@ -3,9 +3,29 @@
 All notable changes for each released versions (since v0.3.1) will be documented
 here.
 
+## v0.5.0 (unreleased)
+
+**This is a major release that changes many internal things. Please report any
+breakage you find. Thanks!**
+
+This is the first release that supports Windows, also the first release without
+the seemingly unmaintained SNAP library.
+
+### Added
+
+- Windows support and compiled binary releases for Windows ([GH-55]).
+- Compiled binary releases against musl ([GH-55]).
+
+### Removed
+
+- Dependency on the SNAP library ([GH-50], [GH-55]).
+
+[GH-50]: https://github.com/maccmu/macposts/pull/50
+[GH-55]: https://github.com/maccmu/macposts/pull/55
+
 ## v0.4.2 (2024-03-18)
 
-Routine maintenance and add a new graph module to prepare for droping SNAP
+Routine maintenance and add a new graph module to prepare for droping SNAP.
 
 ### Added
 
