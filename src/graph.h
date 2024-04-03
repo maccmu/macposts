@@ -635,7 +635,7 @@ public:
   template <bool d = directed, typename std::enable_if<d, int>::type = 0>
   Connections<true> connections (NId id, Direction direction) const
   {
-    return connections (get_node (id));
+    return connections (get_node (id), direction);
   }
   template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
   Connections<true> connections (NId id) const
