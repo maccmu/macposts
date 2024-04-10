@@ -1432,8 +1432,8 @@ MNM_TDSP_Tree::update_tree (
       for (const auto &l : m_graph.links ())
         {
           auto &&sd = m_graph.get_endpoints (l);
-          _dst_node = m_graph.get_id (sd.first);
-          _src_node = m_graph.get_id (sd.second);
+          _dst_node = m_graph.get_id (sd.second);
+          _src_node = m_graph.get_id (sd.first);
           _edge_cost = link_cost_map.find (m_graph.get_id (l))->second[t];
           _edge_tt = link_tt_map.find (m_graph.get_id (l))->second[t];
           if (std::isinf (_edge_cost))
@@ -1516,8 +1516,8 @@ MNM_TDSP_Tree::update_tree (
         {
           _in_edge_ID = m_graph.get_id (l);
           auto &&sd = m_graph.get_endpoints (l);
-          _dst_node = m_graph.get_id (sd.first);
-          _src_node = m_graph.get_id (sd.second);
+          _dst_node = m_graph.get_id (sd.second);
+          _src_node = m_graph.get_id (sd.first);
           // _src_node -> _edge_cost -> _dst_node -> node_cost -> the beigining
           // of next link after _dst_node
           _edge_cost = link_cost_map.find (m_graph.get_id (l))->second[t];
