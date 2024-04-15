@@ -41,6 +41,17 @@ public:
   std::unordered_map<TInt, MNM_Dnode *> m_node_map;
 };
 
+struct td_link_attribute_row
+{
+  std::string link_type;
+  float length;
+  float FFS;
+  float Cap;
+  float RHOJ;
+  int Lane;
+  float toll;
+};
+
 class MNM_Link_Factory
 {
 public:
@@ -57,6 +68,8 @@ public:
     return 0;
   };
   std::unordered_map<TInt, MNM_Dlink *> m_link_map;
+  std::unordered_map<int, std::unordered_map<int, td_link_attribute_row *> *>
+    *m_td_link_attribute_table;
 };
 
 class MNM_OD_Factory

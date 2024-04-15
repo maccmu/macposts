@@ -39,6 +39,7 @@ public:
   };
 
   int add_dest_demand (MNM_Destination *dest, TFlt *demand);
+  int add_dest_adaptive_ratio (MNM_Destination *dest, TFlt *ad_ratio);
   MNM_DMOND *m_origin_node;
   // private:
   TInt m_frequency;
@@ -46,6 +47,7 @@ public:
   TInt m_max_assign_interval;
   TFlt m_flow_scalar;
   std::unordered_map<MNM_Destination *, TFlt *> m_demand;
+  std::unordered_map<MNM_Destination *, TFlt *> m_adaptive_ratio;
 
   std::vector<TFlt> m_vehicle_label_ratio;
 };

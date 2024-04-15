@@ -16,6 +16,9 @@ MNM_Origin::MNM_Origin (TInt ID, TInt max_interval, TFlt flow_scalar,
   m_demand
     = std::unordered_map<MNM_Destination *,
                          TFlt *> (); // destination node, time-varying demand
+  m_adaptive_ratio
+    = std::unordered_map<MNM_Destination *,
+                         TFlt *> (); // destination node, time-varying adaptive ratio
 
   m_vehicle_label_ratio = std::vector<TFlt> ();
 }
@@ -28,6 +31,12 @@ MNM_Origin::~MNM_Origin ()
       delete[] _demand_it->second;
     }
   m_demand.clear ();
+  for (auto _ratio_it = m_adaptive_ratio.begin (); _ratio_it != m_adaptive_ratio.end ();
+       _ratio_it++)
+    {
+      free (_ratio_it->second);
+    }
+  m_adaptive_ratio.clear ();
   m_vehicle_label_ratio.clear ();
 }
 
@@ -40,6 +49,18 @@ MNM_Origin::add_dest_demand (MNM_Destination *dest, TFlt *demand)
       _demand[i] = TFlt (demand[i]);
     }
   m_demand.insert (std::pair<MNM_Destination *, TFlt *> (dest, _demand));
+  return 0;
+}
+
+int
+MNM_Origin::add_dest_adaptive_ratio (MNM_Destination *dest, TFlt *ad_ratio)
+{
+  TFlt *_ratio = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval);
+  for (int i = 0; i < m_max_assign_interval; ++i)
+    {
+      _ratio[i] = TFlt (ad_ratio[i]);
+    }
+  m_adaptive_ratio.insert (std::pair<MNM_Destination *, TFlt *> (dest, _ratio));
   return 0;
 }
 
@@ -115,6 +136,10 @@ MNM_Origin::release_one_interval (TInt current_interval,
   for (auto _demand_it = m_demand.begin (); _demand_it != m_demand.end ();
        _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio.find(_demand_it->first) != m_adaptive_ratio.end()) {
+        adaptive_ratio = m_adaptive_ratio.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       for (int i = 0; i < _veh_to_release; ++i)

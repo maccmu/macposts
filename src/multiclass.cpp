@@ -2881,6 +2881,8 @@ MNM_Origin_Multiclass::MNM_Origin_Multiclass (TInt ID, TInt max_interval,
 {
   m_demand_car = std::unordered_map<MNM_Destination_Multiclass *, TFlt *> ();
   m_demand_truck = std::unordered_map<MNM_Destination_Multiclass *, TFlt *> ();
+  m_adaptive_ratio_car = std::unordered_map<MNM_Destination_Multiclass *, TFlt *> ();
+  m_adaptive_ratio_truck = std::unordered_map<MNM_Destination_Multiclass *, TFlt *> ();
   m_car_label_ratio = std::vector<TFlt> ();
   m_truck_label_ratio = std::vector<TFlt> ();
 }
@@ -2898,6 +2900,16 @@ MNM_Origin_Multiclass::~MNM_Origin_Multiclass ()
       delete[] _demand_it.second;
     }
   m_demand_truck.clear ();
+    for (auto _ratio_it : m_adaptive_ratio_car)
+    {
+      free (_ratio_it.second);
+    }
+  m_adaptive_ratio_car.clear ();
+  for (auto _ratio_it : m_adaptive_ratio_truck)
+    {
+      free (_ratio_it.second);
+    }
+  m_adaptive_ratio_truck.clear ();
   m_car_label_ratio.clear ();
   m_truck_label_ratio.clear ();
 }
@@ -2989,6 +3001,30 @@ MNM_Origin_Multiclass::add_dest_demand_multiclass (
 }
 
 int
+MNM_Origin_Multiclass::add_dest_adaptive_ratio_multiclass (MNM_Destination_Multiclass *dest,
+                                                           TFlt *ad_ratio_car, TFlt *ad_ratio_truck)
+{
+  // split (15-mins demand) to (15 * 1-minute demand)
+  TFlt *_ratio_car
+    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  for (int i = 0; i < m_max_assign_interval * 15; ++i)
+    {
+      _ratio_car[i] = TFlt (ad_ratio_car[i]);
+    }
+  m_adaptive_ratio_car.insert ({ dest, _ratio_car });
+
+  TFlt *_ratio_truck
+    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  for (int i = 0; i < m_max_assign_interval * 15; ++i)
+    {
+      _ratio_truck[i] = TFlt (ad_ratio_truck[i]);
+    }
+  m_adaptive_ratio_truck.insert ({ dest, _ratio_truck });
+
+  return 0;
+}
+
+int
 MNM_Origin_Multiclass::release (MNM_Veh_Factory *veh_factory,
                                 TInt current_interval)
 {
@@ -3046,6 +3082,10 @@ MNM_Origin_Multiclass::release_one_interval (TInt current_interval,
   for (auto _demand_it = m_demand_car.begin ();
        _demand_it != m_demand_car.end (); _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio_car.find(_demand_it->first) != m_adaptive_ratio_car.end()) {
+        adaptive_ratio = m_adaptive_ratio_car.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       for (int i = 0; i < _veh_to_release; ++i)
@@ -3091,6 +3131,10 @@ MNM_Origin_Multiclass::release_one_interval (TInt current_interval,
   for (auto _demand_it = m_demand_truck.begin ();
        _demand_it != m_demand_truck.end (); _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio_truck.find(_demand_it->first) != m_adaptive_ratio_truck.end()) {
+        adaptive_ratio = m_adaptive_ratio_truck.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       for (int i = 0; i < _veh_to_release; ++i)
@@ -3153,6 +3197,10 @@ MNM_Origin_Multiclass::release_one_interval_biclass (
   for (auto _demand_it = m_demand_car.begin ();
        _demand_it != m_demand_car.end (); _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio_car.find(_demand_it->first) != m_adaptive_ratio_car.end()) {
+        adaptive_ratio_car = m_adaptive_ratio_car.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       for (int i = 0; i < _veh_to_release; ++i)
@@ -3198,6 +3246,10 @@ MNM_Origin_Multiclass::release_one_interval_biclass (
   for (auto _demand_it = m_demand_truck.begin ();
        _demand_it != m_demand_truck.end (); _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio_truck.find(_demand_it->first) != m_adaptive_ratio_truck.end()) {
+        adaptive_ratio_truck = m_adaptive_ratio_truck.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       for (int i = 0; i < _veh_to_release; ++i)
@@ -3381,7 +3433,7 @@ MNM_Link_Factory_Multiclass::MNM_Link_Factory_Multiclass ()
     : MNM_Link_Factory::MNM_Link_Factory ()
 {
   m_td_link_attribute_table = new std::unordered_map<
-    int, std::unordered_map<int, td_link_attribute_row *> *> ();
+    int, std::unordered_map<int, td_link_attribute_row_biclass *> *> ();
 }
 
 MNM_Link_Factory_Multiclass::~MNM_Link_Factory_Multiclass ()
@@ -3863,6 +3915,91 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
   return 0;
 }
 
+int 
+MNM_IO_Multiclass::build_td_adaptive_ratio (const std::string &file_folder,
+                                            MNM_ConfReader *conf_reader,
+                                            MNM_OD_Factory *od_factory,
+                                            const std::string &file_name)
+{
+  /* find file */
+  std::string _ratio_file_name = file_folder + "/" + file_name;
+  std::ifstream _ratio_file;
+  _ratio_file.open (_ratio_file_name, std::ios::in);
+
+  /* read config */
+  TFlt _flow_scalar = conf_reader->get_float ("flow_scalar");
+  TInt _unit_time = conf_reader->get_int ("unit_time");
+  TInt _num_of_minute = int (conf_reader->get_int ("assign_frq"))
+                        / (60 / _unit_time); // the releasing strategy is
+                                             // assigning vehicles per 1 minute
+  TInt _max_interval = conf_reader->get_int ("max_interval");
+
+  /* build */
+  TInt _O_ID, _D_ID;
+  MNM_Origin_Multiclass *_origin;
+  MNM_Destination_Multiclass *_dest;
+  std::string _line;
+  std::vector<std::string> _words;
+  if (_ratio_file.is_open ())
+    {
+      // printf("Start build demand profile.\n");
+      TFlt *_ratio_vector_car
+        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
+      TFlt *_ratio_vector_truck
+        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
+      TFlt _ratio_car;
+      TFlt _ratio_truck;
+
+      std::getline (_ratio_file, _line);
+      while (std::getline (_ratio_file, _line))
+        {
+          _line = trim (_line);
+          _words = split (_line, ' ');
+          if (TInt (_words.size ()) == (_max_interval * 2 + 2))
+            {
+              _O_ID = TInt (std::stoi (_words[0]));
+              _D_ID = TInt (std::stoi (_words[1]));
+              memset (_ratio_vector_car, 0x0,
+                      sizeof (TFlt) * _max_interval * _num_of_minute);
+              memset (_ratio_vector_truck, 0x0,
+                      sizeof (TFlt) * _max_interval * _num_of_minute);
+              // the releasing strategy is assigning vehicles per 1 minute, so
+              // disaggregate 15-min demand into 1-min demand
+              for (int j = 0; j < _max_interval; ++j)
+                {
+                  _ratio_car = TFlt (std::stod (_words[j + 2]));
+                  _ratio_truck = TFlt (std::stod (_words[j + _max_interval + 2]));
+                  for (int k = 0; k < _num_of_minute; ++k)
+                  {
+                    _ratio_vector_car[j * _num_of_minute + k] = _ratio_car;
+                    _ratio_vector_truck[j * _num_of_minute + k] = _ratio_truck;
+                  }
+                }
+              _origin = dynamic_cast<MNM_Origin_Multiclass *> (
+                od_factory->get_origin (_O_ID));
+              _dest = dynamic_cast<MNM_Destination_Multiclass *> (
+                od_factory->get_destination (_D_ID));
+              _origin->add_dest_adaptive_ratio_multiclass (_dest, 
+                                                           _ratio_vector_car,
+                                                           _ratio_vector_truck);
+            }
+          else
+            {
+              free (_ratio_vector_car);
+              free (_ratio_vector_truck);
+              throw std::runtime_error ("failed to build time-dependent adaptive ratio multiclass");
+            }
+        }
+      free (_ratio_vector_car);
+      free (_ratio_vector_truck);
+      _ratio_file.close ();
+    }
+  else {
+    printf("No time-dependent adaptive ratio file\n");
+  }
+  return 0;
+}
+
 int
 MNM_IO_Multiclass::read_origin_car_label_ratio (const std::string &file_folder,
                                                 MNM_ConfReader *conf_reader,
@@ -4120,14 +4257,14 @@ MNM_IO_Multiclass::build_link_td_attribute (const std::string &file_folder,
                   td_link_attribute_table->insert (
                     std::make_pair (_interval,
                                     new std::unordered_map<
-                                      int, td_link_attribute_row *> ()));
+                                      int, td_link_attribute_row_biclass *> ()));
                 }
               if (td_link_attribute_table->find (_interval)->second->find (
                     _link_ID)
                   == td_link_attribute_table->find (_interval)->second->end ())
                 {
                   td_link_attribute_table->find (_interval)->second->insert (
-                    std::make_pair (_link_ID, new td_link_attribute_row ()));
+                    std::make_pair (_link_ID, new td_link_attribute_row_biclass ()));
                 }
 
               auto *_td_row = td_link_attribute_table->find (_interval)
@@ -4288,6 +4425,7 @@ MNM_Dta_Multiclass::build_from_files ()
   MNM_IO_Multiclass::build_link_toll_multiclass (m_file_folder, m_config,
                                                  m_link_factory);
   MNM_IO_Multiclass::build_link_td_attribute (m_file_folder, m_link_factory);
+  MNM_IO_Multiclass::build_td_adaptive_ratio(m_file_folder, m_config, m_od_factory);
   // build_workzone();
   m_workzone = nullptr;
   set_statistics ();

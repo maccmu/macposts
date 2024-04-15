@@ -2674,6 +2674,10 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
   for (auto _demand_it = m_demand_car.begin ();
        _demand_it != m_demand_car.end (); _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio_car.find(_demand_it->first) != m_adaptive_ratio_car.end()) {
+        adaptive_ratio = m_adaptive_ratio_car.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       // _veh_to_release = TInt(floor((_demand_it -> second)[assign_interval] *
@@ -2722,6 +2726,10 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
   for (auto _demand_it = m_demand_truck.begin ();
        _demand_it != m_demand_truck.end (); _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio_truck.find(_demand_it->first) != m_adaptive_ratio_truck.end()) {
+        adaptive_ratio = m_adaptive_ratio_truck.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       // _veh_to_release = TInt(floor((_demand_it -> second)[assign_interval] *
@@ -2873,6 +2881,10 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
   for (auto _demand_it = m_demand_car.begin ();
        _demand_it != m_demand_car.end (); _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio_car.find(_demand_it->first) != m_adaptive_ratio_car.end()) {
+        adaptive_ratio_car = m_adaptive_ratio_car.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       // _veh_to_release = TInt(floor((_demand_it -> second)[assign_interval] *
@@ -2921,6 +2933,10 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
   for (auto _demand_it = m_demand_truck.begin ();
        _demand_it != m_demand_truck.end (); _demand_it++)
     {
+      // override adaptive ratio with time-dependent and OD-dependent one in input file
+      if (m_adaptive_ratio_truck.find(_demand_it->first) != m_adaptive_ratio_truck.end()) {
+        adaptive_ratio_truck = m_adaptive_ratio_truck.find(_demand_it->first) -> second[assign_interval];
+      }
       _veh_to_release = TInt (MNM_Ults::round (
         (_demand_it->second)[assign_interval] * m_flow_scalar));
       // _veh_to_release = TInt(floor((_demand_it -> second)[assign_interval] *
@@ -9735,11 +9751,14 @@ MNM_Dta_Multimodal::build_from_files ()
                                                   m_od_factory,
                                                   "bustransit_demand");
     }
-  MNM_IO_Multimodal::read_origin_vehicle_label_ratio (m_file_folder, m_config,
-                                                      m_od_factory,
-                                                      "Origin_vehicle_label");
+  MNM_IO_Multiclass::read_origin_car_label_ratio (m_file_folder, m_config,
+                                                  m_od_factory, "MNM_origin_label_car");
+  MNM_IO_Multiclass::read_origin_truck_label_ratio (m_file_folder, m_config,
+                                                    m_od_factory, "MNM_origin_label_truck");
   MNM_IO_Multiclass::build_link_toll_multiclass (m_file_folder, m_config,
                                                  m_link_factory);
+  MNM_IO_Multiclass::build_link_td_attribute (m_file_folder, m_link_factory);
+  MNM_IO_Multiclass::build_td_adaptive_ratio(m_file_folder, m_config, m_od_factory);
   // build_workzone();
   m_workzone = nullptr;
   // record link volume and travel time in simulation
