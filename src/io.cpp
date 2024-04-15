@@ -633,6 +633,7 @@ MNM_IO::build_demand (const std::string &file_folder,
             {
               _O_ID = TInt (std::stoi (_words[0]));
               _D_ID = TInt (std::stoi (_words[1]));
+              memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval);
               for (int j = 0; j < _max_interval; ++j)
                 {
                   _demand_vector[j] = TFlt (std::stod (_words[j + 2]));
@@ -649,6 +650,167 @@ MNM_IO::build_demand (const std::string &file_folder,
         }
       delete[] _demand_vector;
       _demand_file.close ();
+    }
+  return 0;
+}
+
+int MNM_IO::build_td_adaptive_ratio (const std::string &file_folder,
+                                    MNM_ConfReader *conf_reader,
+                                    MNM_OD_Factory *od_factory,
+                                    const std::string &file_name)
+{
+  /* find file */
+  std::string _ratio_file_name = file_folder + "/" + file_name;
+  std::ifstream _ratio_file;
+  _ratio_file.open (_ratio_file_name, std::ios::in);
+
+  /* read config */
+  TInt _max_interval = conf_reader->get_int ("max_interval");
+
+  /* build */
+  TInt _O_ID, _D_ID;
+  MNM_Origin *_origin;
+  MNM_Destination *_dest;
+  std::string _line;
+  std::vector<std::string> _words;
+  if (_ratio_file.is_open ())
+    {
+      // printf("Start build demand profile.\n");
+      TFlt *_ratio_vector = (TFlt *) malloc (sizeof (TFlt) * _max_interval);
+      std::getline (_ratio_file, _line);
+      while (std::getline (_ratio_file, _line))
+        {
+          // std::cout << "Processing: " << _line << "\n";
+          _line = trim (_line);
+          _words = split (_line, ' ');
+          // if (TInt(_words.size()) == (_max_interval + 2)) {
+          if (TInt (_words.size ()) >= (_max_interval + 2))
+            {
+              _O_ID = TInt (std::stoi (_words[0]));
+              _D_ID = TInt (std::stoi (_words[1]));
+              memset (_ratio_vector, 0x0, sizeof (TFlt) * _max_interval);
+              for (int j = 0; j < _max_interval; ++j)
+                {
+                  _ratio_vector[j] = TFlt (std::stod (_words[j + 2]));
+                }
+              _origin = od_factory->get_origin (_O_ID);
+              _dest = od_factory->get_destination (_D_ID);
+              _origin->add_dest_adaptive_ratio (_dest, _ratio_vector);
+            }
+          else
+            {
+              free (_ratio_vector);
+              throw std::runtime_error ("failed to build time-dependent adaptive ratio");
+            }
+        }
+      free (_ratio_vector);
+      _ratio_file.close ();
+    }
+  else {
+    printf("No time-dependent adaptive ratio file\n");
+  }
+  return 0;
+}
+
+int
+MNM_IO::build_link_td_attribute (const std::string &file_folder,
+                                MNM_Link_Factory *link_factory,
+                                const std::string &file_name)
+{
+  /* find file */
+  std::string _file_name = file_folder + "/" + file_name;
+  std::ifstream _file;
+  _file.open (_file_name, std::ios::in);
+
+  std::string _line;
+  std::vector<std::string> _words;
+  TInt _interval, _link_ID;
+  TFlt _lane_hold_cap;
+  TFlt _lane_flow_cap;
+  TInt _number_of_lane;
+  TFlt _length;
+  TFlt _ffs;
+  std::string _type;
+  TFlt _toll;
+
+  auto td_link_attribute_table
+    = dynamic_cast<MNM_Link_Factory *> (link_factory)
+        ->m_td_link_attribute_table;
+
+  if (_file.is_open ())
+    {
+      printf ("Start build time-dependent link attribute.\n");
+      std::getline (_file, _line); // #link_ID toll_car toll_truck
+      int i = 0;
+      while (std::getline (_file, _line))
+        {
+          // std::getline (_file, _line);
+          // std::cout << "Processing: " << _line << "\n";
+
+          _words = split (_line, ' ');
+          if (TInt (_words.size ()) == 13)
+            {
+              _interval = TInt (std::stoi (_words[0]));
+              _link_ID = TInt (std::stoi (_words[1]));
+              _type = trim (_words[2]);
+              _length = TFlt (std::stod (_words[3]));
+              _ffs = TFlt (std::stod (_words[4]));
+              _lane_flow_cap = TFlt (
+                std::stod (_words[5])); // flow capacity (vehicles/hour/lane)
+              _lane_hold_cap = TFlt (
+                std::stod (_words[6])); // jam density (vehicles/mile/lane)
+              _number_of_lane = TInt (std::stoi (_words[7]));
+              _toll = TFlt (std::stoi (_words[8]));
+
+              /* unit conversion */
+              // mile -> meter, hour -> second
+              _length = _length * TFlt (1600);  // m
+              _ffs = _ffs * TFlt (1600) / TFlt (3600); // m/s
+              _lane_flow_cap
+                = _lane_flow_cap / TFlt (3600); // vehicles/s/lane
+              _lane_hold_cap
+                = _lane_hold_cap / TFlt (1600); // vehicles/m/lane
+
+              if (td_link_attribute_table->find (_interval)
+                  == td_link_attribute_table->end ())
+                {
+                  td_link_attribute_table->insert (
+                    std::make_pair (_interval,
+                                    new std::unordered_map<
+                                      int, td_link_attribute_row *> ()));
+                }
+              if (td_link_attribute_table->find (_interval)->second->find (
+                    _link_ID)
+                  == td_link_attribute_table->find (_interval)->second->end ())
+                {
+                  td_link_attribute_table->find (_interval)->second->insert (
+                    std::make_pair (_link_ID, new td_link_attribute_row ()));
+                }
+
+              auto *_td_row = td_link_attribute_table->find (_interval)
+                                ->second->find (_link_ID)
+                                ->second;
+              _td_row->link_type = _type;
+              _td_row->length = _length;
+              _td_row->FFS = _ffs;
+              _td_row->Cap = _lane_flow_cap;
+              _td_row->RHOJ = _lane_hold_cap;
+              _td_row->Lane = _number_of_lane;
+              _td_row->toll = _toll;
+            }
+          else
+            {
+              std::cout << _line << std::endl;
+              throw std::runtime_error ("failed to parse line: " + _line);
+            }
+          ++i;
+        }
+      _file.close ();
+      printf ("Finish build time-dependent link attribute.\n");
+    }
+  else
+    {
+      printf ("No time-dependent link attribute.\n");
     }
   return 0;
 }

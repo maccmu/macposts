@@ -129,10 +129,22 @@ MNM_Node_Factory::get_node (TInt ID)
 MNM_Link_Factory::MNM_Link_Factory ()
 {
   m_link_map = std::unordered_map<TInt, MNM_Dlink *> ();
+  m_td_link_attribute_table = new std::unordered_map<
+    int, std::unordered_map<int, td_link_attribute_row *> *> ();
 }
 
 MNM_Link_Factory::~MNM_Link_Factory ()
 {
+  for (auto _it : *m_td_link_attribute_table)
+    {
+      for (auto _it_it : *(_it.second))
+        {
+          delete _it_it.second;
+        }
+      _it.second->clear ();
+    }
+  m_td_link_attribute_table->clear ();
+  
   for (auto _map_it = m_link_map.begin (); _map_it != m_link_map.end ();
        _map_it++)
     {

@@ -95,6 +95,16 @@ public:
     const std::string &interval_tracking_file_name
     = "MNM_input_interval_tracking");
 
+  static int build_link_td_attribute (const std::string &file_folder,
+                                    MNM_Link_Factory *link_factory,
+                                    const std::string &file_name
+                                    = "MNM_input_link_td_attribute");
+
+  static int build_td_adaptive_ratio (const std::string &file_folder,
+                                    MNM_ConfReader *conf_reader,
+                                    MNM_OD_Factory *od_factory,
+                                    const std::string &file_name = "MNM_input_od_td_adaptive_ratio");
+
   // private:
   static std::vector<std::string> split (const std::string &text, char sep);
   static std::string inline &ltrim (std::string &s)

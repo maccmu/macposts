@@ -419,9 +419,13 @@ public:
   // use this one instead of add_dest_demand in the base class
   int add_dest_demand_multiclass (MNM_Destination_Multiclass *dest,
                                   TFlt *demand_car, TFlt *demand_truck);
+  int add_dest_adaptive_ratio_multiclass (MNM_Destination_Multiclass *dest,
+                                          TFlt *ad_ratio_car, TFlt *ad_ratio_truck);
   // two new unordered_map for both classes
   std::unordered_map<MNM_Destination_Multiclass *, TFlt *> m_demand_car;
   std::unordered_map<MNM_Destination_Multiclass *, TFlt *> m_demand_truck;
+  std::unordered_map<MNM_Destination_Multiclass *, TFlt *> m_adaptive_ratio_car;
+  std::unordered_map<MNM_Destination_Multiclass *, TFlt *> m_adaptive_ratio_truck;
 
   std::vector<TFlt> m_car_label_ratio;
   std::vector<TFlt> m_truck_label_ratio;
@@ -493,7 +497,7 @@ public:
                                    TFlt flow_scalar, TFlt veh_convert_factor);
 };
 
-struct td_link_attribute_row
+struct td_link_attribute_row_biclass
 {
   std::string link_type;
   TFlt length;
@@ -524,7 +528,7 @@ public:
   virtual int update_link_attribute (TInt interval,
                                      bool verbose = false) override;
 
-  std::unordered_map<int, std::unordered_map<int, td_link_attribute_row *> *>
+  std::unordered_map<int, std::unordered_map<int, td_link_attribute_row_biclass *> *>
     *m_td_link_attribute_table;
 };
 
@@ -584,6 +588,11 @@ public:
                                       MNM_Link_Factory *link_factory,
                                       const std::string &file_name
                                       = "MNM_input_link_td_attribute");
+  
+  static int build_td_adaptive_ratio (const std::string &file_folder,
+                                      MNM_ConfReader *conf_reader,
+                                      MNM_OD_Factory *od_factory,
+                                      const std::string &file_name = "MNM_input_od_td_adaptive_ratio");
 };
 
 ///

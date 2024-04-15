@@ -333,6 +333,8 @@ MNM_Dta::build_from_files ()
   MNM_IO::read_origin_vehicle_label_ratio (m_file_folder, m_config,
                                            m_od_factory);
   MNM_IO::build_link_toll (m_file_folder, m_config, m_link_factory);
+  MNM_IO::build_link_td_attribute(m_file_folder, m_link_factory);
+  MNM_IO::build_td_adaptive_ratio(m_file_folder, m_config, m_od_factory);
   build_workzone ();
   set_statistics ();
   set_gridlock_recorder ();
@@ -506,6 +508,7 @@ MNM_Dta::pre_loading ()
       _node->prepare_loading ();
     }
   // printf("dsf\n");
+  // TODO: workzone not compatible with new graph(), but workzone can be realized using time-dependent link attribute
   // m_workzone -> init_workzone();
 
   // https://stackoverflow.com/questions/7443787/using-c-ifstream-extraction-operator-to-read-formatted-data-from-a-file
