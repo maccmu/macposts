@@ -23,7 +23,7 @@ MNM_Path::~MNM_Path ()
   m_link_vec.clear ();
   m_node_vec.clear ();
   if (m_buffer != nullptr)
-    free (m_buffer);
+    delete[] m_buffer;
   m_link_set.clear ();
 
   m_travel_time_vec.clear ();
@@ -183,9 +183,7 @@ MNM_Path::allocate_buffer (TInt length)
         "Error: MNM_Path::allocate_buffer, double allocation.");
     }
   m_buffer_length = length;
-  // malloc returns void*, static_cast<TFlt*> casts void* into TFlt*
-  // https://embeddedartistry.com/blog/2017/03/15/c-casting-or-oh-no-they-broke-malloc/
-  m_buffer = static_cast<TFlt *> (std::malloc (sizeof (TFlt) * length));
+  m_buffer = new double[length]();
   for (int i = 0; i < length; ++i)
     {
       m_buffer[i] = 0.0;

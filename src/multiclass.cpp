@@ -2467,15 +2467,15 @@ MNM_Dnode_Inout_Multiclass::MNM_Dnode_Inout_Multiclass (TInt ID,
 MNM_Dnode_Inout_Multiclass::~MNM_Dnode_Inout_Multiclass ()
 {
   if (m_demand != NULL)
-    free (m_demand);
+    delete[] m_demand;
   if (m_supply != NULL)
-    free (m_supply);
+    delete[] m_supply;
   if (m_veh_flow != NULL)
-    free (m_veh_flow);
+    delete[] m_veh_flow;
   if (m_veh_moved_car != NULL)
-    free (m_veh_moved_car);
+    delete[] m_veh_moved_car;
   if (m_veh_moved_truck != NULL)
-    free (m_veh_moved_truck);
+    delete[] m_veh_moved_truck;
 }
 
 int
@@ -2483,22 +2483,15 @@ MNM_Dnode_Inout_Multiclass::prepare_loading ()
 {
   TInt _num_in = m_in_link_array.size ();
   TInt _num_out = m_out_link_array.size ();
-  m_demand = (TFlt *) malloc (sizeof (TFlt) * _num_in
-                              * _num_out); // real-world vehicles
-  memset (m_demand, 0x0, sizeof (TFlt) * _num_in * _num_out);
-  m_supply = (TFlt *) malloc (sizeof (TFlt) * _num_out); // real-world vehicles
-  memset (m_supply, 0x0, sizeof (TFlt) * _num_out);
-  m_veh_flow = (TFlt *) malloc (sizeof (TFlt) * _num_in
-                                * _num_out); // real-world vehicles
-  memset (m_veh_flow, 0x0, sizeof (TFlt) * _num_in * _num_out);
-  m_veh_moved_car = (TFlt *) malloc (
-    sizeof (TFlt) * _num_in
-    * _num_out); // simulation vehicles = real-world vehicles * flow scalar
-  memset (m_veh_moved_car, 0x0, sizeof (TFlt) * _num_in * _num_out);
-  m_veh_moved_truck = (TFlt *) malloc (
-    sizeof (TFlt) * _num_in
-    * _num_out); // simulation vehicles = real-world vehicles * flow scalar
-  memset (m_veh_moved_truck, 0x0, sizeof (TFlt) * _num_in * _num_out);
+  m_demand = new double[_num_in * _num_out]();
+  m_supply = new double[_num_out]();             // real-world vehicles
+  m_veh_flow = new double[_num_in * _num_out](); // real-world vehicles
+  m_veh_moved_car
+    = new double[_num_in * _num_out](); // simulation vehicles = real-world
+                                        // vehicles * flow scalar
+  m_veh_moved_truck
+    = new double[_num_in * _num_out](); // simulation vehicles = real-world
+                                        // vehicles * flow scalar
   return 0;
 }
 
@@ -2874,9 +2867,9 @@ MNM_Dnode_GRJ_Multiclass::MNM_Dnode_GRJ_Multiclass (TInt ID, TFlt flow_scalar,
 MNM_Dnode_GRJ_Multiclass::~MNM_Dnode_GRJ_Multiclass ()
 {
   if (m_d_a != nullptr)
-    free (m_d_a);
+    delete[] m_d_a;
   if (m_C_a != nullptr)
-    free (m_C_a);
+    delete[] m_C_a;
 }
 
 int
@@ -2884,10 +2877,8 @@ MNM_Dnode_GRJ_Multiclass::prepare_loading ()
 {
   MNM_Dnode_Inout_Multiclass::prepare_loading ();
   TInt _num_in = m_in_link_array.size ();
-  m_d_a = (TFlt *) malloc (sizeof (TFlt) * _num_in);
-  memset (m_d_a, 0x0, sizeof (TFlt) * _num_in);
-  m_C_a = (TFlt *) malloc (sizeof (TFlt) * _num_in);
-  memset (m_C_a, 0x0, sizeof (TFlt) * _num_in);
+  m_d_a = new double[_num_in]();
+  m_C_a = new double[_num_in]();
   return 0;
 }
 
@@ -2917,13 +2908,13 @@ MNM_Origin_Multiclass::~MNM_Origin_Multiclass ()
 {
   for (auto _demand_it : m_demand_car)
     {
-      free (_demand_it.second);
+      delete[] _demand_it.second;
     }
   m_demand_car.clear ();
 
   for (auto _demand_it : m_demand_truck)
     {
-      free (_demand_it.second);
+      delete[] _demand_it.second;
     }
   m_demand_truck.clear ();
   m_car_label_ratio.clear ();
@@ -2999,16 +2990,14 @@ MNM_Origin_Multiclass::add_dest_demand_multiclass (
   MNM_Destination_Multiclass *dest, TFlt *demand_car, TFlt *demand_truck)
 {
   // split (15-mins demand) to (15 * 1-minute demand)
-  TFlt *_demand_car
-    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  double *_demand_car = new double[m_max_assign_interval * 15]();
   for (int i = 0; i < m_max_assign_interval * 15; ++i)
     {
       _demand_car[i] = TFlt (demand_car[i]);
     }
   m_demand_car.insert ({ dest, _demand_car });
 
-  TFlt *_demand_truck
-    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  double *_demand_truck = new double[m_max_assign_interval * 15]();
   for (int i = 0; i < m_max_assign_interval * 15; ++i)
     {
       _demand_truck[i] = TFlt (demand_truck[i]);
@@ -3797,10 +3786,9 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
   if (_demand_file.is_open ())
     {
       // printf("Start build demand profile.\n");
-      TFlt *_demand_vector_car
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
-      TFlt *_demand_vector_truck
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
+      double *_demand_vector_car = new double[_max_interval * _num_of_minute]();
+      double *_demand_vector_truck
+        = new double[_max_interval * _num_of_minute]();
       TFlt _demand_car;
       TFlt _demand_truck;
 
@@ -3882,13 +3870,13 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
             }
           else
             {
-              free (_demand_vector_car);
-              free (_demand_vector_truck);
+              delete[] _demand_vector_car;
+              delete[] _demand_vector_truck;
               throw std::runtime_error ("failed to build demand");
             }
         }
-      free (_demand_vector_car);
-      free (_demand_vector_truck);
+      delete[] _demand_vector_car;
+      delete[] _demand_vector_truck;
       _demand_file.close ();
     }
   return 0;

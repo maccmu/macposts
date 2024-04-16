@@ -87,14 +87,14 @@ Tdsp::~Tdsp ()
 
   for (auto _it : m_td_link_tt)
     {
-      free (_it.second);
+      delete[] _it.second;
     }
   m_td_link_tt.clear ();
   for (auto _it : m_td_node_tt)
     {
       for (auto _it_it : _it.second)
         {
-          free (_it_it.second);
+          delete[] _it_it.second;
         }
       _it.second.clear ();
     }
@@ -102,14 +102,14 @@ Tdsp::~Tdsp ()
 
   for (auto _it : m_td_link_cost)
     {
-      free (_it.second);
+      delete[] _it.second;
     }
   m_td_link_cost.clear ();
   for (auto _it : m_td_node_cost)
     {
       for (auto _it_it : _it.second)
         {
-          free (_it_it.second);
+          delete[] _it_it.second;
         }
       _it.second.clear ();
     }
@@ -212,8 +212,7 @@ Tdsp::read_td_link_cost (py::array_t<double> td_link_cost_py,
       _link_ID = TInt ((int) start_ptr[i * (m_max_interval + 1)]);
       if (td_link_cost.find (_link_ID) == td_link_cost.end ())
         {
-          TFlt *_cost_vector_tmp
-            = (TFlt *) malloc (sizeof (TFlt) * m_max_interval);
+          double *_cost_vector_tmp = new double[m_max_interval]();
           td_link_cost.insert (
             std::pair<TInt, TFlt *> (_link_ID, _cost_vector_tmp));
         }
@@ -266,8 +265,7 @@ Tdsp::read_td_node_cost (
       if (td_node_cost.find (_in_link_ID)->second.find (_out_link_ID)
           == td_node_cost.find (_in_link_ID)->second.end ())
         {
-          TFlt *_cost_vector_tmp
-            = (TFlt *) malloc (sizeof (TFlt) * m_max_interval);
+          double *_cost_vector_tmp = new double[m_max_interval]();
           td_node_cost.find (_in_link_ID)
             ->second.insert (
               std::pair<TInt, TFlt *> (_out_link_ID, _cost_vector_tmp));

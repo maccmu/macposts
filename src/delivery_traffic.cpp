@@ -1,5 +1,4 @@
 #include "delivery_traffic.h"
-#include <cstring>
 
 //#################################################################
 //                       Delivery Vehicle
@@ -198,7 +197,7 @@ MNM_Origin_Delivery::~MNM_Origin_Delivery ()
   for (auto _demand_it : m_demand_multi_OD_seq)
     {
       delete _demand_it.first;
-      free (_demand_it.second);
+      delete[] _demand_it.second;
     }
   m_demand_multi_OD_seq.clear ();
 }
@@ -208,7 +207,7 @@ MNM_Origin_Delivery::add_multi_OD_seq_demand (
   std::vector<std::pair<MNM_Origin *, MNM_Destination *>> *multi_od_seq,
   TFlt *demand)
 {
-  TFlt *_demand = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval);
+  double *_demand = new double[m_max_assign_interval]();
   for (int i = 0; i < m_max_assign_interval; ++i)
     {
       _demand[i] = TFlt (demand[i]);
@@ -757,8 +756,7 @@ MNM_IO_Delivery::build_demand_multi_OD_seq (const std::string &file_folder,
   if (_od_file.is_open () && _demand_file.is_open ())
     {
       // printf("Start build multiOD demand profile.\n");
-      TFlt *_demand_vector = (TFlt *) malloc (sizeof (TFlt) * _max_interval);
-      memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval);
+      double *_demand_vector = new double[_max_interval]();
 
       std::getline (_od_file, _line1);     // skip the first line
       std::getline (_demand_file, _line2); // skip the first line
@@ -799,14 +797,14 @@ MNM_IO_Delivery::build_demand_multi_OD_seq (const std::string &file_folder,
             }
           else
             {
-              free (_demand_vector);
+              delete[] _demand_vector;
               throw std::runtime_error (
                 "Error, MNM_IO_Delivery::build_demand_multi_OD_seq, multi-OD "
                 "sequence demand's length is NOT equal to max_interval");
             }
           _origin->add_multi_OD_seq_demand (_od_seq, _demand_vector);
         }
-      free (_demand_vector);
+      delete[] _demand_vector;
       _od_file.close ();
       _demand_file.close ();
     }

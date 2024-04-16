@@ -2521,13 +2521,13 @@ MNM_Origin_Multimodal::~MNM_Origin_Multimodal ()
 {
   for (auto _demand_it : m_demand_car)
     {
-      free (_demand_it.second);
+      delete[] _demand_it.second;
     }
   m_demand_car.clear ();
 
   for (auto _demand_it : m_demand_truck)
     {
-      free (_demand_it.second);
+      delete[] _demand_it.second;
     }
   m_demand_truck.clear ();
 
@@ -2535,7 +2535,7 @@ MNM_Origin_Multimodal::~MNM_Origin_Multimodal ()
     {
       for (auto _demand_it_it : _demand_it.second)
         {
-          free (_demand_it_it.second);
+          delete[] _demand_it_it.second;
         }
       _demand_it.second.clear ();
     }
@@ -2543,13 +2543,13 @@ MNM_Origin_Multimodal::~MNM_Origin_Multimodal ()
 
   for (auto _demand_it : m_demand_pnr_car)
     {
-      free (_demand_it.second);
+      delete[] _demand_it.second;
     }
   m_demand_pnr_car.clear ();
 
   for (auto _demand_it : m_demand_passenger_bus)
     {
-      free (_demand_it.second);
+      delete[] _demand_it.second;
     }
   m_demand_passenger_bus.clear ();
 
@@ -2610,8 +2610,7 @@ MNM_Origin_Multimodal::add_dest_demand_bus (MNM_Destination_Multimodal *dest,
 {
   // split (15-mins demand) to (15 * 1-minute demand)
   // bus demand
-  TFlt *_demand_bus
-    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  double *_demand_bus = new double[m_max_assign_interval * 15]();
   for (int i = 0; i < m_max_assign_interval * 15; ++i)
     {
       _demand_bus[i] = TFlt (demand_bus[i]);
@@ -2635,8 +2634,7 @@ MNM_Origin_Multimodal::add_dest_demand_pnr_car (
   MNM_Destination_Multimodal *dest, TFlt *demand_pnr_car)
 {
   // split (15-mins demand) to (15 * 1-minute demand)
-  TFlt *_demand_pnr_car
-    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  double *_demand_pnr_car = new double[m_max_assign_interval * 15]();
   for (int i = 0; i < m_max_assign_interval * 15; ++i)
     {
       _demand_pnr_car[i] = TFlt (demand_pnr_car[i]);
@@ -2650,8 +2648,7 @@ MNM_Origin_Multimodal::add_dest_demand_passenger_bus (
   MNM_Destination_Multimodal *dest, TFlt *demand_passenger_bus)
 {
   // split (15-mins demand) to (15 * 1-minute demand)
-  TFlt *_demand_passenger_bus
-    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  double *_demand_passenger_bus = new double[m_max_assign_interval * 15]();
   for (int i = 0; i < m_max_assign_interval * 15; ++i)
     {
       _demand_passenger_bus[i] = TFlt (demand_passenger_bus[i]);
@@ -5070,7 +5067,7 @@ MNM_BusPath::~MNM_BusPath ()
   m_node_vec.clear ();
   m_busstop_vec.clear ();
   if (m_buffer != nullptr)
-    free (m_buffer);
+    delete[] m_buffer;
 }
 
 int
@@ -8455,9 +8452,7 @@ MNM_IO_Multimodal::build_passenger_demand (
                     ->second.find (_dest_node_ID)
                   == passenger_demand.find (_origin_node_ID)->second.end ())
                 {
-                  TFlt *_demand_vector
-                    = (TFlt *) malloc (sizeof (TFlt) * _max_interval);
-                  memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval);
+                  double *_demand_vector = new double[_max_interval]();
                   passenger_demand.find (_origin_node_ID)
                     ->second.insert (
                       std::pair<TInt, TFlt *> (_dest_node_ID, _demand_vector));
@@ -8519,10 +8514,9 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
   if (_demand_file.is_open () && _num_OD_driving > 0)
     {
       // printf("Start build demand profile.\n");
-      TFlt *_demand_vector_car
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
-      TFlt *_demand_vector_truck
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
+      double *_demand_vector_car = new double[_max_interval * _num_of_minute]();
+      double *_demand_vector_truck
+        = new double[_max_interval * _num_of_minute]();
       TFlt _demand_car;
       TFlt _demand_truck;
 
@@ -8611,14 +8605,14 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
             }
           else
             {
-              free (_demand_vector_car);
-              free (_demand_vector_truck);
+              delete[] _demand_vector_car;
+              delete[] _demand_vector_truck;
               throw std::runtime_error (
                 "Something wrong in build_vehicle_demand_multimodal");
             }
         }
-      free (_demand_vector_car);
-      free (_demand_vector_truck);
+      delete[] _demand_vector_car;
+      delete[] _demand_vector_truck;
       _demand_file.close ();
     }
   else
@@ -8631,8 +8625,7 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
   if (_bus_demand_file.is_open () && _num_bus_routes > 0)
     {
       // printf("Start build demand profile.\n");
-      TFlt *_demand_vector_bus
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
+      double *_demand_vector_bus = new double[_max_interval * _num_of_minute]();
       TFlt _demand_bus;
 
       std::getline (_bus_demand_file, _line); // skip the first line
@@ -8701,12 +8694,12 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
             }
           else
             {
-              free (_demand_vector_bus);
+              delete[] _demand_vector_bus;
               throw std::runtime_error (
                 "Something wrong in build_vehicle_demand_multimodal");
             }
         }
-      free (_demand_vector_bus);
+      delete[] _demand_vector_bus;
       _bus_demand_file.close ();
     }
   else
@@ -8754,8 +8747,7 @@ MNM_IO_Multimodal::build_pnr_demand (const std::string &file_folder,
   if (_demand_file.is_open ())
     {
       // printf("Start build demand profile.\n");
-      TFlt *_demand_vector
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
+      double *_demand_vector = new double[_max_interval * _num_of_minute]();
       TFlt _demand;
 
       std::getline (_demand_file, _line); // skip the first line
@@ -8811,11 +8803,11 @@ MNM_IO_Multimodal::build_pnr_demand (const std::string &file_folder,
             }
           else
             {
-              free (_demand_vector);
+              delete[] _demand_vector;
               throw std::runtime_error ("Something wrong in build_pnr_demand");
             }
         }
-      free (_demand_vector);
+      delete[] _demand_vector;
       _demand_file.close ();
     }
   else
@@ -8865,8 +8857,7 @@ MNM_IO_Multimodal::build_bustransit_demand (const std::string &file_folder,
   std::vector<std::string> _words;
   if (_demand_file.is_open ())
     {
-      TFlt *_demand_vector
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
+      double *_demand_vector = new double[_max_interval * _num_of_minute]();
 
       // printf("Start build demand profile.\n");
       std::getline (_demand_file, _line); // skip the first line
@@ -15185,7 +15176,7 @@ MNM_MM_Due::~MNM_MM_Due ()
     {
       for (auto _it_it : _it.second)
         {
-          free (_it_it.second);
+          delete[] _it_it.second;
         }
       _it.second.clear ();
     }
@@ -15864,8 +15855,8 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
               if (_origin->m_demand_car.find (_dest)
                   == _origin->m_demand_car.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_car.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));
@@ -15942,8 +15933,8 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
               if (_origin->m_demand_pnr_car.find (_dest)
                   == _origin->m_demand_pnr_car.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_pnr_car.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));
@@ -16019,8 +16010,8 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
               if (_origin->m_demand_passenger_bus.find (_dest)
                   == _origin->m_demand_passenger_bus.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_passenger_bus.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));
@@ -16151,11 +16142,8 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
               if (_origin->m_demand_car.find (_dest)
                   == _origin->m_demand_car.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
-                  memset (_demand_vector_tmp, 0x0,
-                          sizeof (TFlt) * m_total_assign_inter
-                            * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_car.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));
@@ -16239,11 +16227,8 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
               if (_origin->m_demand_pnr_car.find (_dest)
                   == _origin->m_demand_pnr_car.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
-                  memset (_demand_vector_tmp, 0x0,
-                          sizeof (TFlt) * m_total_assign_inter
-                            * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_pnr_car.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));
@@ -16327,11 +16312,8 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
               if (_origin->m_demand_passenger_bus.find (_dest)
                   == _origin->m_demand_passenger_bus.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
-                  memset (_demand_vector_tmp, 0x0,
-                          sizeof (TFlt) * m_total_assign_inter
-                            * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_passenger_bus.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));
@@ -16467,11 +16449,8 @@ MNM_MM_Due::save_od_demand_split (MNM_Dta_Multimodal *mmdta,
               if (_origin->m_demand_car.find (_dest)
                   == _origin->m_demand_car.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
-                  memset (_demand_vector_tmp, 0x0,
-                          sizeof (TFlt) * m_total_assign_inter
-                            * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_car.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));
@@ -16504,11 +16483,8 @@ MNM_MM_Due::save_od_demand_split (MNM_Dta_Multimodal *mmdta,
               if (_origin->m_demand_pnr_car.find (_dest)
                   == _origin->m_demand_pnr_car.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
-                  memset (_demand_vector_tmp, 0x0,
-                          sizeof (TFlt) * m_total_assign_inter
-                            * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_pnr_car.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));
@@ -16541,11 +16517,8 @@ MNM_MM_Due::save_od_demand_split (MNM_Dta_Multimodal *mmdta,
               if (_origin->m_demand_passenger_bus.find (_dest)
                   == _origin->m_demand_passenger_bus.end ())
                 {
-                  TFlt *_demand_vector_tmp = (TFlt *) malloc (
-                    sizeof (TFlt) * m_total_assign_inter * _num_of_minute);
-                  memset (_demand_vector_tmp, 0x0,
-                          sizeof (TFlt) * m_total_assign_inter
-                            * _num_of_minute);
+                  double *_demand_vector_tmp
+                    = new double[m_total_assign_inter * _num_of_minute]();
                   _origin->m_demand_passenger_bus.insert (
                     std::pair<MNM_Destination_Multimodal *,
                               TFlt *> (_dest, _demand_vector_tmp));

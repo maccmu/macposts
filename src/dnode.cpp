@@ -1,6 +1,5 @@
 #include "dnode.h"
 #include "path.h"
-#include <cstring>
 
 MNM_Dnode::MNM_Dnode (TInt ID, TFlt flow_scalar)
 {
@@ -209,13 +208,13 @@ MNM_Dnode_Inout::MNM_Dnode_Inout (TInt ID, TFlt flow_scalar)
 MNM_Dnode_Inout::~MNM_Dnode_Inout ()
 {
   if (m_demand != nullptr)
-    free (m_demand);
+    delete[] m_demand;
   if (m_supply != nullptr)
-    free (m_supply);
+    delete[] m_supply;
   if (m_veh_flow != nullptr)
-    free (m_veh_flow);
+    delete[] m_veh_flow;
   if (m_veh_tomove != nullptr)
-    free (m_veh_tomove);
+    delete[] m_veh_tomove;
 }
 
 int
@@ -225,17 +224,10 @@ MNM_Dnode_Inout::prepare_loading ()
   TInt _num_out = m_out_link_array.size ();
   // printf("node id %d, num_in: %d, num_out: %d\n",m_node_ID(), _num_in(),
   // _num_out());
-  m_demand = (TFlt *) malloc (
-    sizeof (TFlt) * _num_in
-    * _num_out); // create m_demand, maybe use static_cast<TFlt*>
-  memset (m_demand, 0x0,
-          sizeof (TFlt) * _num_in * _num_out); // initialize m_demand
-  m_supply = (TFlt *) malloc (sizeof (TFlt) * _num_out);
-  memset (m_supply, 0x0, sizeof (TFlt) * _num_out);
-  m_veh_flow = (TFlt *) malloc (sizeof (TFlt) * _num_in * _num_out);
-  memset (m_veh_flow, 0x0, sizeof (TFlt) * _num_in * _num_out);
-  m_veh_tomove = (TInt *) malloc (sizeof (TInt) * _num_in * _num_out);
-  memset (m_veh_tomove, 0x0, sizeof (TInt) * _num_in * _num_out);
+  m_demand = new double[_num_in * _num_out]();
+  m_supply = new double[_num_out]();
+  m_veh_flow = new double[_num_in * _num_out]();
+  m_veh_tomove = new int[_num_in * _num_out]();
   return 0;
 }
 
@@ -559,9 +551,9 @@ MNM_Dnode_GRJ::MNM_Dnode_GRJ (TInt ID, TFlt flow_scalar)
 MNM_Dnode_GRJ::~MNM_Dnode_GRJ ()
 {
   if (m_d_a != NULL)
-    free (m_d_a);
+    delete[] m_d_a;
   if (m_C_a != NULL)
-    free (m_C_a);
+    delete[] m_C_a;
 }
 
 int
@@ -569,10 +561,8 @@ MNM_Dnode_GRJ::prepare_loading ()
 {
   MNM_Dnode_Inout::prepare_loading ();
   TInt _num_in = m_in_link_array.size ();
-  m_d_a = (TFlt *) malloc (sizeof (TFlt) * _num_in);
-  memset (m_d_a, 0x0, sizeof (TFlt) * _num_in);
-  m_C_a = (TFlt *) malloc (sizeof (TFlt) * _num_in);
-  memset (m_C_a, 0x0, sizeof (TFlt) * _num_in);
+  m_d_a = new double[_num_in]();
+  m_C_a = new double[_num_in]();
   return 0;
 }
 

@@ -616,8 +616,7 @@ MNM_IO::build_demand (const std::string &file_folder,
   if (_demand_file.is_open ())
     {
       // printf("Start build demand profile.\n");
-      TFlt *_demand_vector = (TFlt *) malloc (sizeof (TFlt) * _max_interval);
-      memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval);
+      double *_demand_vector = new double[_max_interval]();
       for (int i = 0; i < _num_OD;)
         {
           std::getline (_demand_file, _line);
@@ -644,11 +643,11 @@ MNM_IO::build_demand (const std::string &file_folder,
             }
           else
             {
-              free (_demand_vector);
+              delete[] _demand_vector;
               throw std::runtime_error ("failed to build demand");
             }
         }
-      free (_demand_vector);
+      delete[] _demand_vector;
       _demand_file.close ();
     }
   return 0;
@@ -934,7 +933,7 @@ MNM_IO::read_float (const std::string &file_name, std::vector<TFlt *> *reader)
           std::getline (_file, _line);
           _words = split (_line, ' ');
           _len = TInt (_words.size ());
-          _tmp_flt = (TFlt *) malloc (sizeof (TFlt) * _len);
+          _tmp_flt = new double[_len]();
           // std::cout << "Processing: " << _line << "\n";
           for (int j = 0; j < _len; ++j)
             {
@@ -1133,8 +1132,7 @@ MNM_IO::read_td_link_cost (const std::string &file_folder,
               _link_ID = TInt (std::stoi (trim (_words[0])));
               if (td_link_cost.find (_link_ID) == td_link_cost.end ())
                 {
-                  TFlt *_cost_vector_tmp
-                    = (TFlt *) malloc (sizeof (TFlt) * num_timestamps);
+                  double *_cost_vector_tmp = new double[num_timestamps]();
                   td_link_cost.insert (
                     std::pair<TInt, TFlt *> (_link_ID, _cost_vector_tmp));
                 }
@@ -1211,8 +1209,7 @@ MNM_IO::read_td_node_cost (
               if (td_node_cost.find (_in_link_ID)->second.find (_out_link_ID)
                   == td_node_cost.find (_in_link_ID)->second.end ())
                 {
-                  TFlt *_cost_vector_tmp
-                    = (TFlt *) malloc (sizeof (TFlt) * num_timestamps);
+                  double *_cost_vector_tmp = new double[num_timestamps]();
                   td_node_cost.find (_in_link_ID)
                     ->second.insert (
                       std::pair<TInt, TFlt *> (_out_link_ID, _cost_vector_tmp));

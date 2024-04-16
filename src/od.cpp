@@ -25,7 +25,7 @@ MNM_Origin::~MNM_Origin ()
   for (auto _demand_it = m_demand.begin (); _demand_it != m_demand.end ();
        _demand_it++)
     {
-      free (_demand_it->second);
+      delete[] _demand_it->second;
     }
   m_demand.clear ();
   m_vehicle_label_ratio.clear ();
@@ -34,7 +34,7 @@ MNM_Origin::~MNM_Origin ()
 int
 MNM_Origin::add_dest_demand (MNM_Destination *dest, TFlt *demand)
 {
-  TFlt *_demand = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval);
+  double *_demand = new double[m_max_assign_interval]();
   for (int i = 0; i < m_max_assign_interval; ++i)
     {
       _demand[i] = TFlt (demand[i]);
