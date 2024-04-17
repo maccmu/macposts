@@ -2902,12 +2902,12 @@ MNM_Origin_Multiclass::~MNM_Origin_Multiclass ()
   m_demand_truck.clear ();
     for (auto _ratio_it : m_adaptive_ratio_car)
     {
-      free (_ratio_it.second);
+      delete[] _ratio_it.second;
     }
   m_adaptive_ratio_car.clear ();
   for (auto _ratio_it : m_adaptive_ratio_truck)
     {
-      free (_ratio_it.second);
+      delete[] _ratio_it.second;
     }
   m_adaptive_ratio_truck.clear ();
   m_car_label_ratio.clear ();
@@ -3005,16 +3005,14 @@ MNM_Origin_Multiclass::add_dest_adaptive_ratio_multiclass (MNM_Destination_Multi
                                                            TFlt *ad_ratio_car, TFlt *ad_ratio_truck)
 {
   // split (15-mins demand) to (15 * 1-minute demand)
-  TFlt *_ratio_car
-    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  TFlt *_ratio_car = new double[m_max_assign_interval * 15]();
   for (int i = 0; i < m_max_assign_interval * 15; ++i)
     {
       _ratio_car[i] = TFlt (ad_ratio_car[i]);
     }
   m_adaptive_ratio_car.insert ({ dest, _ratio_car });
 
-  TFlt *_ratio_truck
-    = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval * 15);
+  TFlt *_ratio_truck = new double[m_max_assign_interval * 15]();
   for (int i = 0; i < m_max_assign_interval * 15; ++i)
     {
       _ratio_truck[i] = TFlt (ad_ratio_truck[i]);
@@ -3943,10 +3941,8 @@ MNM_IO_Multiclass::build_td_adaptive_ratio (const std::string &file_folder,
   if (_ratio_file.is_open ())
     {
       // printf("Start build demand profile.\n");
-      TFlt *_ratio_vector_car
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
-      TFlt *_ratio_vector_truck
-        = (TFlt *) malloc (sizeof (TFlt) * _max_interval * _num_of_minute);
+      TFlt *_ratio_vector_car = new double[_max_interval * _num_of_minute]();
+      TFlt *_ratio_vector_truck = new double[_max_interval * _num_of_minute]();
       TFlt _ratio_car;
       TFlt _ratio_truck;
 
@@ -3985,13 +3981,13 @@ MNM_IO_Multiclass::build_td_adaptive_ratio (const std::string &file_folder,
             }
           else
             {
-              free (_ratio_vector_car);
-              free (_ratio_vector_truck);
+              delete[] _ratio_vector_car;
+              delete[] _ratio_vector_truck;
               throw std::runtime_error ("failed to build time-dependent adaptive ratio multiclass");
             }
         }
-      free (_ratio_vector_car);
-      free (_ratio_vector_truck);
+      delete[] _ratio_vector_car;
+      delete[] _ratio_vector_truck;
       _ratio_file.close ();
     }
   else {

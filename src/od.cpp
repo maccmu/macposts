@@ -34,7 +34,7 @@ MNM_Origin::~MNM_Origin ()
   for (auto _ratio_it = m_adaptive_ratio.begin (); _ratio_it != m_adaptive_ratio.end ();
        _ratio_it++)
     {
-      free (_ratio_it->second);
+      delete[] _ratio_it->second;
     }
   m_adaptive_ratio.clear ();
   m_vehicle_label_ratio.clear ();
@@ -55,7 +55,7 @@ MNM_Origin::add_dest_demand (MNM_Destination *dest, TFlt *demand)
 int
 MNM_Origin::add_dest_adaptive_ratio (MNM_Destination *dest, TFlt *ad_ratio)
 {
-  TFlt *_ratio = (TFlt *) malloc (sizeof (TFlt) * m_max_assign_interval);
+  TFlt *_ratio = new double[m_max_assign_interval]();
   for (int i = 0; i < m_max_assign_interval; ++i)
     {
       _ratio[i] = TFlt (ad_ratio[i]);
