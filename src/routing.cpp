@@ -734,6 +734,10 @@ MNM_Routing_Biclass_Hybrid::~MNM_Routing_Biclass_Hybrid ()
   // printf("m_routing_adaptive\n");
   delete m_routing_fixed_car;
   // printf("m_routing_fixed_car\n");
+  // Note that m_routing_fixed_car and m_routing_fixed_truck share the same path_table
+  // delete m_routing_fixed_car will delete the path_table
+  // so set m_routing_fixed_truck -> m_path_table = nullptr to avoid segmentation fault
+  m_routing_fixed_truck -> m_path_table = nullptr;
   delete m_routing_fixed_truck;
   // printf("m_routing_fixed_truck\n");
 }
@@ -744,6 +748,8 @@ MNM_Routing_Biclass_Hybrid::init_routing (Path_Table *path_table)
   if (m_routing_adaptive->m_working)
     m_routing_adaptive->init_routing ();
   // printf("Finished init all ADAPTIVE vehicles routing\n");
+  
+  // Note that m_routing_fixed_car and m_routing_fixed_truck share the same path_table
   m_routing_fixed_car->init_routing (path_table);
   // printf("Finished init STATIC cars routing\n");
   m_routing_fixed_truck->init_routing (path_table);
