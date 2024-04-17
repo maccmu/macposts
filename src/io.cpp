@@ -676,7 +676,7 @@ int MNM_IO::build_td_adaptive_ratio (const std::string &file_folder,
   if (_ratio_file.is_open ())
     {
       // printf("Start build demand profile.\n");
-      TFlt *_ratio_vector = (TFlt *) malloc (sizeof (TFlt) * _max_interval);
+      double *_ratio_vector = new double[_max_interval]();
       std::getline (_ratio_file, _line);
       while (std::getline (_ratio_file, _line))
         {
@@ -699,11 +699,11 @@ int MNM_IO::build_td_adaptive_ratio (const std::string &file_folder,
             }
           else
             {
-              free (_ratio_vector);
+              delete[] _ratio_vector;
               throw std::runtime_error ("failed to build time-dependent adaptive ratio");
             }
         }
-      free (_ratio_vector);
+      delete[] _ratio_vector;
       _ratio_file.close ();
     }
   else {
