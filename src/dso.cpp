@@ -166,7 +166,7 @@ MNM_Dso::get_link_marginal_cost (MNM_Dta *dta)
                   if (MNM_Ults::
                         approximate_equal (m_link_tt_map[_link_it.first]
                                                         [_actual_lift_up_time],
-                                           (float) _link_fft))
+                                           (TFlt) _link_fft))
                     {
                       // based on subgradient paper, when out flow = capacity
                       // and link tt = fftt, this is critical state where the

@@ -1544,11 +1544,11 @@ MNM_Parking_Lot::release_one_interval_passenger (
     }
 
   // All cars reaching this destination will park here
-  // IAssert(m_occupancy <= (float) (m_parked_car_queue.size())  /
-  // (float)_flow_scalar); m_occupancy = (float) (m_parked_car_queue.size())  /
-  // (float)_flow_scalar;
-  IAssert (m_occupancy <= (float) (m_parked_car) / (float) _flow_scalar);
-  m_occupancy = (float) (m_parked_car) / (float) _flow_scalar;
+  // IAssert(m_occupancy <= (TFlt) (m_parked_car_queue.size())  /
+  // (TFlt)_flow_scalar); m_occupancy = (TFlt) (m_parked_car_queue.size())  /
+  // (TFlt)_flow_scalar;
+  IAssert (m_occupancy <= (TFlt) (m_parked_car) / (TFlt) _flow_scalar);
+  m_occupancy = (TFlt) (m_parked_car) / (TFlt) _flow_scalar;
 
   if (m_occupancy >= m_capacity)
     {
@@ -4198,8 +4198,8 @@ MNM_Dlink_Ctm_Multimodal::clear_incoming_array (TInt timestamp)
             }
         }
       _veh->m_visual_position_on_link
-        = float (1) / float (m_num_cells)
-          / float (2); // initial position at first cell
+        = TFlt (1) / TFlt (m_num_cells)
+          / TFlt (2); // initial position at first cell
     }
   m_cell_array[0]->m_volume_car = m_cell_array[0]->m_veh_queue_car.size ();
   m_cell_array[0]->m_volume_truck = m_cell_array[0]->m_veh_queue_truck.size ();
@@ -4306,7 +4306,7 @@ MNM_Dlink_Ctm_Multimodal::move_veh_queue_in_cell (
           // update the vehicle position on current link. 0: at the beginning,
           // 1: at the end.
           _veh_multimodal->m_visual_position_on_link
-            += float (1) / float (m_num_cells);
+            += TFlt (1) / TFlt (m_num_cells);
           if (_veh_multimodal->m_visual_position_on_link > 0.99)
             _veh_multimodal->m_visual_position_on_link = 0.99;
           to_queue->push_back (_veh);
@@ -7860,11 +7860,11 @@ MNM_IO_Multimodal::build_busstop_factory (const std::string &file_folder,
                 = _historical_waiting_time;
               _bus_stop_virtual->m_max_boarding_passengers_per_unit_time
                 = TInt (round (
-                  float (conf_reader->get_int ("unit_time"))
+                  TFlt (conf_reader->get_int ("unit_time"))
                   / conf_reader->get_int ("boarding_time_per_passenger")));
               _bus_stop_virtual->m_max_alighting_passengers_per_unit_time
                 = TInt (round (
-                  float (conf_reader->get_int ("unit_time"))
+                  TFlt (conf_reader->get_int ("unit_time"))
                   / conf_reader->get_int ("alighting_time_per_passenger")));
               _bus_stop_virtual->m_cell_ID = _bus_stop_physical->m_cell_ID;
               _bus_stop_virtual->m_busstop_physical = _bus_stop_physical;
@@ -9494,16 +9494,16 @@ MNM_Dta_Multimodal::initialize ()
     = new MNM_Veh_Factory_Multimodal (TInt (m_config->get_int ("bus_capacity")),
                                       TInt (round (
                                         m_config->get_float ("fixed_dwell_time")
-                                        / float (m_unit_time))),
+                                        / TFlt (m_unit_time))),
                                       TInt (round (m_config->get_float (
                                                      "boarding_lost_time")
-                                                   / float (m_unit_time))),
+                                                   / TFlt (m_unit_time))),
                                       TInt (round (
-                                        float (m_unit_time)
+                                        TFlt (m_unit_time)
                                         / m_config->get_int (
                                           "alighting_time_per_passenger"))),
                                       TInt (round (
-                                        float (m_unit_time)
+                                        TFlt (m_unit_time)
                                         / m_config->get_int (
                                           "boarding_time_per_passenger"))));
   m_node_factory = new MNM_Node_Factory_Multimodal ();
@@ -11222,8 +11222,8 @@ add_dar_records_bus (std::vector<dar_record *> &record, MNM_Bus_Link *link,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -11272,8 +11272,8 @@ add_dar_records_passenger (std::vector<dar_record *> &record,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -11321,8 +11321,8 @@ add_dar_records_bus (std::vector<dar_record *> &record, MNM_Bus_Link *link,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -11371,8 +11371,8 @@ add_dar_records_passenger (std::vector<dar_record *> &record,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -11466,7 +11466,7 @@ add_ltg_records_passenger (std::vector<ltg_record *> &record,
   new_record->gradient = gradient;
   // printf("Adding record, %d, %d, %d, %d, %f\n", new_record -> path_ID(),
   // new_record -> assign_int,
-  //         new_record -> link_ID(), new_record -> link_start_int, (float)
+  //         new_record -> link_ID(), new_record -> link_start_int, (TFlt)
   //         new_record -> gradient());
   record.push_back (new_record);
   return 0;
@@ -15770,7 +15770,7 @@ MNM_MM_Due::init_passenger_path_flow ()
                             = m_passenger_demand[_o_node_ID][_d_node_ID][_col];
                           // printf("%lf\n", _dmd());
                           _path->m_buffer[_col] = TFlt (1.0) / _num_mode * _dmd;
-                          // printf("%lf\n", (float)_path->m_buffer[_col]);
+                          // printf("%lf\n", (TFlt)_path->m_buffer[_col]);
                         }
                     }
                   else
@@ -15778,7 +15778,7 @@ MNM_MM_Due::init_passenger_path_flow ()
                       for (int _col = 0; _col < m_total_assign_inter; _col++)
                         {
                           _path->m_buffer[_col] = TFlt (0);
-                          // printf("%lf\n", (float)_path->m_buffer[_col]);
+                          // printf("%lf\n", (TFlt)_path->m_buffer[_col]);
                         }
                     }
                   p++;
@@ -15908,7 +15908,7 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
                           for (int k = 0; k < _max_num_of_minute; ++k)
                             {
                               // printf("original demand value is %f\n",
-                              // (float)_demand_vector[_col * _num_of_minute +
+                              // (TFlt)_demand_vector[_col * _num_of_minute +
                               // k]);
                               _demand_vector[_col * _num_of_minute + k]
                                 = _demand;
@@ -15985,7 +15985,7 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
                           for (int k = 0; k < _max_num_of_minute; ++k)
                             {
                               // printf("original demand value is %f\n",
-                              // (float)_demand_vector[_col * _num_of_minute +
+                              // (TFlt)_demand_vector[_col * _num_of_minute +
                               // k]);
                               _demand_vector[_col * _num_of_minute + k]
                                 = _demand;
@@ -16066,7 +16066,7 @@ MNM_MM_Due::update_origin_demand_from_passenger_path_table (
                           for (int k = 0; k < _max_num_of_minute; ++k)
                             {
                               // printf("original demand value is %f\n",
-                              // (float)_demand_vector[_col * _num_of_minute +
+                              // (TFlt)_demand_vector[_col * _num_of_minute +
                               // k]);
                               _demand_vector[_col * _num_of_minute + k]
                                 = _demand;
@@ -16160,7 +16160,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                   for (int k = 1; k < _num_of_minute; ++k)
                     {
                       // printf("original demand value is %f\n",
-                      // (float)_demand_vector[_col * _num_of_minute + k]);
+                      // (TFlt)_demand_vector[_col * _num_of_minute + k]);
                       _demand_vector[assign_inter * _num_of_minute + k] = 0;
                     }
                 }
@@ -16185,7 +16185,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                   for (int k = 0; k < _num_of_minute; ++k)
                     {
                       // printf("original demand value is %f\n",
-                      // (float)_demand_vector[_col * _num_of_minute + k]);
+                      // (TFlt)_demand_vector[_col * _num_of_minute + k]);
                       if (k < _max_num_of_minute)
                         {
                           _demand_vector[assign_inter * _num_of_minute + k]
@@ -16244,7 +16244,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                   for (int k = 1; k < _num_of_minute; ++k)
                     {
                       // printf("original demand value is %f\n",
-                      // (float)_demand_vector[_col * _num_of_minute + k]);
+                      // (TFlt)_demand_vector[_col * _num_of_minute + k]);
                       _demand_vector[assign_inter * _num_of_minute + k] = 0;
                     }
                 }
@@ -16269,7 +16269,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                   for (int k = 0; k < _num_of_minute; ++k)
                     {
                       // printf("original demand value is %f\n",
-                      // (float)_demand_vector[_col * _num_of_minute + k]);
+                      // (TFlt)_demand_vector[_col * _num_of_minute + k]);
                       if (k < _max_num_of_minute)
                         {
                           _demand_vector[assign_inter * _num_of_minute + k]
@@ -16329,7 +16329,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
               // _demand_vector[assign_inter * _num_of_minute] = _demand;
               // for (int k = 1; k < _num_of_minute; ++k){
               //     // printf("original demand value is %f\n",
-              //     (float)_demand_vector[_col * _num_of_minute + k]);
+              //     (TFlt)_demand_vector[_col * _num_of_minute + k]);
               //     _demand_vector[assign_inter * _num_of_minute + k] = 0;
               // }
 
@@ -16339,7 +16339,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                   for (int k = 1; k < _num_of_minute; ++k)
                     {
                       // printf("original demand value is %f\n",
-                      // (float)_demand_vector[_col * _num_of_minute + k]);
+                      // (TFlt)_demand_vector[_col * _num_of_minute + k]);
                       _demand_vector[assign_inter * _num_of_minute + k] = 0;
                     }
                 }
@@ -16365,7 +16365,7 @@ MNM_MM_Due::update_origin_demand_logit_model (MNM_Dta_Multimodal *mmdta,
                   for (int k = 0; k < _num_of_minute; ++k)
                     {
                       // printf("original demand value is %f\n",
-                      // (float)_demand_vector[_col * _num_of_minute + k]);
+                      // (TFlt)_demand_vector[_col * _num_of_minute + k]);
                       if (k < _max_num_of_minute)
                         {
                           _demand_vector[assign_inter * _num_of_minute + k]
@@ -18325,7 +18325,7 @@ MNM_MM_Due::get_link_queue_dissipated_time (MNM_Dta_Multimodal *mmdta)
               _link = dynamic_cast<MNM_Dlink_Multiclass *> (_link_it.second);
               if (MNM_Ults::
                     approximate_equal (m_link_tt_map[_link_it.first][i],
-                                       (float) _link
+                                       (TFlt) _link
                                          ->get_link_freeflow_tt_loading_car ()))
                 {
                   // based on subgradient paper, when out flow = capacity and
@@ -18466,7 +18466,7 @@ MNM_MM_Due::get_link_queue_dissipated_time (MNM_Dta_Multimodal *mmdta)
               if (
                 MNM_Ults::
                   approximate_equal (m_link_tt_map_truck[_link_it.first][i],
-                                     (float) _link
+                                     (TFlt) _link
                                        ->get_link_freeflow_tt_loading_truck ()))
                 {
                   // based on subgradient paper, when out flow = capacity and
@@ -19845,7 +19845,7 @@ MNM_MM_Due::get_best_path_for_single_interval (
         = get_best_driving_path_for_single_interval (interval, o_node_ID,
                                                      _tdsp_tree_driving, mmdta);
       printf ("new driving path cost: %f\n",
-              (float) std::get<2> (_path_driving_result));
+              (TFlt) std::get<2> (_path_driving_result));
       _best = std::make_pair (_path_driving_result, driving);
     }
 
@@ -19861,7 +19861,7 @@ MNM_MM_Due::get_best_path_for_single_interval (
         = get_best_bus_path_for_single_interval (interval, o_node_ID,
                                                  _tdsp_tree_bus, mmdta);
       printf ("new bus transit path cost: %f\n",
-              (float) std::get<2> (_path_bus_result));
+              (TFlt) std::get<2> (_path_bus_result));
       if (std::get<0> (_path_bus_result) != nullptr)
         {
           if (std::get<0> (_best.first) != nullptr)
@@ -19896,7 +19896,7 @@ MNM_MM_Due::get_best_path_for_single_interval (
                                                  _tdsp_tree_bus,
                                                  tdsp_tree_map_driving, mmdta);
       printf ("new pnr path cost: %f\n",
-              (float) std::get<2> (_path_pnr_result));
+              (TFlt) std::get<2> (_path_pnr_result));
       if (std::get<0> (_path_pnr_result) != nullptr)
         {
           if (std::get<0> (_best.first) != nullptr)
@@ -20263,7 +20263,7 @@ MNM_MM_Due::get_best_existing_path_for_single_interval (
                                                               o_node_ID,
                                                               d_node_ID, mmdta);
       printf ("new driving path cost: %f\n",
-              (float) std::get<2> (_path_driving_result));
+              (TFlt) std::get<2> (_path_driving_result));
       _best = std::make_pair (_path_driving_result, driving);
     }
 
@@ -20278,7 +20278,7 @@ MNM_MM_Due::get_best_existing_path_for_single_interval (
         = get_best_existing_bus_path_for_single_interval (interval, o_node_ID,
                                                           d_node_ID, mmdta);
       printf ("new bustransit path cost: %f\n",
-              (float) std::get<2> (_path_bus_result));
+              (TFlt) std::get<2> (_path_bus_result));
       if (std::get<0> (_path_bus_result) != nullptr)
         {
           if (std::get<0> (_best.first) != nullptr)
@@ -20311,7 +20311,7 @@ MNM_MM_Due::get_best_existing_path_for_single_interval (
         = get_best_existing_pnr_path_for_single_interval (interval, o_node_ID,
                                                           d_node_ID, mmdta);
       printf ("new pnr path cost: %f\n",
-              (float) std::get<2> (_path_pnr_result));
+              (TFlt) std::get<2> (_path_pnr_result));
       if (std::get<0> (_path_pnr_result) != nullptr)
         {
           if (std::get<0> (_best.first) != nullptr)

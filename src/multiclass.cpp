@@ -494,7 +494,7 @@ MNM_Dlink_Ctm_Multiclass::move_veh_queue (std::deque<MNM_Veh *> *from_queue,
       // update the vehicle position on current link. 0: at the beginning, 1: at
       // the end.
       _veh_multiclass->m_visual_position_on_link
-        += float (1) / float (m_num_cells);
+        += TFlt (1) / TFlt (m_num_cells);
       if (_veh_multiclass->m_visual_position_on_link > 0.99)
         _veh_multiclass->m_visual_position_on_link = 0.99;
       to_queue->push_back (_veh);
@@ -856,8 +856,8 @@ MNM_Dlink_Ctm_Multiclass::clear_incoming_array (TInt timestamp)
           m_cell_array[0]->m_veh_queue_truck.push_back (_veh);
         }
       _veh->m_visual_position_on_link
-        = float (1) / float (m_num_cells)
-          / float (2); // initial position at first cell
+        = TFlt (1) / TFlt (m_num_cells)
+          / TFlt (2); // initial position at first cell
     }
   m_cell_array[0]->m_volume_car = m_cell_array[0]->m_veh_queue_car.size ();
   m_cell_array[0]->m_volume_truck = m_cell_array[0]->m_veh_queue_truck.size ();
@@ -1763,9 +1763,9 @@ MNM_Dlink_Lq_Multiclass::print_info ()
 {
   printf ("Link Dynamic model: Multiclass Link Queue\n");
   printf ("Total car volume in the link: %.4f\n",
-          (float) (m_volume_car / m_flow_scalar));
+          (TFlt) (m_volume_car / m_flow_scalar));
   printf ("Total truck volume in the link: %.4f\n",
-          (float) (m_volume_truck / m_flow_scalar));
+          (TFlt) (m_volume_truck / m_flow_scalar));
 }
 
 TFlt
@@ -2075,9 +2075,9 @@ MNM_Dlink_Pq_Multiclass::print_info ()
 {
   printf ("Link Dynamic model: Multiclass Point Queue\n");
   printf ("Total car volume in the link: %.4f\n",
-          (float) (m_volume_car / m_flow_scalar));
+          (TFlt) (m_volume_car / m_flow_scalar));
   printf ("Total truck volume in the link: %.4f\n",
-          (float) (m_volume_truck / m_flow_scalar));
+          (TFlt) (m_volume_truck / m_flow_scalar));
 }
 
 int
@@ -4900,8 +4900,8 @@ add_dar_records_car (std::vector<dar_record *> &record,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -4949,8 +4949,8 @@ add_dar_records_truck (std::vector<dar_record *> &record,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -4999,8 +4999,8 @@ add_dar_records_car (std::vector<dar_record *> &record,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -5049,8 +5049,8 @@ add_dar_records_truck (std::vector<dar_record *> &record,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -5103,8 +5103,8 @@ add_dar_records_eigen_car (std::vector<Eigen::Triplet<double>> &record,
                   + num_e_path * depart_it.first; // # of paths * # of intervals
               // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
               // path_ID(), new_record -> assign_int(),
-              //     new_record -> link_ID(), (float)new_record ->
-              //     link_start_int(), (float) new_record -> flow());
+              //     new_record -> link_ID(), (TFlt)new_record ->
+              //     link_start_int(), (TFlt) new_record -> flow());
 
               // https://eigen.tuxfamily.org/dox/classEigen_1_1Triplet.html
               // https://eigen.tuxfamily.org/dox/SparseUtil_8h_source.html
@@ -5164,8 +5164,8 @@ add_dar_records_eigen_car (Eigen::SparseMatrix<double, Eigen::RowMajor> &mat,
                   + num_e_path * depart_it.first; // # of paths * # of intervals
               // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
               // path_ID(), new_record -> assign_int(),
-              //     new_record -> link_ID(), (float)new_record ->
-              //     link_start_int(), (float) new_record -> flow());
+              //     new_record -> link_ID(), (TFlt)new_record ->
+              //     link_start_int(), (TFlt) new_record -> flow());
 
               // https://stackoverflow.com/questions/18154027/sparsematrix-construction-in-eigen
               // http://eigen.tuxfamily.org/dox/group__TutorialSparse.html#title3
@@ -5224,8 +5224,8 @@ add_dar_records_eigen_truck (std::vector<Eigen::Triplet<double>> &record,
                   + num_e_path * depart_it.first; // # of paths * # of intervals
               // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
               // path_ID(), new_record -> assign_int(),
-              //     new_record -> link_ID(), (float)new_record ->
-              //     link_start_int(), (float) new_record -> flow());
+              //     new_record -> link_ID(), (TFlt)new_record ->
+              //     link_start_int(), (TFlt) new_record -> flow());
 
               // https://eigen.tuxfamily.org/dox/classEigen_1_1Triplet.html
               // https://eigen.tuxfamily.org/dox/SparseUtil_8h_source.html
@@ -5285,8 +5285,8 @@ add_dar_records_eigen_truck (Eigen::SparseMatrix<double, Eigen::RowMajor> &mat,
                   + num_e_path * depart_it.first; // # of paths * # of intervals
               // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
               // path_ID(), new_record -> assign_int(),
-              //     new_record -> link_ID(), (float)new_record ->
-              //     link_start_int(), (float) new_record -> flow());
+              //     new_record -> link_ID(), (TFlt)new_record ->
+              //     link_start_int(), (TFlt) new_record -> flow());
 
               // https://stackoverflow.com/questions/18154027/sparsematrix-construction-in-eigen
               // http://eigen.tuxfamily.org/dox/group__TutorialSparse.html#title3
@@ -5398,7 +5398,7 @@ add_ltg_records_veh (std::vector<ltg_record *> &record,
   new_record->gradient = gradient;
   // printf("Adding record, %d, %d, %d, %d, %f\n", new_record -> path_ID(),
   // new_record -> assign_int,
-  //         new_record -> link_ID(), new_record -> link_start_int, (float)
+  //         new_record -> link_ID(), new_record -> link_start_int, (TFlt)
   //         new_record -> gradient());
   record.push_back (new_record);
   return 0;

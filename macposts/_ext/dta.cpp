@@ -373,7 +373,7 @@ Dta::run_due (int max_iter, const std::string &folder, bool verbose,
           _gap = _due->compute_merit_function_fixed_departure_time_choice ();
         }
 
-      printf ("GAP = %lf, total tt = %lf\n", (float) _gap, (float) _total_tt);
+      printf ("GAP = %lf, total tt = %lf\n", (TFlt) _gap, (TFlt) _total_tt);
       _gap_file << std::to_string (_gap) + " " + std::to_string (_total_tt)
                      + "\n";
 
@@ -478,7 +478,7 @@ Dta::run_dso (int max_iter, const std::string &folder, bool verbose,
           _gap = _dso->compute_merit_function_fixed_departure_time_choice ();
         }
 
-      printf ("GAP = %lf, total tt = %lf\n", (float) _gap, (float) _total_tt);
+      printf ("GAP = %lf, total tt = %lf\n", (TFlt) _gap, (TFlt) _total_tt);
       _gap_file << std::to_string (_gap) + " " + std::to_string (_total_tt)
                      + "\n";
 
@@ -608,7 +608,7 @@ Dta::run_dnl_delivery_traffic (const std::string &folder, bool verbose,
          + "Total enroute car: " + std::to_string (int (_enroute_car)) + "\n"
          + "Total released delivery car: "
          + std::to_string (int (_released_delivery_car)) + "\n"
-         + "Total car tt: " + std::to_string (float (_tot_tt_car))
+         + "Total car tt: " + std::to_string (TFlt (_tot_tt_car))
          + " hours\n\n";
 
   _str += print_emission_stats ();
@@ -730,7 +730,7 @@ Dta::run_dnl_electrified_traffic (const std::string &folder, bool verbose,
          + "Total roadside charged electrified car: "
          + std::to_string (int (_released_electrified_car)
                            - int (_home_charged_electrified_car))
-         + "\n" + "Total car tt: " + std::to_string (float (_tot_tt_car))
+         + "\n" + "Total car tt: " + std::to_string (TFlt (_tot_tt_car))
          + " hours\n\n";
 
   _str += print_emission_stats ();
@@ -1108,7 +1108,7 @@ Dta::get_link_queue_dissipated_time ()
               _link = dynamic_cast<MNM_Dlink *> (_link_it.second);
               if (MNM_Ults::
                     approximate_equal (m_link_tt_map[_link_it.first][i],
-                                       (float) _link
+                                       (TFlt) _link
                                          ->get_link_freeflow_tt_loading ()))
                 {
                   // based on subgradient paper, when out flow = capacity and

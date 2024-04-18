@@ -496,16 +496,16 @@ public:
 struct td_link_attribute_row
 {
   std::string link_type;
-  float length;
-  float FFS_car;
-  float Cap_car;
-  float RHOJ_car;
+  TFlt length;
+  TFlt FFS_car;
+  TFlt Cap_car;
+  TFlt RHOJ_car;
   int Lane;
-  float FFS_truck;
-  float Cap_truck;
-  float RHOJ_truck;
-  float Convert_factor;
-  float toll;
+  TFlt FFS_truck;
+  TFlt Cap_truck;
+  TFlt RHOJ_truck;
+  TFlt Convert_factor;
+  TFlt toll;
 };
 
 class MNM_Link_Factory_Multiclass : public MNM_Link_Factory

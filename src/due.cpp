@@ -295,7 +295,7 @@ MNM_Due::get_disutility (TFlt depart_time, TFlt tt)
     {
       return m_vot * tt + m_early_penalty * (m_target_time - _arrival_time);
     }
-  throw std::runtime_error ("Error in MNM_Due::get_disutility");
+  // throw std::runtime_error ("Error in MNM_Due::get_disutility");
 }
 
 TFlt
@@ -875,14 +875,14 @@ MNM_Due_Msa::update_path_table_gp_fixed_departure_time_choice (MNM_Dta *dta,
                     {
                       // _tmp_tt = get_tt(_col *
                       // m_dta_config->get_int("assign_frq"), _tmp_path);
-                      // printf("path in pathset, tt %lf\n", (float)_tmp_tt);
+                      // printf("path in pathset, tt %lf\n", (TFlt)_tmp_tt);
                       // _tmp_cost = get_disutility(TFlt(_col *
                       // m_dta_config->get_int("assign_frq")), _tmp_tt);
                       _tmp_tt = _tmp_path->m_travel_time_vec[_col];
-                      printf ("path in pathset, tt %lf\n", (float) _tmp_tt);
+                      printf ("path in pathset, tt %lf\n", (TFlt) _tmp_tt);
                       _tmp_cost = _tmp_path->m_travel_disutility_vec[_col];
                       printf ("path in pathset, disutility %lf\n",
-                              (float) _tmp_cost);
+                              (TFlt) _tmp_cost);
                       _tot_path_cost += _tmp_cost;
                       _tot_nonzero_path += 1;
                       if ((_tmp_path->m_buffer[_col] > 0)

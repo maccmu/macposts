@@ -836,8 +836,8 @@ Mcdta::get_travel_stats ()
   // printf("\n\nTotal car: %d, Total truck: %d, Total car tt: %.2f hours, Total
   // truck tt: %.2f hours\n\n",
   //        int(_count_car/m_mcdta -> m_flow_scalar), int(_count_truck/m_mcdta
-  //        -> m_flow_scalar), float(_tot_tt_car/m_mcdta -> m_flow_scalar),
-  //        float(_tot_tt_truck/m_mcdta -> m_flow_scalar));
+  //        -> m_flow_scalar), TFlt(_tot_tt_car/m_mcdta -> m_flow_scalar),
+  //        TFlt(_tot_tt_truck/m_mcdta -> m_flow_scalar));
   // m_mcdta -> m_emission -> output();
 
   // for all released vehicles
@@ -1031,7 +1031,7 @@ Mcdta::get_link_queue_dissipated_time ()
               _link = dynamic_cast<MNM_Dlink_Multiclass *> (_link_it.second);
               if (MNM_Ults::
                     approximate_equal (m_link_tt_map[_link_it.first][i],
-                                       (float) _link
+                                       (TFlt) _link
                                          ->get_link_freeflow_tt_loading_car ()))
                 {
                   // based on subgradient paper, when out flow = capacity and
@@ -1165,7 +1165,7 @@ Mcdta::get_link_queue_dissipated_time ()
               if (
                 MNM_Ults::
                   approximate_equal (m_link_tt_map_truck[_link_it.first][i],
-                                     (float) _link
+                                     (TFlt) _link
                                        ->get_link_freeflow_tt_loading_truck ()))
                 {
                   // based on subgradient paper, when out flow = capacity and

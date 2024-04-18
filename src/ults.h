@@ -19,11 +19,11 @@ TFlt max_link_cost ();
 int copy_file (const char *srce_file, const char *dest_file);
 int copy_file (std::string srce_file, std::string dest_file);
 
-float roundoff (float value, unsigned char prec);
-bool approximate_equal (TFlt a, TFlt b, float p = 1e-4);
-bool approximate_less_than (TFlt a, TFlt b, float p = 1e-4);
+TFlt roundoff (TFlt value, unsigned char prec);
+bool approximate_equal (TFlt a, TFlt b, TFlt p = 1e-4);
+bool approximate_less_than (TFlt a, TFlt b, TFlt p = 1e-4);
 
-int round_up_time (TFlt time, float p = 1e-4);
+int round_up_time (TFlt time, TFlt p = 1e-4);
 int round_down_time (TFlt time);
 
 macposts::Graph reverse_graph (const macposts::Graph &graph);

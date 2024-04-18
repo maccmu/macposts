@@ -772,10 +772,10 @@ MNM_IO_Delivery::build_demand_multi_OD_seq (const std::string &file_folder,
           // destruct in Origin destructor
           _od_seq
             = new std::vector<std::pair<MNM_Origin *, MNM_Destination *>> ();
-          for (size_t i = 0; i < _words.size (); i += 2)
+          for (size_t j = 0; j < _words.size (); j += 2)
             {
-              _O_ID = TInt (std::stoi (_words[i]));
-              _D_ID = TInt (std::stoi (_words[i + 1]));
+              _O_ID = TInt (std::stoi (_words[j]));
+              _D_ID = TInt (std::stoi (_words[j + 1]));
               _origin = dynamic_cast<MNM_Origin_Delivery *> (
                 _od_factory_delivery->get_origin (_O_ID));
               _dest = dynamic_cast<MNM_Destination_Delivery *> (
