@@ -565,6 +565,7 @@ int
 MNM_Routing_Fixed::register_veh (MNM_Veh *veh, bool track)
 {
   TFlt _r = MNM_Ults::rand_flt ();
+  // std::cout << "original r: " << _r << std::endl;
   // printf("%d\n", veh -> get_origin() -> m_origin_node  -> m_node_ID);
   // printf("%d\n", veh -> get_destination() -> m_dest_node  -> m_node_ID);
   MNM_Pathset *_pathset
@@ -576,8 +577,11 @@ MNM_Routing_Fixed::register_veh (MNM_Veh *veh, bool track)
   // note m_path_vec is an ordered vector, not unordered
   for (MNM_Path *_path : _pathset->m_path_vec)
     {
-      // printf("2\n");
-      if (_path->m_p >= _r)
+      // when _r = 1, it will come to equality check of two floating numbers
+      // and simply using if (_path->m_p >= _r) can be problematic sometimes, 
+      // especially on Windows, _route_path can still be nullptr after this,
+      // which can cause vehicle on wrong link or node
+      if (!MNM_Ults::approximate_less_than(_path -> m_p, _r))
         {
           _route_path = _path;
           break;

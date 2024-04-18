@@ -5602,7 +5602,7 @@ MNM_Routing_PnR_Fixed::register_veh (MNM_Veh *veh, bool track)
   for (MNM_Path *_path : _pathset->m_path_vec)
     {
       // printf("2\n");
-      if (_path->m_p >= _r)
+      if (!MNM_Ults::approximate_less_than(_path->m_p, _r)) 
         {
           _route_path = dynamic_cast<MNM_PnR_Path *> (_path);
           break;
@@ -5914,7 +5914,7 @@ MNM_Routing_PassengerBusTransit_Fixed::register_passenger (
       for (MNM_Path *_path : _pathset->m_path_vec)
         {
           // printf("2\n");
-          if (_path->m_p >= _r)
+          if (!MNM_Ults::approximate_less_than(_path->m_p, _r))
             {
               _route_path = _path;
               break;
