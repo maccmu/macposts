@@ -561,9 +561,9 @@ MNM_Dlink_Pq::print_info ()
 {
   printf ("Link Dynamic model: Point Queue\n");
   printf ("Real volume in the link: %.4f\n",
-          (float) (m_volume / m_flow_scalar));
+          (TFlt) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
-          (float) (TFlt (m_finished_array.size ()) / m_flow_scalar));
+          (TFlt) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }
 
 int
@@ -751,9 +751,9 @@ MNM_Dlink_Lq::print_info ()
 {
   printf ("Link Dynamic model: Link Queue\n");
   printf ("Real volume in the link: %.4f\n",
-          (float) (m_volume / m_flow_scalar));
+          (TFlt) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
-          (float) (TFlt (m_finished_array.size ()) / m_flow_scalar));
+          (TFlt) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }
 
 int
@@ -784,7 +784,7 @@ MNM_Dlink_Lq::evolve (TInt timestamp)
       TInt _veh_to_move = MNM_Ults::round (_demand * m_flow_scalar)
                           - TInt (m_finished_array.size ());
       // printf("demand %f, Veh queue size %d, finished size %d, to move %d \n",
-      // (float) _demand(), (int) m_veh_queue.size(),
+      // (TFlt) _demand(), (int) m_veh_queue.size(),
       // (int)m_finished_array.size(), _veh_to_move());
 
       _veh_to_move = std::min (_veh_to_move, TInt (m_veh_queue.size ()));
@@ -1448,9 +1448,9 @@ MNM_Dlink_Ltm::print_info ()
 {
   printf ("Link Dynamic model: Link Transmission Model\n");
   printf ("Real volume in the link: %.4f\n",
-          (float) (m_volume / m_flow_scalar));
+          (TFlt) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
-          (float) (TFlt (m_finished_array.size ()) / m_flow_scalar));
+          (TFlt) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }
 
 int
@@ -1517,7 +1517,7 @@ MNM_Dlink_Ltm::evolve (TInt timestamp)
       TInt _veh_to_move = MNM_Ults::round (_demand * m_flow_scalar)
                           - TInt (m_finished_array.size ());
       // printf("demand %f, Veh queue size %d, finished size %d, to move %d \n",
-      // (float) _demand(), (int) m_veh_queue.size(),
+      // (TFlt) _demand(), (int) m_veh_queue.size(),
       // (int)m_finished_array.size(), _veh_to_move());
 
       _veh_to_move = std::min (_veh_to_move, TInt (m_veh_queue.size ()));

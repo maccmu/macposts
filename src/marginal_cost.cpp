@@ -112,7 +112,7 @@ MNM_Link_Tt::print_info ()
       _link = _link_it.first;
       _tt = _link_it.second;
       printf ("In link ID %d, the travel time is %.4f.\n",
-              (int) _link->m_link_ID, (float) _tt);
+              (int) _link->m_link_ID, (TFlt) _tt);
     }
 }
 

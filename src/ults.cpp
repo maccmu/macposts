@@ -65,15 +65,15 @@ copy_file (std::string srce_file, std::string dest_file)
   return MNM_Ults::copy_file (srce_file.c_str (), dest_file.c_str ());
 }
 
-float
-roundoff (float value, unsigned char prec)
+TFlt
+roundoff (TFlt value, unsigned char prec)
 {
-  float pow_10 = pow (10.0f, (float) prec);
+  TFlt pow_10 = pow (10.0f, (TFlt) prec);
   return round (value * pow_10) / pow_10;
 }
 
 bool
-approximate_equal (TFlt a, TFlt b, float p)
+approximate_equal (TFlt a, TFlt b, TFlt p)
 {
   // approximately equal,
   // https://stackoverflow.com/questions/17333/what-is-the-most-effective-way-for-float-and-double-comparison
@@ -88,13 +88,13 @@ approximate_equal (TFlt a, TFlt b, float p)
 }
 
 bool
-approximate_less_than (TFlt a, TFlt b, float p)
+approximate_less_than (TFlt a, TFlt b, TFlt p)
 {
   return a + p * std::max (fabs (a), fabs (b)) < b;
 }
 
 int
-round_up_time (TFlt time, float p)
+round_up_time (TFlt time, TFlt p)
 {
   if (time < 1)
     {

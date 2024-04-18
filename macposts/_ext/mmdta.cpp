@@ -995,7 +995,7 @@ Mmdta::run_mmdue (const std::string &folder, bool verbose)
       // fixed departure time choice
       gap = m_mmdue->compute_merit_function_fixed_departure_time_choice (mmdta);
       printf ("\n\n*******************GAP = %lf*******************\n\n",
-              (float) gap);
+              (TFlt) gap);
       gap_file << std::to_string (gap) + "\n";
 
       // search for the lowest disutility route and update path flow
@@ -1039,8 +1039,8 @@ Mmdta::run_mmdue (const std::string &folder, bool verbose)
                   "%d, Total bus: %d, Total car tt: %.2f hours, Total truck "
                   "tt: %.2f hours, Total bus tt: %.2f hours\n",
                   int (_count_car), int (_count_car_pnr), int (_count_truck),
-                  int (_count_bus), float (_tot_tt_car), float (_tot_tt_truck),
-                  float (_tot_tt_bus));
+                  int (_count_bus), TFlt (_tot_tt_car), TFlt (_tot_tt_truck),
+                  TFlt (_tot_tt_bus));
           _count_passenger = mmdta->m_passenger_factory->m_finished_passenger;
           _count_passenger_pnr
             = mmdta->m_passenger_factory->m_finished_passenger_pnr;
@@ -1049,7 +1049,7 @@ Mmdta::run_mmdue (const std::string &folder, bool verbose)
           printf ("Total passenger: %d, Total pnr passenger: %d, Total Total "
                   "tt: %.2f hours\n",
                   int (_count_passenger), int (_count_passenger_pnr),
-                  float (_tot_tt_passenger));
+                  TFlt (_tot_tt_passenger));
 
           // print to terminal
           // freopen("CON", "w", stdout);
@@ -1820,10 +1820,10 @@ Mmdta::get_travel_stats ()
   // bus tt: %.2f hours, Total passenger tt: %.2f hours\n\n",
   //         int(_count_car/m_mmdta -> m_flow_scalar), int(_count_truck/m_mmdta
   //         -> m_flow_scalar), int(_count_bus/m_mmdta -> m_flow_scalar),
-  //         int(_count_passenger), float(_tot_tt_car/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_truck/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_bus/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_passenger));
+  //         int(_count_passenger), TFlt(_tot_tt_car/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_truck/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_bus/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_passenger));
   // m_mmdta -> m_emission -> output();
 
   // add flow_scalar to passenger
@@ -1832,11 +1832,11 @@ Mmdta::get_travel_stats ()
   // bus tt: %.2f hours, Total passenger tt: %.2f hours\n\n",
   //         int(_count_car/m_mmdta -> m_flow_scalar), int(_count_truck/m_mmdta
   //         -> m_flow_scalar), int(_count_bus/m_mmdta -> m_flow_scalar),
-  //         int(_count_passenger/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_car/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_truck/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_bus/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_passenger/m_mmdta -> m_flow_scalar));
+  //         TFlt(_count_passenger/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_car/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_truck/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_bus/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_passenger/m_mmdta -> m_flow_scalar));
   // m_mmdta -> m_emission -> output();
 
   // for all released vehicles and passengers

@@ -378,8 +378,8 @@ add_dar_records (std::vector<dar_record *> &record, MNM_Dlink *link,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -429,8 +429,8 @@ add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
                            * depart_it.first; // # of paths * # of intervals
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
 
                   // https://eigen.tuxfamily.org/dox/classEigen_1_1Triplet.html
                   // https://eigen.tuxfamily.org/dox/SparseUtil_8h_source.html

@@ -99,7 +99,7 @@ class MNM_Charging_Station : public MNM_Dnode
 {
 public:
   MNM_Charging_Station (TInt ID, TFlt flow_scalar, int unit_time, int num_slots,
-                        int charging_time, int avg_waiting_time, float price);
+                        int charging_time, int avg_waiting_time, TFlt price);
   virtual ~MNM_Charging_Station () override;
   virtual int evolve (TInt timestamp) override;
   virtual void print_info () override;
@@ -115,7 +115,7 @@ public:
   int m_slots;
   int m_charging_time;    // number of loading intervals
   int m_avg_waiting_time; // number of loading intervals
-  float m_price;          // us dollar
+  TFlt m_price;          // us dollar
 
   std::vector<std::deque<MNM_Veh *>> m_queue_pool;
   MNM_Cumulative_Curve *m_N_out;
@@ -130,7 +130,7 @@ public:
   virtual ~MNM_Node_Factory_EV ();
   MNM_Dnode *make_charging_station (TInt ID, TFlt flow_scalar, int unit_time,
                                     int num_slots, int charging_time,
-                                    int avg_waiting_time, float price);
+                                    int avg_waiting_time, TFlt price);
 };
 
 typedef std::unordered_map<

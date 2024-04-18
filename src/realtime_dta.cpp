@@ -242,7 +242,7 @@ MNM_Realtime_Dta::get_estimation_gradient (
       m_link_tt_difference.find (_link_ID)->second
         = m_average_link_tt.find (_link_ID)->second - _measure_tt;
       // printf("For link ID %d, the tt difference is %.4f\n", (int)_link_ID,
-      // (float)m_link_tt_difference.find(_link_ID)->second);
+      // (TFlt)m_link_tt_difference.find(_link_ID)->second);
     }
 
   for (auto _it : *path_table)
@@ -273,8 +273,8 @@ MNM_Realtime_Dta::get_estimation_gradient (
                 {
                   _tmp_tt = m_average_link_tt.find (_link_ID)->second;
                   // printf("Average tt is %.4f, marginal cost is %.4f\n",
-                  // (float)_tmp_tt,
-                  // (float)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
+                  // (TFlt)_tmp_tt,
+                  // (TFlt)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
                   // _tmp_tt));
                   _tmp_grad += MNM_Ults::
                     divide (m_link_tt_difference.find (_link_ID)->second
@@ -433,8 +433,8 @@ MNM_Realtime_Dta::get_optimization_gradient (MNM_Dta_Screenshot *screenshot,
                   _link = _link_factory->get_link (_link_ID);
                   _tmp_tt = m_average_link_tt.find (_link_ID)->second;
                   // printf("Average tt is %.4f, marginal cost is %.4f\n",
-                  // (float)_tmp_tt,
-                  // (float)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
+                  // (TFlt)_tmp_tt,
+                  // (TFlt)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
                   // _tmp_tt));
                   _tmp_grad += MNM_Ults::divide (_tmp_tt, _demand);
                   _tmp_grad
@@ -556,7 +556,7 @@ MNM_Realtime_Dta::estimate_previous (TInt assign_inter)
       // for(auto _it : *m_path_table){
       //   for (auto _it_it : *(_it.second)){
       //     for (MNM_Path* _path : _it_it.second -> m_path_vec){
-      //       printf("Now the probability is %.4f\n", (float)_path -> m_p);
+      //       printf("Now the probability is %.4f\n", (TFlt)_path -> m_p);
       //     }
       //   }
       // }
@@ -596,7 +596,7 @@ MNM_Realtime_Dta::optimize_next (TInt next_assign_inter)
       // for(auto _it : *m_path_table){
       //   for (auto _it_it : *(_it.second)){
       //     for (MNM_Path* _path : _it_it.second -> m_path_vec){
-      //       printf("Now the probability is %.4f\n", (float)_path -> m_p);
+      //       printf("Now the probability is %.4f\n", (TFlt)_path -> m_p);
       //     }
       //   }
       // }

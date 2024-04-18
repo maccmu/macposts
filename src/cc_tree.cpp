@@ -29,7 +29,7 @@ MNM_Tree_Cumulative_Curve::add_flow (TFlt timestamp, TFlt flow, MNM_Path *path,
                                      TInt departing_int)
 {
   // printf("CC tree, adding flow, time %d, flow %f, path id %d, depart time
-  // %d \n", (int) timestamp(), (float) flow(), (int) path -> m_path_ID,
+  // %d \n", (int) timestamp(), (TFlt) flow(), (int) path -> m_path_ID,
   // (int) departing_int);
   if (m_record.find (path) == m_record.end ())
     {
@@ -44,7 +44,7 @@ MNM_Tree_Cumulative_Curve::add_flow (TFlt timestamp, TFlt flow, MNM_Path *path,
         std::pair<TFlt, TFlt> (TFlt (0), TFlt (0)));
     }
   // printf("CC tree, adding flow, time %d, flow %f, path id %d, depart time
-  // %d \n", (int) timestamp(), (float) flow(), (int) path -> m_path_ID,
+  // %d \n", (int) timestamp(), (TFlt) flow(), (int) path -> m_path_ID,
   // (int) departing_int);
   m_record[path][departing_int]->add_increment (
     std::make_pair (timestamp, flow));

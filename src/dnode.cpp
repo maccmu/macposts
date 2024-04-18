@@ -346,7 +346,7 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
       if (_out_link->m_N_out != nullptr && _temp_sum > 0)
         {
           // printf("record out link cc: link ID %d, time %d, value %f\n",
-          // _out_link -> m_link_ID(), timestamp()+1, (float)
+          // _out_link -> m_link_ID(), timestamp()+1, (TFlt)
           // TFlt(_temp_sum)/m_flow_scalar);
           _out_link->m_N_in->add_increment (
             std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
@@ -367,7 +367,7 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
       if (_in_link->m_N_in != nullptr && _temp_sum > 0)
         {
           // printf("record in link cc: link ID %d, time %d, value %f\n",
-          // _in_link -> m_link_ID(), timestamp()+1, (float)
+          // _in_link -> m_link_ID(), timestamp()+1, (TFlt)
           // TFlt(_temp_sum)/m_flow_scalar);
           _in_link->m_N_out->add_increment (
             std::pair<TFlt, TFlt> (TFlt (timestamp + 1),

@@ -212,7 +212,7 @@ MNM_Origin_EV::adjust_multi_OD_seq_veh_routing_type (TFlt adaptive_ratio)
           // trip: " << _veh_elec -> need_charging() << std::endl;
           if (_veh_elec->need_charging ())
             {
-              Assert (_veh_elec->m_using_roadside_charging = true);
+              Assert (_veh_elec->m_using_roadside_charging == true);
               _veh_elec->m_type = MNM_TYPE_ADAPTIVE;
             }
           else
@@ -409,7 +409,7 @@ MNM_OD_Factory_EV::make_origin_ev (TInt ID, TInt max_interval, TFlt flow_scalar,
 MNM_Charging_Station::MNM_Charging_Station (TInt ID, TFlt flow_scalar,
                                             int unit_time, int num_slots,
                                             int charging_time,
-                                            int avg_waiting_time, float price)
+                                            int avg_waiting_time, TFlt price)
     : MNM_Dnode::MNM_Dnode (ID, flow_scalar)
 {
   m_unit_time = unit_time;
@@ -479,7 +479,7 @@ MNM_Charging_Station::save_waiting_time_record (const std::string &file_name)
                 << file_name << std::endl;
       throw std::runtime_error ("Error");
     }
-  std::vector<TFlt> _k = std::vector<TFlt> ();
+  std::vector<int> _k = std::vector<int> ();
   for (auto _it : m_waiting_time_record)
     {
       _k.push_back (_it.first);
@@ -682,14 +682,14 @@ MNM_Charging_Station::move_out_veh (TInt timestamp, MNM_Veh *veh)
   if (_in_link->m_N_out != nullptr)
     {
       // printf("record in link cc: link ID %d, time %d, value %f\n", _in_link
-      // -> m_link_ID(), timestamp()+1, (float) TFlt(1)/m_flow_scalar);
+      // -> m_link_ID(), timestamp()+1, (TFlt) TFlt(1)/m_flow_scalar);
       _in_link->m_N_out->add_increment (
         std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
     }
   if (_out_link->m_N_in != nullptr)
     {
       // printf("record out link cc: link ID %d, time %d, value %f\n", _out_link
-      // -> m_link_ID(), timestamp()+1, (float) TFlt(1)/m_flow_scalar);
+      // -> m_link_ID(), timestamp()+1, (TFlt) TFlt(1)/m_flow_scalar);
       _out_link->m_N_in->add_increment (
         std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
     }
@@ -732,7 +732,7 @@ MNM_Dnode *
 MNM_Node_Factory_EV::make_charging_station (TInt ID, TFlt flow_scalar,
                                             int unit_time, int num_slots,
                                             int charging_time,
-                                            int avg_waiting_time, float price)
+                                            int avg_waiting_time, TFlt price)
 {
   if (m_node_map.empty ())
     {
@@ -1692,7 +1692,7 @@ MNM_IO_EV::add_charging_station_node (const std::string &file_folder,
       TInt _unit_time = conf_reader->get_int ("unit_time");
       TFlt _flow_scalar = conf_reader->get_float ("flow_scalar");
       int _num_slots, _charging_time, _avg_waiting_time;
-      float _price;
+      TFlt _price;
 
       std::string _line;
       std::vector<std::string> _words;

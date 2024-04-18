@@ -666,8 +666,8 @@ MNM_TDSP_Tree::update_tree (
             {
               // printf("At time %d, src %d to des %d, m_dist is %f, _temp_cost
               // is %f\n", t, _src_node(),
-              //        _edge_it.GetDstNId(), (float) m_dist[_src_node][t],
-              //        (float) _temp_cost);
+              //        _edge_it.GetDstNId(), (TFlt) m_dist[_src_node][t],
+              //        (TFlt) _temp_cost);
               m_dist[_src_node][t] = _temp_cost;
               m_tree[_src_node][t] = m_graph.get_id (l);
             }
@@ -773,8 +773,8 @@ MNM_TDSP_Tree::update_tree (
             {
               // printf("At time %d, src %d to des %d, m_dist is %f, _temp_cost
               // is %f\n", t, _src_node(),
-              //        _edge_it.GetDstNId(), (float) m_dist[_src_node][t],
-              //        (float) _temp_cost);
+              //        _edge_it.GetDstNId(), (TFlt) m_dist[_src_node][t],
+              //        (TFlt) _temp_cost);
               m_dist[_src_node][t] = _temp_cost;
               m_tree[_src_node][t] = m_graph.get_id (l);
             }
@@ -894,7 +894,7 @@ MNM_TDSP_Tree::get_distance_to_destination (TInt node_ID, TFlt time_stamp)
 
 TFlt
 MNM_TDSP_Tree::get_distance_to_destination (TInt node_ID, int start_time_stamp,
-                                            TFlt travel_time, float p)
+                                            TFlt travel_time, TFlt p)
 {
   IAssert (m_dist.find (node_ID) != m_dist.end ());
   IAssert (m_dist[node_ID] != nullptr);
@@ -918,7 +918,7 @@ MNM_TDSP_Tree::round_time (TFlt time_stamp)
 }
 
 int
-MNM_TDSP_Tree::round_time (int start_time_stamp, TFlt travel_time, float p)
+MNM_TDSP_Tree::round_time (int start_time_stamp, TFlt travel_time, TFlt p)
 {
   int _end_time_stamp
     = start_time_stamp + MNM_Ults::round_up_time (travel_time, p);
