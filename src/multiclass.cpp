@@ -623,7 +623,8 @@ MNM_Dlink_Ctm_Multiclass::update_out_veh ()
           _temp_out_flux_car = m_cell_array[i]->m_space_fraction_car
                                * std::min (_demand_car, _supply_car);
           m_cell_array[i]->m_out_veh_car
-            = MNM_Ults::round (_temp_out_flux_car * m_flow_scalar);
+            = std::min((int)m_cell_array[i]->m_veh_queue_car.size(), 
+                       MNM_Ults::round (_temp_out_flux_car * m_flow_scalar));
 
           // truck, veh_type = TInt(1)
           _demand_truck = m_cell_array[i]->get_perceived_demand (TInt (1));
@@ -634,7 +635,8 @@ MNM_Dlink_Ctm_Multiclass::update_out_veh ()
           // condition, this makes a truck travel to next cell with a
           // probability of ffs_truck / ffs_car
           m_cell_array[i]->m_out_veh_truck
-            = MNM_Ults::round (_temp_out_flux_truck * m_flow_scalar);
+            = std::min((int)m_cell_array[i]->m_veh_queue_truck.size(), 
+                      MNM_Ults::round (_temp_out_flux_truck * m_flow_scalar));
         }
     }
   m_cell_array[m_num_cells - 1]->m_out_veh_car
