@@ -2939,7 +2939,7 @@ MNM_Origin_Multiclass::generate_label (TInt veh_class)
           TInt _label = 0;
           for (TFlt _p : m_car_label_ratio)
             {
-              if (_p >= _r)
+              if (!MNM_Ults::approximate_less_than(_p, _r))
                 {
                   return _label;
                 }
@@ -2966,7 +2966,7 @@ MNM_Origin_Multiclass::generate_label (TInt veh_class)
           TInt _label = 0;
           for (TFlt _p : m_truck_label_ratio)
             {
-              if (_p >= _r)
+              if (!MNM_Ults::approximate_less_than(_p, _r)) 
                 {
                   return _label;
                 }
