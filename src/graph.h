@@ -14,8 +14,6 @@
 
 // TODO: Move graph related functions (e.g., shortest path) to this library.
 //
-// TODO: Expose the graph class to Python.
-//
 // TODO: Mark functions as `noexcept' properly (maybe not very necessary?).
 //
 // NOTE: This library use smart pointers to manage resources and does not check
