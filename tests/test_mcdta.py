@@ -20,10 +20,10 @@ def test_reproducibility(network, request):
         mcdta.register_links()
         mcdta.install_cc()
         mcdta.run_whole()
-        car_in_ccs_ = mcdta.get_car_in_ccs()[1]
-        car_out_ccs_ = mcdta.get_car_out_ccs()[1]
-        truck_in_ccs_ = mcdta.get_truck_in_ccs()[1]
-        truck_out_ccs_ = mcdta.get_truck_out_ccs()[1]
+        car_in_ccs_ = mcdta.get_car_in_ccs()
+        car_out_ccs_ = mcdta.get_car_out_ccs()
+        truck_in_ccs_ = mcdta.get_truck_in_ccs()
+        truck_out_ccs_ = mcdta.get_truck_out_ccs()
         if car_in_ccs is not None:
             assert np.allclose(car_in_ccs, car_in_ccs_)
             assert np.allclose(car_out_ccs, car_out_ccs_)
