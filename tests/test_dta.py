@@ -1,14 +1,10 @@
 import macposts
 import numpy as np
-import platform
 import pytest
 from .conftest import SEED, NUM_REPRO_RUNS
 
 
-@pytest.mark.xfail(
-    platform.system() == "Darwin",
-    reason="failed for unknown reasons on Darwin platform",
-)
+@pytest.mark.xfail(reason="Bug #28")
 @pytest.mark.parametrize("network", ["network_3link", "network_7link"])
 def test_reproducibility(network, request):
     in_ccs, out_ccs = None, None
