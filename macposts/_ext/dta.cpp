@@ -311,6 +311,11 @@ Dta::run_whole (bool verbose)
 {
   m_dta->pre_loading ();
   m_dta->loading (verbose);
+  // FIXME: Force a flush so that we can discard/capture all outputs from
+  // libmacposts. This is only a workaround, and we should indeed use a better
+  // logging system.
+  std::cout.flush ();   // iostream
+  std::fflush (stdout); // cstdio
   return 0;
 }
 
