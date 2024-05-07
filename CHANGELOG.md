@@ -16,6 +16,10 @@ the seemingly unmaintained SNAP library.
 - Windows support and compiled binary releases for Windows ([GH-55]).
 - Compiled binary releases against musl ([GH-55]).
 
+### Changed
+
+- Update pybind11 to v2.12.0.
+
 ### Removed
 
 - Dependency on the SNAP library ([GH-50], [GH-55]).
