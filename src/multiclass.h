@@ -296,7 +296,7 @@ public:
   virtual TInt get_link_freeflow_tt_loading_car () override;   // intervals
   virtual TInt get_link_freeflow_tt_loading_truck () override; // intervals
 
-  std::unordered_map<MNM_Veh *, TInt> m_veh_pool;
+  std::deque<std::pair<MNM_Veh *, TInt>> m_veh_pool;
   TInt m_volume_car;   // vehicle number, without the flow scalar
   TInt m_volume_truck; // vehicle number, without the flow scalar
   TFlt m_lane_hold_cap;

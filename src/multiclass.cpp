@@ -623,8 +623,8 @@ MNM_Dlink_Ctm_Multiclass::update_out_veh ()
           _temp_out_flux_car = m_cell_array[i]->m_space_fraction_car
                                * std::min (_demand_car, _supply_car);
           m_cell_array[i]->m_out_veh_car
-            = std::min((int)m_cell_array[i]->m_veh_queue_car.size(), 
-                       MNM_Ults::round (_temp_out_flux_car * m_flow_scalar));
+            = std::min ((int) m_cell_array[i]->m_veh_queue_car.size (),
+                        MNM_Ults::round (_temp_out_flux_car * m_flow_scalar));
 
           // truck, veh_type = TInt(1)
           _demand_truck = m_cell_array[i]->get_perceived_demand (TInt (1));
@@ -635,8 +635,8 @@ MNM_Dlink_Ctm_Multiclass::update_out_veh ()
           // condition, this makes a truck travel to next cell with a
           // probability of ffs_truck / ffs_car
           m_cell_array[i]->m_out_veh_truck
-            = std::min((int)m_cell_array[i]->m_veh_queue_truck.size(), 
-                      MNM_Ults::round (_temp_out_flux_truck * m_flow_scalar));
+            = std::min ((int) m_cell_array[i]->m_veh_queue_truck.size (),
+                        MNM_Ults::round (_temp_out_flux_truck * m_flow_scalar));
         }
     }
   m_cell_array[m_num_cells - 1]->m_out_veh_car
@@ -1995,7 +1995,7 @@ MNM_Dlink_Pq_Multiclass::MNM_Dlink_Pq_Multiclass (
   // round down time, but ensures m_max_stamp >= 1
   m_max_stamp = MNM_Ults::round_down_time (m_length / (ffs_car * unit_time));
   // printf("m_max_stamp = %d\n", m_max_stamp);
-  m_veh_pool = std::unordered_map<MNM_Veh *, TInt> ();
+  m_veh_pool = std::deque<std::pair<MNM_Veh *, TInt>> ();
   m_volume_car = TInt (0);
   m_volume_truck = TInt (0);
   m_unit_time = unit_time;
@@ -2028,7 +2028,7 @@ MNM_Dlink_Pq_Multiclass::clear_incoming_array (TInt timestamp)
           // so we use m_max_stamp - 1 in link -> evolve() to ensure vehicle
           // spends m_max_stamp in this link when m_max_stamp > 1 and 1 when
           // m_max_stamp = 0
-          m_veh_pool.insert ({ _veh, TInt (0) });
+          m_veh_pool.push_back ({ _veh, TInt (0) });
           if (_veh->m_class == 0)
             {
               // printf("car\n");
@@ -2085,9 +2085,7 @@ MNM_Dlink_Pq_Multiclass::print_info ()
 int
 MNM_Dlink_Pq_Multiclass::evolve (TInt timestamp)
 {
-  std::unordered_map<MNM_Veh *, TInt>::iterator _que_it = m_veh_pool.begin ();
-  MNM_Veh_Multiclass *_veh;
-  TInt _num_car = 0, _num_truck = 0;
+  auto _que_it = m_veh_pool.begin ();
   while (_que_it != m_veh_pool.end ())
     {
       // we use m_max_stamp - 1 in link -> evolve() to ensure vehicle spends
@@ -2096,15 +2094,6 @@ MNM_Dlink_Pq_Multiclass::evolve (TInt timestamp)
       if (_que_it->second >= std::max (0, m_max_stamp - 1))
         {
           m_finished_array.push_back (_que_it->first);
-          _veh = dynamic_cast<MNM_Veh_Multiclass *> (m_finished_array.back ());
-          if (_veh->m_class == 0)
-            {
-              _num_car += 1;
-            }
-          else
-            {
-              _num_truck += 1;
-            }
           _que_it = m_veh_pool.erase (_que_it); // c++ 11
         }
       else
@@ -2567,7 +2556,7 @@ int
 MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
 {
   MNM_Dlink *_in_link, *_out_link;
-  MNM_Dlink_Multiclass *_ilink, *_olink;
+  MNM_Dlink_Multiclass *_olink;
   size_t _offset = m_out_link_array.size ();
   TFlt _to_move;
   TFlt _equiv_num;
@@ -2635,9 +2624,6 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                                   _olink
                                     = dynamic_cast<MNM_Dlink_Multiclass *> (
                                       _out_link);
-                                  _ilink
-                                    = dynamic_cast<MNM_Dlink_Multiclass *> (
-                                      _in_link);
                                   if (_olink->m_N_in_tree_car != nullptr)
                                     {
                                       _olink->m_N_in_tree_car
@@ -2656,9 +2642,6 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                                   _olink
                                     = dynamic_cast<MNM_Dlink_Multiclass *> (
                                       _out_link);
-                                  _ilink
-                                    = dynamic_cast<MNM_Dlink_Multiclass *> (
-                                      _in_link);
                                   if (_olink->m_N_in_tree_truck != nullptr)
                                     {
                                       _olink->m_N_in_tree_truck
@@ -2683,8 +2666,6 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                               m_veh_moved_car[i * _offset + j] += 1;
                               _olink = dynamic_cast<MNM_Dlink_Multiclass *> (
                                 _out_link);
-                              _ilink = dynamic_cast<MNM_Dlink_Multiclass *> (
-                                _in_link);
                               if (_olink->m_N_in_tree_car != nullptr)
                                 {
                                   _olink->m_N_in_tree_car
@@ -2701,8 +2682,6 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                                 m_veh_moved_truck[i * _offset + j] += 1;
                               _olink = dynamic_cast<MNM_Dlink_Multiclass *> (
                                 _out_link);
-                              _ilink = dynamic_cast<MNM_Dlink_Multiclass *> (
-                                _in_link);
                               if (_olink->m_N_in_tree_truck != nullptr)
                                 {
                                   _olink->m_N_in_tree_truck
@@ -2941,7 +2920,7 @@ MNM_Origin_Multiclass::generate_label (TInt veh_class)
           TInt _label = 0;
           for (TFlt _p : m_car_label_ratio)
             {
-              if (!MNM_Ults::approximate_less_than(_p, _r))
+              if (!MNM_Ults::approximate_less_than (_p, _r))
                 {
                   return _label;
                 }
@@ -2968,7 +2947,7 @@ MNM_Origin_Multiclass::generate_label (TInt veh_class)
           TInt _label = 0;
           for (TFlt _p : m_truck_label_ratio)
             {
-              if (!MNM_Ults::approximate_less_than(_p, _r)) 
+              if (!MNM_Ults::approximate_less_than (_p, _r))
                 {
                   return _label;
                 }
