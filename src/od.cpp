@@ -60,7 +60,7 @@ MNM_Origin::generate_label (TInt veh_class)
       for (TFlt _p : m_vehicle_label_ratio)
         {
           // printf("2\n");
-          if (!MNM_Ults::approximate_less_than(_p, _r))
+          if (!MNM_Ults::approximate_less_than (_p, _r))
             {
               return _label;
             }

@@ -75,4 +75,4 @@ int add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
                            const double *f_ptr);
 TFlt get_arrival_cc_slope (MNM_Dlink *link, TFlt start_time, TFlt end_time);
 TFlt get_departure_cc_slope (MNM_Dlink *link, TFlt start_time, TFlt end_time);
-};
+}

@@ -115,7 +115,7 @@ public:
   int m_slots;
   int m_charging_time;    // number of loading intervals
   int m_avg_waiting_time; // number of loading intervals
-  TFlt m_price;          // us dollar
+  TFlt m_price;           // us dollar
 
   std::vector<std::deque<MNM_Veh *>> m_queue_pool;
   MNM_Cumulative_Curve *m_N_out;

@@ -254,8 +254,9 @@ MNM_Dlink_Ctm::update_out_veh ()
           _demand = m_cell_array[i]->get_demand ();
           _supply = m_cell_array[i + 1]->get_supply ();
           _temp_out_flux = std::min (_demand, _supply) * m_flow_scalar;
-          m_cell_array[i]->m_out_veh = std::min((int)m_cell_array[i]->m_veh_queue.size(), 
-                                                MNM_Ults::round (_temp_out_flux));
+          m_cell_array[i]->m_out_veh
+            = std::min ((int) m_cell_array[i]->m_veh_queue.size (),
+                        MNM_Ults::round (_temp_out_flux));
         }
     }
   m_cell_array[m_num_cells - 1]->m_out_veh
@@ -561,8 +562,7 @@ void
 MNM_Dlink_Pq::print_info ()
 {
   printf ("Link Dynamic model: Point Queue\n");
-  printf ("Real volume in the link: %.4f\n",
-          (TFlt) (m_volume / m_flow_scalar));
+  printf ("Real volume in the link: %.4f\n", (TFlt) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
           (TFlt) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }
@@ -751,8 +751,7 @@ void
 MNM_Dlink_Lq::print_info ()
 {
   printf ("Link Dynamic model: Link Queue\n");
-  printf ("Real volume in the link: %.4f\n",
-          (TFlt) (m_volume / m_flow_scalar));
+  printf ("Real volume in the link: %.4f\n", (TFlt) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
           (TFlt) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }
@@ -1448,8 +1447,7 @@ void
 MNM_Dlink_Ltm::print_info ()
 {
   printf ("Link Dynamic model: Link Transmission Model\n");
-  printf ("Real volume in the link: %.4f\n",
-          (TFlt) (m_volume / m_flow_scalar));
+  printf ("Real volume in the link: %.4f\n", (TFlt) (m_volume / m_flow_scalar));
   printf ("Finished real volume in the link: %.2f\n",
           (TFlt) (TFlt (m_finished_array.size ()) / m_flow_scalar));
 }

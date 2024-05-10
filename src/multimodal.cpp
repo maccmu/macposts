@@ -5277,7 +5277,7 @@ MNM_PnR_Path::is_link_in (TInt link_ID)
                                                                                                 PnR Pathset
 *******************************************************************************************************************
 ******************************************************************************************************************/
-MNM_PnR_Pathset::MNM_PnR_Pathset () : MNM_Pathset::MNM_Pathset () { ; };
+MNM_PnR_Pathset::MNM_PnR_Pathset () : MNM_Pathset::MNM_Pathset () { ; }
 
 MNM_PnR_Pathset::~MNM_PnR_Pathset () { ; }
 
@@ -5602,7 +5602,7 @@ MNM_Routing_PnR_Fixed::register_veh (MNM_Veh *veh, bool track)
   for (MNM_Path *_path : _pathset->m_path_vec)
     {
       // printf("2\n");
-      if (!MNM_Ults::approximate_less_than(_path->m_p, _r)) 
+      if (!MNM_Ults::approximate_less_than (_path->m_p, _r))
         {
           _route_path = dynamic_cast<MNM_PnR_Path *> (_path);
           break;
@@ -5914,7 +5914,7 @@ MNM_Routing_PassengerBusTransit_Fixed::register_passenger (
       for (MNM_Path *_path : _pathset->m_path_vec)
         {
           // printf("2\n");
-          if (!MNM_Ults::approximate_less_than(_path->m_p, _r))
+          if (!MNM_Ults::approximate_less_than (_path->m_p, _r))
             {
               _route_path = _path;
               break;
@@ -11776,7 +11776,7 @@ MNM_Passenger_Path_Driving::info2str ()
   // <bus_transit_link_sequence>, \n included
   _s += std::string ("<--->") + "\n";
   return _s;
-};
+}
 
 /**************************************************************************
                                                    Bus Transit
@@ -11796,7 +11796,7 @@ MNM_Passenger_Path_Bus::MNM_Passenger_Path_Bus (int mode, MNM_Path *path,
   m_bus_inconvenience = bus_inconvenience;
 }
 
-MNM_Passenger_Path_Bus::~MNM_Passenger_Path_Bus () { ; };
+MNM_Passenger_Path_Bus::~MNM_Passenger_Path_Bus () { ; }
 
 TFlt
 MNM_Passenger_Path_Bus::get_length (MNM_Dta_Multimodal *mmdta)
@@ -11981,7 +11981,7 @@ MNM_Passenger_Path_Bus::is_equal (MNM_Passenger_Path_Base *path)
         return false;
       return true;
     }
-};
+}
 
 std::string
 MNM_Passenger_Path_Bus::info2str ()
@@ -12004,7 +12004,7 @@ MNM_Passenger_Path_Bus::info2str ()
   _s.pop_back ();
   _s += std::string (">\n");
   return _s;
-};
+}
 
 /**************************************************************************
                                                    Metro Transit
@@ -12091,7 +12091,7 @@ MNM_Passenger_Path_Metro::is_equal (MNM_Passenger_Path_Base *path)
         return false;
       return true;
     }
-};
+}
 
 std::string
 MNM_Passenger_Path_Metro::info2str ()
@@ -12114,7 +12114,7 @@ MNM_Passenger_Path_Metro::info2str ()
   _s.pop_back ();
   _s += std::string (">\n");
   return _s;
-};
+}
 
 /**************************************************************************
                                                    Park & Ride
@@ -12256,7 +12256,7 @@ MNM_Passenger_Path_PnR::is_equal (MNM_Passenger_Path_Base *path)
         }
       return true;
     }
-};
+}
 
 std::string
 MNM_Passenger_Path_PnR::info2str ()
@@ -12281,7 +12281,7 @@ MNM_Passenger_Path_PnR::info2str ()
   _s.pop_back ();
   _s += std::string (">\n");
   return _s;
-};
+}
 
 /**************************************************************************
                                                    Ride & Drive
@@ -12419,7 +12419,7 @@ MNM_Passenger_Path_RnD::info2str ()
   _s.pop_back ();
   _s += std::string (">\n");
   return _s;
-};
+}
 
 /******************************************************************************************************************
 *******************************************************************************************************************
@@ -19895,8 +19895,7 @@ MNM_MM_Due::get_best_path_for_single_interval (
         = get_best_pnr_path_for_single_interval (interval, o_node_ID,
                                                  _tdsp_tree_bus,
                                                  tdsp_tree_map_driving, mmdta);
-      printf ("new pnr path cost: %f\n",
-              (TFlt) std::get<2> (_path_pnr_result));
+      printf ("new pnr path cost: %f\n", (TFlt) std::get<2> (_path_pnr_result));
       if (std::get<0> (_path_pnr_result) != nullptr)
         {
           if (std::get<0> (_best.first) != nullptr)
@@ -20310,8 +20309,7 @@ MNM_MM_Due::get_best_existing_path_for_single_interval (
       _path_pnr_result
         = get_best_existing_pnr_path_for_single_interval (interval, o_node_ID,
                                                           d_node_ID, mmdta);
-      printf ("new pnr path cost: %f\n",
-              (TFlt) std::get<2> (_path_pnr_result));
+      printf ("new pnr path cost: %f\n", (TFlt) std::get<2> (_path_pnr_result));
       if (std::get<0> (_path_pnr_result) != nullptr)
         {
           if (std::get<0> (_best.first) != nullptr)

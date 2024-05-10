@@ -218,8 +218,7 @@ MNM_Pre_Routing::toString ()
 }
 
 int
-MNM_Pre_Routing::update_routing_table_MSA (MNM_PMC_Table pmc_table,
-                                           TFlt lambda)
+MNM_Pre_Routing::update_routing_table_MSA (MNM_PMC_Table pmc_table, TFlt lambda)
 {
   // TODO, not only need to update the routing table, but also the demand of OD
   // when no departure time choice

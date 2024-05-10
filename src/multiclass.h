@@ -722,7 +722,7 @@ int add_ltg_records_eigen_veh (std::vector<Eigen::Triplet<double>> &record,
                                int link_ind, int assign_interval,
                                int num_e_link, int num_e_path, TFlt gradient);
 
-};
+}
 
 namespace MNM
 {
@@ -741,7 +741,7 @@ int print_vehicle_route_results (
   const std::vector<std::pair<int, int>> &OD_pair_tracked,
   const std::vector<int> &depart_interval_tracked, int interval,
   double sampling_rate, int cong_frequency, bool verbose = false);
-};
+}
 
 ///
 /// Multiclass emissions

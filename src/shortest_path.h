@@ -69,7 +69,7 @@ int all_to_one_LIFO (TInt dest_node_ID, const macposts::Graph &graph,
 bool is_FIFO (const macposts::Graph &graph,
               const std::unordered_map<TInt, TFlt *> &cost_map,
               TInt num_interval, TFlt unit_time);
-};
+}
 
 /*------------------------------------------------------------
                   shortest path one destination tree

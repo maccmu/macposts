@@ -578,10 +578,10 @@ MNM_Routing_Fixed::register_veh (MNM_Veh *veh, bool track)
   for (MNM_Path *_path : _pathset->m_path_vec)
     {
       // when _r = 1, it will come to equality check of two floating numbers
-      // and simply using if (_path->m_p >= _r) can be problematic sometimes, 
+      // and simply using if (_path->m_p >= _r) can be problematic sometimes,
       // especially on Windows, _route_path can still be nullptr after this,
       // which can cause vehicle on wrong link or node
-      if (!MNM_Ults::approximate_less_than(_path -> m_p, _r))
+      if (!MNM_Ults::approximate_less_than (_path->m_p, _r))
         {
           _route_path = _path;
           break;
@@ -738,10 +738,10 @@ MNM_Routing_Biclass_Hybrid::~MNM_Routing_Biclass_Hybrid ()
   // printf("m_routing_adaptive\n");
   delete m_routing_fixed_car;
   // printf("m_routing_fixed_car\n");
-  // Note that m_routing_fixed_car and m_routing_fixed_truck share the same path_table
-  // delete m_routing_fixed_car will delete the path_table
-  // so set m_routing_fixed_truck -> m_path_table = nullptr to avoid segmentation fault
-  m_routing_fixed_truck -> m_path_table = nullptr;
+  // Note that m_routing_fixed_car and m_routing_fixed_truck share the same
+  // path_table delete m_routing_fixed_car will delete the path_table so set
+  // m_routing_fixed_truck -> m_path_table = nullptr to avoid segmentation fault
+  m_routing_fixed_truck->m_path_table = nullptr;
   delete m_routing_fixed_truck;
   // printf("m_routing_fixed_truck\n");
 }
@@ -752,8 +752,9 @@ MNM_Routing_Biclass_Hybrid::init_routing (Path_Table *path_table)
   if (m_routing_adaptive->m_working)
     m_routing_adaptive->init_routing ();
   // printf("Finished init all ADAPTIVE vehicles routing\n");
-  
-  // Note that m_routing_fixed_car and m_routing_fixed_truck share the same path_table
+
+  // Note that m_routing_fixed_car and m_routing_fixed_truck share the same
+  // path_table
   m_routing_fixed_car->init_routing (path_table);
   // printf("Finished init STATIC cars routing\n");
   m_routing_fixed_truck->init_routing (path_table);
