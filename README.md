@@ -10,18 +10,25 @@ Analytics Center (MAC)][mac] at Carnegie Mellon University.
 MAC-POSTS works as a Python library. It currently supports Linux, Windows, and
 macOS platforms.
 
-To install from the repository, first ensure a working C++ toolchain. Then clone
-this repository, initialize and clone all submodules,
+To install from the repository, first ensure a working C++ toolchain (`GCC` or 
+`Clang` on Linux and macOS and `MSVC` on Windows), `CMake >= 3.10`, and `Git` 
+are installed. 
+
+Then open terminal or command prompt, run the following command to clone the 
+repository, initialize and clone all submodules.
 
 ```sh
 git clone --recurse-submodules https://github.com/maccmu/macposts.git
 ```
 
-Create a Python 3.x environment and run at the project root:
+Create a `Python>=3.8` virtual environment and run at the project root (i.e., 
+`path_to_store_cloned_macposts_repo/macposts/`):
 
 ```sh
 pip install .
 ```
+
+This will install the `main` branch by default.
 
 For development, run
 
@@ -29,9 +36,29 @@ For development, run
 pip install -e .[dev]
 ```
 
-instead to also install the development tools and enable editable mode. If you
-need debug information for the C++ library (and also enable other settings for
-debugging), set the environment variable `DEBUG` to `1` before installation.
+instead to install the `dev` branch and enable editable mode. Or you can manually
+ check out `dev` branch first
+
+```sh
+git checkout dev
+pip install -e .
+```
+
+If you need debug information for the C++ library (and also enable other settings 
+for debugging), set the environment variable `DEBUG` to `1` in the current shell 
+session before installation.
+
+On Linux and macOS, just type the following in the terminal
+
+```sh
+DEBUG=1
+```
+
+On Windows, type the following instead in the command prompt
+
+```sh
+set DEBUG=1
+```
 
 For normal users, you can instead use the precompiled wheels of tagged releases
 for certain platforms and Python versions on the GitHub [releases] page. There
