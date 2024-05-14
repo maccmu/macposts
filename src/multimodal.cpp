@@ -9574,11 +9574,15 @@ MNM_Dta_Multimodal::initialize ()
   m_explicit_bus = m_config->get_int ("explicit_bus");
   if (!m_explicit_bus)
     {
-      IAssert (m_config->get_int ("historical_bus_waiting_time") > 0);
+      if (m_config->get_int ("historical_bus_waiting_time") < 0) {
+        throw std::runtime_error ("historical_bus_waiting_time should be greater than or equal to 0 when m_explicit_bus = 0");
+      }  
     }
   else
     {
-      IAssert (m_config->get_int ("historical_bus_waiting_time") == 0);
+      if (m_config->get_int ("historical_bus_waiting_time") != 0) {
+        throw std::runtime_error ("historical_bus_waiting_time should be equal to 0 when m_explicit_bus = 1");
+      }  
     }
   return 0;
 }
