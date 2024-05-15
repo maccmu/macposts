@@ -9475,6 +9475,12 @@ MNM_Dta_Multimodal::~MNM_Dta_Multimodal ()
   delete m_busstop_factory;
   delete m_parkinglot_factory;
   delete m_transitlink_factory;
+  // FIXME: MNM_Routing_Multimodal_Adaptive's destructor relies on m_bus_transit_graph
+  // but m_bus_transit_graph will be destroyed here
+  // so when in MNM_Dta::~MNM_Dta, delete m_routing will trigger segfault
+  // we delete it here and set it to nullptr as a solution
+  delete m_routing;
+  m_routing = nullptr;
 
   m_enroute_passenger_num.clear ();
   m_queue_passenger_num.clear ();
