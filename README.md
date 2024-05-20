@@ -1,77 +1,67 @@
 # MAC-POSTS
 
-MAC-POSTS, the abbreviation of *Mobility data Analytics Center - Prediction,
+MAC-POSTS, the abbreviation of *Mobility data Analytics Center – Prediction,
 Optimization, and Simulation toolkit for Transportation Systems* is a toolkit
-for dynamic transportation network modeling developed by [Mobility data
-Analytics Center (MAC)][mac] at Carnegie Mellon University.
+for dynamic transportation network modeling.
+
+Developed by [Mobility data Analytics Center (MAC)][mac] at Carnegie Mellon
+University, this package implements many classic dynamic transportation network
+models and also new models proposed by MAC members. Besides, it has served as
+one building block for many other models and research projects (example
+[1][eg1], [2][eg2], and [3][eg3]).
+
+As such, this package used to be treated as an internal research project of MAC
+lab, and admittedly the code base is messy and the interface is hard to use.
+However, we are working hard to make it a generally usable and useful toolkit
+for dynamic transportation network modeling. We would really appreciate it if
+you try to use it and give us some feedback, comments, suggestions, or
+criticisms.
 
 ## Installation
 
-MAC-POSTS works as a Python library. It currently supports Linux, Windows, and
-macOS platforms.
+MAC-POSTS works as a Python library. It currently supports 64-bit Linux,
+Windows, and macOS platforms.
 
-To install from the repository, first ensure a working C++ toolchain (`GCC` or 
-`Clang` on Linux and macOS and `MSVC` on Windows), `CMake >= 3.10`, and `Git` 
-are installed. 
-
-Then open terminal or command prompt, run the following command to clone the 
-repository, initialize and clone all submodules.
-
-```sh
-git clone --recurse-submodules https://github.com/maccmu/macposts.git
-```
-
-Create a `Python>=3.8` virtual environment and run at the project root (i.e., 
-`path_to_store_cloned_macposts_repo/macposts/`):
+Normal users are advised to use the precompiled packages (or “wheels” in Python
+jargon), which are on the [GitHub Releases page][releases]. For example, if you
+are using Python 3.12 on GNU/Linux, you may download the
+`macposts-0.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl`, and
+run in Bash (or other POSIX shells):
 
 ```sh
-pip install .
+pip install macposts-0.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
-This will install the `main` branch by default.
+to install MAC-POSTS v0.5.0.
 
-For development, run
+If you are using some platform or Python version for which there is no
+precompiled package, you may try to install the package from source using the
+“sdist” package (e.g., `macposts-0.5.0.tar.gz` for MAC-POSTS v0.5.0). To install
+such a package, first ensure a working C++ toolchain. We recommend:
+
+- GCC or Clang on Linux.
+- Clang on macOS (via Xcode).
+- MSCV on Windows (via Visual Studio).
+
+Then run:
 
 ```sh
-pip install -e .[dev]
+pip install macposts-0.5.0.tar.gz
 ```
 
-instead to install the `dev` branch and enable editable mode. Or you can manually
- check out `dev` branch first
+which will compile and install MAC-POSTS.
 
-```sh
-git checkout dev
-pip install -e .
-```
-
-If you need debug information for the C++ library (and also enable other settings 
-for debugging), set the environment variable `DEBUG` to `1` in the current shell 
-session before installation.
-
-On Linux and macOS, just type the following in the terminal
-
-```sh
-DEBUG=1
-```
-
-On Windows, type the following instead in the command prompt
-
-```sh
-set DEBUG=1
-```
-
-For normal users, you can instead use the precompiled wheels of tagged releases
-for certain platforms and Python versions on the GitHub [releases] page. There
-are “sdist” packages on the [releases] page as well. To install an sdist
-package, a C++ toolchain are required.
+MAC-POSTS is under active development and you may often see bug fixes or new
+features missing in the latest tagged release. If you really need those, you
+could install the package from the repository ([instructions](#development)).
 
 ## Usage
 
 Please refer to this [link][documentation] for the documentation. You may also
 check the ‘examples’ directory for some working examples in this repository.
 
-**CAVEAT:** *Do not run macposts on untrusted inputs. Currently it uses a rather
-crude data file reader/parser and may have some security vulnerabilities,
+**CAVEAT:** *Do not run MAC-POSTS on untrusted inputs. Currently it uses a
+rather crude data file reader/parser and may have some security vulnerabilities,
 including remote code execution (RCE).*
 
 ## Frequently asked questions
@@ -93,12 +83,99 @@ including remote code execution (RCE).*
   the Python binding in the future. So it is recommended to only use the Python
   library and treat the whole C++ library as internal.
 
-* How to report issues and send patches?
+## Development
 
-  If you want to report issues, please feel free to contact us via
-  [macenter@andrew.cmu.edu][macenter]. The pull requests page is open and we
-  will review and accept patches there. You can also send patches via email as
-  well.
+### Prerequisites
+
+For the development of MAC-POSTS, you need to install:
+
+- A C++ toolchain.
+  + On Linux: GCC or Clang.
+  + On macOS: Clang (Xcode).
+  + On Windows: MSVC (Visual Studio).
+- Git.
+- CMake (≥3.10).
+
+On Windows, it is also recommended to install a POSIX-compliant shell (e.g.,
+Bash), although that is not required.
+
+### Clone the repository
+
+We use Git submodules to vendor third-party libraries. To clone the repository
+and all submodules, run:
+
+```sh
+git clone --recurse-submodules https://github.com/maccmu/macposts.git
+```
+
+Then get into the project root and change to the `dev` branch (in a
+POSIX-compliant shell or PowerShell):
+
+```sh
+cd macposts
+git checkout dev
+```
+
+### Install the package
+
+For development, we usually install the package using the following command (in
+a POSIX-compliant shell):
+
+```sh
+DEBUG=1 pip install -e .[dev]
+```
+
+`DEBUG=1` means that this is a debug build and so the debug configuration will
+be used. Most notably, debug information will not be stripped from the compiled
+binary, and so we can use GDB with it. In PowerShell, you may run:
+
+```powershell
+$env:DEBUG = 1
+pip install -e .[dev]
+```
+
+Note that, unlike the command for POSIX shells, this will set `DEBUG` for the
+whole PowerShell session.
+
+### Development workflow
+
+The normal development workflow is:
+
+- Edit the source files.
+- If C++ files are changed, rebuild the package.
+- Test.
+
+To rebuild the package, we may reinstall the package. However, that is slow and
+wasteful. Oftentimes we only need to recompile a small portion of files but
+reinstalling the package will compile everything again from scratch. A better
+way is to use CMake.
+
+First, we need to configure the project:
+
+```sh
+cmake -DCMAKE_BUILD_TYPE=Debug -S . -B build
+```
+
+We only need to run this command once for a newly cloned repository. Then after
+making changes to the source files, run:
+
+```sh
+cmake --build build
+```
+
+to (re)compiles the project. This will produce a file ‘build/_macposts_ext.*’
+(the suffix indicated by ‘*’ varies depending on your tools used). Finally, copy
+that ‘build/_macposts_ext.*’ file to the project root, where there should be an
+existing file with the same name.
+
+To run the tests, use:
+
+```sh
+pytest
+```
+
+We value testing but that was historically overlooked. For new features or bug
+fixes, please consider adding some test cases as well.
 
 ## Contributors
 
@@ -141,3 +218,6 @@ The US Government assumes no liability for the contents or use thereof.
 [documentation]: https://github.com/maccmu/macposts-documentations/blob/main/MAC_POSTS_users_manual.pdf
 [MAC-POSTS]: https://github.com/Lemma1/MAC-POSTS
 [macenter]: mailto:macenter@andrew.cmu.edu
+[eg1]: https://doi.org/10.1016/j.trc.2019.05.011
+[eg2]: https://doi.org/10.1016/j.trc.2020.102747
+[eg3]: https://trid.trb.org/View/1573278
