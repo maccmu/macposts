@@ -23,16 +23,31 @@ MAC-POSTS works as a Python library. It currently supports 64-bit Linux,
 Windows, and macOS platforms.
 
 Normal users are advised to use the precompiled packages (or “wheels” in Python
-jargon), which are on the [GitHub Releases page][releases]. For example, if you
-are using Python 3.12 on GNU/Linux, you may download the
-`macposts-0.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl`, and
-run in Bash (or other POSIX shells):
+jargon), which are on the [GitHub Releases page][releases]. You will see a large
+variety of files on that page with some cryptic [compatibility tags]. If you do
+not know which one to use, here are our recommended steps:
+
+1. Check your Python version. If you are using Python 3.12, then you need to use
+   those files including the string “cp312”.
+2. Now from those files, select the one that works for your platform:
+   - On Linux using glibc (e.g., Debian, Fedora, Ubuntu, etc.), search for
+     “manylinux”. On Linux using musl libc (e.g., Alpine Linux), search for
+     “musllinux”.
+   - On Windows, search for “win”.
+   - On macOS with the new silicon chips (the “M” chips), search for “arm64”. On
+     macOS with the older Intel chips, search for “universal2”.
+
+For example, if you are using Python 3.12 on Debian Bookworm, you can download
+the `macposts-0.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl`,
+and run in Bash (or other POSIX shells):
 
 ```sh
 pip install macposts-0.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
-to install MAC-POSTS v0.5.0.
+to install MAC-POSTS v0.5.0. In the future we may publish this package to the
+official PyPI registry to ease this process, but we would like to first improve
+the quality of this package (see [GH-17]).
 
 If you are using some platform or Python version for which there is no
 precompiled package, you may try to install the package from source using the
@@ -221,3 +236,5 @@ The US Government assumes no liability for the contents or use thereof.
 [eg1]: https://doi.org/10.1016/j.trc.2019.05.011
 [eg2]: https://doi.org/10.1016/j.trc.2020.102747
 [eg3]: https://trid.trb.org/View/1573278
+[compatibility tags]: https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/#platform-compatibility-tags
+[GH-17]: https://github.com/maccmu/macposts/issues/17
