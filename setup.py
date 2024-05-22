@@ -19,6 +19,7 @@ from setuptools.command.build_ext import build_ext
 from pathlib import Path
 import os
 import sys
+import shlex
 from subprocess import check_call
 
 here = Path(__file__).parent.resolve()
@@ -43,28 +44,35 @@ class CMakeBuild(build_ext):
 
         # CMake arguments
         cmake_args = [
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(extdir),
             "-DPYTHON_EXECUTABLE={}".format(sys.executable),
             "-DCMAKE_BUILD_TYPE={}".format(cfg),
+            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(extdir),
+            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(
+                cfg.upper(), extdir
+            ),
+            *shlex.split(os.environ.get("CMAKE_ARGS", "")),
         ]
-        cmake_args_env = os.environ.get("CMAKE_ARGS")
-        if cmake_args_env is not None:
-            cmake_args += [arg for arg in cmake_args_env.split(" ") if arg]
+
+        # macOS cross compilation (for the 'universal2' fat binaries)
+        if sys.platform.startswith("darwin"):
+            archflags = shlex.split(os.environ.get("ARCHFLAGS", ""))
+            archs = []
+            while archflags:
+                flag = archflags.pop(0)
+                if flag.startswith("-arch="):
+                    archs.append(flag.split("=")[1])
+                elif flag == "-arch":
+                    archs.append(archflags.pop(0))
+            if archs:
+                cmake_args.append(
+                    "-DCMAKE_OSX_ARCHITECTURES={}".format(";".join(archs))
+                )
 
         # Build arguments
-        build_args = []
+        build_args = ["--config", cfg]
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
             if hasattr(self, "parallel") and self.parallel:
                 build_args += ["-j{}".format(self.parallel)]
-
-        # Windows specific
-        if self.compiler.compiler_type == "msvc":
-            cmake_args.append(
-                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(
-                    cfg.upper(), extdir
-                )
-            )
-            build_args += ["--config", cfg]
 
         # Build extension
         build_temp = Path(self.build_temp) / ext.name

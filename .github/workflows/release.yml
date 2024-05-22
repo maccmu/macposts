@@ -43,7 +43,8 @@ jobs:
 
     - uses: pypa/cibuildwheel@v2.17.0
       env:
-        CIBW_ARCHS: native
+        CIBW_ARCHS: auto64
+        CIBW_ARCHS_MACOS: "auto64 universal2"
         # We do not support PyPy (for now).
         CIBW_SKIP: "pp*"
 
