@@ -15,6 +15,8 @@ the seemingly unmaintained SNAP library.
 
 - Windows support and compiled binary releases for Windows ([GH-55]).
 - Compiled binary releases against musl ([GH-55]).
+- Compiled fat binary releases for macOS (mainly to support older machines with
+  Intel chips).
 
 ### Changed
 
