@@ -22,7 +22,17 @@ import sys
 import shlex
 from subprocess import check_call
 
-here = Path(__file__).parent.resolve()
+
+# Mapping from Python (distutils) to CMake for platform names.
+#
+# The value is passed to CMake '-A' option, and it seems that only MSVC uses
+# it. So this is Windows only for now.
+PLAT_PY2CMAKE = {
+    "win32": "Win32",
+    "win-amd64": "x64",
+    "win-arm32": "ARM",
+    "win-arm64": "ARM64",
+}
 
 
 class CMakeExtension(Extension):
@@ -52,6 +62,8 @@ class CMakeBuild(build_ext):
             ),
             *shlex.split(os.environ.get("CMAKE_ARGS", "")),
         ]
+        if self.plat_name in PLAT_PY2CMAKE:
+            cmake_args.extend(["-A", PLAT_PY2CMAKE[self.plat_name]])
 
         # macOS cross compilation (for the 'universal2' fat binaries)
         if sys.platform.startswith("darwin"):
@@ -72,7 +84,7 @@ class CMakeBuild(build_ext):
         build_args = ["--config", cfg]
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
             if hasattr(self, "parallel") and self.parallel:
-                build_args += ["-j{}".format(self.parallel)]
+                build_args.append("-j{}".format(self.parallel))
 
         # Build extension
         build_temp = Path(self.build_temp) / ext.name
