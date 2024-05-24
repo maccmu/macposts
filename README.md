@@ -178,10 +178,10 @@ making changes to the source files, run:
 cmake --build build
 ```
 
-to (re)compiles the project. This will produce a file ‘build/_macposts_ext.*’
-(the suffix indicated by ‘*’ varies depending on your tools used). Finally, copy
-that ‘build/_macposts_ext.*’ file to the project root, where there should be an
-existing file with the same name.
+to (re)compile the project. This will produce a file ‘build/_macposts_ext.\*’
+(the suffix indicated by ‘\*’ varies depending on your tools used). Finally,
+copy that ‘build/_macposts_ext.\*’ file to the project root, where there should
+be an existing file with the same name.
 
 To run the tests, use:
 
@@ -217,7 +217,7 @@ MAC-POSTS depends on two external libraries under the lib directory. You may
 want to check their licenses as well:
 
 - pybind11: lib/pybinb11/LICENSE
-- Eigen: lib/eigen/COPYING.* (multiple licenses)
+- Eigen: lib/eigen/COPYING.\* (multiple licenses)
 
 ## Acknowledgment
 
