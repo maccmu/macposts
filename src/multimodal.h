@@ -385,6 +385,7 @@ public:
   virtual ~MNM_Destination_Multimodal () override;
   int evolve (TInt timestamp);
   virtual int receive (TInt timestamp) override;
+  using MNM_Destination_Multiclass::receive;
   int receive (TInt timestamp, MNM_Routing_Multimodal_Hybrid *routing,
                MNM_Veh_Factory *veh_factory,
                MNM_Passenger_Factory *passenger_factory, bool del = true);
@@ -814,7 +815,7 @@ typedef std::unordered_map<TInt, std::unordered_map<TInt, MNM_PnR_Pathset *> *>
 class MNM_Routing_Bus : public MNM_Routing_Biclass_Fixed
 {
 public:
-  MNM_Routing_Bus (PNEGraph &driving_graph, MNM_OD_Factory *od_factory,
+  MNM_Routing_Bus (macposts::Graph &driving_graph, MNM_OD_Factory *od_factory,
                    MNM_Node_Factory *node_factory,
                    MNM_Link_Factory *link_factory,
                    Bus_Path_Table *bus_path_table, TInt route_frq = TInt (-1),
@@ -834,13 +835,11 @@ public:
 class MNM_Routing_PnR_Fixed : public MNM_Routing_Biclass_Fixed
 {
 public:
-  MNM_Routing_PnR_Fixed (PNEGraph &driving_graph, MNM_OD_Factory *od_factory,
-                         MNM_Node_Factory *node_factory,
-                         MNM_Link_Factory *link_factory,
-                         PnR_Path_Table *pnr_path_table,
-                         TInt route_frq = TInt (-1),
-                         TInt buffer_length = TInt (-1),
-                         TInt veh_class = TInt (0));
+  MNM_Routing_PnR_Fixed (
+    macposts::Graph &driving_graph, MNM_OD_Factory *od_factory,
+    MNM_Node_Factory *node_factory, MNM_Link_Factory *link_factory,
+    PnR_Path_Table *pnr_path_table, TInt route_frq = TInt (-1),
+    TInt buffer_length = TInt (-1), TInt veh_class = TInt (0));
   virtual ~MNM_Routing_PnR_Fixed () override;
   virtual int change_choice_portion (TInt routing_interval) override;
   virtual int register_veh (MNM_Veh *veh, bool track = true) override;
@@ -858,7 +857,7 @@ class MNM_Routing_PassengerBusTransit
 {
 public:
   MNM_Routing_PassengerBusTransit (
-    PNEGraph &transit_graph, MNM_OD_Factory *od_factory,
+    macposts::Graph &transit_graph, MNM_OD_Factory *od_factory,
     MNM_Node_Factory *node_factory, MNM_Busstop_Factory *busstop_factory,
     MNM_Parking_Lot_Factory *parkinglot_factory,
     MNM_Transit_Link_Factory *transitlink_factory);
@@ -870,7 +869,7 @@ public:
     return 0;
   };
 
-  PNEGraph m_graph;
+  macposts::Graph &m_graph;
   MNM_OD_Factory *m_od_factory;
   MNM_Node_Factory *m_node_factory;
   MNM_Busstop_Factory *m_busstop_factory;
@@ -886,7 +885,7 @@ class MNM_Routing_PassengerBusTransit_Fixed
 {
 public:
   MNM_Routing_PassengerBusTransit_Fixed (
-    PNEGraph &transit_graph, MNM_OD_Factory *od_factory,
+    macposts::Graph &transit_graph, MNM_OD_Factory *od_factory,
     MNM_Node_Factory *node_factory, MNM_Busstop_Factory *busstop_factory,
     MNM_Parking_Lot_Factory *parkinglot_factory,
     MNM_Transit_Link_Factory *transitlink_factory,
@@ -924,8 +923,8 @@ class MNM_Routing_Multimodal_Adaptive
 {
 public:
   MNM_Routing_Multimodal_Adaptive (
-    const std::string &file_folder, PNEGraph &driving_graph,
-    PNEGraph &transit_graph, MNM_Statistics *statistics,
+    const std::string &file_folder, macposts::Graph &driving_graph,
+    macposts::Graph &transit_graph, MNM_Statistics *statistics,
     MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
     MNM_Busstop_Factory *busstop_factory,
     MNM_Parking_Lot_Factory *parkinglot_factory, MNM_Link_Factory *link_factory,
@@ -956,8 +955,8 @@ public:
 
   Routing_Table *m_driving_table;
   Routing_Table *m_transit_table;
-  PNEGraph m_driving_graph;
-  PNEGraph m_transit_graph;
+  macposts::Graph &m_driving_graph;
+  macposts::Graph &m_transit_graph;
   MNM_OD_Factory *m_od_factory;
   MNM_Node_Factory *m_node_factory;
   MNM_Busstop_Factory *m_busstop_factory;
@@ -978,8 +977,8 @@ class MNM_Routing_Multimodal_Hybrid : public MNM_Routing_Biclass_Hybrid
 {
 public:
   MNM_Routing_Multimodal_Hybrid (
-    const std::string &file_folder, PNEGraph &driving_graph,
-    PNEGraph &transit_graph, MNM_Statistics *statistics,
+    const std::string &file_folder, macposts::Graph &driving_graph,
+    macposts::Graph &transit_graph, MNM_Statistics *statistics,
     MNM_OD_Factory *od_factory, MNM_Node_Factory *node_factory,
     MNM_Link_Factory *link_factory, MNM_Busstop_Factory *busstop_factory,
     MNM_Parking_Lot_Factory *parkinglot_factory,
@@ -1044,7 +1043,7 @@ public:
     MNM_Transit_Link_Factory *transit_link_factory,
     MNM_Busstop_Factory *busstop_factory, MNM_Link_Factory *link_factory,
     const std::string &file_name = "bus_link");
-  static PNEGraph
+  static macposts::Graph
   build_bus_transit_graph (MNM_ConfReader *conf_reader,
                            MNM_Transit_Link_Factory *transit_link_factory);
   static int build_passenger_demand (
@@ -1070,23 +1069,21 @@ public:
                                       = "bustransit_demand");
 
   static Bus_Path_Table *
-  load_bus_path_table (const PNEGraph &graph, TInt num_path,
+  load_bus_path_table (const macposts::Graph &graph, TInt num_path,
                        MNM_Node_Factory *node_factory = nullptr,
                        MNM_Busstop_Factory *busstop_factory = nullptr,
                        TInt num_release_interval = -1,
                        const std::string &file_name = "bus_path_table",
                        const std::string &route_file_name = "bus_route");
   static PnR_Path_Table *
-  load_pnr_path_table (const PNEGraph &driving_graph,
-                       const PNEGraph &transit_graph, TInt num_path,
+  load_pnr_path_table (const macposts::Graph &driving_graph,
+                       const macposts::Graph &transit_graph, TInt num_path,
                        const std::string &file_name = "pnr_path_table",
                        bool w_buffer = true, bool w_ID = false);
-  static Path_Table *load_bustransit_path_table (const PNEGraph &transit_graph,
-                                                 TInt num_path,
-                                                 const std::string &file_name
-                                                 = "bustransit_path_table",
-                                                 bool w_buffer = true,
-                                                 bool w_ID = false);
+  static Path_Table *load_bustransit_path_table (
+    const macposts::Graph &transit_graph, TInt num_path,
+    const std::string &file_name = "bustransit_path_table",
+    bool w_buffer = true, bool w_ID = false);
 };
 
 /******************************************************************************************************************
@@ -1123,7 +1120,7 @@ public:
   MNM_Parking_Lot_Factory *m_parkinglot_factory;
   MNM_Transit_Link_Factory *m_transitlink_factory;
 
-  PNEGraph m_bus_transit_graph;
+  macposts::Graph m_bus_transit_graph;
 
   std::deque<TInt> m_enroute_passenger_num;
   std::deque<TInt> m_queue_passenger_num;
@@ -1514,9 +1511,9 @@ Passenger_Path_Table *build_shortest_passenger_pathset (
   std::unordered_map<TInt,
                      std::unordered_map<TInt, std::unordered_map<int, bool>>>
     &od_mode_connectivity,
-  MNM_MM_Due *mmdue, PNEGraph &driving_graph, PNEGraph &bustransit_graph,
-  MNM_OD_Factory *od_factory, MNM_Link_Factory *link_factory,
-  MNM_Transit_Link_Factory *transitlink_factory,
+  MNM_MM_Due *mmdue, macposts::Graph &driving_graph,
+  macposts::Graph &bustransit_graph, MNM_OD_Factory *od_factory,
+  MNM_Link_Factory *link_factory, MNM_Transit_Link_Factory *transitlink_factory,
   MNM_Busstop_Factory *busstop_factory);
 
 Passenger_Path_Table *build_existing_passenger_pathset (
@@ -1528,7 +1525,7 @@ Passenger_Path_Table *build_existing_passenger_pathset (
   MNM_MM_Due *mmdue);
 
 Path_Table *build_shortest_driving_pathset (
-  PNEGraph &driving_graph, MNM_OD_Factory *od_factory,
+  macposts::Graph &driving_graph, MNM_OD_Factory *od_factory,
   std::unordered_map<TInt,
                      std::unordered_map<TInt, std::unordered_map<int, bool>>>
     &od_mode_connectivity,
@@ -1537,7 +1534,7 @@ Path_Table *build_shortest_driving_pathset (
   TInt buffer_length = -1);
 
 Path_Table *build_shortest_bustransit_pathset (
-  PNEGraph &bustransit_graph, MNM_OD_Factory *od_factory,
+  macposts::Graph &bustransit_graph, MNM_OD_Factory *od_factory,
   std::unordered_map<TInt,
                      std::unordered_map<TInt, std::unordered_map<int, bool>>>
     &od_mode_connectivity,
@@ -1546,7 +1543,7 @@ Path_Table *build_shortest_bustransit_pathset (
   TInt buffer_length = -1);
 
 PnR_Path_Table *build_shortest_pnr_pathset (
-  PNEGraph &driving_graph, PNEGraph &bustransit_graph,
+  macposts::Graph &driving_graph, macposts::Graph &bustransit_graph,
   MNM_OD_Factory *od_factory,
   std::unordered_map<TInt,
                      std::unordered_map<TInt, std::unordered_map<int, bool>>>

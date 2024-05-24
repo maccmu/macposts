@@ -14,8 +14,6 @@
 
 // TODO: Move graph related functions (e.g., shortest path) to this library.
 //
-// TODO: Expose the graph class to Python.
-//
 // TODO: Mark functions as `noexcept' properly (maybe not very necessary?).
 //
 // NOTE: This library use smart pointers to manage resources and does not check
@@ -26,8 +24,10 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
@@ -107,24 +107,6 @@ private:
     }
     reference operator* () const { return *current; }
 
-    // Convert from a non-const iterator to a const one
-    //
-    // NOTE: Implicit conversion is fine here because the two types of iterators
-    // are almost the same, and such conversions are quite common and somewhat
-    // expected (all STL containers support implicit conversion from `iterator'
-    // to `const_iterator').
-    template <bool c = readonly, typename std::enable_if<!c, int>::type = 0>
-    operator Type<true> () const
-    {
-      // HACK: This is really ugly, and is very prone to error. This works
-      // safely because the difference between a non-const iterator and a const
-      // one *only* lies on the `const' specifier on the value, pointer, and
-      // reference types. When modifying this template, please be sure to not
-      // violate that contract.
-      auto r = reinterpret_cast<const Type<true> *> (this);
-      return *r;
-    }
-
   protected:
     State current;
     const Direction direction;
@@ -199,6 +181,13 @@ public:
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
 
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<!c> () const
+      {
+        auto r = Iterator_<!c> (this->current);
+        return r;
+      }
+
       typename Base::reference operator* () const
       {
         return *this->current->second;
@@ -225,6 +214,8 @@ public:
     {
       return static_cast<const_iterator> (end ());
     }
+
+    bool empty () const { return begin () == end (); };
   };
 
   template <bool readonly> class Neighbors
@@ -244,25 +235,26 @@ public:
       {
       }
 
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<!c> () const
+      {
+        auto r = Iterator_<!c> (this->current, this->direction, refill);
+        return r;
+      }
+
       void step ()
       {
-        Link *current = this->current;
+        Link *cur = this->current;
         int direction = static_cast<int> (this->direction);
 
         // Invariant: before stepping to the next neighbor, the current one
         // should have never been seen.
-        //
-        // TODO: Switch to `assert'.
-#ifndef NDEBUG
-        if (current && seen.count (current->endpoints[direction]))
-          __builtin_trap ();
-#endif
-
-        while (current || refill)
+        assert (!(cur && seen.count (cur->endpoints[direction])));
+        while (cur || refill)
           {
-            if (!current)
+            if (!cur)
               {
-                current = refill;
+                cur = refill;
                 refill = nullptr;
                 const_cast<Direction &> (this->direction)
                   = invert (this->direction);
@@ -270,15 +262,15 @@ public:
               }
             else
               {
-                seen.insert (current->endpoints[direction]);
+                seen.insert (cur->endpoints[direction]);
               }
 
-            if (!seen.count (current->endpoints[direction]))
+            if (!seen.count (cur->endpoints[direction]))
               break;
             else
-              current = current->next[direction];
+              cur = cur->next[direction];
           }
-        this->current = current;
+        this->current = cur;
       }
 
       typename Base::reference operator* () const
@@ -337,6 +329,8 @@ public:
     {
       return static_cast<const_iterator> (end ());
     }
+
+    bool empty () const { return begin () == end (); };
   };
 
   template <bool readonly> class Links
@@ -354,6 +348,13 @@ public:
 
     public:
       explicit Iterator_ (State state) : Base (state, Direction::Incoming) {}
+
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<!c> () const
+      {
+        auto r = Iterator_<!c> (this->current);
+        return r;
+      }
 
       typename Base::reference operator* () const
       {
@@ -381,6 +382,8 @@ public:
     {
       return static_cast<const_iterator> (end ());
     }
+
+    bool empty () const { return begin () == end (); };
   };
 
   template <bool readonly> class Connections
@@ -399,19 +402,26 @@ public:
       {
       }
 
+      template <bool c = readonly_, typename std::enable_if<!c, int>::type = 0>
+      operator Iterator_<!c> () const
+      {
+        auto r = Iterator_<!c> (this->current, this->direction, refill);
+        return r;
+      }
+
       void step ()
       {
-        Link *current = this->current;
-        if (current)
-          current = current->next[static_cast<int> (this->direction)];
-        if (!current && refill)
+        Link *cur = this->current;
+        if (cur)
+          cur = cur->next[static_cast<int> (this->direction)];
+        if (!cur && refill)
           {
-            current = refill;
+            cur = refill;
             refill = nullptr;
             const_cast<Direction &> (this->direction)
               = invert (this->direction);
           }
-        this->current = current;
+        this->current = cur;
       }
 
       bool operator== (const Iterator_ &other) const
@@ -465,6 +475,8 @@ public:
     {
       return static_cast<const_iterator> (end ());
     }
+
+    bool empty () const { return begin () == end (); };
   };
 
   // Graph methods
@@ -569,6 +581,26 @@ public:
   {
     return Neighbors<true> (node, Direction::Outgoing);
   }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Neighbors<false> neighbors (NId id, Direction direction)
+  {
+    return neighbors (get_node (id), direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Neighbors<false> neighbors (NId id)
+  {
+    return neighbors (get_node (id));
+  }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Neighbors<true> neighbors (NId id, Direction direction) const
+  {
+    return neighbors (get_node (id), direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Neighbors<true> neighbors (NId id) const
+  {
+    return neighbors (get_node (id));
+  }
 
   template <bool d = directed, typename std::enable_if<d, int>::type = 0>
   Connections<false> connections (const Node &node, Direction direction)
@@ -590,6 +622,26 @@ public:
   {
     return Connections<true> (node, Direction::Incoming);
   }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Connections<false> connections (NId id, Direction direction)
+  {
+    return connections (get_node (id), direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Connections<false> connections (NId id)
+  {
+    return connections (get_node (id));
+  }
+  template <bool d = directed, typename std::enable_if<d, int>::type = 0>
+  Connections<true> connections (NId id, Direction direction) const
+  {
+    return connections (get_node (id), direction);
+  }
+  template <bool d = directed, typename std::enable_if<!d, int>::type = 0>
+  Connections<true> connections (NId id) const
+  {
+    return connections (get_node (id));
+  }
 
   std::pair<Node &, Node &> get_endpoints (const Link &link)
   {
@@ -607,6 +659,16 @@ public:
         throw std::runtime_error ("invalid link");
       }
     return { *from, *to };
+  }
+  std::pair<Node &, Node &> get_endpoints (LId id)
+  {
+    const auto &link = get_link (id);
+    return get_endpoints (link);
+  }
+  std::pair<const Node &, const Node &> get_endpoints (LId id) const
+  {
+    const auto &link = get_link (id);
+    return get_endpoints (link);
   }
 
 protected:

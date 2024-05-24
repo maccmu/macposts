@@ -1,20 +1,26 @@
 #include "shortest_path.h"
 
+using macposts::graph::Direction;
+
 static_assert (std::numeric_limits<double>::is_iec559,
                "No iec559 infinity implementation for this compiler!\n");
 
 int
-MNM_Shortest_Path::one_to_one (TInt origin_node_ID, TInt dest_node_ID,
-                               PNEGraph graph,
-                               const std::unordered_map<TInt, TFlt> &cost_map,
-                               std::vector<TInt> &output_array)
+MNM_Shortest_Path::all_to_one_Dijkstra (
+  TInt dest_node_ID, const macposts::Graph &graph,
+  const std::unordered_map<TInt, TFlt> &cost_map,
+  std::unordered_map<TInt, TInt> &output_map)
 {
-  return 0;
+  std::unordered_map<TInt, TFlt> dist_to_dest
+    = std::unordered_map<TInt, TFlt> ();
+  return all_to_one_Dijkstra (dest_node_ID, graph, dist_to_dest, cost_map,
+                              output_map);
 }
 
 int
 MNM_Shortest_Path::all_to_one_Dijkstra (
-  TInt dest_node_ID, PNEGraph graph,
+  TInt dest_node_ID, const macposts::Graph &graph,
+  std::unordered_map<TInt, TFlt> &dist_to_dest,
   const std::unordered_map<TInt, TFlt> &cost_map,
   std::unordered_map<TInt, TInt> &output_map)
 {
@@ -25,12 +31,12 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
   m_Q.push (dest_cost);
 
   TInt _node_id;
-  std::unordered_map<TInt, TFlt> dist_to_dest
-    = std::unordered_map<TInt, TFlt> ();
-
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
+  // std::unordered_map<TInt, TFlt> dist_to_dest = std::unordered_map<TInt,
+  // TFlt>();
+  dist_to_dest.clear ();
+  for (const auto &node : graph.nodes ())
     {
-      _node_id = _node_it.GetId ();
+      _node_id = graph.get_id (node);
       if (_node_id != dest_node_ID)
         {
           dist_to_dest.insert (
@@ -61,16 +67,13 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
       _min_cost = m_Q.top ();
       m_Q.pop ();
       _node_id = _min_cost->m_ID;
-      auto _node_it = graph->GetNI (_node_id);
+      const auto &node = graph.get_node (_node_id);
       _tmp_dist = dist_to_dest[_node_id];
-      for (int e = 0; e < _node_it.GetInDeg (); e++)
+      for (const auto &link : graph.connections (node, Direction::Incoming))
         {
-          _in_node_id = _node_it.GetInNId (e);
-          // _in_link_id = graph->GetEI(_in_node_id, _node_id).GetId();
-          // for multigraph
-          _in_link_id = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_id).GetSrcNId () == _in_node_id);
-
+          _in_link_id = graph.get_id (link);
+          const auto &in_node = graph.get_endpoints (link).first;
+          _in_node_id = graph.get_id (in_node);
           _alt = _tmp_dist + cost_map.find (_in_link_id)->second;
           if (_alt < dist_to_dest[_in_node_id])
             {
@@ -87,81 +90,7 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
 
 int
 MNM_Shortest_Path::all_to_one_Dijkstra (
-  TInt dest_node_ID, PNEGraph graph,
-  std::unordered_map<TInt, TFlt> &dist_to_dest,
-  const std::unordered_map<TInt, TFlt> &cost_map,
-  std::unordered_map<TInt, TInt> &output_map)
-{
-  std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>, LessThanByCost> m_Q
-    = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
-                          LessThanByCost> ();
-  MNM_Cost *dest_cost = new MNM_Cost (dest_node_ID, TFlt (0));
-  m_Q.push (dest_cost);
-
-  TInt _node_id;
-  // std::unordered_map<TInt, TFlt> dist_to_dest = std::unordered_map<TInt,
-  // TFlt>();
-  dist_to_dest.clear ();
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
-    {
-      _node_id = _node_it.GetId ();
-      if (_node_id != dest_node_ID)
-        {
-          dist_to_dest.insert (
-            { _node_id, TFlt (std::numeric_limits<double>::infinity ()) });
-          output_map.insert (
-            { _node_id, -1 }); // If the destination is not accessible the
-                               // output remains -1
-        }
-    }
-  dist_to_dest[dest_node_ID] = TFlt (0);
-
-  // Initialization above. Dijkstra with binary min-heap (std::prioritry_queue)
-  // below:
-
-  // NOTE: Since C++ std::priority_queue does not have decrease_key() function,
-  // we insert [pointer to new MNM_cost object] to the min-heap every time when
-  // the dist_to_dest[] changes for some node. So there could be duplicated
-  // elements in the min-heap for the same nodes with different distance values.
-  // But the duplication doesn't affect the correctness of algorithm. (visited
-  // label for eliminating the duplication is also tested, but slower than not
-  // using it, kind of weird.)
-
-  MNM_Cost *_min_cost;
-  TInt _in_node_id, _in_link_id;
-  TFlt _tmp_dist, _alt;
-  while (m_Q.size () != 0)
-    {
-      _min_cost = m_Q.top ();
-      m_Q.pop ();
-      _node_id = _min_cost->m_ID;
-      auto _node_it = graph->GetNI (_node_id);
-      _tmp_dist = dist_to_dest[_node_id];
-      for (int e = 0; e < _node_it.GetInDeg (); e++)
-        {
-          _in_node_id = _node_it.GetInNId (e);
-          // _in_link_id = graph->GetEI(_in_node_id, _node_id).GetId();
-          // for multigraph
-          _in_link_id = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_id).GetSrcNId () == _in_node_id);
-
-          _alt = _tmp_dist + cost_map.find (_in_link_id)->second;
-          if (_alt < dist_to_dest[_in_node_id])
-            {
-              dist_to_dest[_in_node_id] = _alt;
-              m_Q.push (new MNM_Cost (_in_node_id, _alt));
-              output_map[_in_node_id] = _in_link_id;
-            }
-        }
-      delete _min_cost;
-    }
-
-  return 0;
-}
-
-int
-MNM_Shortest_Path::all_to_one_Dijkstra (
-  TInt dest_node_ID, PNEGraph graph,
+  TInt dest_node_ID, const macposts::Graph &graph,
   const std::unordered_map<TInt, TFlt *> &cost_map,
   std::unordered_map<TInt, TFlt *> &dist_to_dest,
   std::unordered_map<TInt, TInt *> &output_map, TInt cost_position,
@@ -174,12 +103,9 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
   m_Q.push (dest_cost);
 
   TInt _node_id;
-  // std::unordered_map<TInt, TFlt> dist_to_dest = std::unordered_map<TInt,
-  // TFlt>();
-
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
+  for (const auto &node : graph.nodes ())
     {
-      _node_id = _node_it.GetId ();
+      _node_id = graph.get_id (node);
       if (_node_id != dest_node_ID)
         {
           dist_to_dest[_node_id][dist_position]
@@ -200,16 +126,13 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
       _min_cost = m_Q.top ();
       m_Q.pop ();
       _node_id = _min_cost->m_ID;
-      auto _node_it = graph->GetNI (_node_id);
+      const auto &node = graph.get_node (_node_id);
       _tmp_dist = dist_to_dest[_node_id][dist_position];
-      for (int e = 0; e < _node_it.GetInDeg (); e++)
+      for (const auto &link : graph.connections (node, Direction::Incoming))
         {
-          _in_node_id = _node_it.GetInNId (e);
-          // _in_link_id = graph->GetEI(_in_node_id, _node_id).GetId();
-          // for multigraph
-          _in_link_id = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_id).GetSrcNId () == _in_node_id);
-
+          const auto &in_node = graph.get_endpoints (link).first;
+          _in_node_id = graph.get_id (in_node);
+          _in_link_id = graph.get_id (link);
           _alt = _tmp_dist + cost_map.find (_in_link_id)->second[cost_position];
           if (_alt < dist_to_dest[_in_node_id][dist_position])
             {
@@ -225,114 +148,11 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
 }
 
 int
-MNM_Shortest_Path::all_to_one_Dijkstra_deprecated (
-  TInt dest_node_ID, PNEGraph graph,
-  const std::unordered_map<TInt, TFlt> &cost_map,
-  std::unordered_map<TInt, TInt> &output_map)
-{
-  // if (output_map.size() != 0){
-  //   // printf("Output map already exist, clear!\n");
-  //   output_map.clear();
-  // }
-  // printf("1\n");
-  std::unordered_map<TInt, TFlt> _dist = std::unordered_map<TInt, TFlt> ();
-  _dist.insert (std::pair<TInt, TFlt> (dest_node_ID, TFlt (0)));
-
-  // std::deque<MNM_Cost*> m_Q = std::deque<MNM_Cost*>();
-  std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>, LessThanByCost> m_Q
-    = std::priority_queue<MNM_Cost *, std::vector<MNM_Cost *>,
-                          LessThanByCost> ();
-  std::unordered_map<TInt, MNM_Cost *> m_Q_support
-    = std::unordered_map<TInt, MNM_Cost *> ();
-  MNM_Cost *_cost = new MNM_Cost (dest_node_ID, TFlt (0));
-  // m_Q.push_back(_cost);
-  m_Q.push (_cost);
-  m_Q_support.insert (std::pair<TInt, MNM_Cost *> (dest_node_ID, _cost));
-
-  TInt _node_ID;
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
-    {
-      // printf("node id %d with out-degree %d and in-degree %d\n",
-      // _node_it.GetId(), _node_it.GetOutDeg(), _node_it.GetInDeg());
-      _node_ID = _node_it.GetId ();
-      if (_node_ID != dest_node_ID)
-        {
-          _dist.insert (
-            std::pair<TInt,
-                      TFlt> (_node_ID,
-                             TFlt (std::numeric_limits<double>::infinity ())));
-          output_map.insert (std::pair<TInt, TInt> (_node_ID, -1));
-          _cost
-            = new MNM_Cost (_node_ID,
-                            TFlt (std::numeric_limits<double>::infinity ()));
-          // m_Q.push_back(_cost);
-          m_Q.push (_cost);
-          m_Q_support.insert (std::pair<TInt, MNM_Cost *> (_node_ID, _cost));
-        }
-    }
-  // printf("2\n");
-  MNM_Cost *_min_cost;
-  TInt _in_node_ID, _tmp_ID, _in_link_ID;
-  TFlt _alt, _tmp_dist;
-  while (m_Q.size () != 0)
-    {
-      // _min_cost = m_Q.front();
-      // m_Q.pop_front();
-      // auto _pv = std::min_element(m_Q.begin(), m_Q.end(),
-      // CompareCostDecendSort);
-      _min_cost = m_Q.top ();
-      // _min_cost = *(_pv);
-      _tmp_ID = _min_cost->m_ID;
-      auto _node_it = graph->GetNI (_tmp_ID);
-      _tmp_dist = _dist.find (_tmp_ID)->second;
-      for (int e = 0; e < _node_it.GetInDeg (); ++e)
-        {
-          _in_node_ID = _node_it.GetInNId (e);
-          // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
-          // _in_link_ID = graph->GetEI(_in_node_ID, _tmp_ID).GetId();
-          // for multigraph
-          _in_link_ID = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_ID).GetSrcNId () == _in_node_ID);
-
-          _alt = _tmp_dist + cost_map.find (_in_link_ID)->second;
-          if (_alt < _dist.find (_in_node_ID)->second)
-            {
-              // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
-              m_Q.push (m_Q_support.find (_in_node_ID)->second);
-              _dist.find (_in_node_ID)->second = _alt;
-              output_map.find (_in_node_ID)->second = _in_link_ID;
-              m_Q_support.find (_in_node_ID)->second->m_cost = _alt;
-            }
-        }
-      // m_Q.erase(_pv);
-      m_Q.pop ();
-    }
-
-  // for (auto _it : m_Q){
-  //   free (*_it);
-  // }
-  // m_Q.clear();
-  m_Q_support.clear ();
-  _dist.clear ();
-  return 0;
-}
-
-int
 MNM_Shortest_Path::all_to_one_FIFO (
-  TInt dest_node_ID, PNEGraph graph,
+  TInt dest_node_ID, const macposts::Graph &graph,
   const std::unordered_map<TInt, TFlt> &cost_map,
   std::unordered_map<TInt, TInt> &output_map)
 {
-  // if (output_map.size() != 0){
-  //   // printf("Output map already exist, clear!\n");
-  //   output_map.clear();
-  // }
-
-  // for (auto _map_it : cost_map){
-  //   printf("For link ID %d, it's cost is %.4f\n", _map_it.first(),
-  //   _map_it.second());
-  // }
-
   std::unordered_map<TInt, TFlt> _dist = std::unordered_map<TInt, TFlt> ();
   _dist.insert (std::pair<TInt, TFlt> (dest_node_ID, TFlt (0)));
 
@@ -344,11 +164,9 @@ MNM_Shortest_Path::all_to_one_FIFO (
   m_Q_support.insert (std::pair<TInt, bool> (dest_node_ID, true));
 
   TInt _node_ID;
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
+  for (const auto &node : graph.nodes ())
     {
-      // printf("node id %d with out-degree %d and in-degree %d\n",
-      // _node_it.GetId(), _node_it.GetOutDeg(), _node_it.GetInDeg());
-      _node_ID = _node_it.GetId ();
+      _node_ID = graph.get_id (node);
       if (_node_ID != dest_node_ID)
         {
           _dist.insert (
@@ -374,16 +192,13 @@ MNM_Shortest_Path::all_to_one_FIFO (
       _tmp_ID = m_Q.front ();
       m_Q.pop_front ();
       m_Q_support.find (_tmp_ID)->second = false;
-      auto _node_it = graph->GetNI (_tmp_ID);
+      const auto &node = graph.get_node (_tmp_ID);
       _tmp_dist = _dist.find (_tmp_ID)->second;
-      for (int e = 0; e < _node_it.GetInDeg (); ++e)
+      for (const auto &link : graph.connections (node, Direction::Incoming))
         {
-          _in_node_ID = _node_it.GetInNId (e);
-          // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
-          // _in_link_ID = graph->GetEI(_in_node_ID, _tmp_ID).GetId();
-          // for multigraph
-          _in_link_ID = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_ID).GetSrcNId () == _in_node_ID);
+          const auto &in_node = graph.get_endpoints (link).first;
+          _in_node_ID = graph.get_id (in_node);
+          _in_link_ID = graph.get_id (link);
           _alt = _tmp_dist + cost_map.find (_in_link_ID)->second;
           // printf("Current alternative distance is %.4f\n", _alt());
           if (_alt < _dist.find (_in_node_ID)->second)
@@ -408,7 +223,7 @@ MNM_Shortest_Path::all_to_one_FIFO (
 
 int
 MNM_Shortest_Path::all_to_one_FIFO (
-  TInt dest_node_ID, PNEGraph graph,
+  TInt dest_node_ID, const macposts::Graph &graph,
   const std::unordered_map<TInt, TFlt *> &cost_map,
   std::unordered_map<TInt, TFlt *> &dist_to_dest,
   std::unordered_map<TInt, TInt *> &output_map, TInt cost_position,
@@ -422,9 +237,9 @@ MNM_Shortest_Path::all_to_one_FIFO (
   m_Q_support.insert (std::pair<TInt, bool> (dest_node_ID, true));
 
   TInt _node_ID;
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
+  for (const auto &node : graph.nodes ())
     {
-      _node_ID = _node_it.GetId ();
+      _node_ID = graph.get_id (node);
       if (_node_ID != dest_node_ID)
         {
           dist_to_dest[_node_ID][dist_position]
@@ -440,31 +255,19 @@ MNM_Shortest_Path::all_to_one_FIFO (
   TFlt _alt, _tmp_dist;
   while (m_Q.size () != 0)
     {
-      // printf("current m_Q size is %d\n", m_Q.size());
       _tmp_ID = m_Q.front ();
       m_Q.pop_front ();
       m_Q_support.find (_tmp_ID)->second = false;
-      auto _node_it = graph->GetNI (_tmp_ID);
+      const auto &node = graph.get_node (_tmp_ID);
       _tmp_dist = dist_to_dest[_tmp_ID][dist_position];
-      for (int e = 0; e < _node_it.GetInDeg (); ++e)
+      for (const auto &link : graph.connections (node, Direction::Incoming))
         {
-          _in_node_ID = _node_it.GetInNId (e);
-          // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
-          // _in_link_ID = graph->GetEI(_in_node_ID, _tmp_ID).GetId();
-          // for multigraph
-          _in_link_ID = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_ID).GetSrcNId () == _in_node_ID);
-          // printf("MNM_Shortest_Path::all_to_one_FIFO, debug 1, %d, %d\n",
-          // (int) cost_position, (int) cost_map.size());
-          // printf("MNM_Shortest_Path::all_to_one_FIFO, debug 1, %d, %f\n",
-          // (int) cost_position, (float) cost_map.find(_in_link_ID) ->
-          // second[0]);
+          const auto &in_node = graph.get_endpoints (link).first;
+          _in_node_ID = graph.get_id (in_node);
+          _in_link_ID = graph.get_id (link);
           _alt = _tmp_dist + cost_map.find (_in_link_ID)->second[cost_position];
-          // printf("MNM_Shortest_Path::all_to_one_FIFO, debug 2\n");
-          // printf("Current alternative distance is %.4f\n", _alt());
           if (_alt < dist_to_dest[_in_node_ID][dist_position])
             {
-              // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
               dist_to_dest[_in_node_ID][dist_position] = _alt;
               output_map[_in_node_ID][output_position] = _in_link_ID;
               if (!m_Q_support.find (_in_node_ID)->second)
@@ -483,7 +286,7 @@ MNM_Shortest_Path::all_to_one_FIFO (
 
 int
 MNM_Shortest_Path::all_to_one_FIFO (
-  TInt dest_node_ID, PNEGraph graph,
+  TInt dest_node_ID, const macposts::Graph &graph,
   const std::unordered_map<TInt, TFlt> &link_cost_map,
   const std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> &node_cost_map,
   std::unordered_map<TInt, TInt> &output_map)
@@ -499,11 +302,9 @@ MNM_Shortest_Path::all_to_one_FIFO (
   m_Q_support.insert (std::pair<TInt, bool> (dest_node_ID, true));
 
   TInt _node_ID;
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
+  for (const auto &node : graph.nodes ())
     {
-      // printf("node id %d with out-degree %d and in-degree %d\n",
-      // _node_it.GetId(), _node_it.GetOutDeg(), _node_it.GetInDeg());
-      _node_ID = _node_it.GetId ();
+      _node_ID = graph.get_id (node);
       if (_node_ID != dest_node_ID)
         {
           _dist.insert (
@@ -525,20 +326,16 @@ MNM_Shortest_Path::all_to_one_FIFO (
   TFlt _alt, _tmp_dist;
   while (m_Q.size () != 0)
     {
-      // printf("current m_Q size is %d\n", m_Q.size());
       _tmp_ID = m_Q.front ();
       m_Q.pop_front ();
       m_Q_support.find (_tmp_ID)->second = false;
-      auto _node_it = graph->GetNI (_tmp_ID);
+      const auto &node = graph.get_node (_tmp_ID);
       _tmp_dist = _dist.find (_tmp_ID)->second;
-      for (int e = 0; e < _node_it.GetInDeg (); ++e)
+      for (const auto &link : graph.connections (node, Direction::Incoming))
         {
-          _in_node_ID = _node_it.GetInNId (e);
-          // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
-          // _in_link_ID = graph->GetEI(_in_node_ID, _tmp_ID).GetId();
-          // for multigraph
-          _in_link_ID = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_ID).GetSrcNId () == _in_node_ID);
+          const auto &in_node = graph.get_endpoints (link).first;
+          _in_node_ID = graph.get_id (in_node);
+          _in_link_ID = graph.get_id (link);
           _alt = _tmp_dist + link_cost_map.find (_in_link_ID)->second;
           if (_tmp_ID != dest_node_ID)
             {
@@ -554,10 +351,8 @@ MNM_Shortest_Path::all_to_one_FIFO (
                             ->second;
                 }
             }
-          // printf("Current alternative distance is %.4f\n", _alt());
           if (_alt < _dist.find (_in_node_ID)->second)
             {
-              // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
               _dist.find (_in_node_ID)->second = _alt;
               output_map.find (_in_node_ID)->second = _in_link_ID;
               if (!m_Q_support.find (_in_node_ID)->second)
@@ -577,7 +372,7 @@ MNM_Shortest_Path::all_to_one_FIFO (
 
 int
 MNM_Shortest_Path::all_to_one_FIFO (
-  TInt dest_node_ID, PNEGraph graph,
+  TInt dest_node_ID, const macposts::Graph &graph,
   const std::unordered_map<TInt, TFlt *> &link_cost_map,
   const std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>
     &node_cost_map,
@@ -593,9 +388,9 @@ MNM_Shortest_Path::all_to_one_FIFO (
   m_Q_support.insert (std::pair<TInt, bool> (dest_node_ID, true));
 
   TInt _node_ID;
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
+  for (const auto &node : graph.nodes ())
     {
-      _node_ID = _node_it.GetId ();
+      _node_ID = graph.get_id (node);
       if (_node_ID != dest_node_ID)
         {
           dist_to_dest[_node_ID][dist_position]
@@ -611,20 +406,15 @@ MNM_Shortest_Path::all_to_one_FIFO (
   TFlt _alt, _tmp_dist;
   while (m_Q.size () != 0)
     {
-      // printf("current m_Q size is %d\n", m_Q.size());
       _tmp_ID = m_Q.front ();
       m_Q.pop_front ();
       m_Q_support.find (_tmp_ID)->second = false;
-      auto _node_it = graph->GetNI (_tmp_ID);
+      const auto &node = graph.get_node (_tmp_ID);
       _tmp_dist = dist_to_dest[_tmp_ID][dist_position];
-      for (int e = 0; e < _node_it.GetInDeg (); ++e)
+      for (const auto &link : graph.connections (node, Direction::Incoming))
         {
-          _in_node_ID = _node_it.GetInNId (e);
-          // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
-          // _in_link_ID = graph->GetEI(_in_node_ID, _tmp_ID).GetId();
-          // for multigraph
-          _in_link_ID = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_ID).GetSrcNId () == _in_node_ID);
+          _in_node_ID = graph.get_id (graph.get_endpoints (link).first);
+          _in_link_ID = graph.get_id (link);
           _alt = _tmp_dist
                  + link_cost_map.find (_in_link_ID)->second[cost_position];
           if (_tmp_ID != dest_node_ID)
@@ -641,10 +431,8 @@ MNM_Shortest_Path::all_to_one_FIFO (
                             ->second[cost_position];
                 }
             }
-          // printf("Current alternative distance is %.4f\n", _alt());
           if (_alt < dist_to_dest[_in_node_ID][dist_position])
             {
-              // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
               dist_to_dest[_in_node_ID][dist_position] = _alt;
               output_map[_in_node_ID][output_position] = _in_link_ID;
               if (!m_Q_support.find (_in_node_ID)->second)
@@ -663,20 +451,10 @@ MNM_Shortest_Path::all_to_one_FIFO (
 
 int
 MNM_Shortest_Path::all_to_one_LIFO (
-  TInt dest_node_ID, PNEGraph graph,
+  TInt dest_node_ID, const macposts::Graph &graph,
   const std::unordered_map<TInt, TFlt> &cost_map,
   std::unordered_map<TInt, TInt> &output_map)
 {
-  // if (output_map.size() != 0){
-  //   // printf("Output map already exist, clear!\n");
-  //   output_map.clear();
-  // }
-
-  // for (auto _map_it : cost_map){
-  //   printf("For link ID %d, it's cost is %.4f\n", _map_it.first(),
-  //   _map_it.second());
-  // }
-
   std::unordered_map<TInt, TFlt> _dist = std::unordered_map<TInt, TFlt> ();
   _dist.insert (std::pair<TInt, TFlt> (dest_node_ID, TFlt (0)));
 
@@ -688,11 +466,9 @@ MNM_Shortest_Path::all_to_one_LIFO (
   m_Q_support.insert (std::pair<TInt, bool> (dest_node_ID, true));
 
   TInt _node_ID;
-  for (auto _node_it = graph->BegNI (); _node_it < graph->EndNI (); _node_it++)
+  for (const auto &node : graph.nodes ())
     {
-      // printf("node id %d with out-degree %d and in-degree %d\n",
-      // _node_it.GetId(), _node_it.GetOutDeg(), _node_it.GetInDeg());
-      _node_ID = _node_it.GetId ();
+      _node_ID = graph.get_id (node);
       if (_node_ID != dest_node_ID)
         {
           _dist.insert (
@@ -710,30 +486,22 @@ MNM_Shortest_Path::all_to_one_LIFO (
           m_Q_support.insert (std::pair<TInt, bool> (_node_ID, false));
         }
     }
+
   TInt _in_node_ID, _tmp_ID, _in_link_ID;
   TFlt _alt, _tmp_dist;
   while (m_Q.size () != 0)
     {
-      // printf("current m_Q size is %d\n", m_Q.size());
       _tmp_ID = m_Q.front ();
       m_Q.pop_front ();
       m_Q_support.find (_tmp_ID)->second = false;
-      auto _node_it = graph->GetNI (_tmp_ID);
       _tmp_dist = _dist.find (_tmp_ID)->second;
-      for (int e = 0; e < _node_it.GetInDeg (); ++e)
+      for (const auto &link : graph.links ())
         {
-          _in_node_ID = _node_it.GetInNId (e);
-          // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
-          // _in_link_ID = graph->GetEI(_in_node_ID, _tmp_ID).GetId();
-          // for multigraph
-          _in_link_ID = _node_it.GetInEId (e);
-          IAssert (graph->GetEI (_in_link_ID).GetSrcNId () == _in_node_ID);
-
+          _in_node_ID = graph.get_id (graph.get_endpoints (link).first);
+          _in_link_ID = graph.get_id (link);
           _alt = _tmp_dist + cost_map.find (_in_link_ID)->second;
-          // printf("Current alternative distance is %.4f\n", _alt());
           if (_alt < _dist.find (_in_node_ID)->second)
             {
-              // m_Q.push_back(m_Q_support.find(_in_node_ID) -> second);
               _dist.find (_in_node_ID)->second = _alt;
               output_map.find (_in_node_ID)->second = _in_link_ID;
               if (!m_Q_support.find (_in_node_ID)->second)
@@ -764,25 +532,16 @@ CompareCostDecendSort (MNM_Cost *lhs, MNM_Cost *rhs)
 /*------------------------------------------------------------
                           TDSP
 -------------------------------------------------------------*/
-int
-MNM_Shortest_Path::all_to_one_TDSP (
-  TInt dest_node_ID, PNEGraph graph,
-  const std::unordered_map<TInt, TFlt *> &cost_map,
-  std::unordered_map<TInt, TInt *> &output_map, TInt num_interval)
-{
-  return 0;
-}
-
 bool
-MNM_Shortest_Path::is_FIFO (PNEGraph graph,
+MNM_Shortest_Path::is_FIFO (const macposts::Graph &graph,
                             const std::unordered_map<TInt, TFlt *> &cost_map,
                             TInt num_interval, TFlt unit_time)
 {
   TInt _edge_ID;
   TFlt *_cost_list;
-  for (auto _edge_it = graph->BegEI (); _edge_it < graph->EndEI (); _edge_it++)
+  for (const auto &link : graph.links ())
     {
-      _edge_ID = _edge_it.GetId ();
+      _edge_ID = graph.get_id (link);
       _cost_list = cost_map.find (_edge_ID)->second;
       for (int i = 0; i < num_interval - 1; ++i)
         {
@@ -798,23 +557,22 @@ MNM_Shortest_Path::is_FIFO (PNEGraph graph,
 /*------------------------------------------------------------
                   TDSP  one destination tree
 -------------------------------------------------------------*/
-MNM_TDSP_Tree::MNM_TDSP_Tree (TInt dest_node_ID, const PNEGraph &graph,
+MNM_TDSP_Tree::MNM_TDSP_Tree (TInt dest_node_ID, macposts::Graph &graph,
                               TInt max_interval)
+    : m_graph (graph)
 {
   m_dist = std::unordered_map<TInt, TFlt *> ();
   m_tree = std::unordered_map<TInt, TInt *> ();
   m_dest_node_ID = dest_node_ID;
-  m_graph = graph;
   m_max_interval = max_interval;
 }
 
 MNM_TDSP_Tree::~MNM_TDSP_Tree ()
 {
   TInt _node_ID;
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
-      _node_ID = _node_it.GetId ();
+      _node_ID = m_graph.get_id (n);
       if (m_dist[_node_ID] != nullptr)
         delete m_dist[_node_ID];
       if (m_tree[_node_ID] != nullptr)
@@ -828,10 +586,9 @@ int
 MNM_TDSP_Tree::initialize ()
 {
   TInt _node_ID;
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
-      _node_ID = _node_it.GetId ();
+      _node_ID = m_graph.get_id (n);
       m_dist.insert ({ _node_ID, new TFlt[m_max_interval] });
       m_tree.insert ({ _node_ID, new TInt[m_max_interval] });
     }
@@ -847,12 +604,11 @@ MNM_TDSP_Tree::update_tree (
   // init tree and cost
 
   TInt _node_ID;
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
       for (int t = 0; t < m_max_interval; ++t)
         {
-          _node_ID = _node_it.GetId ();
+          _node_ID = m_graph.get_id (n);
           m_dist[_node_ID][t]
             = _node_ID == m_dest_node_ID
                 ? TFlt (0)
@@ -892,13 +648,13 @@ MNM_TDSP_Tree::update_tree (
       // that this while loop may not be able to break if many links have short
       // travel time
 
-      for (auto _edge_it = m_graph->BegEI (); _edge_it < m_graph->EndEI ();
-           _edge_it++)
+      for (const auto &l : m_graph.links ())
         {
-          _dst_node = _edge_it.GetDstNId ();
-          _src_node = _edge_it.GetSrcNId ();
-          _edge_cost = link_cost_map.find (_edge_it.GetId ())->second[t];
-          _edge_tt = link_tt_map.find (_edge_it.GetId ())->second[t];
+          auto &&sd = m_graph.get_endpoints (l);
+          _dst_node = m_graph.get_id (sd.second);
+          _src_node = m_graph.get_id (sd.first);
+          _edge_cost = link_cost_map.find (m_graph.get_id (l))->second[t];
+          _edge_tt = link_tt_map.find (m_graph.get_id (l))->second[t];
           if (std::isinf (_edge_cost))
             {
               continue;
@@ -910,10 +666,10 @@ MNM_TDSP_Tree::update_tree (
             {
               // printf("At time %d, src %d to des %d, m_dist is %f, _temp_cost
               // is %f\n", t, _src_node(),
-              //        _edge_it.GetDstNId(), (float) m_dist[_src_node][t],
-              //        (float) _temp_cost);
+              //        _edge_it.GetDstNId(), (TFlt) m_dist[_src_node][t],
+              //        (TFlt) _temp_cost);
               m_dist[_src_node][t] = _temp_cost;
-              m_tree[_src_node][t] = _edge_it.GetId ();
+              m_tree[_src_node][t] = m_graph.get_id (l);
             }
         }
     }
@@ -933,12 +689,11 @@ MNM_TDSP_Tree::update_tree (
   // init tree and cost
 
   TInt _node_ID, _in_edge_ID, _out_edge_ID;
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
       for (int t = 0; t < m_max_interval; ++t)
         {
-          _node_ID = _node_it.GetId ();
+          _node_ID = m_graph.get_id (n);
           m_dist[_node_ID][t]
             = _node_ID == m_dest_node_ID
                 ? TFlt (0)
@@ -976,16 +731,16 @@ MNM_TDSP_Tree::update_tree (
       // travel time
 
       // m_dist stores the distance to the dest node after traversing this node
-      for (auto _edge_it = m_graph->BegEI (); _edge_it < m_graph->EndEI ();
-           _edge_it++)
+      for (const auto &l : m_graph.links ())
         {
-          _in_edge_ID = _edge_it.GetId ();
-          _dst_node = _edge_it.GetDstNId ();
-          _src_node = _edge_it.GetSrcNId ();
+          _in_edge_ID = m_graph.get_id (l);
+          auto &&sd = m_graph.get_endpoints (l);
+          _dst_node = m_graph.get_id (sd.second);
+          _src_node = m_graph.get_id (sd.first);
           // _src_node -> _edge_cost -> _dst_node -> node_cost -> the beigining
           // of next link after _dst_node
-          _edge_cost = link_cost_map.find (_edge_it.GetId ())->second[t];
-          _edge_tt = link_tt_map.find (_edge_it.GetId ())->second[t];
+          _edge_cost = link_cost_map.find (m_graph.get_id (l))->second[t];
+          _edge_tt = link_tt_map.find (m_graph.get_id (l))->second[t];
           if (std::isinf (_edge_cost))
             {
               continue;
@@ -1018,10 +773,10 @@ MNM_TDSP_Tree::update_tree (
             {
               // printf("At time %d, src %d to des %d, m_dist is %f, _temp_cost
               // is %f\n", t, _src_node(),
-              //        _edge_it.GetDstNId(), (float) m_dist[_src_node][t],
-              //        (float) _temp_cost);
+              //        _edge_it.GetDstNId(), (TFlt) m_dist[_src_node][t],
+              //        (TFlt) _temp_cost);
               m_dist[_src_node][t] = _temp_cost;
-              m_tree[_src_node][t] = _edge_it.GetId ();
+              m_tree[_src_node][t] = m_graph.get_id (l);
             }
         }
     }
@@ -1047,7 +802,7 @@ MNM_TDSP_Tree::get_tdsp (TInt src_node_ID, TInt time,
       if (_cur_link_ID == -1)
         {
           printf ("No available path between node %d and node %d\n",
-                  src_node_ID (), m_dest_node_ID ());
+                  src_node_ID, m_dest_node_ID);
           // exit(-1);
           return -1;
         }
@@ -1056,7 +811,8 @@ MNM_TDSP_Tree::get_tdsp (TInt src_node_ID, TInt time,
       _cur_time
         = round_time (_cur_time,
                       link_tt_map.find (_cur_link_ID)->second[_cur_time]);
-      _cur_node_ID = m_graph->GetEI (_cur_link_ID).GetDstNId ();
+      _cur_node_ID
+        = m_graph.get_id (m_graph.get_endpoints (_cur_link_ID).second);
     }
   path->m_node_vec.push_back (m_dest_node_ID);
   return _tt;
@@ -1081,7 +837,7 @@ MNM_TDSP_Tree::get_tdsp (
       if (_cur_link_ID == -1)
         {
           printf ("No available path between node %d and node %d\n",
-                  src_node_ID (), m_dest_node_ID ());
+                  src_node_ID, m_dest_node_ID);
           // exit(-1);
           return -1;
         }
@@ -1112,7 +868,8 @@ MNM_TDSP_Tree::get_tdsp (
       _cur_time = round_time (_cur_time,
                               link_tt_map.find (_cur_link_ID)
                                 ->second[_cur_time]); // link tt cannot be zero
-      _cur_node_ID = m_graph->GetEI (_cur_link_ID).GetDstNId ();
+      _cur_node_ID
+        = m_graph.get_id (m_graph.get_endpoints (_cur_link_ID).second);
     }
   path->m_node_vec.push_back (m_dest_node_ID);
   return _tt;
@@ -1137,7 +894,7 @@ MNM_TDSP_Tree::get_distance_to_destination (TInt node_ID, TFlt time_stamp)
 
 TFlt
 MNM_TDSP_Tree::get_distance_to_destination (TInt node_ID, int start_time_stamp,
-                                            TFlt travel_time, float p)
+                                            TFlt travel_time, TFlt p)
 {
   IAssert (m_dist.find (node_ID) != m_dist.end ());
   IAssert (m_dist[node_ID] != nullptr);
@@ -1161,7 +918,7 @@ MNM_TDSP_Tree::round_time (TFlt time_stamp)
 }
 
 int
-MNM_TDSP_Tree::round_time (int start_time_stamp, TFlt travel_time, float p)
+MNM_TDSP_Tree::round_time (int start_time_stamp, TFlt travel_time, TFlt p)
 {
   int _end_time_stamp
     = start_time_stamp + MNM_Ults::round_up_time (travel_time, p);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "dlink.h"
 #include "dnode.h"
 #include "enum.h"
@@ -41,18 +41,35 @@ public:
   std::unordered_map<TInt, MNM_Dnode *> m_node_map;
 };
 
+struct td_link_attribute_row
+{
+  std::string link_type;
+  float length;
+  float FFS;
+  float Cap;
+  float RHOJ;
+  int Lane;
+  float toll;
+};
+
 class MNM_Link_Factory
 {
 public:
   MNM_Link_Factory ();
   virtual ~MNM_Link_Factory ();
-  virtual MNM_Dlink *make_link (TInt ID, DLink_type link_type, TFlt lane_hold_cap,
-                                TFlt lane_flow_cap, TInt number_of_lane, TFlt length,
-                                TFlt ffs, TFlt unit_time, TFlt flow_scalar);
+  virtual MNM_Dlink *make_link (TInt ID, DLink_type link_type,
+                                TFlt lane_hold_cap, TFlt lane_flow_cap,
+                                TInt number_of_lane, TFlt length, TFlt ffs,
+                                TFlt unit_time, TFlt flow_scalar);
   MNM_Dlink *get_link (TInt ID);
   int delete_link (TInt ID);
-  virtual int update_link_attribute(TInt interval, bool verbose=false) {return 0;};
+  virtual int update_link_attribute (TInt interval, bool verbose = false)
+  {
+    return 0;
+  };
   std::unordered_map<TInt, MNM_Dlink *> m_link_map;
+  std::unordered_map<int, std::unordered_map<int, td_link_attribute_row *> *>
+    *m_td_link_attribute_table;
 };
 
 class MNM_OD_Factory

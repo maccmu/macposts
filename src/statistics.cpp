@@ -206,7 +206,7 @@ MNM_Statistics::record_loading_interval_condition (TInt timestamp)
   TFlt _flow, _tt;
   if (m_record_volume && m_load_interval_volume_file.is_open ())
     {
-      _str = std::to_string(timestamp) + " ";
+      _str = std::to_string (timestamp) + " ";
       for (auto _link : m_link_order)
         {
           _flow = m_load_interval_volume.find (_link->m_link_ID)->second;
@@ -220,7 +220,7 @@ MNM_Statistics::record_loading_interval_condition (TInt timestamp)
   _str.clear ();
   if (m_record_tt && m_load_interval_tt_file.is_open ())
     {
-      _str = std::to_string(timestamp) + " ";
+      _str = std::to_string (timestamp) + " ";
       for (auto _link : m_link_order)
         {
           _tt = m_load_interval_tt.find (_link->m_link_ID)->second;
@@ -241,7 +241,7 @@ MNM_Statistics::record_record_interval_condition (TInt timestamp)
   TFlt _flow, _tt;
   if (m_record_volume && m_record_interval_volume_file.is_open ())
     {
-      _str = std::to_string(timestamp) + " ";
+      _str = std::to_string (timestamp) + " ";
       for (auto _link : m_link_order)
         {
           _flow = m_record_interval_volume.find (_link->m_link_ID)->second;
@@ -255,7 +255,7 @@ MNM_Statistics::record_record_interval_condition (TInt timestamp)
 
   if (m_record_tt && m_record_interval_tt_file.is_open ())
     {
-      _str = std::to_string(timestamp) + " ";
+      _str = std::to_string (timestamp) + " ";
       for (auto _link : m_link_order)
         {
           _tt = m_record_interval_tt.find (_link->m_link_ID)->second;
@@ -273,13 +273,17 @@ MNM_Statistics::post_record ()
 {
   if (m_record_volume)
     {
-      if (m_load_interval_volume_file.is_open ()) m_load_interval_volume_file.close ();
-      if (m_record_interval_volume_file.is_open ()) m_record_interval_volume_file.close ();
+      if (m_load_interval_volume_file.is_open ())
+        m_load_interval_volume_file.close ();
+      if (m_record_interval_volume_file.is_open ())
+        m_record_interval_volume_file.close ();
     }
   if (m_record_tt)
     {
-      if (m_load_interval_tt_file.is_open ()) m_load_interval_tt_file.close ();
-      if (m_record_interval_tt_file.is_open ()) m_record_interval_tt_file.close ();
+      if (m_load_interval_tt_file.is_open ())
+        m_load_interval_tt_file.close ();
+      if (m_record_interval_tt_file.is_open ())
+        m_record_interval_tt_file.close ();
     }
   return 0;
 }

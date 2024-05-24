@@ -1,4 +1,7 @@
 #include "realtime_dta.h"
+#include <cstring>
+
+using macposts::graph::Direction;
 
 MNM_Realtime_Dta::MNM_Realtime_Dta (const std::string &file_folder)
 {
@@ -69,12 +72,11 @@ MNM_Realtime_Dta::init_running ()
 
   m_average_link_tt.clear ();
   m_link_tt_difference.clear ();
-  for (auto _link_it = m_graph->BegEI (); _link_it < m_graph->EndEI ();
-       _link_it++)
+  for (const auto &l : m_graph.links ())
     {
-      m_average_link_tt.insert (std::pair<TInt, TFlt> (_link_it.GetId (), 0));
+      m_average_link_tt.insert (std::pair<TInt, TFlt> (m_graph.get_id (l), 0));
       m_link_tt_difference.insert (
-        std::pair<TInt, TFlt> (_link_it.GetId (), 0));
+        std::pair<TInt, TFlt> (m_graph.get_id (l), 0));
     }
 
   for (auto _it : *m_path_table)
@@ -240,7 +242,7 @@ MNM_Realtime_Dta::get_estimation_gradient (
       m_link_tt_difference.find (_link_ID)->second
         = m_average_link_tt.find (_link_ID)->second - _measure_tt;
       // printf("For link ID %d, the tt difference is %.4f\n", (int)_link_ID,
-      // (float)m_link_tt_difference.find(_link_ID)->second);
+      // (TFlt)m_link_tt_difference.find(_link_ID)->second);
     }
 
   for (auto _it : *path_table)
@@ -271,8 +273,8 @@ MNM_Realtime_Dta::get_estimation_gradient (
                 {
                   _tmp_tt = m_average_link_tt.find (_link_ID)->second;
                   // printf("Average tt is %.4f, marginal cost is %.4f\n",
-                  // (float)_tmp_tt,
-                  // (float)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
+                  // (TFlt)_tmp_tt,
+                  // (TFlt)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
                   // _tmp_tt));
                   _tmp_grad += MNM_Ults::
                     divide (m_link_tt_difference.find (_link_ID)->second
@@ -431,8 +433,8 @@ MNM_Realtime_Dta::get_optimization_gradient (MNM_Dta_Screenshot *screenshot,
                   _link = _link_factory->get_link (_link_ID);
                   _tmp_tt = m_average_link_tt.find (_link_ID)->second;
                   // printf("Average tt is %.4f, marginal cost is %.4f\n",
-                  // (float)_tmp_tt,
-                  // (float)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
+                  // (TFlt)_tmp_tt,
+                  // (TFlt)MNM::calculate_link_mc(_link_factory->get_link(_link_ID),
                   // _tmp_tt));
                   _tmp_grad += MNM_Ults::divide (_tmp_tt, _demand);
                   _tmp_grad
@@ -513,12 +515,10 @@ MNM_Realtime_Dta::update_compliance_ratio (TInt assign_inter)
                 }
             }
         }
-      _tmp_ratio
-        = MNM_Ults::max (MNM_Ults::min (MNM_Ults::divide (_est_flow
-                                                            - _real_flow,
-                                                          _est_flow),
-                                        0),
-                         1);
+      _tmp_ratio = std::max (std::min (MNM_Ults::divide (_est_flow - _real_flow,
+                                                         _est_flow),
+                                       0.0),
+                             1.0);
       _vms->m_compliance_ratio = _vms->m_compliance_ratio * (1 - Learning_Rate)
                                  + _tmp_ratio * Learning_Rate;
     }
@@ -556,7 +556,7 @@ MNM_Realtime_Dta::estimate_previous (TInt assign_inter)
       // for(auto _it : *m_path_table){
       //   for (auto _it_it : *(_it.second)){
       //     for (MNM_Path* _path : _it_it.second -> m_path_vec){
-      //       printf("Now the probability is %.4f\n", (float)_path -> m_p);
+      //       printf("Now the probability is %.4f\n", (TFlt)_path -> m_p);
       //     }
       //   }
       // }
@@ -596,7 +596,7 @@ MNM_Realtime_Dta::optimize_next (TInt next_assign_inter)
       // for(auto _it : *m_path_table){
       //   for (auto _it_it : *(_it.second)){
       //     for (MNM_Path* _path : _it_it.second -> m_path_vec){
-      //       printf("Now the probability is %.4f\n", (float)_path -> m_p);
+      //       printf("Now the probability is %.4f\n", (TFlt)_path -> m_p);
       //     }
       //   }
       // }
@@ -756,10 +756,11 @@ MNM_Realtime_Dta::get_statistics (MNM_Node_Factory *node_factory,
                           Screen shot
 **************************************************************************/
 MNM_Dta_Screenshot::MNM_Dta_Screenshot (const std::string &file_folder,
-                                        MNM_ConfReader *config, PNEGraph graph,
+                                        MNM_ConfReader *config,
+                                        macposts::Graph &graph,
                                         MNM_OD_Factory *od_factory)
+    : m_graph (graph)
 {
-  m_graph = graph;
   m_file_folder = file_folder;
   m_config = config;
   m_od_factory = od_factory;
@@ -794,36 +795,31 @@ MNM_Dta_Screenshot::hook_up_node_and_link ()
   MNM_Dnode *_node;
   MNM_Dlink *_link;
   // hook up node to link
-  for (auto _node_it = m_graph->BegNI (); _node_it < m_graph->EndNI ();
-       _node_it++)
+  for (const auto &n : m_graph.nodes ())
     {
-      // printf("node id %d with out-degree %d and in-degree %d\n",
-      // _node_it.GetId(), _node_it.GetOutDeg(), _node_it.GetInDeg());
-      _node_ID = _node_it.GetId ();
+      _node_ID = m_graph.get_id (n);
       _node = m_node_factory->get_node (_node_ID);
-      for (int e = 0; e < _node_it.GetOutDeg (); ++e)
+      auto &&outs = m_graph.connections (n, Direction::Outgoing);
+      for (const auto &l : outs)
         {
-          // printf("Out: edge (%d %d)\n", _node_it.GetId(),
-          // _node_it.GetOutNId(e));
-          _link = m_link_factory->get_link (_node_it.GetOutEId (e));
+          _link = m_link_factory->get_link (m_graph.get_id (l));
           _node->add_out_link (_link);
         }
-      for (int e = 0; e < _node_it.GetInDeg (); ++e)
+      auto &&ins = m_graph.connections (n, Direction::Incoming);
+      for (const auto &l : ins)
         {
-          // printf("In: edge (%d %d)\n", _node_it.GetInNId(e),
-          // _node_it.GetId());
-          _link = m_link_factory->get_link (_node_it.GetInEId (e));
+          _link = m_link_factory->get_link (m_graph.get_id (l));
           _node->add_in_link (_link);
         }
     }
-  // printf("Hook up link to node\n");
   // hook up link to node
-  for (auto _link_it = m_graph->BegEI (); _link_it < m_graph->EndEI ();
-       _link_it++)
+  for (const auto &l : m_graph.links ())
     {
-      _link = m_link_factory->get_link (_link_it.GetId ());
-      _link->hook_up_node (m_node_factory->get_node (_link_it.GetSrcNId ()),
-                           m_node_factory->get_node (_link_it.GetDstNId ()));
+      _link = m_link_factory->get_link (m_graph.get_id (l));
+      auto &&sd = m_graph.get_endpoints (l);
+      _link->hook_up_node (m_node_factory->get_node (m_graph.get_id (sd.first)),
+                           m_node_factory->get_node (
+                             m_graph.get_id (sd.second)));
     }
   return 0;
 }
@@ -932,7 +928,7 @@ run_from_screenshot (MNM_Dta_Screenshot *screenshot, MNM_ConfReader *dta_config,
 MNM_Dta_Screenshot *
 make_screenshot (const std::string &file_folder, MNM_ConfReader *config,
                  MNM_OD_Factory *od_factory, MNM_Link_Factory *link_factory,
-                 MNM_Node_Factory *node_factory, const PNEGraph &graph,
+                 MNM_Node_Factory *node_factory, macposts::Graph &graph,
                  MNM_Routing_Fixed *old_routing)
 {
   MNM_Dta_Screenshot *_shot
@@ -1027,7 +1023,7 @@ make_screenshot (MNM_Dta_Screenshot *screenshot)
 
 MNM_Dta_Screenshot *
 make_empty_screenshot (const std::string &file_folder, MNM_ConfReader *config,
-                       MNM_OD_Factory *od_factory, PNEGraph graph)
+                       MNM_OD_Factory *od_factory, macposts::Graph &graph)
 {
   MNM_Dta_Screenshot *_shot
     = new MNM_Dta_Screenshot (file_folder, config, graph, od_factory);
@@ -1056,8 +1052,8 @@ update_path_p (Path_Table *path_table, TInt col, TFlt step_size)
                 }
               // _path -> m_p -= step_size * _path -> buffer[col];
               // printf("Now m_p is %lf\n", _path -> m_p);
-              _path->m_p = MNM_Ults::max (_path->m_p, -Possible_Large);
-              _path->m_p = MNM_Ults::min (_path->m_p, Possible_Large);
+              _path->m_p = std::max (_path->m_p, -Possible_Large);
+              _path->m_p = std::min (_path->m_p, Possible_Large);
             }
           _it_it.second->normalize_p ();
         }

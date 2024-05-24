@@ -208,13 +208,13 @@ MNM_Dnode_Inout::MNM_Dnode_Inout (TInt ID, TFlt flow_scalar)
 MNM_Dnode_Inout::~MNM_Dnode_Inout ()
 {
   if (m_demand != nullptr)
-    free (m_demand);
+    delete[] m_demand;
   if (m_supply != nullptr)
-    free (m_supply);
+    delete[] m_supply;
   if (m_veh_flow != nullptr)
-    free (m_veh_flow);
+    delete[] m_veh_flow;
   if (m_veh_tomove != nullptr)
-    free (m_veh_tomove);
+    delete[] m_veh_tomove;
 }
 
 int
@@ -224,17 +224,10 @@ MNM_Dnode_Inout::prepare_loading ()
   TInt _num_out = m_out_link_array.size ();
   // printf("node id %d, num_in: %d, num_out: %d\n",m_node_ID(), _num_in(),
   // _num_out());
-  m_demand = (TFlt *) malloc (
-    sizeof (TFlt) * _num_in
-    * _num_out); // create m_demand, maybe use static_cast<TFlt*>
-  memset (m_demand, 0x0,
-          sizeof (TFlt) * _num_in * _num_out); // initialize m_demand
-  m_supply = (TFlt *) malloc (sizeof (TFlt) * _num_out);
-  memset (m_supply, 0x0, sizeof (TFlt) * _num_out);
-  m_veh_flow = (TFlt *) malloc (sizeof (TFlt) * _num_in * _num_out);
-  memset (m_veh_flow, 0x0, sizeof (TFlt) * _num_in * _num_out);
-  m_veh_tomove = (TInt *) malloc (sizeof (TInt) * _num_in * _num_out);
-  memset (m_veh_tomove, 0x0, sizeof (TInt) * _num_in * _num_out);
+  m_demand = new double[_num_in * _num_out]();
+  m_supply = new double[_num_out]();
+  m_veh_flow = new double[_num_in * _num_out]();
+  m_veh_tomove = new int[_num_in * _num_out]();
   return 0;
 }
 
@@ -353,7 +346,7 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
       if (_out_link->m_N_out != nullptr && _temp_sum > 0)
         {
           // printf("record out link cc: link ID %d, time %d, value %f\n",
-          // _out_link -> m_link_ID(), timestamp()+1, (float)
+          // _out_link -> m_link_ID(), timestamp()+1, (TFlt)
           // TFlt(_temp_sum)/m_flow_scalar);
           _out_link->m_N_in->add_increment (
             std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
@@ -374,7 +367,7 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
       if (_in_link->m_N_in != nullptr && _temp_sum > 0)
         {
           // printf("record in link cc: link ID %d, time %d, value %f\n",
-          // _in_link -> m_link_ID(), timestamp()+1, (float)
+          // _in_link -> m_link_ID(), timestamp()+1, (TFlt)
           // TFlt(_temp_sum)/m_flow_scalar);
           _in_link->m_N_out->add_increment (
             std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
@@ -421,7 +414,7 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
                       _out_link->m_incoming_array.push_back (_veh);
                       _veh->set_current_link (_out_link);
                       // accumulated miles for non-Pq links
-                      _veh -> update_miles_traveled(_in_link);
+                      _veh->update_miles_traveled (_in_link);
                       // c++ 11
                       _veh_it = _in_link->m_finished_array.erase (_veh_it);
                       _num_to_move -= 1;
@@ -537,7 +530,7 @@ MNM_Dnode_FWJ::compute_flow ()
           // printf("Portion is %.4f, sum in flow is %.4f, demand is %.4f\n",
           // _portion, _sum_in_flow, m_demand[i * _offset + j]);
           m_veh_flow[i * _offset + j]
-            = MNM_Ults::min (m_demand[i * _offset + j], _portion * m_supply[j]);
+            = std::min (m_demand[i * _offset + j], _portion * m_supply[j]);
           // printf("to link %d the flow is %.4f\n", m_out_link_array[j] ->
           // m_link_ID, m_veh_flow[i * _offset + j]);
         }
@@ -558,9 +551,9 @@ MNM_Dnode_GRJ::MNM_Dnode_GRJ (TInt ID, TFlt flow_scalar)
 MNM_Dnode_GRJ::~MNM_Dnode_GRJ ()
 {
   if (m_d_a != NULL)
-    free (m_d_a);
+    delete[] m_d_a;
   if (m_C_a != NULL)
-    free (m_C_a);
+    delete[] m_C_a;
 }
 
 int
@@ -568,10 +561,8 @@ MNM_Dnode_GRJ::prepare_loading ()
 {
   MNM_Dnode_Inout::prepare_loading ();
   TInt _num_in = m_in_link_array.size ();
-  m_d_a = (TFlt *) malloc (sizeof (TFlt) * _num_in);
-  memset (m_d_a, 0x0, sizeof (TFlt) * _num_in);
-  m_C_a = (TFlt *) malloc (sizeof (TFlt) * _num_in);
-  memset (m_C_a, 0x0, sizeof (TFlt) * _num_in);
+  m_d_a = new double[_num_in]();
+  m_C_a = new double[_num_in]();
   return 0;
 }
 
@@ -595,7 +586,7 @@ MNM_Dnode_GRJ::compute_flow ()
   for (size_t i = 0; i < m_in_link_array.size (); ++i)
     {
       // printf("3\n");
-      _f_a = MNM_Ults::min (m_d_a[i], _theta * m_C_a[i]);
+      _f_a = std::min (m_d_a[i], _theta * m_C_a[i]);
       // printf("f_a is %lf\n", _f_a);
       for (size_t j = 0; j < m_out_link_array.size (); ++j)
         {
@@ -617,7 +608,7 @@ MNM_Dnode_GRJ::prepare_outflux ()
     {
       _link = m_in_link_array[i];
       m_d_a[i] = TFlt (_link->m_finished_array.size ()) / m_flow_scalar;
-      m_C_a[i] = MNM_Ults::max (m_d_a[i], _link->get_link_supply ());
+      m_C_a[i] = std::max (m_d_a[i], _link->get_link_supply ());
       // printf("mda is %lf, mca is %lf\n", m_d_a[i](), m_C_a[i]());
     }
   return 0;
@@ -723,7 +714,7 @@ MNM_Dnode_GRJ::get_theta ()
 
   // printf("e1 is %lf, e2 is %lf\n", _e1(), _e2());
   // total
-  TFlt _theta = MNM_Ults::min (_e1, _e2);
+  TFlt _theta = std::min (_e1, _e2);
   // printf("return\n");
   return _theta;
 }

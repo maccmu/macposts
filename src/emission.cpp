@@ -36,7 +36,7 @@ MNM_Cumulative_Emission::calculate_fuel_rate (TFlt v)
       + 2.35409750 * 1e-03 * pow (v, 3) - 1.11752399 * 1e-01 * pow (v, 2)
       + 2.96137050 * pow (v, 1) - 1.51623933;
   // printf("fuel rate is %lf\n", 1.0/_fule_eco());
-  return MNM_Ults::max (TFlt (1) / _fule_eco, TFlt (0));
+  return std::max (TFlt (1) / _fule_eco, TFlt (0));
 }
 
 // TFlt MNM_Cumulative_Emission:: calculate_fuel_rate_deprecated(TFlt v)
@@ -60,7 +60,7 @@ MNM_Cumulative_Emission::calculate_CO2_rate (TFlt v)
 {
   TFlt _fuel_rate = calculate_fuel_rate (v);
   // printf("CO2 rate is %lf\n", _fuel_rate * TFlt(8875)());
-  return MNM_Ults::max (_fuel_rate * TFlt (8887), TFlt (0));
+  return std::max (_fuel_rate * TFlt (8887), TFlt (0));
 }
 
 // TFlt MNM_Cumulative_Emission::calculate_CO2_rate_deprecated(TFlt v)
@@ -80,7 +80,7 @@ MNM_Cumulative_Emission::calculate_HC_rate (TFlt v)
       + 0.15792241257931 * pow (v, 2.0) - 1.82687242201925 * v
       + 9.84559996919605;
   // printf("HC rate is %lf\n", _HC_rate());
-  return MNM_Ults::max (_HC_rate, TFlt (0));
+  return std::max (_HC_rate, TFlt (0));
 }
 
 TFlt
@@ -95,7 +95,7 @@ MNM_Cumulative_Emission::calculate_CO_rate (TFlt v)
                   + 0.047711166912908 * pow (v, 2) - 0.615061016205463 * v
                   + 4.12900319568868;
   // printf("CO rate is %lf\n", _CO_rate());
-  return MNM_Ults::max (_CO_rate, TFlt (0));
+  return std::max (_CO_rate, TFlt (0));
 }
 
 TFlt
@@ -110,7 +110,7 @@ MNM_Cumulative_Emission::calculate_NOX_rate (TFlt v)
                    + 0.0895029037098895 * pow (v, 2) - 1.07265851515536 * v
                    + 6.06514023873933;
   // printf("NOX rate is %lf\n", _NOX_rate());
-  return MNM_Ults::max (_NOX_rate, TFlt (0));
+  return std::max (_NOX_rate, TFlt (0));
 }
 
 int
@@ -126,9 +126,10 @@ MNM_Cumulative_Emission::update (MNM_Veh_Factory *veh_factory)
     {
       _v = link->m_length / link->get_link_tt ();    // m/s
       _v_converted = _v * TFlt (3600) / TFlt (1600); // mile / hour
-      _v_converted = MNM_Ults::max (_v_converted, TFlt (5));
-      _v_converted = MNM_Ults::min (_v_converted, TFlt (65));
-      _veh_ct = link->get_link_flow_emission (m_ev_label);  // already divided by flow_scalar
+      _v_converted = std::max (_v_converted, TFlt (5));
+      _v_converted = std::min (_v_converted, TFlt (65));
+      _veh_ct = link->get_link_flow_emission (
+        m_ev_label); // already divided by flow_scalar
       IAssert (_veh_ct.size () == 2);
       _nonev_ct = _veh_ct[0];
       _ev_ct = _veh_ct[1];
@@ -174,19 +175,18 @@ MNM_Cumulative_Emission::output ()
   std::string _s = "";
 
   _s += "The emission stats are: \n";
-  _s += "fuel: " + std::to_string (m_fuel ()) + " gallons, ";
-  _s += "CO2: " + std::to_string (m_CO2 ()) + " g, ";
-  _s += "HC: " + std::to_string (m_HC ()) + " g, ";
-  _s += "CO: " + std::to_string (m_CO ()) + " g, ";
-  _s += "NOX: " + std::to_string (m_NOX ()) + " g, ";
-  _s += "Total VMT: " + std::to_string (m_VMT ()) + " miles, ";
-  _s += "EV VMT: " + std::to_string (m_VMT_ev ()) + " miles\n";
+  _s += "fuel: " + std::to_string (m_fuel) + " gallons, ";
+  _s += "CO2: " + std::to_string (m_CO2) + " g, ";
+  _s += "HC: " + std::to_string (m_HC) + " g, ";
+  _s += "CO: " + std::to_string (m_CO) + " g, ";
+  _s += "NOX: " + std::to_string (m_NOX) + " g, ";
+  _s += "Total VMT: " + std::to_string (m_VMT) + " miles, ";
+  _s += "EV VMT: " + std::to_string (m_VMT_ev) + " miles\n";
 
   printf ("The emission stats are: ");
   printf ("fuel: %lf gallons, CO2: %lf g, HC: %lf g, CO: %lf g, NOX: %lf g, "
           "Total VMT: %lf miles, EV VMT: %lf miles\n",
-          m_fuel (), m_CO2 (), m_HC (), m_CO (), m_NOX (), m_VMT (),
-          m_VMT_ev ());
+          m_fuel, m_CO2, m_HC, m_CO, m_NOX, m_VMT, m_VMT_ev);
 
   return _s;
 }

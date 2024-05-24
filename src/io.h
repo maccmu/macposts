@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "enum.h"
 #include "factory.h"
 #include "path.h"
@@ -41,17 +41,19 @@ public:
                               MNM_OD_Factory *od_factory,
                               MNM_Node_Factory *node_factory,
                               const std::string &file_name = "MNM_input_od");
-  static PNEGraph build_graph (const std::string &file_folder,
-                               MNM_ConfReader *conf_reader);
+  static macposts::Graph build_graph (const std::string &file_folder,
+                                      MNM_ConfReader *conf_reader);
   static int build_demand (const std::string &file_folder,
                            MNM_ConfReader *conf_reader,
                            MNM_OD_Factory *od_factory,
                            const std::string &file_name = "MNM_input_demand");
   static Path_Table *load_path_table (const std::string &file_name,
-                                      const PNEGraph &graph, TInt num_path,
-                                      bool w_buffer = false, bool w_ID = false);
-  static int build_vms_facotory (const std::string &file_folder, PNEGraph graph,
-                                 TInt num_vms, MNM_Vms_Factory *vms_factory,
+                                      const macposts::Graph &graph,
+                                      TInt num_path, bool w_buffer = false,
+                                      bool w_ID = false);
+  static int build_vms_facotory (const std::string &file_folder,
+                                 const macposts::Graph &graph, TInt num_vms,
+                                 MNM_Vms_Factory *vms_factory,
                                  const std::string &file_name
                                  = "MNM_input_vms");
   static int read_int_float (const std::string &file_name,
@@ -80,19 +82,28 @@ public:
     const TInt num_rows, const TInt num_timestamps,
     const std::string &file_name = "tdsp_node_cost");
 
-  static int read_origin_vehicle_label_ratio (const std::string &file_folder,
-                                              MNM_ConfReader *conf_reader,
-                                              MNM_OD_Factory *od_factory,
-                                              const std::string &file_name
-                                              = "MNM_input_origin_vehicle_label");
+  static int read_origin_vehicle_label_ratio (
+    const std::string &file_folder, MNM_ConfReader *conf_reader,
+    MNM_OD_Factory *od_factory,
+    const std::string &file_name = "MNM_input_origin_vehicle_label");
 
-  static int read_vehicle_tracking_setting (const std::string &file_folder,
-                                              std::vector<std::pair<int, int>> *od_pair_tracked,
-                                              std::vector<int> *interval_tracked,
-                                              const std::string &od_tracking_file_name
-                                              = "MNM_input_od_tracking",
-                                              const std::string &interval_tracking_file_name
-                                              = "MNM_input_interval_tracking");
+  static int read_vehicle_tracking_setting (
+    const std::string &file_folder,
+    std::vector<std::pair<int, int>> *od_pair_tracked,
+    std::vector<int> *interval_tracked,
+    const std::string &od_tracking_file_name = "MNM_input_od_tracking",
+    const std::string &interval_tracking_file_name
+    = "MNM_input_interval_tracking");
+
+  static int build_link_td_attribute (const std::string &file_folder,
+                                    MNM_Link_Factory *link_factory,
+                                    const std::string &file_name
+                                    = "MNM_input_link_td_attribute");
+
+  static int build_td_adaptive_ratio (const std::string &file_folder,
+                                    MNM_ConfReader *conf_reader,
+                                    MNM_OD_Factory *od_factory,
+                                    const std::string &file_name = "MNM_input_od_td_adaptive_ratio");
 
   // private:
   static std::vector<std::string> split (const std::string &text, char sep);

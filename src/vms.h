@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "factory.h"
 #include "path.h"
 #include "ults.h"
@@ -11,7 +11,7 @@
 class MNM_Link_Vms
 {
 public:
-  MNM_Link_Vms (TInt ID, TInt link_ID, PNEGraph graph);
+  MNM_Link_Vms (TInt ID, TInt link_ID, const macposts::Graph &graph);
   ~MNM_Link_Vms ();
   TInt m_ID;
   TInt m_my_link_ID;
@@ -22,7 +22,7 @@ public:
   TInt generate_detour_link (Path_Table *path_table, TInt next_assign_inter,
                              MNM_Node_Factory *node_factory);
   TFlt m_compliance_ratio;
-  int hook_link (PNEGraph graph);
+  void hook_link (const macposts::Graph &graph);
   int hook_path (Path_Table *path_table);
 };
 
@@ -32,7 +32,8 @@ public:
   MNM_Vms_Factory ();
   ~MNM_Vms_Factory ();
   std::unordered_map<TInt, MNM_Link_Vms *> m_link_vms_map;
-  MNM_Link_Vms *make_link_vms (TInt ID, TInt link_ID, PNEGraph graph);
+  MNM_Link_Vms *make_link_vms (TInt ID, TInt link_ID,
+                               const macposts::Graph &graph);
   MNM_Link_Vms *get_link_vms (TInt ID);
   int hook_path (Path_Table *path_table);
 };

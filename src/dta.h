@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "dlink.h"
 #include "dnode.h"
 #include "emission.h"
@@ -51,7 +51,7 @@ public:
   MNM_Node_Factory *m_node_factory;
   MNM_Link_Factory *m_link_factory;
   MNM_OD_Factory *m_od_factory;
-  PNEGraph m_graph;
+  macposts::Graph m_graph;
   MNM_Statistics *m_statistics;
   MNM_Gridlock_Link_Recorder *m_gridlock_recorder;
   MNM_Routing *m_routing;

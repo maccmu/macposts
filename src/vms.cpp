@@ -1,6 +1,9 @@
 #include "vms.h"
+#include <cfloat>
 
-MNM_Link_Vms::MNM_Link_Vms (TInt ID, TInt link_ID, PNEGraph graph)
+using macposts::graph::Direction;
+
+MNM_Link_Vms::MNM_Link_Vms (TInt ID, TInt link_ID, const macposts::Graph &graph)
 {
   m_ID = ID;
   m_my_link_ID = link_ID;
@@ -21,19 +24,17 @@ MNM_Link_Vms::~MNM_Link_Vms ()
   m_out_link_vec.clear ();
 }
 
-int
-MNM_Link_Vms::hook_link (PNEGraph graph)
+void
+MNM_Link_Vms::hook_link (const macposts::Graph &graph)
 {
-  auto _node_it = graph->GetNI (graph->GetEI (m_my_link_ID).GetSrcNId ());
-  for (int e = 0; e < _node_it.GetOutDeg (); ++e)
+  const auto &link = graph.get_link (m_my_link_ID);
+  const auto &node = graph.get_endpoints (link).first;
+  for (const auto &c : graph.connections (node, Direction::Outgoing))
     {
-      m_out_link_vec.push_back (_node_it.GetOutEId (e));
+      m_out_link_vec.push_back (graph.get_id (c));
       std::vector<MNM_Path *> *_v = new std::vector<MNM_Path *> ();
-      m_link_path_map.insert (
-        std::pair<TInt, std::vector<MNM_Path *> *> (_node_it.GetOutEId (e),
-                                                    _v));
+      m_link_path_map.insert ({ graph.get_id (c), _v });
     }
-  return 0;
 }
 
 int
@@ -123,7 +124,8 @@ MNM_Vms_Factory::~MNM_Vms_Factory ()
 }
 
 MNM_Link_Vms *
-MNM_Vms_Factory::make_link_vms (TInt ID, TInt link_ID, PNEGraph graph)
+MNM_Vms_Factory::make_link_vms (TInt ID, TInt link_ID,
+                                const macposts::Graph &graph)
 {
   MNM_Link_Vms *_vms = new MNM_Link_Vms (ID, link_ID, graph);
   m_link_vms_map.insert (std::pair<TInt, MNM_Link_Vms *> (ID, _vms));

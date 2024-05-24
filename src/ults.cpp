@@ -1,4 +1,5 @@
 #include "ults.h"
+#include <cmath>
 
 namespace MNM_Ults
 {
@@ -6,11 +7,6 @@ void
 set_random_state (unsigned int s)
 {
   std::srand (s);
-  // HACK: SNAP random number generators use a signed integer as seed, and
-  // require it to be non-negative.
-  TInt::Rnd.PutSeed (s >> 1);
-  TUInt::Rnd.PutSeed (s >> 1);
-  TFlt::Rnd.PutSeed (s >> 1);
 }
 
 TInt
@@ -22,24 +18,6 @@ round (TFlt in)
     return TInt (floorN + 1);
   else
     return TInt (floorN);
-}
-
-TInt
-min (TInt a, TInt b)
-{
-  return a < b ? a : b;
-}
-
-TFlt
-min (TFlt a, TFlt b)
-{
-  return a < b ? a : b;
-}
-
-TFlt
-max (TFlt a, TFlt b)
-{
-  return a > b ? a : b;
 }
 
 TFlt
@@ -87,19 +65,19 @@ copy_file (std::string srce_file, std::string dest_file)
   return MNM_Ults::copy_file (srce_file.c_str (), dest_file.c_str ());
 }
 
-float
-roundoff (float value, unsigned char prec)
+TFlt
+roundoff (TFlt value, unsigned char prec)
 {
-  float pow_10 = pow (10.0f, (float) prec);
+  TFlt pow_10 = pow (10.0f, (TFlt) prec);
   return round (value * pow_10) / pow_10;
 }
 
 bool
-approximate_equal (TFlt a, TFlt b, float p)
+approximate_equal (TFlt a, TFlt b, TFlt p)
 {
   // approximately equal,
   // https://stackoverflow.com/questions/17333/what-is-the-most-effective-way-for-float-and-double-comparison
-  if (fabs (a - b) <= p * max (fabs (a), fabs (b)))
+  if (fabs (a - b) <= p * std::max (fabs (a), fabs (b)))
     {
       return true;
     }
@@ -110,13 +88,13 @@ approximate_equal (TFlt a, TFlt b, float p)
 }
 
 bool
-approximate_less_than (TFlt a, TFlt b, float p)
+approximate_less_than (TFlt a, TFlt b, TFlt p)
 {
-  return a + p * max (abs (a), abs (b)) < b;
+  return a + p * std::max (fabs (a), fabs (b)) < b;
 }
 
 int
-round_up_time (TFlt time, float p)
+round_up_time (TFlt time, TFlt p)
 {
   if (time < 1)
     {
@@ -151,29 +129,19 @@ round_down_time (TFlt time)
     }
 }
 
-PNEGraph
-reverse_graph (const PNEGraph &graph)
+macposts::Graph
+reverse_graph (const macposts::Graph &graph)
 {
-  PNEGraph reversed_graph = PNEGraph::TObj::New ();
-  if (graph->GetEdges () > 0)
+  macposts::Graph reversed_graph;
+  for (const auto &node : graph.nodes ())
+    reversed_graph.add_node (graph.get_id (node));
+  for (const auto &link : graph.links ())
     {
-      int _link_ID, _from_node_ID, _to_node_ID;
-      for (auto _edge_it = graph->BegEI (); _edge_it < graph->EndEI ();
-           _edge_it++)
-        {
-          _link_ID = _edge_it.GetId ();
-          _from_node_ID = _edge_it.GetSrcNId ();
-          _to_node_ID = _edge_it.GetDstNId ();
-          if (!reversed_graph->IsNode (_from_node_ID))
-            {
-              reversed_graph->AddNode (_from_node_ID);
-            }
-          if (!reversed_graph->IsNode (_to_node_ID))
-            {
-              reversed_graph->AddNode (_to_node_ID);
-            }
-          reversed_graph->AddEdge (_to_node_ID, _from_node_ID, _link_ID);
-        }
+      auto endpoints = graph.get_endpoints (link);
+      auto from = graph.get_id (endpoints.first);
+      auto to = graph.get_id (endpoints.second);
+      auto id = graph.get_id (link);
+      reversed_graph.add_link (to, from, id);
     }
   return reversed_graph;
 }

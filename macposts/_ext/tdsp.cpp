@@ -1,11 +1,11 @@
 // Time-dependent shortest path (TDSP)
 
-#include <Snap.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <unordered_map>
 #include <vector>
 
+#include <common.h>
 #include <io.h>
 #include <shortest_path.h>
 
@@ -44,7 +44,7 @@ public:
 
   TInt m_num_rows_link_file, m_num_rows_node_file, m_dest_node_ID,
     m_max_interval;
-  PNEGraph m_graph;
+  macposts::Graph m_graph;
   MNM_TDSP_Tree *m_tdsp_tree;
 
   std::unordered_map<TInt, TFlt *> m_td_link_tt;
@@ -79,8 +79,6 @@ Tdsp::Tdsp ()
 
   m_num_rows_link_file = -1;
   m_num_rows_node_file = -1;
-
-  m_graph = nullptr;
 }
 
 Tdsp::~Tdsp ()
@@ -89,14 +87,14 @@ Tdsp::~Tdsp ()
 
   for (auto _it : m_td_link_tt)
     {
-      free (_it.second);
+      delete[] _it.second;
     }
   m_td_link_tt.clear ();
   for (auto _it : m_td_node_tt)
     {
       for (auto _it_it : _it.second)
         {
-          free (_it_it.second);
+          delete[] _it_it.second;
         }
       _it.second.clear ();
     }
@@ -104,20 +102,18 @@ Tdsp::~Tdsp ()
 
   for (auto _it : m_td_link_cost)
     {
-      free (_it.second);
+      delete[] _it.second;
     }
   m_td_link_cost.clear ();
   for (auto _it : m_td_node_cost)
     {
       for (auto _it_it : _it.second)
         {
-          free (_it_it.second);
+          delete[] _it_it.second;
         }
       _it.second.clear ();
     }
   m_td_node_cost.clear ();
-
-  m_graph->Clr ();
 }
 
 int
@@ -216,8 +212,7 @@ Tdsp::read_td_link_cost (py::array_t<double> td_link_cost_py,
       _link_ID = TInt ((int) start_ptr[i * (m_max_interval + 1)]);
       if (td_link_cost.find (_link_ID) == td_link_cost.end ())
         {
-          TFlt *_cost_vector_tmp
-            = (TFlt *) malloc (sizeof (TFlt) * m_max_interval);
+          double *_cost_vector_tmp = new double[m_max_interval]();
           td_link_cost.insert (
             std::pair<TInt, TFlt *> (_link_ID, _cost_vector_tmp));
         }
@@ -270,8 +265,7 @@ Tdsp::read_td_node_cost (
       if (td_node_cost.find (_in_link_ID)->second.find (_out_link_ID)
           == td_node_cost.find (_in_link_ID)->second.end ())
         {
-          TFlt *_cost_vector_tmp
-            = (TFlt *) malloc (sizeof (TFlt) * m_max_interval);
+          double *_cost_vector_tmp = new double[m_max_interval]();
           td_node_cost.find (_in_link_ID)
             ->second.insert (
               std::pair<TInt, TFlt *> (_out_link_ID, _cost_vector_tmp));
@@ -330,7 +324,7 @@ Tdsp::extract_tdsp (int origin_node_ID, int timestamp)
                ->m_dist[origin_node_ID][timestamp < m_tdsp_tree->m_max_interval
                                           ? timestamp
                                           : m_tdsp_tree->m_max_interval - 1];
-  printf ("At time %d, minimum cost is %f\n", timestamp, tmp_cost ());
+  printf ("At time %d, minimum cost is %f\n", timestamp, tmp_cost);
   _path = new MNM_Path ();
   TFlt _tt;
   if (m_num_rows_node_file != -1)
@@ -343,7 +337,7 @@ Tdsp::extract_tdsp (int origin_node_ID, int timestamp)
       _tt = m_tdsp_tree->get_tdsp (origin_node_ID, timestamp, m_td_link_tt,
                                    _path);
     }
-  printf ("travel time: %f\n", _tt ());
+  printf ("travel time: %f\n", _tt);
   printf ("number of nodes: %d\n", int (_path->m_node_vec.size ()));
   _str = _path->node_vec_to_string ();
   std::cout << "path: " << _str << "\n";

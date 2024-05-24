@@ -1,4 +1,7 @@
 #include "io.h"
+#include <cstring>
+
+using macposts::graph::Direction;
 
 int
 MNM_IO::build_node_factory (const std::string &file_folder,
@@ -462,65 +465,77 @@ MNM_IO::read_origin_vehicle_label_ratio (const std::string &file_folder,
 }
 
 int
-MNM_IO::read_vehicle_tracking_setting (const std::string &file_folder,
-                                      std::vector<std::pair<int, int>> *od_pair_tracked,
-                                      std::vector<int> *interval_tracked,
-                                      const std::string &od_tracking_file_name,
-                                      const std::string &interval_tracking_file_name)
-{ 
+MNM_IO::read_vehicle_tracking_setting (
+  const std::string &file_folder,
+  std::vector<std::pair<int, int>> *od_pair_tracked,
+  std::vector<int> *interval_tracked, const std::string &od_tracking_file_name,
+  const std::string &interval_tracking_file_name)
+{
   int _origin_ID, _dest_ID;
   std::string _line;
   std::vector<std::string> _words;
 
   /* find file */
-  std::string _od_pair_tracked_file_name = file_folder + "/" + od_tracking_file_name;
+  std::string _od_pair_tracked_file_name
+    = file_folder + "/" + od_tracking_file_name;
   std::ifstream _od_pair_tracked_file;
   _od_pair_tracked_file.open (_od_pair_tracked_file_name, std::ios::in);
 
-  if (_od_pair_tracked_file.is_open ()) {
-    std::getline(_od_pair_tracked_file, _line);
-    while (std::getline(_od_pair_tracked_file, _line)) {
-      _words = split (_line, ' ');
-      if ((int) _words.size () == 2) {
-        _origin_ID = std::stoi (_words[0]);
-        _dest_ID = std::stoi (_words[1]);
-        od_pair_tracked -> push_back(std::make_pair(_origin_ID, _dest_ID));
-      }
-      else {
-        throw std::runtime_error("Wrong OD tracking file");
-      }
+  if (_od_pair_tracked_file.is_open ())
+    {
+      std::getline (_od_pair_tracked_file, _line);
+      while (std::getline (_od_pair_tracked_file, _line))
+        {
+          _words = split (_line, ' ');
+          if ((int) _words.size () == 2)
+            {
+              _origin_ID = std::stoi (_words[0]);
+              _dest_ID = std::stoi (_words[1]);
+              od_pair_tracked->push_back (
+                std::make_pair (_origin_ID, _dest_ID));
+            }
+          else
+            {
+              throw std::runtime_error ("Wrong OD tracking file");
+            }
+        }
     }
-  }
-  else {
-    printf ("No OD pair tracking file\n");
-  }
+  else
+    {
+      printf ("No OD pair tracking file\n");
+    }
   _od_pair_tracked_file.close ();
 
-
-  std::string _interval_tracked_file_name = file_folder + "/" + interval_tracking_file_name;
+  std::string _interval_tracked_file_name
+    = file_folder + "/" + interval_tracking_file_name;
   std::ifstream _interval_tracked_file;
   _interval_tracked_file.open (_interval_tracked_file_name, std::ios::in);
 
-  if (_interval_tracked_file.is_open ()) {
-    std::getline(_interval_tracked_file, _line);
-    while (std::getline(_interval_tracked_file, _line)) {
-      _words = split (_line, ' ');
-      if ((int) _words.size () == 1) {
-        interval_tracked -> push_back(std::stoi(_words[0]));
-      }
-      else {
-        throw std::runtime_error("Wrong interval tracking file");
-      }
+  if (_interval_tracked_file.is_open ())
+    {
+      std::getline (_interval_tracked_file, _line);
+      while (std::getline (_interval_tracked_file, _line))
+        {
+          _words = split (_line, ' ');
+          if ((int) _words.size () == 1)
+            {
+              interval_tracked->push_back (std::stoi (_words[0]));
+            }
+          else
+            {
+              throw std::runtime_error ("Wrong interval tracking file");
+            }
+        }
     }
-  }
-  else {
-    printf ("No interval tracking file\n");
-  }
+  else
+    {
+      printf ("No interval tracking file\n");
+    }
   _interval_tracked_file.close ();
   return 0;
 }
 
-PNEGraph
+macposts::Graph
 MNM_IO::build_graph (const std::string &file_folder,
                      MNM_ConfReader *conf_reader)
 {
@@ -532,8 +547,7 @@ MNM_IO::build_graph (const std::string &file_folder,
 
   TInt _num_of_link = conf_reader->get_int ("num_of_link");
 
-  // printf("Start build graph.\n");
-  PNEGraph _graph = PNEGraph::TObj::New ();
+  macposts::Graph _graph;
 
   int _link_ID, _from_ID, _to_ID;
   std::string _line;
@@ -541,32 +555,41 @@ MNM_IO::build_graph (const std::string &file_folder,
   for (int i = 0; i < _num_of_link;)
     {
       std::getline (_graph_file, _line);
-      _line = trim (_line);
+      _line = MNM_IO::trim (_line);
       if (_line.empty () || _line[0] == '#')
         {
           continue;
         }
       ++i;
-      _words = split (_line, ' ');
+      _words = MNM_IO::split (_line, ' ');
       if (_words.size () == 3)
         {
           // std::cout << "Processing: " << _line << "\n";
           _link_ID = TInt (std::stoi (_words[0]));
           _from_ID = TInt (std::stoi (_words[1]));
           _to_ID = TInt (std::stoi (_words[2]));
-          if (!_graph->IsNode (_from_ID))
+          try
             {
-              _graph->AddNode (_from_ID);
+              _graph.add_node (_from_ID);
             }
-          if (!_graph->IsNode (_to_ID))
+          // FIXME: This could be overly generic. Maybe we should use a more
+          // specific exception type.
+          catch (const std::runtime_error &)
             {
-              _graph->AddNode (_to_ID);
             }
-          _graph->AddEdge (_from_ID, _to_ID, _link_ID);
+          try
+            {
+              _graph.add_node (_to_ID);
+            }
+          // FIXME: This could be overly generic. Maybe we should use a more
+          // specific exception type.
+          catch (const std::runtime_error &)
+            {
+            }
+          _graph.add_link (_from_ID, _to_ID, _link_ID);
         }
     }
-  _graph->Defrag ();
-  IAssert (_graph->GetEdges () == _num_of_link);
+  assert ((std::ptrdiff_t) _graph.size_links () == _num_of_link);
   return _graph;
 }
 
@@ -593,8 +616,7 @@ MNM_IO::build_demand (const std::string &file_folder,
   if (_demand_file.is_open ())
     {
       // printf("Start build demand profile.\n");
-      TFlt *_demand_vector = (TFlt *) malloc (sizeof (TFlt) * _max_interval);
-      memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval);
+      double *_demand_vector = new double[_max_interval]();
       for (int i = 0; i < _num_OD;)
         {
           std::getline (_demand_file, _line);
@@ -611,6 +633,7 @@ MNM_IO::build_demand (const std::string &file_folder,
             {
               _O_ID = TInt (std::stoi (_words[0]));
               _D_ID = TInt (std::stoi (_words[1]));
+              memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval);
               for (int j = 0; j < _max_interval; ++j)
                 {
                   _demand_vector[j] = TFlt (std::stod (_words[j + 2]));
@@ -621,19 +644,181 @@ MNM_IO::build_demand (const std::string &file_folder,
             }
           else
             {
-              free (_demand_vector);
+              delete[] _demand_vector;
               throw std::runtime_error ("failed to build demand");
             }
         }
-      free (_demand_vector);
+      delete[] _demand_vector;
       _demand_file.close ();
     }
   return 0;
 }
 
+int MNM_IO::build_td_adaptive_ratio (const std::string &file_folder,
+                                    MNM_ConfReader *conf_reader,
+                                    MNM_OD_Factory *od_factory,
+                                    const std::string &file_name)
+{
+  /* find file */
+  std::string _ratio_file_name = file_folder + "/" + file_name;
+  std::ifstream _ratio_file;
+  _ratio_file.open (_ratio_file_name, std::ios::in);
+
+  /* read config */
+  TInt _max_interval = conf_reader->get_int ("max_interval");
+
+  /* build */
+  TInt _O_ID, _D_ID;
+  MNM_Origin *_origin;
+  MNM_Destination *_dest;
+  std::string _line;
+  std::vector<std::string> _words;
+  if (_ratio_file.is_open ())
+    {
+      // printf("Start build demand profile.\n");
+      double *_ratio_vector = new double[_max_interval]();
+      std::getline (_ratio_file, _line);
+      while (std::getline (_ratio_file, _line))
+        {
+          // std::cout << "Processing: " << _line << "\n";
+          _line = trim (_line);
+          _words = split (_line, ' ');
+          // if (TInt(_words.size()) == (_max_interval + 2)) {
+          if (TInt (_words.size ()) >= (_max_interval + 2))
+            {
+              _O_ID = TInt (std::stoi (_words[0]));
+              _D_ID = TInt (std::stoi (_words[1]));
+              memset (_ratio_vector, 0x0, sizeof (TFlt) * _max_interval);
+              for (int j = 0; j < _max_interval; ++j)
+                {
+                  _ratio_vector[j] = TFlt (std::stod (_words[j + 2]));
+                }
+              _origin = od_factory->get_origin (_O_ID);
+              _dest = od_factory->get_destination (_D_ID);
+              _origin->add_dest_adaptive_ratio (_dest, _ratio_vector);
+            }
+          else
+            {
+              delete[] _ratio_vector;
+              throw std::runtime_error ("failed to build time-dependent adaptive ratio");
+            }
+        }
+      delete[] _ratio_vector;
+      _ratio_file.close ();
+    }
+  else {
+    printf("No time-dependent adaptive ratio file\n");
+  }
+  return 0;
+}
+
+int
+MNM_IO::build_link_td_attribute (const std::string &file_folder,
+                                MNM_Link_Factory *link_factory,
+                                const std::string &file_name)
+{
+  /* find file */
+  std::string _file_name = file_folder + "/" + file_name;
+  std::ifstream _file;
+  _file.open (_file_name, std::ios::in);
+
+  std::string _line;
+  std::vector<std::string> _words;
+  TInt _interval, _link_ID;
+  TFlt _lane_hold_cap;
+  TFlt _lane_flow_cap;
+  TInt _number_of_lane;
+  TFlt _length;
+  TFlt _ffs;
+  std::string _type;
+  TFlt _toll;
+
+  auto td_link_attribute_table
+    = dynamic_cast<MNM_Link_Factory *> (link_factory)
+        ->m_td_link_attribute_table;
+
+  if (_file.is_open ())
+    {
+      printf ("Start build time-dependent link attribute.\n");
+      std::getline (_file, _line); // #link_ID toll_car toll_truck
+      int i = 0;
+      while (std::getline (_file, _line))
+        {
+          // std::getline (_file, _line);
+          // std::cout << "Processing: " << _line << "\n";
+
+          _words = split (_line, ' ');
+          if (TInt (_words.size ()) == 13)
+            {
+              _interval = TInt (std::stoi (_words[0]));
+              _link_ID = TInt (std::stoi (_words[1]));
+              _type = trim (_words[2]);
+              _length = TFlt (std::stod (_words[3]));
+              _ffs = TFlt (std::stod (_words[4]));
+              _lane_flow_cap = TFlt (
+                std::stod (_words[5])); // flow capacity (vehicles/hour/lane)
+              _lane_hold_cap = TFlt (
+                std::stod (_words[6])); // jam density (vehicles/mile/lane)
+              _number_of_lane = TInt (std::stoi (_words[7]));
+              _toll = TFlt (std::stoi (_words[8]));
+
+              /* unit conversion */
+              // mile -> meter, hour -> second
+              _length = _length * TFlt (1600);  // m
+              _ffs = _ffs * TFlt (1600) / TFlt (3600); // m/s
+              _lane_flow_cap
+                = _lane_flow_cap / TFlt (3600); // vehicles/s/lane
+              _lane_hold_cap
+                = _lane_hold_cap / TFlt (1600); // vehicles/m/lane
+
+              if (td_link_attribute_table->find (_interval)
+                  == td_link_attribute_table->end ())
+                {
+                  td_link_attribute_table->insert (
+                    std::make_pair (_interval,
+                                    new std::unordered_map<
+                                      int, td_link_attribute_row *> ()));
+                }
+              if (td_link_attribute_table->find (_interval)->second->find (
+                    _link_ID)
+                  == td_link_attribute_table->find (_interval)->second->end ())
+                {
+                  td_link_attribute_table->find (_interval)->second->insert (
+                    std::make_pair (_link_ID, new td_link_attribute_row ()));
+                }
+
+              auto *_td_row = td_link_attribute_table->find (_interval)
+                                ->second->find (_link_ID)
+                                ->second;
+              _td_row->link_type = _type;
+              _td_row->length = _length;
+              _td_row->FFS = _ffs;
+              _td_row->Cap = _lane_flow_cap;
+              _td_row->RHOJ = _lane_hold_cap;
+              _td_row->Lane = _number_of_lane;
+              _td_row->toll = _toll;
+            }
+          else
+            {
+              std::cout << _line << std::endl;
+              throw std::runtime_error ("failed to parse line: " + _line);
+            }
+          ++i;
+        }
+      _file.close ();
+      printf ("Finish build time-dependent link attribute.\n");
+    }
+  else
+    {
+      printf ("No time-dependent link attribute.\n");
+    }
+  return 0;
+}
+
 Path_Table *
-MNM_IO::load_path_table (const std::string &file_name, const PNEGraph &graph,
-                         TInt num_path, bool w_buffer, bool w_ID)
+MNM_IO::load_path_table (const std::string &file_name,
+                         const macposts::Graph &graph, TInt num_path,
+                         bool w_buffer, bool w_ID)
 {
   if (w_ID)
     {
@@ -642,7 +827,7 @@ MNM_IO::load_path_table (const std::string &file_name, const PNEGraph &graph,
     }
   printf ("Loading Path Table for Driving!\n");
   TInt Num_Path = num_path;
-  printf ("Number of path %d\n", Num_Path ());
+  printf ("Number of path %d\n", Num_Path);
 
   if (Num_Path <= 0)
     {
@@ -727,8 +912,16 @@ MNM_IO::load_path_table (const std::string &file_name, const PNEGraph &graph,
                 {
                   _from_ID = _path->m_node_vec[j];
                   _to_ID = _path->m_node_vec[j + 1];
-                  _link_ID = graph->GetEI (_from_ID, _to_ID)
-                               .GetId (); // assume this is not a MultiGraph
+                  for (auto &&c : graph.connections (graph.get_node (_from_ID),
+                                                     Direction::Outgoing))
+                    {
+                      if (graph.get_id (graph.get_endpoints (c).second)
+                          == _to_ID)
+                        {
+                          _link_ID = graph.get_id (c);
+                          break;
+                        }
+                    };
                   _path->m_link_vec.push_back (_link_ID);
                 }
 
@@ -737,7 +930,7 @@ MNM_IO::load_path_table (const std::string &file_name, const PNEGraph &graph,
                   TInt _buffer_len = TInt (_buffer_words.size ());
                   // printf("Buffer len %d\n", _buffer_len());
                   _path->allocate_buffer (_buffer_len);
-                  for (int j = 0; j < _buffer_len (); ++j)
+                  for (int j = 0; j < _buffer_len; ++j)
                     {
                       _path->m_buffer[j]
                         = TFlt (std::stof (trim (_buffer_words[j])));
@@ -768,8 +961,9 @@ MNM_IO::load_path_table (const std::string &file_name, const PNEGraph &graph,
 }
 
 int
-MNM_IO::build_vms_facotory (const std::string &file_folder, PNEGraph graph,
-                            TInt num_vms, MNM_Vms_Factory *vms_factory,
+MNM_IO::build_vms_facotory (const std::string &file_folder,
+                            const macposts::Graph &graph, TInt num_vms,
+                            MNM_Vms_Factory *vms_factory,
                             const std::string &file_name)
 {
   /* find file */
@@ -827,7 +1021,7 @@ MNM_IO::read_int_float (const std::string &file_name,
       std::getline (_file, _line);
       std::cout << "Processing: " << _line << "\n";
       TInt num_record = TInt (std::stoi (trim (_line)));
-      printf ("Total is %d\n", num_record ());
+      printf ("Total is %d\n", num_record);
       for (int i = 0; i < num_record; ++i)
         {
           std::getline (_file, _line);
@@ -864,7 +1058,7 @@ MNM_IO::read_int (const std::string &file_name, std::vector<TInt> *reader)
       std::getline (_file, _line);
       std::cout << "Processing: " << _line << "\n";
       TInt num_record = TInt (std::stoi (trim (_line)));
-      printf ("Total is %d\n", num_record ());
+      printf ("Total is %d\n", num_record);
       for (int i = 0; i < num_record; ++i)
         {
           std::getline (_file, _line);
@@ -895,13 +1089,13 @@ MNM_IO::read_float (const std::string &file_name, std::vector<TFlt *> *reader)
       std::getline (_file, _line);
       std::cout << "Processing: " << _line << "\n";
       TInt num_record = TInt (std::stoi (trim (_line)));
-      printf ("Total is %d\n", num_record ());
+      printf ("Total is %d\n", num_record);
       for (int i = 0; i < num_record; ++i)
         {
           std::getline (_file, _line);
           _words = split (_line, ' ');
           _len = TInt (_words.size ());
-          _tmp_flt = (TFlt *) malloc (sizeof (TFlt) * _len);
+          _tmp_flt = new double[_len]();
           // std::cout << "Processing: " << _line << "\n";
           for (int j = 0; j < _len; ++j)
             {
@@ -1100,8 +1294,7 @@ MNM_IO::read_td_link_cost (const std::string &file_folder,
               _link_ID = TInt (std::stoi (trim (_words[0])));
               if (td_link_cost.find (_link_ID) == td_link_cost.end ())
                 {
-                  TFlt *_cost_vector_tmp
-                    = (TFlt *) malloc (sizeof (TFlt) * num_timestamps);
+                  double *_cost_vector_tmp = new double[num_timestamps]();
                   td_link_cost.insert (
                     std::pair<TInt, TFlt *> (_link_ID, _cost_vector_tmp));
                 }
@@ -1178,8 +1371,7 @@ MNM_IO::read_td_node_cost (
               if (td_node_cost.find (_in_link_ID)->second.find (_out_link_ID)
                   == td_node_cost.find (_in_link_ID)->second.end ())
                 {
-                  TFlt *_cost_vector_tmp
-                    = (TFlt *) malloc (sizeof (TFlt) * num_timestamps);
+                  double *_cost_vector_tmp = new double[num_timestamps]();
                   td_node_cost.find (_in_link_ID)
                     ->second.insert (
                       std::pair<TInt, TFlt *> (_out_link_ID, _cost_vector_tmp));

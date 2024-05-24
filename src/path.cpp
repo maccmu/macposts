@@ -23,7 +23,7 @@ MNM_Path::~MNM_Path ()
   m_link_vec.clear ();
   m_node_vec.clear ();
   if (m_buffer != nullptr)
-    free (m_buffer);
+    delete[] m_buffer;
   m_link_set.clear ();
 
   m_travel_time_vec.clear ();
@@ -183,9 +183,7 @@ MNM_Path::allocate_buffer (TInt length)
         "Error: MNM_Path::allocate_buffer, double allocation.");
     }
   m_buffer_length = length;
-  // malloc returns void*, static_cast<TFlt*> casts void* into TFlt*
-  // https://embeddedartistry.com/blog/2017/03/15/c-casting-or-oh-no-they-broke-malloc/
-  m_buffer = static_cast<TFlt *> (std::malloc (sizeof (TFlt) * length));
+  m_buffer = new double[length]();
   for (int i = 0; i < length; ++i)
     {
       m_buffer[i] = 0.0;
@@ -346,7 +344,8 @@ namespace MNM
 {
 MNM_Path *
 extract_path (TInt origin_node_ID, TInt dest_node_ID,
-              std::unordered_map<TInt, TInt> &output_map, PNEGraph &graph)
+              std::unordered_map<TInt, TInt> &output_map,
+              macposts::Graph &graph)
 {
   // output_map[node_ID][edge_ID], tdsp tree
   // printf("Entering extract_path\n");
@@ -365,12 +364,13 @@ extract_path (TInt origin_node_ID, TInt dest_node_ID,
         {
           printf ("Cannot extract path from origin node %d to destination node "
                   "%d\n",
-                  origin_node_ID (), dest_node_ID ());
+                  origin_node_ID, dest_node_ID);
           return nullptr;
         }
       _path->m_node_vec.push_back (_current_node_ID);
       _path->m_link_vec.push_back (_current_link_ID);
-      _current_node_ID = graph->GetEI (_current_link_ID).GetDstNId ();
+      _current_node_ID
+        = graph.get_id (graph.get_endpoints (_current_link_ID).second);
     }
   _path->m_node_vec.push_back (_current_node_ID);
   // printf("Exiting extract_path\n");
@@ -414,7 +414,7 @@ get_path_tt (TFlt start_time, MNM_Path *path,
 }
 
 Path_Table *
-build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
+build_shortest_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                         MNM_Link_Factory *link_factory)
 {
   // this build for each OD pair, no matter this OD pair exists in demand file
@@ -475,8 +475,8 @@ build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
           else
             {
               throw std::runtime_error (
-                "no path between origin " + std::to_string (_origin_node_ID ())
-                + " and destination " + std::to_string (_dest_node_ID ()));
+                "no path between origin " + std::to_string (_origin_node_ID)
+                + " and destination " + std::to_string (_dest_node_ID));
             }
         }
     }
@@ -484,7 +484,7 @@ build_shortest_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
 }
 
 Path_Table *
-build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
+build_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                MNM_Link_Factory *link_factory, TFlt min_path_length,
                size_t MaxIter, TFlt vot, TFlt Mid_Scale, TFlt Heavy_Scale,
                TInt buffer_length)
@@ -579,8 +579,8 @@ build_pathset (PNEGraph &graph, MNM_OD_Factory *od_factory,
           else
             {
               throw std::runtime_error (
-                "no path between origin " + std::to_string (_origin_node_ID ())
-                + " and destination " + std::to_string (_dest_node_ID ()));
+                "no path between origin " + std::to_string (_origin_node_ID)
+                + " and destination " + std::to_string (_dest_node_ID));
             }
         }
     }

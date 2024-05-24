@@ -15,9 +15,6 @@ MNM_Pre_Routing::MNM_Pre_Routing (Path_Table *path_table,
     TInt, std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>> ();
   m_path_table = path_table;
   TInt _dest_node_ID, _origin_node_ID;
-  TInt _oid;
-  TInt _did;
-  MNM_Pathset *_pset;
 
   // for (auto _ops = _path_table -> begin();_ops != _path_table ->end();
   // _ops++){ 	_oid = _ops -> first; 	for (auto _dps = _ops -> second ->
@@ -221,8 +218,7 @@ MNM_Pre_Routing::toString ()
 }
 
 int
-MNM_Pre_Routing::update_routing_table_MSA (MNM_PMC_Table pmc_table,
-                                           float lambda)
+MNM_Pre_Routing::update_routing_table_MSA (MNM_PMC_Table pmc_table, TFlt lambda)
 {
   // TODO, not only need to update the routing table, but also the demand of OD
   // when no departure time choice
@@ -233,7 +229,7 @@ MNM_Pre_Routing::update_routing_table_MSA (MNM_PMC_Table pmc_table,
 int
 MNM_Pre_Routing::update_routing_table_MSA1 (MNM_PMC_Table pmc_table_lower,
                                             MNM_PMC_Table pmc_table_upper,
-                                            float lambda)
+                                            TFlt lambda)
 {
   // TODO
   return 0;
@@ -242,7 +238,7 @@ MNM_Pre_Routing::update_routing_table_MSA1 (MNM_PMC_Table pmc_table_lower,
 int
 MNM_Pre_Routing::update_routing_table_MSA2 (MNM_PMC_Table pmc_table_lower,
                                             MNM_PMC_Table pmc_table_upper,
-                                            float lambda)
+                                            TFlt lambda)
 {
   // TODO
   return 0;
@@ -270,7 +266,7 @@ routing_table_multiply (
   std::unordered_map<TInt,
                      std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>>
     *routing_table,
-  float lambda)
+  TFlt lambda)
 {
   for (auto _rt_it = routing_table->begin (); _rt_it != routing_table->end ();
        _rt_it++)

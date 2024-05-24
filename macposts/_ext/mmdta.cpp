@@ -1,5 +1,6 @@
 // Multimodal DTA
 
+#include <cfloat>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <set>
@@ -7,8 +8,10 @@
 #include <vector>
 
 #include "utils.h"
-#include <Snap.h>
+#include <common.h>
 #include <multimodal.h>
+
+using macposts::graph::Direction;
 
 namespace py = pybind11;
 
@@ -844,7 +847,7 @@ Mmdta::check_input_files ()
 int
 Mmdta::install_cc ()
 {
-// // car and truck
+  // // car and truck
   // for (size_t i = 0; i < m_link_vec_driving.size (); ++i)
   //   {
   //     m_link_vec_driving[i]->install_cumulative_curve_multiclass ();
@@ -860,8 +863,10 @@ Mmdta::install_cc ()
   //     // passenger
   //     m_link_vec_bus[i]->install_cumulative_curve ();
   //     // bus
-  //     m_link_vec_bus[i]->m_from_busstop->install_cumulative_curve_multiclass ();
-  //     m_link_vec_bus[i]->m_to_busstop->install_cumulative_curve_multiclass ();
+  //     m_link_vec_bus[i]->m_from_busstop->install_cumulative_curve_multiclass
+  //     ();
+  //     m_link_vec_bus[i]->m_to_busstop->install_cumulative_curve_multiclass
+  //     ();
   //   }
   // // truck traversing bus links
   // for (size_t i = 0; i < m_link_vec_bus_driving.size (); ++i)
@@ -869,24 +874,31 @@ Mmdta::install_cc ()
   //     m_link_vec_bus_driving[i]->install_cumulative_curve_multiclass ();
   //   }
 
-  for (auto _link_it : m_mmdta -> m_link_factory -> m_link_map){
-    dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second) -> install_cumulative_curve_multiclass();
-  }
-  for (auto _link_it : m_mmdta -> m_transitlink_factory -> m_transit_link_map){
-    if (auto _bus_link = dynamic_cast<MNM_Bus_Link*>(_link_it.second)) {
-      // passenger
-      _bus_link->install_cumulative_curve ();
-      // bus
-      _bus_link->m_from_busstop->install_cumulative_curve_multiclass ();
-      _bus_link->m_to_busstop->install_cumulative_curve_multiclass ();
+  for (auto _link_it : m_mmdta->m_link_factory->m_link_map)
+    {
+      dynamic_cast<MNM_Dlink_Multiclass *> (_link_it.second)
+        ->install_cumulative_curve_multiclass ();
     }
-    else if (auto _walking_link = dynamic_cast<MNM_Walking_Link*>(_link_it.second)) {
-      _walking_link->install_cumulative_curve ();
+  for (auto _link_it : m_mmdta->m_transitlink_factory->m_transit_link_map)
+    {
+      if (auto _bus_link = dynamic_cast<MNM_Bus_Link *> (_link_it.second))
+        {
+          // passenger
+          _bus_link->install_cumulative_curve ();
+          // bus
+          _bus_link->m_from_busstop->install_cumulative_curve_multiclass ();
+          _bus_link->m_to_busstop->install_cumulative_curve_multiclass ();
+        }
+      else if (auto _walking_link
+               = dynamic_cast<MNM_Walking_Link *> (_link_it.second))
+        {
+          _walking_link->install_cumulative_curve ();
+        }
+      else
+        {
+          throw std::runtime_error ("Wrong transit link type");
+        }
     }
-    else {
-      throw std::runtime_error ("Wrong transit link type");
-    }
-  }
   return 0;
 }
 
@@ -983,7 +995,7 @@ Mmdta::run_mmdue (const std::string &folder, bool verbose)
       // fixed departure time choice
       gap = m_mmdue->compute_merit_function_fixed_departure_time_choice (mmdta);
       printf ("\n\n*******************GAP = %lf*******************\n\n",
-              (float) gap);
+              (TFlt) gap);
       gap_file << std::to_string (gap) + "\n";
 
       // search for the lowest disutility route and update path flow
@@ -1027,8 +1039,8 @@ Mmdta::run_mmdue (const std::string &folder, bool verbose)
                   "%d, Total bus: %d, Total car tt: %.2f hours, Total truck "
                   "tt: %.2f hours, Total bus tt: %.2f hours\n",
                   int (_count_car), int (_count_car_pnr), int (_count_truck),
-                  int (_count_bus), float (_tot_tt_car), float (_tot_tt_truck),
-                  float (_tot_tt_bus));
+                  int (_count_bus), TFlt (_tot_tt_car), TFlt (_tot_tt_truck),
+                  TFlt (_tot_tt_bus));
           _count_passenger = mmdta->m_passenger_factory->m_finished_passenger;
           _count_passenger_pnr
             = mmdta->m_passenger_factory->m_finished_passenger_pnr;
@@ -1037,7 +1049,7 @@ Mmdta::run_mmdue (const std::string &folder, bool verbose)
           printf ("Total passenger: %d, Total pnr passenger: %d, Total Total "
                   "tt: %.2f hours\n",
                   int (_count_passenger), int (_count_passenger_pnr),
-                  float (_tot_tt_passenger));
+                  TFlt (_tot_tt_passenger));
 
           // print to terminal
           // freopen("CON", "w", stdout);
@@ -1313,9 +1325,9 @@ Mmdta::get_links_overlapped_bus_driving ()
   for (size_t i = 0; i < _overlapped_driving_link_records.size (); ++i)
     {
       tmp_record = _overlapped_driving_link_records[i];
-      result_ptr[i * 3 + 0] = (double) tmp_record->bus_link_ID ();
-      result_ptr[i * 3 + 1] = (double) tmp_record->driving_link_ID ();
-      result_ptr[i * 3 + 2] = (double) tmp_record->length_proportion ();
+      result_ptr[i * 3 + 0] = (double) tmp_record->bus_link_ID;
+      result_ptr[i * 3 + 1] = (double) tmp_record->driving_link_ID;
+      result_ptr[i * 3 + 2] = (double) tmp_record->length_proportion;
     }
 
   for (size_t i = 0; i < _overlapped_driving_link_records.size (); ++i)
@@ -1373,7 +1385,7 @@ Mmdta::register_links_bus_driving (py::array_t<int> links_bus_driving)
 int
 Mmdta::get_cur_loading_interval ()
 {
-  return m_mmdta->m_current_loading_interval ();
+  return m_mmdta->m_current_loading_interval;
 }
 
 std::string
@@ -1441,7 +1453,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   _link = _link_it.second;
                   _link_m = dynamic_cast<MNM_Dlink_Multiclass *> (_link);
                   _str1 = std::to_string (int (_iter)) + " ";
-                  _str1 += std::to_string (_link->m_link_ID ()) + " ";
+                  _str1 += std::to_string (_link->m_link_ID) + " ";
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
                                get_link_inflow_car (_link_m, _iter,
@@ -1450,7 +1462,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
                                get_link_outflow_car (_link_m, _iter,
-                                                    _iter + cong_frequency))
+                                                     _iter + cong_frequency))
                            + " ";
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
@@ -1460,7 +1472,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   _str1 += std::to_string (
                              MNM_DTA_GRADIENT::
                                get_link_outflow_truck (_link_m, _iter,
-                                                      _iter + cong_frequency))
+                                                       _iter + cong_frequency))
                            + " ";
                   // _str1 +=
                   // std::to_string(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
@@ -1487,13 +1499,19 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                                m_mmdta->m_current_loading_interval)
                              * m_mmdta->m_unit_time)
                            + " ";
-                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_car ())
+                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_car
+                  // ())
                   //          + " ";
-                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_truck ())
+                  // _str1 += std::to_string
+                  // (_link_m->get_link_freeflow_tt_truck ())
                   //          + " ";
-                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_loading_car () * m_mmdta -> m_unit_time)
+                  _str1 += std::to_string (
+                             _link_m->get_link_freeflow_tt_loading_car ()
+                             * m_mmdta->m_unit_time)
                            + " ";
-                  _str1 += std::to_string (_link_m->get_link_freeflow_tt_loading_truck () * m_mmdta -> m_unit_time)
+                  _str1 += std::to_string (
+                             _link_m->get_link_freeflow_tt_loading_truck ()
+                             * m_mmdta->m_unit_time)
                            + " ";
                   // _str1 += std::to_string(_link_m ->
                   // m_length/(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
@@ -1512,7 +1530,8 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   //          + " "; // mph
                   _str1 += std::to_string (
                              _link_m->m_length
-                             / (_link_m->get_link_freeflow_tt_loading_car () * m_mmdta -> m_unit_time)
+                             / (_link_m->get_link_freeflow_tt_loading_car ()
+                                * m_mmdta->m_unit_time)
                              * 3600 / 1600)
                            + " "; // mph
                   _str1 += std::to_string (
@@ -1532,7 +1551,8 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   //          + " "; // mph
                   _str1 += std::to_string (
                              _link_m->m_length
-                             / (_link_m->get_link_freeflow_tt_loading_truck () * m_mmdta -> m_unit_time)
+                             / (_link_m->get_link_freeflow_tt_loading_truck ()
+                                * m_mmdta->m_unit_time)
                              * 3600 / 1600)
                            + " "; // mph
                   _str1 += std::to_string (
@@ -1552,7 +1572,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                 {
                   _transit_link = _link_it.second;
                   _str2 = std::to_string (int (_iter)) + " ";
-                  _str2 += std::to_string (_transit_link->m_link_ID ()) + " ";
+                  _str2 += std::to_string (_transit_link->m_link_ID) + " ";
                   _str2 += std::to_string (_transit_link->m_link_type) + " ";
                   _str2
                     += std::to_string (
@@ -1800,10 +1820,10 @@ Mmdta::get_travel_stats ()
   // bus tt: %.2f hours, Total passenger tt: %.2f hours\n\n",
   //         int(_count_car/m_mmdta -> m_flow_scalar), int(_count_truck/m_mmdta
   //         -> m_flow_scalar), int(_count_bus/m_mmdta -> m_flow_scalar),
-  //         int(_count_passenger), float(_tot_tt_car/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_truck/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_bus/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_passenger));
+  //         int(_count_passenger), TFlt(_tot_tt_car/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_truck/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_bus/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_passenger));
   // m_mmdta -> m_emission -> output();
 
   // add flow_scalar to passenger
@@ -1812,11 +1832,11 @@ Mmdta::get_travel_stats ()
   // bus tt: %.2f hours, Total passenger tt: %.2f hours\n\n",
   //         int(_count_car/m_mmdta -> m_flow_scalar), int(_count_truck/m_mmdta
   //         -> m_flow_scalar), int(_count_bus/m_mmdta -> m_flow_scalar),
-  //         int(_count_passenger/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_car/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_truck/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_bus/m_mmdta -> m_flow_scalar),
-  //         float(_tot_tt_passenger/m_mmdta -> m_flow_scalar));
+  //         TFlt(_count_passenger/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_car/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_truck/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_bus/m_mmdta -> m_flow_scalar),
+  //         TFlt(_tot_tt_passenger/m_mmdta -> m_flow_scalar));
   // m_mmdta -> m_emission -> output();
 
   // for all released vehicles and passengers
@@ -2405,7 +2425,7 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
       return result;
     }
 
-  PNEGraph reversed_graph = MNM_Ults::reverse_graph (m_mmdta->m_graph);
+  macposts::Graph reversed_graph = MNM_Ults::reverse_graph (m_mmdta->m_graph);
   std::unordered_map<TInt, TFlt> _cost_map = std::unordered_map<TInt, TFlt> ();
   for (auto _link_it : m_mmdta->m_link_factory->m_link_map)
     {
@@ -2433,12 +2453,10 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
       if (!_link_existing_driving[i])
         {
           // generate new path including this link
-          _from_node_ID
-            = m_mmdta->m_graph->GetEI (m_link_vec_driving[i]->m_link_ID)
-                .GetSrcNId ();
-          _to_node_ID
-            = m_mmdta->m_graph->GetEI (m_link_vec_driving[i]->m_link_ID)
-                .GetDstNId ();
+          auto &&sd
+            = m_mmdta->m_graph.get_endpoints (m_link_vec_driving[i]->m_link_ID);
+          _from_node_ID = m_mmdta->m_graph.get_id (sd.first);
+          _to_node_ID = m_mmdta->m_graph.get_id (sd.second);
 
           // path from origin to from_node_ID
           if (!_shortest_path_tree.empty ())
@@ -2631,7 +2649,6 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
   _cost_map.clear ();
   _shortest_path_tree.clear ();
   _shortest_path_tree_reversed.clear ();
-  reversed_graph.Clr ();
   pair_ptrs_1.clear ();
   pair_ptrs_2.clear ();
   return result;
@@ -2676,7 +2693,7 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
       return result;
     }
 
-  PNEGraph reversed_graph
+  macposts::Graph reversed_graph
     = MNM_Ults::reverse_graph (m_mmdta->m_bus_transit_graph);
   std::unordered_map<TInt, TFlt> _cost_map_driving
     = std::unordered_map<TInt, TFlt> ();
@@ -2719,20 +2736,19 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           _is_pnr = false;
 
           // generate new path including this link
-          _from_node_ID
-            = m_mmdta->m_bus_transit_graph->GetEI (m_link_vec_bus[i]->m_link_ID)
-                .GetSrcNId ();
-          _to_node_ID
-            = m_mmdta->m_bus_transit_graph->GetEI (m_link_vec_bus[i]->m_link_ID)
-                .GetDstNId ();
+          auto &&sd
+            = m_mmdta->m_graph.get_endpoints (m_link_vec_bus[i]->m_link_ID);
+          _from_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.first);
+          _to_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.second);
 
           // path from origin to from_node_ID
           if (!_shortest_path_tree.empty ())
             {
               _shortest_path_tree.clear ();
             }
-          if (m_mmdta->m_bus_transit_graph->GetNI (_from_node_ID).GetInDeg ()
-              == 0)
+          if (m_mmdta->m_bus_transit_graph
+                .connections (_from_node_ID, Direction::Incoming)
+                .empty ())
             {
               _path_1 = new MNM_Path ();
               _path_1->m_node_vec.push_back (_from_node_ID);
@@ -2750,8 +2766,9 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               _shortest_path_tree_reversed.clear ();
             }
-          if (m_mmdta->m_bus_transit_graph->GetNI (_from_node_ID).GetOutDeg ()
-              == 0)
+          if (m_mmdta->m_bus_transit_graph
+                .connections (_from_node_ID, Direction::Outgoing)
+                .empty ())
             {
               _path_2 = new MNM_Path ();
               _path_2->m_node_vec.push_back (_to_node_ID);
@@ -3054,20 +3071,19 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           _is_pnr = false;
 
           // generate new path including this link
-          _from_node_ID = m_mmdta->m_bus_transit_graph
-                            ->GetEI (m_link_vec_walking[i]->m_link_ID)
-                            .GetSrcNId ();
-          _to_node_ID = m_mmdta->m_bus_transit_graph
-                          ->GetEI (m_link_vec_walking[i]->m_link_ID)
-                          .GetDstNId ();
+          auto &&sd
+            = m_mmdta->m_graph.get_endpoints (m_link_vec_walking[i]->m_link_ID);
+          _from_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.first);
+          _to_node_ID = m_mmdta->m_bus_transit_graph.get_id (sd.second);
 
           // path from origin to from_node_ID
           if (!_shortest_path_tree.empty ())
             {
               _shortest_path_tree.clear ();
             }
-          if (m_mmdta->m_bus_transit_graph->GetNI (_from_node_ID).GetInDeg ()
-              == 0)
+          if (m_mmdta->m_bus_transit_graph
+                .connections (_from_node_ID, Direction::Incoming)
+                .empty ())
             {
               _path_1 = new MNM_Path ();
               _path_1->m_node_vec.push_back (_from_node_ID);
@@ -3085,8 +3101,9 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             {
               _shortest_path_tree_reversed.clear ();
             }
-          if (m_mmdta->m_bus_transit_graph->GetNI (_from_node_ID).GetOutDeg ()
-              == 0)
+          if (m_mmdta->m_bus_transit_graph
+                .connections (_from_node_ID, Direction::Outgoing)
+                .empty ())
             {
               _path_2 = new MNM_Path ();
               _path_2->m_node_vec.push_back (_to_node_ID);
@@ -3400,7 +3417,6 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
   _cost_map.clear ();
   _shortest_path_tree.clear ();
   _shortest_path_tree_reversed.clear ();
-  reversed_graph.Clr ();
   pair_ptrs_1.clear ();
   pair_ptrs_2.clear ();
   return result;
@@ -3469,10 +3485,12 @@ Mmdta::link_seq_to_node_seq_driving (py::array_t<int> link_IDs)
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
 
-  result_ptr[0] = m_mmdta->m_graph->GetEI (links_ptr[0]).GetSrcNId ();
+  result_ptr[0] = m_mmdta->m_graph.get_id (
+    m_mmdta->m_graph.get_endpoints (links_ptr[0]).first);
   for (int i = 0; i < m; ++i)
     {
-      result_ptr[i + 1] = m_mmdta->m_graph->GetEI (links_ptr[i]).GetDstNId ();
+      result_ptr[i + 1] = m_mmdta->m_graph.get_id (
+        m_mmdta->m_graph.get_endpoints (links_ptr[i]).second);
     }
 
   return result;
@@ -3496,12 +3514,12 @@ Mmdta::link_seq_to_node_seq_bustransit (py::array_t<int> link_IDs)
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
 
-  result_ptr[0]
-    = m_mmdta->m_bus_transit_graph->GetEI (links_ptr[0]).GetSrcNId ();
+  result_ptr[0] = m_mmdta->m_bus_transit_graph.get_id (
+    m_mmdta->m_bus_transit_graph.get_endpoints (links_ptr[0]).first);
   for (int i = 0; i < m; ++i)
     {
-      result_ptr[i + 1]
-        = m_mmdta->m_bus_transit_graph->GetEI (links_ptr[i]).GetDstNId ();
+      result_ptr[i + 1] = m_mmdta->m_bus_transit_graph.get_id (
+        m_mmdta->m_bus_transit_graph.get_endpoints (links_ptr[i]).second);
     }
 
   return result;
@@ -3533,7 +3551,17 @@ Mmdta::node_seq_to_link_seq_driving (py::array_t<int> node_IDs)
 
   for (int i = 0; i < m - 1; ++i)
     {
-      result_ptr[i] = m_mmdta->m_graph->GetEId (nodes_ptr[i], nodes_ptr[i + 1]);
+      for (const auto &l :
+           m_mmdta->m_graph.connections (nodes_ptr[i], Direction::Outgoing))
+        {
+          if (m_mmdta->m_graph.get_id (
+                m_mmdta->m_graph.get_endpoints (l).second)
+              == nodes_ptr[i + 1])
+            {
+              result_ptr[i] = m_mmdta->m_graph.get_id (l);
+              break;
+            }
+        }
       if (result_ptr[i] < 0)
         {
           throw std::runtime_error (
@@ -3571,8 +3599,18 @@ Mmdta::node_seq_to_link_seq_bustransit (py::array_t<int> node_IDs)
 
   for (int i = 0; i < m - 1; ++i)
     {
-      result_ptr[i]
-        = m_mmdta->m_bus_transit_graph->GetEId (nodes_ptr[i], nodes_ptr[i + 1]);
+      for (const auto &l :
+           m_mmdta->m_bus_transit_graph.connections (nodes_ptr[i],
+                                                     Direction::Outgoing))
+        {
+          if (m_mmdta->m_bus_transit_graph.get_id (
+                m_mmdta->m_bus_transit_graph.get_endpoints (l).second)
+              == nodes_ptr[i + 1])
+            {
+              result_ptr[i] = m_mmdta->m_bus_transit_graph.get_id (l);
+              break;
+            }
+        }
       if (result_ptr[i] < 0)
         {
           throw std::runtime_error (
@@ -3609,13 +3647,14 @@ Mmdta::get_passenger_path_cost_driving (py::array_t<int> link_IDs,
   int *links_ptr = (int *) links_buf.ptr;
 
   auto *_path = new MNM_Path ();
+  auto &&graph = m_mmdta->m_graph;
   _path->m_node_vec.push_back (
-    m_mmdta->m_graph->GetEI (links_ptr[0]).GetSrcNId ());
+    graph.get_id (graph.get_endpoints (links_ptr[0]).first));
   for (int i = 0; i < m; ++i)
     {
       _path->m_link_vec.push_back (links_ptr[i]);
       _path->m_node_vec.push_back (
-        m_mmdta->m_graph->GetEI (links_ptr[i]).GetDstNId ());
+        graph.get_id (graph.get_endpoints (links_ptr[i]).second));
     }
   TInt _dest_node_ID = _path->m_node_vec.back ();
   auto *_dest = dynamic_cast<MNM_Destination_Multimodal *> (
@@ -3648,14 +3687,13 @@ Mmdta::get_passenger_path_cost_driving (py::array_t<int> link_IDs,
                                       m_mmdue->m_link_tt_map,
                                       m_mmdue->m_transitlink_cost_map);
       // _tt = _p_path -> get_travel_time(TFlt(start_ptr[t]), m_mmdta);
-      result_ptr[t] = _tt () * m_mmdta->m_unit_time;
+      result_ptr[t] = _tt * m_mmdta->m_unit_time;
       result_ptr[l + t]
         = _p_path->get_travel_time_truck (TFlt (start_ptr[t]), m_mmdta,
-                                          m_mmdue->m_link_tt_map_truck) ()
+                                          m_mmdue->m_link_tt_map_truck)
           * m_mmdta->m_unit_time;
       result_ptr[2 * l + t]
-        = _p_path->get_travel_cost_with_tt (TFlt (start_ptr[t]), _tt,
-                                            m_mmdta) ();
+        = _p_path->get_travel_cost_with_tt (TFlt (start_ptr[t]), _tt, m_mmdta);
     }
 
   delete _p_path;
@@ -3687,13 +3725,14 @@ Mmdta::get_passenger_path_cost_bus (py::array_t<int> link_IDs,
   int *links_ptr = (int *) links_buf.ptr;
 
   auto *_path = new MNM_Path ();
+  auto &&graph = m_mmdta->m_bus_transit_graph;
   _path->m_node_vec.push_back (
-    m_mmdta->m_bus_transit_graph->GetEI (links_ptr[0]).GetSrcNId ());
+    graph.get_id (graph.get_endpoints (links_ptr[0]).first));
   for (int i = 0; i < m; ++i)
     {
       _path->m_link_vec.push_back (links_ptr[i]);
       _path->m_node_vec.push_back (
-        m_mmdta->m_bus_transit_graph->GetEI (links_ptr[i]).GetDstNId ());
+        graph.get_id (graph.get_endpoints (links_ptr[i]).second));
     }
 
   auto *_p_path
@@ -3723,9 +3762,9 @@ Mmdta::get_passenger_path_cost_bus (py::array_t<int> link_IDs,
                                       m_mmdue->m_link_tt_map,
                                       m_mmdue->m_transitlink_tt_map);
       // _tt = _p_path -> get_travel_time(TFlt(start_ptr[t]), m_mmdta);
-      result_ptr[t] = _tt () * m_mmdta->m_unit_time;
-      result_ptr[l + t] = _p_path->get_travel_cost_with_tt (TFlt (start_ptr[t]),
-                                                            _tt, m_mmdta) ();
+      result_ptr[t] = _tt * m_mmdta->m_unit_time;
+      result_ptr[l + t]
+        = _p_path->get_travel_cost_with_tt (TFlt (start_ptr[t]), _tt, m_mmdta);
     }
 
   delete _p_path;
@@ -3768,14 +3807,17 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   int *links_ptr_bustransit = (int *) links_buf_bustransit.ptr;
 
   auto *_path_driving = new MNM_Path ();
-  _path_driving->m_node_vec.push_back (
-    m_mmdta->m_graph->GetEI (links_ptr_driving[0]).GetSrcNId ());
-  for (int i = 0; i < m_driving; ++i)
-    {
-      _path_driving->m_link_vec.push_back (links_ptr_driving[i]);
-      _path_driving->m_node_vec.push_back (
-        m_mmdta->m_graph->GetEI (links_ptr_driving[i]).GetDstNId ());
-    }
+  {
+    auto &&graph = m_mmdta->m_graph;
+    _path_driving->m_node_vec.push_back (
+      graph.get_id (graph.get_endpoints (links_ptr_driving[0]).first));
+    for (int i = 0; i < m_driving; ++i)
+      {
+        _path_driving->m_link_vec.push_back (links_ptr_driving[i]);
+        _path_driving->m_node_vec.push_back (
+          graph.get_id (graph.get_endpoints (links_ptr_driving[i]).second));
+      }
+  }
   TInt _mid_dest_node_ID = _path_driving->m_node_vec.back ();
   auto *_mid_dest = dynamic_cast<MNM_Destination_Multimodal *> (
     ((MNM_DMDND *) m_mmdta->m_node_factory->get_node (_mid_dest_node_ID))
@@ -3783,16 +3825,17 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
   Assert (_mid_dest->m_parking_lot != nullptr);
 
   auto *_path_bustransit = new MNM_Path ();
-  _path_bustransit->m_node_vec.push_back (
-    m_mmdta->m_bus_transit_graph->GetEI (links_ptr_bustransit[0]).GetSrcNId ());
-  for (int i = 0; i < m_bustransit; ++i)
-    {
-      _path_bustransit->m_link_vec.push_back (links_ptr_bustransit[i]);
-      _path_bustransit->m_node_vec.push_back (
-        m_mmdta->m_bus_transit_graph->GetEI (links_ptr_bustransit[i])
-          .GetDstNId ());
-    }
-
+  {
+    auto &&graph = m_mmdta->m_bus_transit_graph;
+    _path_bustransit->m_node_vec.push_back (
+      graph.get_id (graph.get_endpoints (links_ptr_bustransit[0]).first));
+    for (int i = 0; i < m_bustransit; ++i)
+      {
+        _path_bustransit->m_link_vec.push_back (links_ptr_bustransit[i]);
+        _path_bustransit->m_node_vec.push_back (
+          graph.get_id (graph.get_endpoints (links_ptr_bustransit[i]).second));
+      }
+  }
   auto *_path_pnr
     = new MNM_PnR_Path (0, _mid_dest->m_parking_lot->m_ID, _mid_dest_node_ID,
                         _path_driving, _path_bustransit);
@@ -3827,9 +3870,9 @@ Mmdta::get_passenger_path_cost_pnr (py::array_t<int> link_IDs_driving,
                                       m_mmdue->m_link_tt_map,
                                       m_mmdue->m_transitlink_tt_map);
       // _tt = _p_path -> get_travel_time(TFlt(start_ptr[t]), m_mmdta);
-      result_ptr[t] = _tt () * m_mmdta->m_unit_time;
-      result_ptr[l + t] = _p_path->get_travel_cost_with_tt (TFlt (start_ptr[t]),
-                                                            _tt, m_mmdta) ();
+      result_ptr[t] = _tt * m_mmdta->m_unit_time;
+      result_ptr[l + t]
+        = _p_path->get_travel_cost_with_tt (TFlt (start_ptr[t]), _tt, m_mmdta);
     }
 
   delete _p_path;
@@ -3883,11 +3926,10 @@ Mmdta::get_registered_path_tt_truck (py::array_t<double> start_intervals)
           // double _tmp = dynamic_cast<MNM_Passenger_Path_Driving*>(_p_path) ->
           // get_travel_time_truck(TFlt(start_ptr[t]), m_mmdta)() * m_mmdta ->
           // m_unit_time;
-          double _tmp
-            = dynamic_cast<MNM_Passenger_Path_Driving *> (_p_path)
-                ->get_travel_time_truck (TFlt (start_ptr[t]), m_mmdta,
-                                         m_mmdue->m_link_tt_map_truck) ()
-              * m_mmdta->m_unit_time;
+          double _tmp = dynamic_cast<MNM_Passenger_Path_Driving *> (_p_path)
+                          ->get_travel_time_truck (TFlt (start_ptr[t]), m_mmdta,
+                                                   m_mmdue->m_link_tt_map_truck)
+                        * m_mmdta->m_unit_time;
           result_ptr[i * l + t] = _tmp;
         }
     }
@@ -3923,7 +3965,7 @@ Mmdta::get_registered_path_distance_driving ()
             "passenger path");
         }
 
-      double _tmp = _p_path->get_length (m_mmdta) () / 1600; // miles
+      double _tmp = _p_path->get_length (m_mmdta) / 1600; // miles
       result_ptr[i] = _tmp;
     }
 
@@ -3958,7 +4000,7 @@ Mmdta::get_registered_path_distance_bustransit ()
             "Error, Mmdta::get_registered_path_distance_bustransit, "
             "invalid passenger path");
         }
-      double _tmp = _p_path->get_length (m_mmdta) () / 1600; // miles
+      double _tmp = _p_path->get_length (m_mmdta) / 1600; // miles
       result_ptr[i] = _tmp;
     }
 
@@ -3992,7 +4034,7 @@ Mmdta::get_registered_path_distance_pnr ()
             "Error, Mmdta::get_registered_path_tt_pnr, invalid passenger "
             "path");
         }
-      double _tmp = _p_path->get_length (m_mmdta) () / 1600; // miles
+      double _tmp = _p_path->get_length (m_mmdta) / 1600; // miles
       result_ptr[i] = _tmp;
     }
 
@@ -4044,11 +4086,10 @@ Mmdta::get_registered_path_tt_driving (py::array_t<double> start_intervals)
                 "Error, Mmdta::get_registered_path_tt_driving, invalid "
                 "passenger path");
             }
-          double _tmp
-            = _p_path->get_travel_time (TFlt (start_ptr[t]), m_mmdta,
-                                        m_mmdue->m_link_tt_map,
-                                        m_mmdue->m_transitlink_tt_map) ()
-              * m_mmdta->m_unit_time;
+          double _tmp = _p_path->get_travel_time (TFlt (start_ptr[t]), m_mmdta,
+                                                  m_mmdue->m_link_tt_map,
+                                                  m_mmdue->m_transitlink_tt_map)
+                        * m_mmdta->m_unit_time;
           // double _tmp = _p_path ->get_travel_time(TFlt(start_ptr[t]),
           // m_mmdta)() * m_mmdta -> m_unit_time;
           result_ptr[i * l + t] = _tmp;
@@ -4102,11 +4143,10 @@ Mmdta::get_registered_path_tt_bustransit (py::array_t<double> start_intervals)
                 "Error, Mmdta::get_registered_path_tt_bustransit, invalid "
                 "passenger path");
             }
-          double _tmp
-            = _p_path->get_travel_time (TFlt (start_ptr[t]), m_mmdta,
-                                        m_mmdue->m_link_tt_map,
-                                        m_mmdue->m_transitlink_tt_map) ()
-              * m_mmdta->m_unit_time;
+          double _tmp = _p_path->get_travel_time (TFlt (start_ptr[t]), m_mmdta,
+                                                  m_mmdue->m_link_tt_map,
+                                                  m_mmdue->m_transitlink_tt_map)
+                        * m_mmdta->m_unit_time;
           // double _tmp = _p_path ->get_travel_time(TFlt(start_ptr[t]),
           // m_mmdta)() * m_mmdta -> m_unit_time;
           result_ptr[i * l + t] = _tmp;
@@ -4157,11 +4197,10 @@ Mmdta::get_registered_path_tt_pnr (py::array_t<double> start_intervals)
                 "Error, Mmdta::get_registered_path_tt_pnr, invalid "
                 "passenger path");
             }
-          double _tmp
-            = _p_path->get_travel_time (TFlt (start_ptr[t]), m_mmdta,
-                                        m_mmdue->m_link_tt_map,
-                                        m_mmdue->m_transitlink_tt_map) ()
-              * m_mmdta->m_unit_time;
+          double _tmp = _p_path->get_travel_time (TFlt (start_ptr[t]), m_mmdta,
+                                                  m_mmdue->m_link_tt_map,
+                                                  m_mmdue->m_transitlink_tt_map)
+                        * m_mmdta->m_unit_time;
           // double _tmp = _p_path ->get_travel_time(TFlt(start_ptr[t]),
           // m_mmdta)() * m_mmdta -> m_unit_time;
           result_ptr[i * l + t] = _tmp;
@@ -4220,7 +4259,7 @@ Mmdta::get_registered_path_cost_driving (py::array_t<double> start_intervals)
           double _tmp
             = _p_path->get_travel_cost (TFlt (start_ptr[t]), m_mmdta,
                                         m_mmdue->m_link_tt_map,
-                                        m_mmdue->m_transitlink_tt_map) ();
+                                        m_mmdue->m_transitlink_tt_map);
           result_ptr[i * l + t] = _tmp;
         }
     }
@@ -4277,7 +4316,7 @@ Mmdta::get_registered_path_cost_bustransit (py::array_t<double> start_intervals)
           double _tmp
             = _p_path->get_travel_cost (TFlt (start_ptr[t]), m_mmdta,
                                         m_mmdue->m_link_tt_map,
-                                        m_mmdue->m_transitlink_tt_map) ();
+                                        m_mmdue->m_transitlink_tt_map);
           result_ptr[i * l + t] = _tmp;
         }
     }
@@ -4332,7 +4371,7 @@ Mmdta::get_registered_path_cost_pnr (py::array_t<double> start_intervals)
           double _tmp
             = _p_path->get_travel_cost (TFlt (start_ptr[t]), m_mmdta,
                                         m_mmdue->m_link_tt_map,
-                                        m_mmdue->m_transitlink_tt_map) ();
+                                        m_mmdue->m_transitlink_tt_map);
           result_ptr[i * l + t] = _tmp;
         }
     }
@@ -4376,7 +4415,7 @@ Mmdta::get_path_tt_car (py::array_t<int> link_IDs,
                 = MNM_DTA_GRADIENT::
                     get_travel_time_car (_mclink, TFlt (start_ptr[t] + 1),
                                          m_mmdta->m_unit_time,
-                                         m_mmdta->m_current_loading_interval) ()
+                                         m_mmdta->m_current_loading_interval)
                   * m_mmdta->m_unit_time;
               if (_tmp * m_mmdta->m_unit_time
                   > TT_UPPER_BOUND * (_mclink->m_length / _mclink->m_ffs_car))
@@ -4436,8 +4475,7 @@ Mmdta::get_path_tt_truck (py::array_t<int> link_IDs,
                 = MNM_DTA_GRADIENT::
                     get_travel_time_truck (_mclink, TFlt (start_ptr[t] + 1),
                                            m_mmdta->m_unit_time,
-                                           m_mmdta
-                                             ->m_current_loading_interval) ()
+                                           m_mmdta->m_current_loading_interval)
                   * m_mmdta->m_unit_time;
               if (_tmp * m_mmdta->m_unit_time
                   > TT_UPPER_BOUND * (_mclink->m_length / _mclink->m_ffs_truck))
@@ -4503,8 +4541,9 @@ Mmdta::update_tdsp_tree ()
       Assert (m_tdsp_tree_map_driving.find (_dest_node_ID)->second != nullptr);
 
       // for bus transit
-      if (m_mmdta->m_bus_transit_graph->IsNode (_dest_node_ID))
+      try
         {
+          std::ignore = m_mmdta->m_bus_transit_graph.get_node (_dest_node_ID);
           _tdsp_tree
             = new MNM_TDSP_Tree (_dest_node_ID, m_mmdta->m_bus_transit_graph,
                                  m_mmdue->m_total_loading_inter);
@@ -4515,6 +4554,9 @@ Mmdta::update_tdsp_tree ()
             std::pair<TInt, MNM_TDSP_Tree *> (_dest_node_ID, _tdsp_tree));
           _tdsp_tree = nullptr;
           Assert (m_tdsp_tree_map_bus.find (_dest_node_ID)->second != nullptr);
+        }
+      catch (const std::out_of_range &)
+        {
         }
     }
   return 0;
@@ -5009,7 +5051,7 @@ Mmdta::get_car_link_tt (py::array_t<double> start_intervals, bool return_inf)
           double _tmp = MNM_DTA_GRADIENT::
             get_travel_time_car (m_link_vec_driving[i], TFlt (start_ptr[t] + 1),
                                  m_mmdta->m_unit_time,
-                                 m_mmdta->m_current_loading_interval) ();
+                                 m_mmdta->m_current_loading_interval);
           if (_tmp * m_mmdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec_driving[i]->m_length
@@ -5085,7 +5127,7 @@ Mmdta::get_car_link_tt_robust (py::array_t<double> start_intervals,
                                         TFlt (end_ptr[t] + 1),
                                         m_mmdta->m_unit_time,
                                         m_mmdta->m_current_loading_interval,
-                                        num_trials) ();
+                                        num_trials);
           if (_tmp * m_mmdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec_driving[i]->m_length
@@ -5138,7 +5180,7 @@ Mmdta::get_truck_link_tt (py::array_t<double> start_intervals, bool return_inf)
             get_travel_time_truck (m_link_vec_driving[i],
                                    TFlt (start_ptr[t] + 1),
                                    m_mmdta->m_unit_time,
-                                   m_mmdta->m_current_loading_interval) ();
+                                   m_mmdta->m_current_loading_interval);
           if (_tmp * m_mmdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec_driving[i]->m_length
@@ -5214,7 +5256,7 @@ Mmdta::get_truck_link_tt_robust (py::array_t<double> start_intervals,
                                           TFlt (end_ptr[t] + 1),
                                           m_mmdta->m_unit_time,
                                           m_mmdta->m_current_loading_interval,
-                                          num_trials) ();
+                                          num_trials);
           if (_tmp * m_mmdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec_driving[i]->m_length
@@ -5269,7 +5311,7 @@ Mmdta::get_bus_link_tt (py::array_t<double> start_intervals, bool return_inf,
                                  m_mmdta->m_unit_time,
                                  m_mmdta->m_current_loading_interval,
                                  m_mmdta->m_explicit_bus, return_inf,
-                                 return_bus_time) ();
+                                 return_bus_time);
           // if (std::isinf(_tmp)) {
           //     result_ptr[i * l + t] =
           //     std::numeric_limits<double>::quiet_NaN();
@@ -5339,7 +5381,7 @@ Mmdta::get_bus_link_tt_robust (py::array_t<double> start_intervals,
                                         m_mmdta->m_unit_time,
                                         m_mmdta->m_current_loading_interval,
                                         num_trials, m_mmdta->m_explicit_bus,
-                                        return_inf, return_bus_time) ();
+                                        return_inf, return_bus_time);
           // if (std::isinf(_tmp)) {
           //     result_ptr[i * l + t] =
           //     std::numeric_limits<double>::quiet_NaN();
@@ -5385,7 +5427,7 @@ Mmdta::get_passenger_walking_link_tt (py::array_t<double> start_intervals)
             get_travel_time_walking (m_link_vec_walking[i],
                                      TFlt (start_ptr[t] + 1),
                                      m_mmdta->m_unit_time,
-                                     m_mmdta->m_current_loading_interval) ();
+                                     m_mmdta->m_current_loading_interval);
           result_ptr[i * l + t] = _tmp * m_mmdta->m_unit_time; // seconds
         }
     }
@@ -5449,7 +5491,7 @@ Mmdta::get_passenger_walking_link_tt_robust (
                                             TFlt (end_ptr[t] + 1),
                                             m_mmdta->m_unit_time,
                                             m_mmdta->m_current_loading_interval,
-                                            num_trials) ();
+                                            num_trials);
           result_ptr[i * l + t] = _tmp * m_mmdta->m_unit_time; // seconds
         }
     }
@@ -5493,7 +5535,7 @@ Mmdta::get_bus_driving_link_tt_car (py::array_t<double> start_intervals,
           double _tmp = MNM_DTA_GRADIENT::
             get_travel_time_car (m_link_vec_bus_driving[i],
                                  TFlt (start_ptr[t] + 1), m_mmdta->m_unit_time,
-                                 m_mmdta->m_current_loading_interval) ();
+                                 m_mmdta->m_current_loading_interval);
           if (_tmp * m_mmdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec_bus_driving[i]->m_length
@@ -5580,7 +5622,7 @@ Mmdta::get_bus_driving_link_tt_car_robust (py::array_t<double> start_intervals,
                                         TFlt (end_ptr[t] + 1),
                                         m_mmdta->m_unit_time,
                                         m_mmdta->m_current_loading_interval,
-                                        num_trials) ();
+                                        num_trials);
           if (_tmp * m_mmdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec_bus_driving[i]->m_length
@@ -5642,7 +5684,7 @@ Mmdta::get_bus_driving_link_tt_truck (py::array_t<double> start_intervals,
             get_travel_time_truck (m_link_vec_bus_driving[i],
                                    TFlt (start_ptr[t] + 1),
                                    m_mmdta->m_unit_time,
-                                   m_mmdta->m_current_loading_interval) ();
+                                   m_mmdta->m_current_loading_interval);
           if (_tmp * m_mmdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec_bus_driving[i]->m_length
@@ -5728,7 +5770,7 @@ Mmdta::get_bus_driving_link_tt_truck_robust (
                                           TFlt (end_ptr[t] + 1),
                                           m_mmdta->m_unit_time,
                                           m_mmdta->m_current_loading_interval,
-                                          num_trials) ();
+                                          num_trials);
           if (_tmp * m_mmdta->m_unit_time
               > TT_UPPER_BOUND
                   * (m_link_vec_bus_driving[i]->m_length
@@ -5787,7 +5829,7 @@ Mmdta::get_car_link_speed (py::array_t<double> start_intervals)
                 get_travel_time_car (m_link_vec_driving[i],
                                      TFlt (start_ptr[t] + 1),
                                      m_mmdta->m_unit_time,
-                                     m_mmdta->m_current_loading_interval) ()
+                                     m_mmdta->m_current_loading_interval)
               * m_mmdta->m_unit_time; // seconds
           result_ptr[i * l + t] = (m_link_vec_driving[i]->m_length) / _tt * 3600
                                   / 1600; // mile per hour
@@ -5829,7 +5871,7 @@ Mmdta::get_truck_link_speed (py::array_t<double> start_intervals)
                 get_travel_time_truck (m_link_vec_driving[i],
                                        TFlt (start_ptr[t] + 1),
                                        m_mmdta->m_unit_time,
-                                       m_mmdta->m_current_loading_interval) ()
+                                       m_mmdta->m_current_loading_interval)
               * m_mmdta->m_unit_time; // seconds
           result_ptr[i * l + t] = (m_link_vec_driving[i]->m_length) / _tt * 3600
                                   / 1600; // mile per hour
@@ -5873,7 +5915,7 @@ Mmdta::get_bus_link_speed (py::array_t<double> start_intervals, bool return_inf,
                                      m_mmdta->m_unit_time,
                                      m_mmdta->m_current_loading_interval,
                                      m_mmdta->m_explicit_bus, return_inf,
-                                     return_bus_time) ()
+                                     return_bus_time)
               * m_mmdta->m_unit_time; // seconds
           if (std::isinf (_tt))
             {
@@ -5937,7 +5979,7 @@ Mmdta::get_link_car_inflow (py::array_t<int> start_intervals,
           result_ptr[i * l + t]
             = MNM_DTA_GRADIENT::get_link_inflow_car (m_link_vec_driving[i],
                                                      TFlt (start_ptr[t]),
-                                                     TFlt (end_ptr[t])) ();
+                                                     TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -5992,7 +6034,7 @@ Mmdta::get_link_truck_inflow (py::array_t<int> start_intervals,
           result_ptr[i * l + t]
             = MNM_DTA_GRADIENT::get_link_inflow_truck (m_link_vec_driving[i],
                                                        TFlt (start_ptr[t]),
-                                                       TFlt (end_ptr[t])) ();
+                                                       TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -6047,7 +6089,7 @@ Mmdta::get_link_bus_inflow (py::array_t<int> start_intervals,
           result_ptr[i * l + t]
             = MNM_DTA_GRADIENT::get_link_inflow_bus (m_link_vec_bus[i],
                                                      TFlt (start_ptr[t]),
-                                                     TFlt (end_ptr[t])) ();
+                                                     TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -6103,7 +6145,7 @@ Mmdta::get_busstop_bus_inflow (py::array_t<int> start_intervals,
             = MNM_DTA_GRADIENT::get_busstop_inflow_bus (m_link_vec_bus[i]
                                                           ->m_to_busstop,
                                                         TFlt (start_ptr[t]),
-                                                        TFlt (end_ptr[t])) ();
+                                                        TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -6160,8 +6202,7 @@ Mmdta::get_link_bus_passenger_inflow (py::array_t<int> start_intervals,
           result_ptr[i * l + t]
             = MNM_DTA_GRADIENT::get_link_inflow_passenger (m_link_vec_bus[i],
                                                            TFlt (start_ptr[t]),
-                                                           TFlt (
-                                                             end_ptr[t])) ();
+                                                           TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -6217,8 +6258,7 @@ Mmdta::get_link_walking_passenger_inflow (py::array_t<int> start_intervals,
         {
           result_ptr[i * l + t] = MNM_DTA_GRADIENT::
             get_link_inflow_passenger (m_link_vec_walking[i],
-                                       TFlt (start_ptr[t]),
-                                       TFlt (end_ptr[t])) ();
+                                       TFlt (start_ptr[t]), TFlt (end_ptr[t]));
           // printf("i %d, t %d, %f\n", i, t, result_ptr[i * l + t]);
         }
     }
@@ -6244,8 +6284,8 @@ Mmdta::get_car_link_out_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6269,8 +6309,8 @@ Mmdta::get_car_link_in_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6294,8 +6334,8 @@ Mmdta::get_truck_link_out_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6319,8 +6359,8 @@ Mmdta::get_truck_link_in_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6344,8 +6384,8 @@ Mmdta::get_bus_link_out_passenger_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6369,8 +6409,8 @@ Mmdta::get_bus_link_in_passenger_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6402,8 +6442,8 @@ Mmdta::get_bus_link_to_busstop_in_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6435,8 +6475,8 @@ Mmdta::get_bus_link_to_busstop_out_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6468,8 +6508,8 @@ Mmdta::get_bus_link_from_busstop_in_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6501,8 +6541,8 @@ Mmdta::get_bus_link_from_busstop_out_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6526,8 +6566,8 @@ Mmdta::get_walking_link_out_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6551,8 +6591,8 @@ Mmdta::get_walking_link_in_cc (int link_ID)
   double *result_ptr = (double *) result_buf.ptr;
   for (size_t i = 0; i < _record.size (); ++i)
     {
-      result_ptr[i * 2] = _record[i].first ();
-      result_ptr[i * 2 + 1] = _record[i].second ();
+      result_ptr[i * 2] = _record[i].first;
+      result_ptr[i * 2 + 1] = _record[i].second;
     }
   return result;
 }
@@ -6568,7 +6608,7 @@ Mmdta::get_waiting_time_at_intersections ()
     {
       result_ptr[i]
         = MNM_DTA_GRADIENT::get_average_waiting_time_at_intersection (
-          m_link_vec_driving[i]) (); // seconds
+          m_link_vec_driving[i]); // seconds
     }
   return result;
 }
@@ -6584,7 +6624,7 @@ Mmdta::get_waiting_time_at_intersections_car ()
     {
       result_ptr[i]
         = MNM_DTA_GRADIENT::get_average_waiting_time_at_intersection_car (
-          m_link_vec_driving[i]) (); // seconds
+          m_link_vec_driving[i]); // seconds
     }
   return result;
 }
@@ -6600,7 +6640,7 @@ Mmdta::get_waiting_time_at_intersections_truck ()
     {
       result_ptr[i]
         = MNM_DTA_GRADIENT::get_average_waiting_time_at_intersection_truck (
-          m_link_vec_driving[i]) (); // seconds
+          m_link_vec_driving[i]); // seconds
     }
   return result;
 }
@@ -6615,7 +6655,7 @@ Mmdta::get_link_spillback ()
   for (size_t i = 0; i < m_link_vec_driving.size (); ++i)
     {
       result_ptr[i]
-        = MNM_DTA_GRADIENT::get_is_spillback (m_link_vec_driving[i]) ();
+        = MNM_DTA_GRADIENT::get_is_spillback (m_link_vec_driving[i]);
     }
   return result;
 }
@@ -6647,11 +6687,11 @@ Mmdta::get_enroute_and_queue_veh_stats_agg ()
       for (int i = 0; i < _tot_interval; ++i)
         {
           result_ptr[i * 3]
-            = (m_mmdta->m_enroute_veh_num[i]()) / (m_mmdta->m_flow_scalar);
+            = (m_mmdta->m_enroute_veh_num[i]) / (m_mmdta->m_flow_scalar);
           result_ptr[i * 3 + 1]
-            = (m_mmdta->m_queue_veh_num[i]()) / (m_mmdta->m_flow_scalar);
+            = (m_mmdta->m_queue_veh_num[i]) / (m_mmdta->m_flow_scalar);
           result_ptr[i * 3 + 2]
-            = (m_mmdta->m_enroute_veh_num[i]() - m_mmdta->m_queue_veh_num[i]())
+            = (m_mmdta->m_enroute_veh_num[i] - m_mmdta->m_queue_veh_num[i])
               / (m_mmdta->m_flow_scalar);
         }
     }
@@ -6692,11 +6732,11 @@ Mmdta::get_enroute_and_queue_passenger_stats_agg ()
 
           // add flow_scalar to passenger
           result_ptr[i * 3]
-            = m_mmdta->m_enroute_passenger_num[i]() / m_mmdta->m_flow_scalar;
+            = m_mmdta->m_enroute_passenger_num[i] / m_mmdta->m_flow_scalar;
           result_ptr[i * 3 + 1]
-            = m_mmdta->m_queue_passenger_num[i]() / m_mmdta->m_flow_scalar;
-          result_ptr[i * 3 + 2] = (m_mmdta->m_enroute_passenger_num[i]()
-                                   - m_mmdta->m_queue_passenger_num[i]())
+            = m_mmdta->m_queue_passenger_num[i] / m_mmdta->m_flow_scalar;
+          result_ptr[i * 3 + 2] = (m_mmdta->m_enroute_passenger_num[i]
+                                   - m_mmdta->m_queue_passenger_num[i])
                                   / m_mmdta->m_flow_scalar;
         }
     }
@@ -6824,7 +6864,7 @@ Mmdta::get_car_link_out_num (int link_ID, double time)
   // printf("1\n");
   TFlt result = _link->m_N_out_car->get_result (TFlt (time));
   // printf("%lf\n", result());
-  return result ();
+  return result;
 }
 
 double
@@ -6839,7 +6879,7 @@ Mmdta::get_truck_link_out_num (int link_ID, double time)
         "Error, Mmdta::get_truck_link_out_num, cc not installed");
     }
   TFlt result = _link->m_N_out_truck->get_result (TFlt (time));
-  return result ();
+  return result;
 }
 
 double
@@ -6853,7 +6893,7 @@ Mmdta::get_passenger_link_out_num (int link_ID, double time)
         "Error, Mmdta::get_passenger_link_out_num, cc not installed");
     }
   TFlt result = _link->m_N_out->get_result (TFlt (time));
-  return result ();
+  return result;
 }
 
 double
@@ -6872,7 +6912,7 @@ Mmdta::get_bus_stop_arrival_num (int busstop_ID, double time)
         "Error, Mmdta::get_bus_stop_arrival_num, cc not installed");
     }
   TFlt result = _busstop->m_N_in_bus->get_result (TFlt (time));
-  return result ();
+  return result;
 }
 
 double
@@ -6891,7 +6931,7 @@ Mmdta::get_bus_stop_departure_num (int busstop_ID, double time)
         "Error, Mmdta::get_bus_stop_departure_num, cc not installed");
     }
   TFlt result = _busstop->m_N_out_bus->get_result (TFlt (time));
-  return result ();
+  return result;
 }
 
 py::array_t<double>
@@ -6921,7 +6961,7 @@ Mmdta::get_car_dar_matrix_driving (py::array_t<int> start_intervals,
     {
       // printf("Current processing time: %d\n", t);
       std::cout << "************ Car Driving DAR link "
-                << m_link_vec_driving[i]->m_link_ID () << " ************\n";
+                << m_link_vec_driving[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -6961,13 +7001,13 @@ Mmdta::get_car_dar_matrix_driving (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7010,7 +7050,7 @@ Mmdta::get_truck_dar_matrix_driving (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_driving.size (); ++i)
     {
       std::cout << "************ Truck Driving DAR link "
-                << m_link_vec_driving[i]->m_link_ID () << " ************\n";
+                << m_link_vec_driving[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7050,13 +7090,13 @@ Mmdta::get_truck_dar_matrix_driving (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7098,7 +7138,7 @@ Mmdta::get_car_dar_matrix_pnr (py::array_t<int> start_intervals,
     {
       // printf("Current processing time: %d\n", t);
       std::cout << "************ Car PnR DAR link "
-                << m_link_vec_driving[i]->m_link_ID () << " ************\n";
+                << m_link_vec_driving[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7138,13 +7178,13 @@ Mmdta::get_car_dar_matrix_pnr (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7187,7 +7227,7 @@ Mmdta::get_bus_dar_matrix_bustransit_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_bus.size (); ++i)
     {
       std::cout << "************ Bus Transit DAR link "
-                << m_link_vec_bus[i]->m_link_ID () << " ************\n";
+                << m_link_vec_bus[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7225,13 +7265,13 @@ Mmdta::get_bus_dar_matrix_bustransit_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7271,7 +7311,7 @@ Mmdta::get_bus_dar_matrix_driving_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_driving.size (); ++i)
     {
       std::cout << "************ Bus Driving DAR link "
-                << m_link_vec_driving[i]->m_link_ID () << " ************\n";
+                << m_link_vec_driving[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7311,13 +7351,13 @@ Mmdta::get_bus_dar_matrix_driving_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7363,7 +7403,7 @@ Mmdta::get_passenger_dar_matrix_bustransit (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_bus.size (); ++i)
     {
       std::cout << "************ Passenger Bus Transit DAR bus link "
-                << m_link_vec_bus[i]->m_link_ID () << " ************\n";
+                << m_link_vec_bus[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7397,7 +7437,7 @@ Mmdta::get_passenger_dar_matrix_bustransit (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_walking.size (); ++i)
     {
       std::cout << "************ Passenger Bus Transit DAR walking link "
-                << m_link_vec_walking[i]->m_link_ID () << " ************\n";
+                << m_link_vec_walking[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7437,13 +7477,13 @@ Mmdta::get_passenger_dar_matrix_bustransit (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7489,7 +7529,7 @@ Mmdta::get_passenger_dar_matrix_pnr (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_bus.size (); ++i)
     {
       std::cout << "************ Passenger PnR DAR bus link "
-                << m_link_vec_bus[i]->m_link_ID () << " ************\n";
+                << m_link_vec_bus[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7523,7 +7563,7 @@ Mmdta::get_passenger_dar_matrix_pnr (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_walking.size (); ++i)
     {
       std::cout << "************ Passenger PnR DAR walking link "
-                << m_link_vec_walking[i]->m_link_ID () << " ************\n";
+                << m_link_vec_walking[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7563,13 +7603,13 @@ Mmdta::get_passenger_dar_matrix_pnr (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7612,7 +7652,7 @@ Mmdta::get_car_dar_matrix_bus_driving_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_bus_driving.size (); ++i)
     {
       std::cout << "************ Car Driving DAR bus driving link "
-                << m_link_vec_bus_driving[i]->m_link_ID () << " ************\n";
+                << m_link_vec_bus_driving[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7652,13 +7692,13 @@ Mmdta::get_car_dar_matrix_bus_driving_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7701,7 +7741,7 @@ Mmdta::get_truck_dar_matrix_bus_driving_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_bus_driving.size (); ++i)
     {
       std::cout << "************ Truck Driving DAR bus driving link "
-                << m_link_vec_bus_driving[i]->m_link_ID () << " ************\n";
+                << m_link_vec_bus_driving[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7742,13 +7782,13 @@ Mmdta::get_truck_dar_matrix_bus_driving_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7791,7 +7831,7 @@ Mmdta::get_passenger_dar_matrix_bustransit_bus_link (
   for (size_t i = 0; i < m_link_vec_bus.size (); ++i)
     {
       std::cout << "************ Passenger Bus Transit DAR bus link "
-                << m_link_vec_bus[i]->m_link_ID () << " ************\n";
+                << m_link_vec_bus[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7835,13 +7875,13 @@ Mmdta::get_passenger_dar_matrix_bustransit_bus_link (
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -7884,7 +7924,7 @@ Mmdta::get_passenger_dar_matrix_pnr_bus_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < m_link_vec_bus.size (); ++i)
     {
       std::cout << "************ Passenger PnR DAR bus link "
-                << m_link_vec_bus[i]->m_link_ID () << " ************\n";
+                << m_link_vec_bus[i]->m_link_ID << " ************\n";
       for (int t = 0; t < l; ++t)
         {
           if (end_ptr[t] <= start_ptr[t])
@@ -7925,13 +7965,13 @@ Mmdta::get_passenger_dar_matrix_pnr_bus_link (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
-      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int ();
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
-      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int ();
-      result_ptr[i * 5 + 4] = tmp_record->flow ();
+      result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
+      result_ptr[i * 5 + 4] = tmp_record->flow;
       //        printf("path ID: %f, departure assign interval (1 min): %f, link
       //        ID: %f, time interval (5 s): %f, flow: %f\n",
       //               result_ptr[i * 5 + 0], result_ptr[i * 5 + 1],
@@ -8088,7 +8128,7 @@ Mmdta::get_car_ltg_matrix_driving (py::array_t<int> start_intervals,
               else
                 {
                   Assert (dynamic_cast<MNM_Dlink_Ctm_Multimodal *> (_link)
-                           != nullptr);
+                          != nullptr);
                   Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
@@ -8310,13 +8350,13 @@ Mmdta::get_car_ltg_matrix_driving (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
       result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
-      result_ptr[i * 5 + 4] = tmp_record->gradient ();
+      result_ptr[i * 5 + 4] = tmp_record->gradient;
       // printf("path ID: %f, departure assign interval (5 s): %f, link ID: %f,
       // time interval (5 s): %f, gradient: %f\n",
       //         result_ptr[i * 5 + 0], result_ptr[i * 5 + 1], result_ptr[i * 5
@@ -8362,13 +8402,13 @@ Mmdta::get_car_ltg_matrix_pnr (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
       result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
-      result_ptr[i * 5 + 4] = tmp_record->gradient ();
+      result_ptr[i * 5 + 4] = tmp_record->gradient;
       // printf("path ID: %f, departure assign interval (5 s): %f, link ID: %f,
       // time interval (5 s): %f, gradient: %f\n",
       //         result_ptr[i * 5 + 0], result_ptr[i * 5 + 1], result_ptr[i * 5
@@ -8460,7 +8500,7 @@ Mmdta::get_truck_ltg_matrix_driving (py::array_t<int> start_intervals,
               else
                 {
                   Assert (dynamic_cast<MNM_Dlink_Ctm_Multimodal *> (_link)
-                           != nullptr);
+                          != nullptr);
                   Assert (_t_depart_lift_up >= 0); // from its upstream link
                   _t_arrival_lift_up = _t_depart_lift_up;
                 }
@@ -8683,13 +8723,13 @@ Mmdta::get_truck_ltg_matrix_driving (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
       result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
-      result_ptr[i * 5 + 4] = tmp_record->gradient ();
+      result_ptr[i * 5 + 4] = tmp_record->gradient;
       // printf("path ID: %f, departure assign interval (5 s): %f, link ID: %f,
       // time interval (5 s): %f, gradient: %f\n",
       //         result_ptr[i * 5 + 0], result_ptr[i * 5 + 1], result_ptr[i * 5
@@ -8736,13 +8776,13 @@ Mmdta::get_passenger_ltg_matrix_bustransit (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
       result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
-      result_ptr[i * 5 + 4] = tmp_record->gradient ();
+      result_ptr[i * 5 + 4] = tmp_record->gradient;
       // printf("path ID: %f, departure assign interval (5 s): %f, link ID: %f,
       // time interval (5 s): %f, gradient: %f\n",
       //         result_ptr[i * 5 + 0], result_ptr[i * 5 + 1], result_ptr[i * 5
@@ -8789,13 +8829,13 @@ Mmdta::get_passenger_ltg_matrix_pnr (py::array_t<int> start_intervals,
   for (size_t i = 0; i < _record.size (); ++i)
     {
       tmp_record = _record[i];
-      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID ();
+      result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
       // the count of 1 min interval
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
-      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID ();
+      result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
       result_ptr[i * 5 + 3] = (double) tmp_record->link_start_int;
-      result_ptr[i * 5 + 4] = tmp_record->gradient ();
+      result_ptr[i * 5 + 4] = tmp_record->gradient;
       // printf("path ID: %f, departure assign interval (5 s): %f, link ID: %f,
       // time interval (5 s): %f, gradient: %f\n",
       //         result_ptr[i * 5 + 0], result_ptr[i * 5 + 1], result_ptr[i * 5

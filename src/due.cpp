@@ -1,4 +1,5 @@
 #include "due.h"
+#include <cfloat>
 
 MNM_Due::MNM_Due (std::string file_folder)
 {
@@ -142,7 +143,7 @@ MNM_Due::compute_total_demand (MNM_Origin *orig, MNM_Destination *dest,
                                TInt total_assign_inter)
 {
   TFlt _tot_dmd = 0.0;
-  for (int i = 0; i < total_assign_inter (); ++i)
+  for (int i = 0; i < total_assign_inter; ++i)
     {
       _tot_dmd += orig->m_demand[dest][i];
     }
@@ -294,7 +295,7 @@ MNM_Due::get_disutility (TFlt depart_time, TFlt tt)
     {
       return m_vot * tt + m_early_penalty * (m_target_time - _arrival_time);
     }
-  throw std::runtime_error ("Error in MNM_Due::get_disutility");
+  // throw std::runtime_error ("Error in MNM_Due::get_disutility");
 }
 
 TFlt
@@ -314,7 +315,7 @@ MNM_Due::build_link_cost_map (MNM_Dta *dta)
   MNM_Dlink *_link;
   for (auto _link_it : dta->m_link_factory->m_link_map)
     {
-      std::cout << "********************** link " << _link_it.first ()
+      std::cout << "********************** link " << _link_it.first
                 << " **********************\n";
       for (int i = 0; i < m_total_loading_inter; i++)
         {
@@ -614,9 +615,9 @@ MNM_Due_Msa::update_path_table (MNM_Dta *dta, int iter)
                           // printf("iter %d\n", iter);
                           // Original
                           _tmp_change
-                            = MNM_Ults::min (_tmp_path->m_buffer[_col],
-                                             _tot_oneOD_demand * m_step_size
-                                               / TFlt (iter + 1));
+                            = std::min (_tmp_path->m_buffer[_col],
+                                        _tot_oneOD_demand * m_step_size
+                                          / TFlt (iter + 1));
                           // Modified by Zou
                           // _tmp_change = _tmp_path->m_buffer[_col] *
                           // m_step_size / TFlt(iter + 1); printf("tmp change
@@ -820,127 +821,131 @@ MNM_Due_Msa::update_path_table_gp_fixed_departure_time_choice (MNM_Dta *dta,
       _tdsp_tree->update_tree (m_link_cost_map, m_link_tt_map);
 
       for (auto _map_it : dta->m_od_factory->m_origin_map)
-      {
-        _orig = _map_it.second;
-        _orig_node_ID = _orig->m_origin_node->m_node_ID;
-
-        // if no demand for this OD pair
-        if (_orig->m_demand.find (_dest) == _orig->m_demand.end ())
-          {
-            continue;
-          }
-
-        _path_set
-          = MNM::get_pathset (m_path_table, _orig_node_ID, _dest_node_ID);
-
-        for (int _col = 0; _col < m_total_assign_inter; _col++)
         {
-          _path_result
-            = get_best_route_for_single_interval (_col
-                                                    * m_dta_config
-                                                        ->get_int (
-                                                          "assign_frq"),
-                                                  _orig_node_ID,
-                                                  _tdsp_tree);
-          _path = _path_result.first;
+          _orig = _map_it.second;
+          _orig_node_ID = _orig->m_origin_node->m_node_ID;
 
-          _tot_path_cost = 0.0;
-          _tot_nonzero_path = 0;
-          _tau = TFlt (std::numeric_limits<double>::max ());
-          _flg = false;
-          _min_flow = TFlt (std::numeric_limits<double>::max ());
-          _tmp_change = 0.0;
-          if (_path_set->is_in (_path))
+          // if no demand for this OD pair
+          if (_orig->m_demand.find (_dest) == _orig->m_demand.end ())
             {
-              printf ("Update current pathset\n");
-              _exist = true;
-            }
-          else
-            {
-              printf ("Adding new path\n");
-              IAssert (_path->m_travel_time_vec.empty ()
-                        && _path->m_travel_disutility_vec.empty ());
-              update_one_path_cost (_path, _orig_node_ID, _dest_node_ID,
-                                    dta);
-              _path->allocate_buffer (m_total_assign_inter);
-              _path_set->m_path_vec.push_back (_path);
-              _exist = false;
-            }
-
-          // average path cost
-          for (auto _tmp_path : _path_set->m_path_vec)
-          {
-            if ((*_tmp_path == *_path) || (_tmp_path->m_buffer[_col] > 0))
-              {
-                // _tmp_tt = get_tt(_col *
-                // m_dta_config->get_int("assign_frq"), _tmp_path);
-                // printf("path in pathset, tt %lf\n", (float)_tmp_tt);
-                // _tmp_cost = get_disutility(TFlt(_col *
-                // m_dta_config->get_int("assign_frq")), _tmp_tt);
-                _tmp_tt = _tmp_path->m_travel_time_vec[_col];
-                printf ("path in pathset, tt %lf\n", (float) _tmp_tt);
-                _tmp_cost = _tmp_path->m_travel_disutility_vec[_col];
-                printf ("path in pathset, disutility %lf\n",
-                        (float) _tmp_cost);
-                _tot_path_cost += _tmp_cost;
-                _tot_nonzero_path += 1;
-                if ((_tmp_path->m_buffer[_col] > 0)
-                    && (_min_flow > _tmp_path->m_buffer[_col]))
-                  {
-                    _min_flow = _tmp_path->m_buffer[_col];
-                  }
-              }
-          }
-          IAssert(_tot_nonzero_path > 0);
-          // minimum tau
-          for (auto _tmp_path : _path_set->m_path_vec)
-          {
-            if ((*_tmp_path == *_path) || (_tmp_path->m_buffer[_col] > 0))
-              {
-                // _tmp_tt = get_tt(_col *
-                // m_dta_config->get_int("assign_frq"), _tmp_path);
-                // _tmp_cost = get_disutility(TFlt(_col *
-                // m_dta_config->get_int("assign_frq")), _tmp_tt);
-                _tmp_cost = _tmp_path->m_travel_disutility_vec[_col];
-                _tmp_change = _tmp_cost - _tot_path_cost / _tot_nonzero_path;
-                // printf("_tmp_change: %lf\n", _tmp_change());  // it may be zero
-                if ((_tmp_change > 0) && (_tau > m_step_size * _min_flow / _tmp_change))
-                {
-                  _tau = m_step_size * _min_flow / _tmp_change;
-                  _flg = true;
-                }
-                // if ((_tmp_change > 0) && (_tau > 1.0 / _tmp_change)) {
-                //     _tau = 1.0 / _tmp_change;
-                // }
-              }
-          }
-          // printf("tau: %lf\n", _tau());
-          if (!_flg) {
-              _tau = 0.;
               continue;
-          }
-          // printf("tau: %lf\n", _tau());
-          // flow adjustment
-          for (auto _tmp_path : _path_set->m_path_vec)
-          {
-            if ((*_tmp_path == *_path) || (_tmp_path->m_buffer[_col] > 0))
-              {
-                // _tmp_tt = get_tt(_col *
-                // m_dta_config->get_int("assign_frq"), _tmp_path);
-                // _tmp_cost = get_disutility(TFlt(_col *
-                // m_dta_config->get_int("assign_frq")), _tmp_tt);
-                _tmp_cost = _tmp_path->m_travel_disutility_vec[_col];
-                _tmp_change
-                  = _tmp_cost - _tot_path_cost / _tot_nonzero_path;
-                _tmp_path->m_buffer[_col]
-                  -= MNM_Ults::min (_tmp_path->m_buffer[_col],
-                                    _tau * _tmp_change);
-              }
-          }
-          if (_exist)
-            delete _path;
+            }
+
+          _path_set
+            = MNM::get_pathset (m_path_table, _orig_node_ID, _dest_node_ID);
+
+          for (int _col = 0; _col < m_total_assign_inter; _col++)
+            {
+              _path_result
+                = get_best_route_for_single_interval (_col
+                                                        * m_dta_config
+                                                            ->get_int (
+                                                              "assign_frq"),
+                                                      _orig_node_ID,
+                                                      _tdsp_tree);
+              _path = _path_result.first;
+
+              _tot_path_cost = 0.0;
+              _tot_nonzero_path = 0;
+              _tau = TFlt (std::numeric_limits<double>::max ());
+              _flg = false;
+              _min_flow = TFlt (std::numeric_limits<double>::max ());
+              _tmp_change = 0.0;
+              if (_path_set->is_in (_path))
+                {
+                  printf ("Update current pathset\n");
+                  _exist = true;
+                }
+              else
+                {
+                  printf ("Adding new path\n");
+                  IAssert (_path->m_travel_time_vec.empty ()
+                           && _path->m_travel_disutility_vec.empty ());
+                  update_one_path_cost (_path, _orig_node_ID, _dest_node_ID,
+                                        dta);
+                  _path->allocate_buffer (m_total_assign_inter);
+                  _path_set->m_path_vec.push_back (_path);
+                  _exist = false;
+                }
+
+              // average path cost
+              for (auto _tmp_path : _path_set->m_path_vec)
+                {
+                  if ((*_tmp_path == *_path) || (_tmp_path->m_buffer[_col] > 0))
+                    {
+                      // _tmp_tt = get_tt(_col *
+                      // m_dta_config->get_int("assign_frq"), _tmp_path);
+                      // printf("path in pathset, tt %lf\n", (TFlt)_tmp_tt);
+                      // _tmp_cost = get_disutility(TFlt(_col *
+                      // m_dta_config->get_int("assign_frq")), _tmp_tt);
+                      _tmp_tt = _tmp_path->m_travel_time_vec[_col];
+                      printf ("path in pathset, tt %lf\n", (TFlt) _tmp_tt);
+                      _tmp_cost = _tmp_path->m_travel_disutility_vec[_col];
+                      printf ("path in pathset, disutility %lf\n",
+                              (TFlt) _tmp_cost);
+                      _tot_path_cost += _tmp_cost;
+                      _tot_nonzero_path += 1;
+                      if ((_tmp_path->m_buffer[_col] > 0)
+                          && (_min_flow > _tmp_path->m_buffer[_col]))
+                        {
+                          _min_flow = _tmp_path->m_buffer[_col];
+                        }
+                    }
+                }
+              IAssert (_tot_nonzero_path > 0);
+              // minimum tau
+              for (auto _tmp_path : _path_set->m_path_vec)
+                {
+                  if ((*_tmp_path == *_path) || (_tmp_path->m_buffer[_col] > 0))
+                    {
+                      // _tmp_tt = get_tt(_col *
+                      // m_dta_config->get_int("assign_frq"), _tmp_path);
+                      // _tmp_cost = get_disutility(TFlt(_col *
+                      // m_dta_config->get_int("assign_frq")), _tmp_tt);
+                      _tmp_cost = _tmp_path->m_travel_disutility_vec[_col];
+                      _tmp_change
+                        = _tmp_cost - _tot_path_cost / _tot_nonzero_path;
+                      // printf("_tmp_change: %lf\n", _tmp_change());  // it may
+                      // be zero
+                      if ((_tmp_change > 0)
+                          && (_tau > m_step_size * _min_flow / _tmp_change))
+                        {
+                          _tau = m_step_size * _min_flow / _tmp_change;
+                          _flg = true;
+                        }
+                      // if ((_tmp_change > 0) && (_tau > 1.0 / _tmp_change)) {
+                      //     _tau = 1.0 / _tmp_change;
+                      // }
+                    }
+                }
+              // printf("tau: %lf\n", _tau());
+              if (!_flg)
+                {
+                  _tau = 0.;
+                  continue;
+                }
+              // printf("tau: %lf\n", _tau());
+              // flow adjustment
+              for (auto _tmp_path : _path_set->m_path_vec)
+                {
+                  if ((*_tmp_path == *_path) || (_tmp_path->m_buffer[_col] > 0))
+                    {
+                      // _tmp_tt = get_tt(_col *
+                      // m_dta_config->get_int("assign_frq"), _tmp_path);
+                      // _tmp_cost = get_disutility(TFlt(_col *
+                      // m_dta_config->get_int("assign_frq")), _tmp_tt);
+                      _tmp_cost = _tmp_path->m_travel_disutility_vec[_col];
+                      _tmp_change
+                        = _tmp_cost - _tot_path_cost / _tot_nonzero_path;
+                      _tmp_path->m_buffer[_col]
+                        -= std::min (_tmp_path->m_buffer[_col],
+                                     _tau * _tmp_change);
+                    }
+                }
+              if (_exist)
+                delete _path;
+            }
         }
-      }
       delete _tdsp_tree;
     }
   // MNM::print_path_table(m_path_table, dta->m_od_factory, true);

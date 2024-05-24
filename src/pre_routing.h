@@ -1,7 +1,7 @@
 // implement a class pre_routing
 #pragma once
 
-#include "Snap.h"
+#include "common.h"
 #include "factory.h"
 #include "path.h"
 #include "pmc_table.h"
@@ -35,11 +35,11 @@ public:
     *routing_table;
   int update_routing_table_MSA (
     MNM_PMC_Table pmc_table,
-    float lambda); // assume single-valued PMC, update routing table
+    TFlt lambda); // assume single-valued PMC, update routing table
   int update_routing_table_MSA1 (MNM_PMC_Table pmc_table_lower,
-                                 MNM_PMC_Table pmc_table_upper, float lambda);
+                                 MNM_PMC_Table pmc_table_upper, TFlt lambda);
   int update_routing_table_MSA2 (MNM_PMC_Table pmc_table_lower,
-                                 MNM_PMC_Table pmc_table_upper, float lambda);
+                                 MNM_PMC_Table pmc_table_upper, TFlt lambda);
   int update_demand (MNM_OD_Factory *od_factory);
   int test_function ();
   int reassign_routing (TInt oid, TInt did, TInt pid, TInt interval,
@@ -47,12 +47,12 @@ public:
   std::string toString ();
 
   // MNM_Pre_Routing operator+(MNM_Pre_Routing other); // plus other pouting
-  // class, for MSA optimization MNM_Pre_Routing operator*(float lambda); //
+  // class, for MSA optimization MNM_Pre_Routing operator*(TFlt lambda); //
   // times the num of vehs
 };
 
 // namespace MNM {
 // 	int
 // routing_table_multiply(std::unordered_map<TInt,std::unordered_map<TInt,std::unordered_map<TInt,TFlt*>>>
-// *routing_table, 		float lambda);
+// *routing_table, 		TFlt lambda);
 // }

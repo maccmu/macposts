@@ -1,4 +1,5 @@
 #include "dta_gradient_utls.h"
+#include <cfloat>
 
 namespace MNM_DTA_GRADIENT
 {
@@ -62,8 +63,8 @@ get_last_valid_time (MNM_Cumulative_Curve *N_in, MNM_Cumulative_Curve *N_out,
                                        N_out->m_recorder.back ().second))
     {
       printf ("max in cc flow: %lf, max out cc flow: %lf\n",
-              N_in->m_recorder.back ().second (),
-              N_out->m_recorder.back ().second ());
+              N_in->m_recorder.back ().second,
+              N_out->m_recorder.back ().second);
       printf ("diff: %lf\n", N_in->m_recorder.back ().second
                                - N_out->m_recorder.back ().second);
       std::cout << s << std::endl;
@@ -114,8 +115,8 @@ get_last_valid_time_bus (MNM_Cumulative_Curve *N_in,
                                        N_out->m_recorder.back ().second))
     {
       printf ("max in cc flow: %lf, max out cc flow: %lf\n",
-              N_in->m_recorder.back ().second (),
-              N_out->m_recorder.back ().second ());
+              N_in->m_recorder.back ().second,
+              N_out->m_recorder.back ().second);
       printf ("diff: %lf\n", N_in->m_recorder.back ().second
                                - N_out->m_recorder.back ().second);
       std::cout << s << std::endl;
@@ -188,7 +189,7 @@ get_travel_time_from_cc (TFlt start_time, MNM_Cumulative_Curve *N_in,
   // as the end_time
   TFlt _end_time = N_out->get_time (_cc_flow, rounding_up);
 
-  if (_end_time () < 0 || (_end_time - start_time < 0)
+  if (_end_time < 0 || (_end_time - start_time < 0)
       || (_end_time - start_time < fftt))
     {
       return fftt; // in intervals
@@ -255,7 +256,7 @@ get_travel_time_robust (MNM_Dlink *link, TFlt start_time, TFlt end_time,
   TFlt _delta = (end_time - start_time) / TFlt (num_trials);
   TFlt _ave_tt = TFlt (0);
   // will not use end_time
-  for (int i = 0; i < num_trials (); ++i)
+  for (int i = 0; i < num_trials; ++i)
     {
       _ave_tt += get_travel_time (link, start_time + TFlt (i) * _delta,
                                   unit_interval, end_loading_timestamp);
@@ -377,8 +378,8 @@ add_dar_records (std::vector<dar_record *> &record, MNM_Dlink *link,
                   new_record->flow = tmp_flow;
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
                   record.push_back (new_record);
                 }
             }
@@ -428,15 +429,15 @@ add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
                            * depart_it.first; // # of paths * # of intervals
                   // printf("Adding record, %d, %d, %d, %f, %f\n", new_record ->
                   // path_ID(), new_record -> assign_int(),
-                  //     new_record -> link_ID(), (float)new_record ->
-                  //     link_start_int(), (float) new_record -> flow());
+                  //     new_record -> link_ID(), (TFlt)new_record ->
+                  //     link_start_int(), (TFlt) new_record -> flow());
 
                   // https://eigen.tuxfamily.org/dox/classEigen_1_1Triplet.html
                   // https://eigen.tuxfamily.org/dox/SparseUtil_8h_source.html
                   // (row index, col index, value)
                   record.push_back (
                     Eigen::Triplet<double> ((double) _x, (double) _y,
-                                            tmp_flow () / f_ptr[_y]));
+                                            tmp_flow / f_ptr[_y]));
                 }
             }
         }
@@ -444,34 +445,39 @@ add_dar_records_eigen (std::vector<Eigen::Triplet<double>> &record,
   return 0;
 }
 
-TFlt 
-get_arrival_cc_slope(MNM_Dlink* link, TFlt start_time, TFlt end_time)
+TFlt
+get_arrival_cc_slope (MNM_Dlink *link, TFlt start_time, TFlt end_time)
 {
-    if (link == nullptr){
-        throw std::runtime_error("Error, get_arrival_cc_slope link is null");
+  if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_arrival_cc_slope link is null");
     }
-    if (link -> m_N_in == nullptr){
-        throw std::runtime_error("Error, get_arrival_cc_slope link cumulative curve is not installed");
+  if (link->m_N_in == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_arrival_cc_slope link cumulative curve is not installed");
     }
-    if (start_time > link -> m_N_in->m_recorder.back().first) {
-        return 0;
+  if (start_time > link->m_N_in->m_recorder.back ().first)
+    {
+      return 0;
     }
-    int _delta = int(end_time) - int(start_time);
-    IAssert(_delta > 0);
-    TFlt _cc1, _cc2, _slope = 0.;
-    for (int i = 0; i < _delta; i++) {
-        _cc1 = link -> m_N_in -> get_result(TFlt(start_time + i));
-        _cc2 = link -> m_N_in -> get_result(TFlt(start_time + i + 1));
-        _slope += (_cc2 -_cc1);
+  int _delta = int (end_time) - int (start_time);
+  IAssert (_delta > 0);
+  TFlt _cc1, _cc2, _slope = 0.;
+  for (int i = 0; i < _delta; i++)
+    {
+      _cc1 = link->m_N_in->get_result (TFlt (start_time + i));
+      _cc2 = link->m_N_in->get_result (TFlt (start_time + i + 1));
+      _slope += (_cc2 - _cc1);
     }
-    // if (_slope <= 0) {
-    // 	std::cout << "car in" << "\n";
-    // 	std::cout << link -> m_N_in -> to_string() << "\n";
-    // 	std::cout << "car out" << "\n";
-    // 	std::cout << link -> m_N_out -> to_string() << "\n";
-    // 	printf("debug");
-    // }
-    return _slope / _delta;  // flow per unit interval
+  // if (_slope <= 0) {
+  // 	std::cout << "car in" << "\n";
+  // 	std::cout << link -> m_N_in -> to_string() << "\n";
+  // 	std::cout << "car out" << "\n";
+  // 	std::cout << link -> m_N_out -> to_string() << "\n";
+  // 	printf("debug");
+  // }
+  return _slope / _delta; // flow per unit interval
 }
 
 TFlt

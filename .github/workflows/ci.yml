@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.platform }}
@@ -26,13 +26,20 @@ jobs:
         submodules: true
         persist-credentials: false
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
         allow-prereleases: true
+
+    - name: Enable UBSan
+      run: echo "CXXFLAGS=$UBSAN_FLAGS $CXXFLAGS" >> "$GITHUB_ENV"
+      if: runner.os != 'Windows'
+      env:
+        UBSAN_FLAGS: -fsanitize=undefined -fsanitize-undefined-trap-on-error
 
     - name: Build and install
       run: pip install --verbose .[test]
 
     - name: Test
       run: pytest
+      timeout-minutes: 30
