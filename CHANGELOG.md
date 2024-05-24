@@ -3,7 +3,7 @@
 All notable changes for each released versions (since v0.3.1) will be documented
 here.
 
-## v0.5.0 (unreleased)
+## v0.5.0 (2024-05-24)
 
 **This is a major release that changes many internal things. Please report any
 breakage you find. Thanks!**
@@ -21,6 +21,7 @@ the seemingly unmaintained SNAP library.
 ### Changed
 
 - Update pybind11 to v2.12.0.
+- Update README.md for more detailed installation instructions.
 
 ### Removed
 
