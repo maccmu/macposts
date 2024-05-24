@@ -38,20 +38,20 @@ not know which one to use, here are our recommended steps:
      macOS with the older Intel chips, search for “universal2”.
 
 For example, if you are using Python 3.12 on Debian Bookworm, you can download
-the `macposts-0.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl`,
+the `macposts-0.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl`,
 and run in Bash (or other POSIX shells):
 
 ```sh
-pip install macposts-0.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+pip install macposts-0.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
-to install MAC-POSTS v0.5.0. In the future we may publish this package to the
+to install MAC-POSTS v0.5.1. In the future we may publish this package to the
 official PyPI registry to ease this process, but we would like to first improve
 the quality of this package (see [GH-17]).
 
 If you are using some platform or Python version for which there is no
 precompiled package, you may try to install the package from source using the
-“sdist” package (e.g., `macposts-0.5.0.tar.gz` for MAC-POSTS v0.5.0). To install
+“sdist” package (e.g., `macposts-0.5.1.tar.gz` for MAC-POSTS v0.5.1). To install
 such a package, first ensure a working C++ toolchain. We recommend:
 
 - GCC or Clang on Linux.
@@ -61,7 +61,7 @@ such a package, first ensure a working C++ toolchain. We recommend:
 Then run:
 
 ```sh
-pip install macposts-0.5.0.tar.gz
+pip install macposts-0.5.1.tar.gz
 ```
 
 which will compile and install MAC-POSTS.
