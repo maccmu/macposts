@@ -56,7 +56,7 @@ such a package, first ensure a working C++ toolchain. We recommend:
 
 - GCC or Clang on Linux.
 - Clang on macOS (via Xcode).
-- MSCV on Windows (via Visual Studio).
+- MSVC on Windows (via Visual Studio).
 
 Then run:
 
