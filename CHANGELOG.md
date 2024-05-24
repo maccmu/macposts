@@ -3,6 +3,14 @@
 All notable changes for each released versions (since v0.3.1) will be documented
 here.
 
+## v0.5.1 (2024-05-24)
+
+This is a hot fix release mainly to trigger the release workflow so that we have
+all the precompiled binary packages correctly uploaded. There is no change in
+the package.
+
+**Please refer to the change log for v0.5.0 for actually changes since v0.4.2.**
+
 ## v0.5.0 (2024-05-24)
 
 **This is a major release that changes many internal things. Please report any
@@ -17,11 +25,11 @@ the seemingly unmaintained SNAP library.
 - Compiled binary releases against musl ([GH-55]).
 - Compiled fat binary releases for macOS (mainly to support older machines with
   Intel chips).
+- Time-dependent and OD-dependent adaptive ratio for vehicle routing ([GH-58]).
 
 ### Changed
 
 - Update pybind11 to v2.12.0.
-- Update README.md for more detailed installation instructions.
 
 ### Removed
 
@@ -29,6 +37,7 @@ the seemingly unmaintained SNAP library.
 
 [GH-50]: https://github.com/maccmu/macposts/pull/50
 [GH-55]: https://github.com/maccmu/macposts/pull/55
+[GH-58]: https://github.com/maccmu/macposts/pull/58
 
 ## v0.4.2 (2024-03-18)
 
