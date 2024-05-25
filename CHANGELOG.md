@@ -9,7 +9,7 @@ This is a hot fix release mainly to trigger the release workflow so that we have
 all the precompiled binary packages correctly uploaded. There is no change in
 the package.
 
-**Please refer to the change log for v0.5.0 for actually changes since v0.4.2.**
+**Please refer to the change log for v0.5.0 for actual changes since v0.4.2.**
 
 ## v0.5.0 (2024-05-24)
 
