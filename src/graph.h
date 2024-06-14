@@ -55,63 +55,64 @@ invert (Direction direction)
   throw std::runtime_error ("invalid direction");
 }
 
+namespace
+{
+// Template for implementing various iterators on the graph
+template <class Value, class State, bool readonly, template <bool c> class Type>
+class Iterator
+{
+public:
+  using iterator_category = std::input_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type =
+    typename std::conditional<readonly, const Value, Value>::type;
+  using pointer =
+    typename std::conditional<readonly, const Value *, Value *>::type;
+  using reference =
+    typename std::conditional<readonly, const Value &, Value &>::type;
+
+  explicit Iterator (State state, Direction direction)
+      : current (state), direction (direction)
+  {
+  }
+
+  void step () { ++current; }
+  Type<readonly> &operator++ ()
+  {
+    auto self = static_cast<Type<readonly> *> (this);
+    self->step ();
+    return *self;
+  }
+  Type<readonly> operator++ (int)
+  {
+    auto self = static_cast<Type<readonly> *> (this);
+    auto r = *self;
+    ++(*self);
+    return r;
+  }
+
+  bool operator== (const Type<readonly> &other) const
+  {
+    return (current == other.current) && (direction == other.direction);
+  }
+  bool operator!= (const Type<readonly> &other) const
+  {
+    auto self = static_cast<const Type<readonly> *> (this);
+    return !(*self == other);
+  }
+  reference operator* () const { return *current; }
+
+protected:
+  State current;
+  const Direction direction;
+};
+}
+
 // FIXME: If we do not want to attach data to a node/link, there is a waste of
 // space in the current implementation.
 template <class NId, class LId, class NData, class LData, bool directed>
 class Graph
 {
-private:
-  // Template for implementing various iterators on the graph
-  template <class Value, class State, bool readonly,
-            template <bool c> class Type>
-  class Iterator
-  {
-  public:
-    using iterator_category = std::input_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type =
-      typename std::conditional<readonly, const Value, Value>::type;
-    using pointer =
-      typename std::conditional<readonly, const Value *, Value *>::type;
-    using reference =
-      typename std::conditional<readonly, const Value &, Value &>::type;
-
-    explicit Iterator (State state, Direction direction)
-        : current (state), direction (direction)
-    {
-    }
-
-    void step () { ++current; }
-    Type<readonly> &operator++ ()
-    {
-      auto self = static_cast<Type<readonly> *> (this);
-      self->step ();
-      return *self;
-    }
-    Type<readonly> operator++ (int)
-    {
-      auto self = static_cast<Type<readonly> *> (this);
-      auto r = *self;
-      ++(*self);
-      return r;
-    }
-
-    bool operator== (const Type<readonly> &other) const
-    {
-      return (current == other.current) && (direction == other.direction);
-    }
-    bool operator!= (const Type<readonly> &other) const
-    {
-      auto self = static_cast<const Type<readonly> *> (this);
-      return !(*self == other);
-    }
-    reference operator* () const { return *current; }
-
-  protected:
-    State current;
-    const Direction direction;
-  };
-
 public:
   // Basics: node and link
   class Link;
