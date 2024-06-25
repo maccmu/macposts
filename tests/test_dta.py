@@ -22,8 +22,8 @@ def test_reproducibility(network, request):
         in_ccs_ = dta.get_in_ccs()
         out_ccs_ = dta.get_out_ccs()
         if in_ccs is not None:
-            assert np.allclose(in_ccs, in_ccs_)
-            assert np.allclose(out_ccs, out_ccs_)
+            assert np.all(in_ccs == in_ccs_)
+            assert np.all(out_ccs == out_ccs_)
         in_ccs, out_ccs = in_ccs_, out_ccs_
 
 

@@ -25,10 +25,10 @@ def test_reproducibility(network, request):
         truck_in_ccs_ = mcdta.get_truck_in_ccs()
         truck_out_ccs_ = mcdta.get_truck_out_ccs()
         if car_in_ccs is not None:
-            assert np.allclose(car_in_ccs, car_in_ccs_)
-            assert np.allclose(car_out_ccs, car_out_ccs_)
-            assert np.allclose(truck_in_ccs, truck_in_ccs_)
-            assert np.allclose(truck_out_ccs, truck_out_ccs_)
+            assert np.all(car_in_ccs == car_in_ccs_)
+            assert np.all(car_out_ccs == car_out_ccs_)
+            assert np.all(truck_in_ccs == truck_in_ccs_)
+            assert np.all(truck_out_ccs == truck_out_ccs_)
         car_in_ccs, car_out_ccs = car_in_ccs_, car_out_ccs_
         truck_in_ccs, truck_out_ccs = truck_in_ccs_, truck_out_ccs_
 
