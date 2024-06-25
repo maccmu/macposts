@@ -197,12 +197,12 @@ fixes, please consider adding some test cases as well.
 ### Maintainers
 
 - Qiling Zou: maintainer;
-- Pengji Zhang: co-maintainer.
 
 ### Previous maintainers
 
 - Wei Ma: author and former maintainer;
 - Xidong Pi: co-author and former maintainer.
+- Pengji Zhang: former maintainer.
 
 ### Contributors
 
