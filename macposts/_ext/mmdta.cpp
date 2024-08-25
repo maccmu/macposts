@@ -1415,6 +1415,7 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
   // MNM_Walking_Link *_walking_link;
   std::string _str1;
   std::string _str2;
+  TFlt _spd;
   TInt _current_inter = m_mmdta->m_current_loading_interval;
   std::ofstream _vis_file2;
   std::ofstream _vis_file3;
@@ -1528,43 +1529,46 @@ Mmdta::print_simulation_results (const std::string &folder, int cong_frequency)
                   //            / _link_m->get_link_freeflow_tt_car ()
                   //            * 3600 / 1600)
                   //          + " "; // mph
-                  _str1 += std::to_string (
-                             _link_m->m_length
+                  _spd = (_link_m->m_length
                              / (_link_m->get_link_freeflow_tt_loading_car ()
                                 * m_mmdta->m_unit_time)
-                             * 3600 / 1600)
-                           + " "; // mph
-                  _str1 += std::to_string (
-                             _link_m->m_length
+                             * 3600. / 1600.);
+                  if (_spd > _link_m -> m_ffs_car * 3600. / 1600.) _spd = _link_m -> m_ffs_car * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + " "; // mph, car ffs
+
+                  _spd = (_link_m->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_car_robust (
                                   _link_m, TFlt (_iter + 1),
                                   TFlt (_iter + cong_frequency + 1),
                                   m_mmdta->m_unit_time,
                                   m_mmdta->m_current_loading_interval)
                                 * m_mmdta->m_unit_time)
-                             * 3600 / 1600)
-                           + " ";
+                             * 3600. / 1600.);
+                  if (_spd > _link_m -> m_ffs_car * 3600. / 1600.) _spd = _link_m -> m_ffs_car * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + " "; // mph, car actual speed
+
                   // _str1 += std::to_string (
                   //            _link_m->m_length
                   //            / _link_m->get_link_freeflow_tt_truck ()
                   //            * 3600 / 1600)
                   //          + " "; // mph
-                  _str1 += std::to_string (
-                             _link_m->m_length
+                  _spd = (_link_m->m_length
                              / (_link_m->get_link_freeflow_tt_loading_truck ()
                                 * m_mmdta->m_unit_time)
-                             * 3600 / 1600)
-                           + " "; // mph
-                  _str1 += std::to_string (
-                             _link_m->m_length
+                             * 3600. / 1600.);
+                  if (_spd > _link_m -> m_ffs_truck * 3600. / 1600.) _spd = _link_m -> m_ffs_truck * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + " "; // mph, truck ffs
+                  
+                  _spd = (_link_m->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_truck_robust (
                                   _link_m, TFlt (_iter + 1),
                                   TFlt (_iter + cong_frequency + 1),
                                   m_mmdta->m_unit_time,
                                   m_mmdta->m_current_loading_interval)
                                 * m_mmdta->m_unit_time)
-                             * 3600 / 1600)
-                           + "\n";
+                             * 3600. / 1600.);
+                  if (_spd > _link_m -> m_ffs_truck * 3600. / 1600.) _spd = _link_m -> m_ffs_truck * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + "\n"; // mph, truck actual speed
                   _vis_file2 << _str1;
                 }
               for (auto _link_it :
@@ -5831,8 +5835,8 @@ Mmdta::get_car_link_speed (py::array_t<double> start_intervals)
                                      m_mmdta->m_unit_time,
                                      m_mmdta->m_current_loading_interval)
               * m_mmdta->m_unit_time; // seconds
-          result_ptr[i * l + t] = (m_link_vec_driving[i]->m_length) / _tt * 3600
-                                  / 1600; // mile per hour
+          result_ptr[i * l + t] = (((m_link_vec_driving[i]->m_length) / _tt) > m_link_vec_driving[i]->m_ffs_car ? 
+                                     m_link_vec_driving[i]->m_ffs_car : ((m_link_vec_driving[i]->m_length) / _tt)) * 3600. / 1600.; // mile per hour
         }
     }
   return result;
@@ -5873,8 +5877,8 @@ Mmdta::get_truck_link_speed (py::array_t<double> start_intervals)
                                        m_mmdta->m_unit_time,
                                        m_mmdta->m_current_loading_interval)
               * m_mmdta->m_unit_time; // seconds
-          result_ptr[i * l + t] = (m_link_vec_driving[i]->m_length) / _tt * 3600
-                                  / 1600; // mile per hour
+          result_ptr[i * l + t] = (((m_link_vec_driving[i]->m_length) / _tt) > m_link_vec_driving[i]->m_ffs_truck ? 
+                                     m_link_vec_driving[i]->m_ffs_truck : ((m_link_vec_driving[i]->m_length) / _tt)) * 3600. / 1600.; // mile per hour
         }
     }
   return result;
@@ -5923,8 +5927,15 @@ Mmdta::get_bus_link_speed (py::array_t<double> start_intervals, bool return_inf,
             }
           else
             {
-              result_ptr[i * l + t] = (m_link_vec_bus[i]->m_length) / _tt * 3600
-                                      / 1600; // mile per hour
+              // find max truck free flow speed
+              auto _comp_spd = [](MNM_Dlink *l1, MNM_Dlink *l2)
+                   {
+                       return dynamic_cast<MNM_Dlink_Multiclass*>(l1) -> m_ffs_truck < dynamic_cast<MNM_Dlink_Multiclass*>(l2) -> m_ffs_truck;
+                   };
+              auto _r = std::max_element(m_link_vec_bus[i]-> m_overlapped_driving_link_vec.begin(), m_link_vec_bus[i]-> m_overlapped_driving_link_vec.end(), _comp_spd);
+              auto _max_spd = dynamic_cast<MNM_Dlink_Multiclass*>(*_r) -> m_ffs_truck;
+              result_ptr[i * l + t] = (((m_link_vec_bus[i]-> m_length) / _tt) > _max_spd ? 
+                                         _max_spd : ((m_link_vec_bus[i]->m_length) / _tt)) * 3600. / 1600.; // mile per hour
             }
         }
     }
