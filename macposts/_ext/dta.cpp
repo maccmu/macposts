@@ -76,6 +76,8 @@ public:
                                           int num_trials = 180,
                                           bool return_inf = false);
 
+  py::array_t<double> get_link_speed (py::array_t<double> start_intervals);                                       
+
   // assume build_link_cost_map() is invoked before
   py::array_t<double> get_path_tt (py::array_t<int> link_IDs,
                                    py::array_t<int> start_intervals);
@@ -140,6 +142,7 @@ init (py::module &m)
     .def ("get_link_tt_FD", &Dta::get_link_tt_FD)
     .def ("get_link_tt", &Dta::get_link_tt)
     .def ("get_link_tt_robust", &Dta::get_link_tt_robust)
+    .def("get_link_speed", &Dta::get_link_speed)
 
     .def ("build_link_cost_map", &Dta::build_link_cost_map)
     // with build_link_cost_map()
@@ -868,6 +871,7 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
 
   MNM_Dlink *_link;
   std::string _str1;
+  TFlt _spd;
   TInt _current_inter = m_dta->m_current_loading_interval;
   std::ofstream _vis_file2;
   if (output_link_cong)
@@ -935,22 +939,20 @@ Dta::print_simulation_results (const std::string &folder, int cong_frequency)
                   //            / _link->get_link_freeflow_tt ()
                   //            * 3600 / 1600)
                   //          + " "; // mph
-                  _str1
-                    += std::to_string (_link->m_length
-                                       / (_link->get_link_freeflow_tt_loading ()
-                                          * m_dta->m_unit_time)
-                                       * 3600 / 1600)
-                       + " "; // mph
-                  _str1 += std::to_string (
-                             _link->m_length
+                  _spd = _link->m_length / (_link->get_link_freeflow_tt_loading () * m_dta->m_unit_time) * 3600. / 1600.;
+                  if (_spd > _link -> m_ffs * 3600. / 1600.) _spd = _link -> m_ffs * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + " "; // mph, ffs
+
+                  _spd = (_link->m_length
                              / (MNM_DTA_GRADIENT::get_travel_time_robust (
                                   _link, TFlt (_iter + 1),
                                   TFlt (_iter + cong_frequency + 1),
                                   m_dta->m_unit_time,
                                   m_dta->m_current_loading_interval)
                                 * m_dta->m_unit_time)
-                             * 3600 / 1600)
-                           + "\n"; // mph
+                             * 3600. / 1600.);
+                  if (_spd > _link -> m_ffs * 3600. / 1600.) _spd = _link -> m_ffs * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + "\n"; // mph, actual speed
                   _vis_file2 << _str1;
                 }
             }
@@ -1847,6 +1849,47 @@ Dta::get_link_tt_robust (py::array_t<double> start_intervals,
                                           / m_link_vec[i]->m_ffs;
                 }
             }
+        }
+    }
+  return result;
+}
+
+
+py::array_t<double>
+Dta::get_link_speed (py::array_t<double> start_intervals)
+{
+  auto start_buf = start_intervals.request ();
+  if (start_buf.ndim != 1)
+    {
+      throw std::runtime_error (
+        "Error, Dta::get_link_speed, input dimension mismatch");
+    }
+  int l = start_buf.shape[0];
+  int new_shape[2] = { (int) m_link_vec.size (), l };
+
+  auto result = py::array_t<double> (new_shape);
+  auto result_buf = result.request ();
+  double *result_ptr = (double *) result_buf.ptr;
+  double *start_ptr = (double *) start_buf.ptr;
+  for (int t = 0; t < l; ++t)
+    {
+      if (start_ptr[t] >= get_cur_loading_interval ())
+        {
+          throw std::runtime_error (
+            "Error, Dta::get_link_speed, input start intervals "
+            "exceeds the total loading intervals - 1");
+        }
+      for (size_t i = 0; i < m_link_vec.size (); ++i)
+        {
+          double _tt
+            = MNM_DTA_GRADIENT::
+                get_travel_time (m_link_vec[i], TFlt (start_ptr[t] + 1),
+                                m_dta->m_unit_time,
+                                m_dta->m_current_loading_interval)
+              * m_dta->m_unit_time; // seconds
+          result_ptr[i * l + t]
+            = (((m_link_vec[i]->m_length) / _tt) > m_link_vec[i]->m_ffs ? 
+                 m_link_vec[i]->m_ffs : ((m_link_vec[i]->m_length) / _tt)) * 3600. / 1600.; // mile per hour
         }
     }
   return result;
