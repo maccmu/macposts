@@ -9219,6 +9219,7 @@ MNM_IO_Multimodal::load_pnr_path_table (const macposts::Graph &driving_graph,
                 }
 
               // driving part
+              // TODO: if driving graph is a multigraph, need to read link seq
               _driving_path = new MNM_Path ();
               for (size_t j = 4; j < _words.size (); ++j)
                 {
