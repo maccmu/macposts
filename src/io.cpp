@@ -816,7 +816,7 @@ MNM_IO::build_link_td_attribute (const std::string &file_folder,
 }
 
 Path_Table *
-MNM_IO::load_path_table (const std::string &file_name,
+MNM_IO::load_path_table (const std::string &node_seq_file_name,
                          const macposts::Graph &graph, TInt num_path,
                          bool w_buffer, bool w_ID)
 {
@@ -835,14 +835,16 @@ MNM_IO::load_path_table (const std::string &file_name,
       return nullptr;
     }
 
-  std::ifstream _path_table_file, _buffer_file;
-  std::string _buffer_file_name;
+  std::ifstream _path_table_file, _path_table_link_seq_file, _buffer_file;
+  std::string _buffer_file_name, _link_seq_file_name;
+  _link_seq_file_name = node_seq_file_name + "_link_seq";
   if (w_buffer)
     {
-      _buffer_file_name = file_name + "_buffer";
+      _buffer_file_name = node_seq_file_name + "_buffer";
       _buffer_file.open (_buffer_file_name, std::ios::in);
     }
-  _path_table_file.open (file_name, std::ios::in);
+  _path_table_file.open (node_seq_file_name, std::ios::in);
+  _path_table_link_seq_file.open (_link_seq_file_name, std::ios::in);
   Path_Table *_path_table = new Path_Table ();
 
   /* read file */
@@ -856,7 +858,109 @@ MNM_IO::load_path_table (const std::string &file_name,
   TInt _path_ID_counter = 0;
   if (_path_table_file.is_open ())
     {
-      for (int i = 0; i < Num_Path;)
+      if (_path_table_link_seq_file.is_open()) {
+
+        for (int i = 0; i < Num_Path;)
+        {
+          std::getline (_path_table_link_seq_file, _line);
+          _line = trim (_line);
+          if (_line.empty () || _line[0] == '#')
+            {
+              continue;
+            }
+          ++i;
+          if (w_buffer)
+            {
+              while (1)
+                {
+                  std::getline (_buffer_file, _buffer_line);
+                  _buffer_line = trim (_buffer_line);
+                  if (!_line.empty () && _line[0] != '#')
+                    {
+                      break;
+                    }
+                }
+              _buffer_words = split (_buffer_line, ' ');
+            }
+          // std::cout << "Processing: " << _line << "\n";
+          _words = split (_line, ' ');
+          if (_words.size () >= 1)
+            {
+              // read link ID first since, when driving graph is a MultiGraph
+              _link_ID = TInt (std::stoi (_words.front())); 
+              const auto &l_front = graph.get_link (_link_ID);
+              auto &&sd_first = graph.get_endpoints (l_front);
+              _origin_node_ID = graph.get_id (sd_first.first);
+
+              _link_ID = TInt (std::stoi (_words.back()));
+              const auto &l_back = graph.get_link (_link_ID);
+              auto &&sd_back = graph.get_endpoints (l_back);
+              _dest_node_ID = graph.get_id (sd_back.second);
+
+              if (_path_table->find (_origin_node_ID) == _path_table->end ())
+                {
+                  _new_map = new std::unordered_map<TInt, MNM_Pathset *> ();
+                  _path_table->insert (
+                    std::pair<TInt, std::unordered_map<TInt, MNM_Pathset *>
+                                      *> (_origin_node_ID, _new_map));
+                }
+              if (_path_table->find (_origin_node_ID)
+                    ->second->find (_dest_node_ID)
+                  == _path_table->find (_origin_node_ID)->second->end ())
+                {
+                  _pathset = new MNM_Pathset ();
+                  _path_table->find (_origin_node_ID)
+                    ->second->insert (
+                      std::pair<TInt, MNM_Pathset *> (_dest_node_ID, _pathset));
+                }
+
+              _path = new MNM_Path ();
+              _path->m_path_ID = _path_ID_counter;
+              _path_ID_counter += 1;
+              for (size_t j = 0; j < _words.size (); ++j)
+                {
+                  _link_ID = TInt (
+                    std::stoi (_words[j])); // read link ID first since
+                                            // transit_graph is a MultiGraph
+                  _path->m_link_vec.push_back (_link_ID);
+                }
+              for (size_t j = 0; j < _path->m_link_vec.size (); ++j)
+                {
+                  _link_ID = _path->m_link_vec[j];
+                  const auto &l = graph.get_link (_link_ID);
+                  auto &&sd = graph.get_endpoints (l);
+                  _from_ID = graph.get_id (sd.first);
+                  _to_ID = graph.get_id (sd.second);
+                  _path->m_node_vec.push_back (_from_ID);
+                  if (j == _path->m_link_vec.size () - 1)
+                    _path->m_node_vec.push_back (_to_ID);
+                }
+              Assert (_path->m_node_vec.size () == _path->m_link_vec.size () + 1);
+              Assert (_path->m_node_vec.back () == _dest_node_ID);
+
+              if (w_buffer && (_buffer_words.size () > 0))
+                {
+                  TInt _buffer_len = TInt (_buffer_words.size ());
+                  // printf("Buffer len %d\n", _buffer_len());
+                  _path->allocate_buffer (_buffer_len);
+                  for (int j = 0; j < _buffer_len; ++j)
+                    {
+                      _path->m_buffer[j]
+                        = TFlt (std::stof (trim (_buffer_words[j])));
+                    }
+                }
+
+              _path_table->find (_origin_node_ID)
+                ->second->find (_dest_node_ID)
+                ->second->m_path_vec.push_back (_path);
+            }
+        }
+        _path_table_link_seq_file.close();
+
+      }
+      else {
+
+        for (int i = 0; i < Num_Path;)
         {
           std::getline (_path_table_file, _line);
           _line = trim (_line);
@@ -942,6 +1046,7 @@ MNM_IO::load_path_table (const std::string &file_name,
                 ->second->m_path_vec.push_back (_path);
             }
         }
+      }
       _path_table_file.close ();
       if (w_buffer)
         {
@@ -955,8 +1060,7 @@ MNM_IO::load_path_table (const std::string &file_name,
   printf ("Finish Loading Path Table for Driving!\n");
   // printf("path table %p\n", _path_table);
   // printf("path table %s\n", _path_table -> find(100283) -> second ->
-  // find(150153) -> second
-  //                           -> m_path_vec.front() -> node_vec_to_string());
+  // find(150153) -> second -> m_path_vec.front() -> node_vec_to_string());
   return _path_table;
 }
 

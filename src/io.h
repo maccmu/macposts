@@ -47,7 +47,7 @@ public:
                            MNM_ConfReader *conf_reader,
                            MNM_OD_Factory *od_factory,
                            const std::string &file_name = "MNM_input_demand");
-  static Path_Table *load_path_table (const std::string &file_name,
+  static Path_Table *load_path_table (const std::string &node_seq_file_name,
                                       const macposts::Graph &graph,
                                       TInt num_path, bool w_buffer = false,
                                       bool w_ID = false);
