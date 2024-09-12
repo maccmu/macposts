@@ -705,6 +705,7 @@ save_path_table (const std::string &file_folder, Path_Table *path_table,
                  MNM_OD_Factory *od_factory, bool w_buffer, bool w_cost)
 {
   std::string _path_file_name = file_folder + "/path_table";
+  std::string _link_seq_file_name = _path_file_name + "_link_seq";
   std::ofstream _path_buffer_file;
   if (w_buffer)
     {
@@ -715,11 +716,16 @@ save_path_table (const std::string &file_folder, Path_Table *path_table,
           throw std::runtime_error ("failed to open file: " + _data_file_name);
         }
     }
-  std::ofstream _path_table_file;
+  std::ofstream _path_table_file, _path_table_link_seq_file;
   _path_table_file.open (_path_file_name, std::ofstream::out);
   if (!_path_table_file.is_open ())
     {
       throw std::runtime_error ("failed to open file: " + _path_file_name);
+    }
+  _path_table_link_seq_file.open (_link_seq_file_name, std::ofstream::out);
+  if (!_path_table_link_seq_file.is_open ())
+    {
+      throw std::runtime_error ("failed to open file: " + _link_seq_file_name);
     }
 
   std::ofstream _path_time_file;
@@ -751,6 +757,7 @@ save_path_table (const std::string &file_folder, Path_Table *path_table,
           for (auto &_path : _d_it.second->m_path_vec)
             {
               _path_table_file << _path->node_vec_to_string ();
+              _path_table_link_seq_file << _path -> link_vec_to_string ();
               // printf("test2\n");
               if (w_buffer)
                 {
@@ -766,6 +773,7 @@ save_path_table (const std::string &file_folder, Path_Table *path_table,
         }
     }
   _path_table_file.close ();
+  _path_table_link_seq_file.close ();
   if (w_buffer)
     {
       _path_buffer_file.close ();
@@ -812,7 +820,8 @@ print_path_table (Path_Table *path_table, MNM_OD_Factory *od_factory,
         {
           for (auto &_path : _d_it.second->m_path_vec)
             {
-              std::cout << "path: " << _path->node_vec_to_string ();
+              std::cout << "path (node seq): " << _path->node_vec_to_string ();
+              std::cout << "path (link seq): " << _path->link_vec_to_string ();
               // printf("test2\n");
               if (w_buffer)
                 {

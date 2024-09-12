@@ -11801,6 +11801,8 @@ MNM_Passenger_Path_Driving::info2str ()
     }
   // <driving_node_sequence>, \n included
   _s += std::string ("<") + m_path->node_vec_to_string ();
+  // TODO: <driving_link_sequence>, in case of a multigraph, \n included
+  // _s += std::string ("<") + m_path->link_vec_to_string ();
   _s.pop_back ();
   _s += std::string (">") + " ";
   // <bus_transit_link_sequence>, \n included
@@ -12304,6 +12306,8 @@ MNM_Passenger_Path_PnR::info2str ()
   _s += std::to_string (m_mid_parking_lot->m_ID) + " ";
   // <driving_node_sequence>, \n included
   _s += std::string ("<") + m_path->m_driving_path->node_vec_to_string ();
+  // TODO: <driving_link_sequence>, in case of a multigraph, \n included
+  // _s += std::string ("<") + m_path->m_driving_path->link_vec_to_string ();
   _s.pop_back ();
   _s += std::string (">") + " ";
   // <bus_or_metro_transit_link_sequence>, \n included
@@ -12446,6 +12450,8 @@ MNM_Passenger_Path_RnD::info2str ()
   _s += std::string (">") + " ";
   // <driving_node_sequence>, \n included
   _s += std::string ("<") + m_path->m_driving_path->node_vec_to_string ();
+  // TODO: <driving_link_sequence>, in case of a multigraph, \n included
+  // _s += std::string ("<") + m_path->m_driving_path->link_vec_to_string ();
   _s.pop_back ();
   _s += std::string (">\n");
   return _s;
@@ -14627,7 +14633,7 @@ save_driving_path_table (const std::string &file_folder, Path_Table *path_table,
                          const std::string &buffer_file_name, bool w_buffer)
 {
   std::string _path_table_file_name = file_folder + "/" + path_file_name;
-
+  std::string _path_table_link_seq_file_name = _path_table_file_name + "_link_seq";
   std::ofstream _path_buffer_file;
   if (w_buffer)
     {
@@ -14640,11 +14646,16 @@ save_driving_path_table (const std::string &file_folder, Path_Table *path_table,
         }
     }
 
-  std::ofstream _path_table_file;
+  std::ofstream _path_table_file, _path_table_link_seq_file;
   _path_table_file.open (_path_table_file_name, std::ofstream::out);
   if (!_path_table_file.is_open ())
     {
       throw std::runtime_error ("Error happens when open _path_table_file");
+    }
+  _path_table_link_seq_file.open (_path_table_link_seq_file_name, std::ofstream::out);
+  if (!_path_table_link_seq_file.is_open ())
+    {
+      throw std::runtime_error ("Error happens when open _path_table_link_seq_file");
     }
 
   // path
@@ -14655,6 +14666,7 @@ save_driving_path_table (const std::string &file_folder, Path_Table *path_table,
           for (auto _path : _d_it.second->m_path_vec)
             {
               _path_table_file << _path->node_vec_to_string ();
+              _path_table_link_seq_file << _path->link_vec_to_string ();
               // printf("test2\n");
               if (w_buffer)
                 {
@@ -14664,6 +14676,7 @@ save_driving_path_table (const std::string &file_folder, Path_Table *path_table,
         }
     }
   _path_table_file.close ();
+  _path_table_link_seq_file.close ();
   if (w_buffer)
     {
       _path_buffer_file.close ();
@@ -14737,7 +14750,7 @@ save_pnr_path_table (const std::string &file_folder, PnR_Path_Table *path_table,
                      const std::string &buffer_file_name, bool w_buffer)
 {
   std::string _path_table_file_name = file_folder + "/" + path_file_name;
-
+  // TODO: save driving part using link sequence in case it is a multigraph
   std::ofstream _path_buffer_file;
   if (w_buffer)
     {
