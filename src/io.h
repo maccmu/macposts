@@ -100,6 +100,11 @@ public:
                                     const std::string &file_name
                                     = "MNM_input_link_td_attribute");
 
+  static int build_node_td_cost (const std::string &file_folder,
+                                    MNM_Link_Factory *link_factory,
+                                    const std::string &file_name
+                                    = "MNM_input_node_td_cost");
+
   static int build_td_adaptive_ratio (const std::string &file_folder,
                                     MNM_ConfReader *conf_reader,
                                     MNM_OD_Factory *od_factory,

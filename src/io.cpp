@@ -739,7 +739,7 @@ MNM_IO::build_link_td_attribute (const std::string &file_folder,
 
   if (_file.is_open ())
     {
-      printf ("Start build time-dependent link attribute.\n");
+      std::cout << "Start build time-dependent link attribute." << std::endl;
       std::getline (_file, _line); // #link_ID toll_car toll_truck
       int i = 0;
       while (std::getline (_file, _line))
@@ -806,12 +806,90 @@ MNM_IO::build_link_td_attribute (const std::string &file_folder,
           ++i;
         }
       _file.close ();
-      printf ("Finish build time-dependent link attribute.\n");
+      std::cout << "Finish build time-dependent link attribute." << std::endl;
     }
   else
     {
-      printf ("No time-dependent link attribute.\n");
+      std::cout << "No time-dependent link attribute." << std::endl;
     }
+  return 0;
+}
+
+int 
+MNM_IO::build_node_td_cost (const std::string &file_folder,
+                            MNM_Link_Factory *link_factory,
+                            const std::string &file_name)
+{
+  /* find file */
+  std::string _file_name = file_folder + "/" + file_name;
+  std::ifstream _file;
+  _file.open (_file_name, std::ios::in);
+
+  std::string _line;
+  std::vector<std::string> _words;
+  TInt _interval, _in_link_ID, _out_link_ID;
+  TFlt _cost;
+
+  auto td_node_cost_table
+    = dynamic_cast<MNM_Link_Factory *> (link_factory)
+        ->m_td_node_cost_table;
+
+  if (_file.is_open()) {
+    std::cout << "Start build time-dependent node cost." << std::endl;
+    std::getline (_file, _line); // #link_ID toll_car toll_truck
+    int i = 0;
+    while (std::getline (_file, _line))
+      {
+        // std::getline (_file, _line);
+        // std::cout << "Processing: " << _line << "\n";
+
+        _words = split (_line, ' ');
+        if (TInt (_words.size ()) == 4)
+          {
+            _interval = TInt (std::stoi (_words[0]));
+            _in_link_ID = TInt (std::stoi (_words[1]));
+            _out_link_ID = TInt (std::stoi (_words[2]));
+            _cost = TFlt (std::stod (_words[3]));
+
+            if (td_node_cost_table->find (_interval)
+                == td_node_cost_table->end ())
+              {
+                td_node_cost_table->insert (
+                  std::make_pair (_interval,
+                                  new std::unordered_map<int, std::unordered_map<int, float>*> ()));
+              }
+            if (td_node_cost_table->find (_interval)->second->find (
+                  _in_link_ID)
+                == td_node_cost_table->find (_interval)->second->end ())
+              {
+                td_node_cost_table->find (_interval)->second->insert (
+                  std::make_pair (_in_link_ID, new std::unordered_map<int, float> ()));
+              }
+            if (td_node_cost_table->find (_interval)->second->find (
+                  _in_link_ID) -> second -> find(_out_link_ID)
+                == td_node_cost_table->find (_interval)->second->find(_in_link_ID) -> second -> end ())
+              {
+                td_node_cost_table->find (_interval)->second->find(_in_link_ID) -> second -> insert (
+                  std::make_pair (_out_link_ID, _cost));
+              }
+            else {
+              throw std::runtime_error ("at interval " + std::to_string(_interval) + " in_link " + std::to_string(_in_link_ID) + " to out_link " + std::to_string(_out_link_ID) + " already exists");
+            }
+
+          }
+        else
+          {
+            std::cout << _line << std::endl;
+            throw std::runtime_error ("failed to parse line: " + _line);
+          }
+        ++i;
+      }
+    _file.close ();
+    std::cout << "Finish build time-dependent node cost." << std::endl;
+  }
+  else {
+    std::cout << "No time-dependent node cost." << std::endl;
+  }
   return 0;
 }
 

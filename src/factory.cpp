@@ -131,6 +131,8 @@ MNM_Link_Factory::MNM_Link_Factory ()
   m_link_map = std::unordered_map<TInt, MNM_Dlink *> ();
   m_td_link_attribute_table = new std::unordered_map<
     int, std::unordered_map<int, td_link_attribute_row *> *> ();
+  m_td_node_cost_table = new std::unordered_map<
+    int, std::unordered_map<int, std::unordered_map<int, float> *> *>();
 }
 
 MNM_Link_Factory::~MNM_Link_Factory ()
@@ -144,6 +146,21 @@ MNM_Link_Factory::~MNM_Link_Factory ()
       _it.second->clear ();
     }
   m_td_link_attribute_table->clear ();
+  delete m_td_link_attribute_table;
+
+  // Clear m_td_node_cost_table
+  for (auto _it : *m_td_node_cost_table)
+  {
+    for (auto _it_it : *(_it.second))
+    {
+      _it_it.second -> clear();
+      delete _it_it.second;
+    }
+    _it.second->clear();
+    delete _it.second;
+  }
+  m_td_node_cost_table->clear();
+  delete m_td_node_cost_table;
   
   for (auto _map_it = m_link_map.begin (); _map_it != m_link_map.end ();
        _map_it++)
@@ -212,6 +229,28 @@ MNM_Link_Factory::delete_link (TInt ID)
   m_link_map.erase (_map_it);
   return 0;
 }
+
+int
+MNM_Link_Factory::update_link_attribute(TInt interval, bool verbose)
+{
+    if (m_td_link_attribute_table->find (interval)
+      != m_td_link_attribute_table->end ())
+    {
+      for (auto _it : *(m_td_link_attribute_table->find (interval)->second))
+        {
+          auto _link = m_link_map.find (_it.first)->second;
+          _link->modify_property (_it.second->Lane, _it.second->length,
+                                  _it.second->RHOJ,
+                                  _it.second->Cap,
+                                  _it.second->FFS);
+          _link->m_toll = _it.second->toll;
+          if (verbose)
+            printf ("link %d attribute updated\n", _it.first);
+        }
+    }
+    return 0; // or appropriate return value
+}
+
 /**************************************************************************
                           OD factory
 **************************************************************************/

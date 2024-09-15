@@ -47,6 +47,18 @@ MNM_Dlink::~MNM_Dlink ()
     delete m_N_out_tree;
 }
 
+int 
+MNM_Dlink::modify_property (TInt number_of_lane, TFlt length,
+                            TFlt lane_hold_cap_car,
+                            TFlt lane_flow_cap,
+                            TFlt ffs)
+{
+  m_number_of_lane = number_of_lane;
+  m_length = length;
+  m_ffs = ffs;
+  return 0;
+}
+
 TFlt
 MNM_Dlink::get_link_freeflow_tt ()
 {

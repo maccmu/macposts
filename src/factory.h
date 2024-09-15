@@ -63,13 +63,14 @@ public:
                                 TFlt unit_time, TFlt flow_scalar);
   MNM_Dlink *get_link (TInt ID);
   int delete_link (TInt ID);
-  virtual int update_link_attribute (TInt interval, bool verbose = false)
-  {
-    return 0;
-  };
+  virtual int update_link_attribute (TInt interval, bool verbose = false);
   std::unordered_map<TInt, MNM_Dlink *> m_link_map;
+  // <interval, <link_ID, attribute>>
   std::unordered_map<int, std::unordered_map<int, td_link_attribute_row *> *>
     *m_td_link_attribute_table;
+  // <interval, <in_link_ID, <out_link_ID, cost>>>
+  std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, float> *> *>
+    *m_td_node_cost_table;
 };
 
 class MNM_OD_Factory
