@@ -9769,6 +9769,7 @@ MNM_Dta_Multimodal::build_from_files ()
   MNM_IO_Multiclass::build_link_toll_multiclass (m_file_folder, m_config,
                                                  m_link_factory);
   MNM_IO_Multiclass::build_link_td_attribute (m_file_folder, m_link_factory);
+  MNM_IO::build_node_td_cost(m_file_folder, m_link_factory);
   MNM_IO_Multiclass::build_td_adaptive_ratio(m_file_folder, m_config, m_od_factory);
   // build_workzone();
   m_workzone = nullptr;

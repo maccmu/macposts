@@ -527,7 +527,7 @@ public:
 
   virtual int update_link_attribute (TInt interval,
                                      bool verbose = false) override;
-
+  // <interval, <link_ID, attribute>>
   std::unordered_map<int, std::unordered_map<int, td_link_attribute_row_biclass *> *>
     *m_td_link_attribute_table;
 };

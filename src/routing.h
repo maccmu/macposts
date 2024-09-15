@@ -51,10 +51,12 @@ public:
   virtual ~MNM_Routing_Adaptive () override;
   virtual int init_routing (Path_Table *path_table = nullptr) override;
   virtual int update_link_cost ();
+  virtual int update_node_cost (int interval);
   virtual int update_routing (TInt timestamp) override;
   // private:
   MNM_Statistics *m_statistics;
   std::unordered_map<TInt, TFlt> m_link_cost;
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> m_node_cost;
   Routing_Table *m_table;
   TInt m_routing_freq;
   TFlt m_vot;

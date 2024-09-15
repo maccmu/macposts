@@ -82,6 +82,11 @@ public:
   int install_cumulative_curve ();
   int install_cumulative_curve_tree ();
 
+  virtual int modify_property (TInt number_of_lane, TFlt length,
+                               TFlt lane_hold_cap_car,
+                               TFlt lane_flow_cap,
+                               TFlt ffs);
+
   // protected:
   DLink_type m_link_type;
   TInt m_link_ID;
@@ -123,6 +128,14 @@ public:
   virtual TFlt get_link_tt () override;
   virtual TFlt get_link_tt_from_flow (TFlt flow) override;
   virtual TInt get_link_freeflow_tt_loading () override; // intervals
+  // TODO: modify_property
+  virtual int modify_property (TInt number_of_lane, TFlt length,
+                               TFlt lane_hold_cap_car,
+                               TFlt lane_flow_cap,
+                               TFlt ffs) override
+  {
+    throw std::runtime_error("MNM_Dlink_Ctm::modify_property() not implemented");
+  }
 
   // private:
   class Ctm_Cell;
@@ -175,7 +188,14 @@ public:
   virtual TFlt get_link_tt () override;
   virtual TFlt get_link_tt_from_flow (TFlt flow) override;
   virtual TInt get_link_freeflow_tt_loading () override; // intervals
-
+  // TODO: modify_property
+  virtual int modify_property (TInt number_of_lane, TFlt length,
+                               TFlt lane_hold_cap_car,
+                               TFlt lane_flow_cap,
+                               TFlt ffs) override
+  {
+    throw std::runtime_error("MNM_Dlink_Pq::modify_property() not implemented");
+  }
   // private:
   std::deque<std::pair<MNM_Veh *, TInt>> m_veh_queue;
   TInt m_volume; // vehicle number, without the flow scalar
@@ -206,6 +226,14 @@ public:
   virtual TFlt get_link_tt () override;
   virtual TFlt get_link_tt_from_flow (TFlt flow) override;
   virtual TInt get_link_freeflow_tt_loading () override; // intervals
+  // TODO: modify_property
+  virtual int modify_property (TInt number_of_lane, TFlt length,
+                               TFlt lane_hold_cap_car,
+                               TFlt lane_flow_cap,
+                               TFlt ffs) override
+  {
+    throw std::runtime_error("MNM_Dlink_Lq::modify_property() not implemented");
+  }
 
   // private:
   std::deque<MNM_Veh *> m_veh_queue;
@@ -242,6 +270,14 @@ public:
   virtual TFlt get_link_tt () override;
   virtual TFlt get_link_tt_from_flow (TFlt flow) override;
   virtual TInt get_link_freeflow_tt_loading () override; // intervals
+  // TODO: modify_property
+  virtual int modify_property (TInt number_of_lane, TFlt length,
+                               TFlt lane_hold_cap_car,
+                               TFlt lane_flow_cap,
+                               TFlt ffs) override
+  {
+    throw std::runtime_error("MNM_Dlink_Ltm::modify_property() not implemented");
+  }
 
   // private:
   std::deque<MNM_Veh *> m_veh_queue;

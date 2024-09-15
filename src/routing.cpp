@@ -128,6 +128,7 @@ MNM_Routing_Adaptive::MNM_Routing_Adaptive (const std::string &file_folder,
 
   m_table = new Routing_Table ();
   m_link_cost = std::unordered_map<TInt, TFlt> ();
+  m_node_cost = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
 }
 
 MNM_Routing_Adaptive::~MNM_Routing_Adaptive ()
@@ -144,6 +145,10 @@ MNM_Routing_Adaptive::~MNM_Routing_Adaptive ()
   m_table->clear ();
   delete m_table;
   m_link_cost.clear ();
+  for (auto &_it : m_node_cost) {
+    _it.second.clear();
+  }
+  m_node_cost.clear();
   delete m_self_config;
 }
 
@@ -195,6 +200,33 @@ MNM_Routing_Adaptive::update_link_cost ()
 }
 
 int
+MNM_Routing_Adaptive::update_node_cost (int interval)
+{
+  if (m_link_factory -> m_td_node_cost_table -> find(interval) != m_link_factory -> m_td_node_cost_table ->end()) {
+    for (auto &_it : m_node_cost) {
+      _it.second.clear();
+    }
+    m_node_cost.clear();
+    for (auto _it : *m_link_factory -> m_td_node_cost_table -> at(interval)) {
+      if (m_node_cost.find(_it.first) == m_node_cost.end()) {
+        m_node_cost.insert(std::make_pair(_it.first, std::unordered_map<int, TFlt>()));
+      }
+      for (auto _it_it: *_it.second) {
+        if (m_node_cost.find(_it.first) -> second.find(_it_it.first) == m_node_cost.find(_it.first) -> second.end()) {
+          m_node_cost.find(_it.first) -> second.insert(std::make_pair(_it_it.first, _it_it.second));
+        }
+        else {
+          throw std::runtime_error("Error: Node cost already exists for in link " + std::to_string(_it.first) + " and out link " + std::to_string(_it_it.first));
+        }
+      }
+      
+    }
+
+  }
+  return 0;
+}
+
+int
 MNM_Routing_Adaptive::update_routing (TInt timestamp)
 {
   // relying on m_statistics -> m_record_interval_tt, which is obtained in
@@ -207,6 +239,7 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
     {
       // printf("Calculating the shortest path trees!\n");
       update_link_cost ();
+      update_node_cost (timestamp);
       for (auto _it = m_od_factory->m_destination_map.begin ();
            _it != m_od_factory->m_destination_map.end (); _it++)
         {
@@ -216,8 +249,14 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
           _dest_node_ID = _dest->m_dest_node->m_node_ID;
           // printf("Destination ID: %d\n", (int) _dest_node_ID);
           _shortest_path_tree = m_table->find (_dest)->second;
+          // // link cost only
+          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
+          //                                     m_link_cost,
+          //                                     *_shortest_path_tree);
+          // link cost + node cost
           MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
                                               m_link_cost,
+                                              m_node_cost,
                                               *_shortest_path_tree);
           // MNM_Shortest_Path::all_to_one_FIFO(_dest_node_ID, m_graph,
           // m_statistics -> m_record_interval_tt, *_shortest_path_tree);

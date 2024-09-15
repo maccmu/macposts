@@ -3432,6 +3432,8 @@ MNM_Link_Factory_Multiclass::MNM_Link_Factory_Multiclass ()
 {
   m_td_link_attribute_table = new std::unordered_map<
     int, std::unordered_map<int, td_link_attribute_row_biclass *> *> ();
+  m_td_node_cost_table = new std::unordered_map<
+    int, std::unordered_map<int, std::unordered_map<int, float> *> *> ();
 }
 
 MNM_Link_Factory_Multiclass::~MNM_Link_Factory_Multiclass ()
@@ -3445,6 +3447,7 @@ MNM_Link_Factory_Multiclass::~MNM_Link_Factory_Multiclass ()
       _it.second->clear ();
     }
   m_td_link_attribute_table->clear ();
+  delete m_td_link_attribute_table;
 }
 
 MNM_Dlink *
@@ -4421,6 +4424,7 @@ MNM_Dta_Multiclass::build_from_files ()
   MNM_IO_Multiclass::build_link_toll_multiclass (m_file_folder, m_config,
                                                  m_link_factory);
   MNM_IO_Multiclass::build_link_td_attribute (m_file_folder, m_link_factory);
+  MNM_IO::build_node_td_cost(m_file_folder, m_link_factory);
   MNM_IO_Multiclass::build_td_adaptive_ratio(m_file_folder, m_config, m_od_factory);
   // build_workzone();
   m_workzone = nullptr;
@@ -5617,6 +5621,8 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
 
   std::unordered_map<TInt, TFlt> _free_cost_map
     = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map
+    = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   std::unordered_map<TInt, TInt> _free_shortest_path_tree
     = std::unordered_map<TInt, TInt> ();
   MNM_Path *_path;
@@ -5628,12 +5634,34 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                                vot * _link_it->second->get_link_tt ()
                                  + _link_it->second->m_toll));
     }
+  // use max node cost
+  for (auto _it : *link_factory -> m_td_node_cost_table) {
+      for (auto _it_it : *_it.second) {
+        if (_node_cost_map.find(_it_it.first) == _node_cost_map.end()) {
+          _node_cost_map.insert(std::make_pair(_it_it.first, std::unordered_map<int, TFlt>()));
+        }
+        for (auto _it_it_it: *_it_it.second) {
+          if (_node_cost_map.find(_it_it.first) -> second.find(_it_it_it.first) == _node_cost_map.find(_it_it.first) -> second.end()) {
+            _node_cost_map.find(_it_it.first) -> second.insert(std::make_pair(_it_it_it.first, _it_it_it.second));
+          }
+          else {
+            if (_node_cost_map.find(_it_it.first) -> second.find(_it_it_it.first) -> second < _it_it_it.second) {
+              _node_cost_map.find(_it_it.first) -> second.find(_it_it_it.first) -> second = _it_it_it.second;
+            }
+          }
+        }
+      }
+  }
   // printf("1111\n");
   for (auto _d_it = od_factory->m_destination_map.begin ();
        _d_it != od_factory->m_destination_map.end (); _d_it++)
     {
       _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
+      // // link cost only
+      // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
+      //                                     _free_shortest_path_tree);
+      // link cost + node cost
+      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map, _node_cost_map,
                                           _free_shortest_path_tree);
       for (auto _o_it = od_factory->m_origin_map.begin ();
            _o_it != od_factory->m_origin_map.end (); _o_it++)
@@ -5712,14 +5740,24 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
           _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
           if (Mid_Scale > 1)
             {
+              // // link cost
+              // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+              //                                     _mid_cost_map,
+              //                                     _mid_shortest_path_tree);
+              // link cost + node cost
               MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                                  _mid_cost_map,
+                                                  _mid_cost_map, _node_cost_map,
                                                   _mid_shortest_path_tree);
             }
           if (Heavy_Scale > 1)
             {
+              // // link cost
+              // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+              //                                     _heavy_cost_map,
+              //                                     _heavy_shortest_path_tree);
+              // link cost + node cost
               MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                                  _heavy_cost_map,
+                                                  _heavy_cost_map, _node_cost_map,
                                                   _heavy_shortest_path_tree);
             }
           for (auto _o_it = od_factory->m_origin_map.begin ();
@@ -5807,6 +5845,12 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
 
   _free_cost_map.clear ();
   _free_shortest_path_tree.clear ();
+
+  // Clear _node_cost_map
+  for (auto &_it : _node_cost_map) {
+    _it.second.clear();
+  }
+  _node_cost_map.clear();
 
   return _path_table;
 }
