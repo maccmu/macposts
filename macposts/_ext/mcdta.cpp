@@ -2765,7 +2765,7 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
   for (int i = 0; i < num_links; ++i)
     {
       // generate new path including this link
-      auto &&sd = m_mcdta->m_graph.get_endpoints (m_link_vec[i]->m_link_ID);
+      auto &&sd = m_mcdta->m_graph.get_endpoints (links_ptr[i]);
       _from_node_ID = m_mcdta->m_graph.get_id (sd.first);
       _to_node_ID = m_mcdta->m_graph.get_id (sd.second);
 
