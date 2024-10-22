@@ -52,6 +52,7 @@ add_library(macposts STATIC
   src/io.cpp
   src/marginal_cost.cpp
   src/multiclass.cpp
+  src/multiclass_multi_route_graph.cpp
   src/multimodal.cpp
   src/od.cpp
   src/path.cpp
