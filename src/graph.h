@@ -129,8 +129,22 @@ public:
     const NId id;
 
   public:
+    // Delete copy constructor and assignment operator
     Node (const Node &) = delete;
     Node &operator= (const Node &) = delete;
+
+    // Move constructor, since we have unique_ptr members
+    // it is not std::move that actually moves anything. 
+    // it is the move constructor of std::unique_ptr that performs the actual move. std::move simply enables the call to the move constructor
+    Node(Node&& other) noexcept
+        : data(std::move(other.data)), // Move the NData member
+          next(other.next),           // Copy the pointers (they are not owned by Node)
+          id(other.id)                // Copy the ID (it's const and cannot be moved)
+    {
+        // Since 'next' is an array of pointers, we don't need to move them.
+        // They are just pointers, not owning resources.
+        // If 'next' were owning pointers (like std::unique_ptr), you would need to move them.
+    }
 
   private:
     explicit Node (NId id, NData data)
@@ -153,8 +167,23 @@ public:
     const LId id;
 
   public:
+    // Delete copy constructor and assignment operator
     Link (const Link &) = delete;
     Link &operator= (const Link &) = delete;
+
+    // Move constructor, since we have unique_ptr members
+    // it is not std::move that actually moves anything. 
+    // it is the move constructor of std::unique_ptr that performs the actual move. std::move simply enables the call to the move constructor
+    Link(Link&& other) noexcept
+        : data(std::move(other.data)), // Move the LData member
+          endpoints(other.endpoints), // Copy the pointers (they are not owned by Link)
+          next(other.next),           // Copy the pointers (they are not owned by Link)
+          id(other.id)                // Copy the ID (it's const and cannot be moved)
+    {
+        // Since 'endpoints' and 'next' are arrays of pointers, we don't need to move them.
+        // They are just pointers, not owning resources.
+        // If 'endpoints' or 'next' were owning pointers (like std::unique_ptr), you would need to move them.
+    }
 
   private:
     explicit Link (LId id, LData data)
@@ -482,6 +511,27 @@ public:
 
   // Graph methods
   explicit Graph () : nodes_ (), links_ () {}
+
+  // Move constructor
+  Graph(Graph&& other) noexcept
+      : nodes_(std::move(other.nodes_)),
+        links_(std::move(other.links_)) {
+      // Optionally, reset the other object's resources to a valid state
+      other.nodes_.clear();
+      other.links_.clear();
+  }
+
+  // Move assignment operator "="
+  Graph& operator=(Graph&& other) noexcept {
+      if (this != &other) {  // Self-assignment check
+          nodes_ = std::move(other.nodes_);
+          links_ = std::move(other.links_);
+          // Optionally, reset the other object's resources to a valid state
+          other.nodes_.clear();
+          other.links_.clear();
+      }
+      return *this;
+  }
 
   // Add a node
   Node &add_node (NId id) { return add_node (id, NData ()); }
