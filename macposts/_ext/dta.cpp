@@ -31,7 +31,7 @@ public:
   bool check_input_files ();
   int generate_shortest_pathsets (const std::string &folder, int max_iter,
                                   double vot, double mid_scale,
-                                  double heavy_scale, double min_path_tt = 0.);
+                                  double heavy_scale, double min_path_tt = 0., bool ignore_disconnected_OD = false);
   int install_cc ();
   int install_cc_tree ();
   int run_whole (bool verbose = false);
@@ -251,7 +251,7 @@ Dta::check_input_files ()
 int
 Dta::generate_shortest_pathsets (const std::string &folder, int max_iter,
                                  double vot, double mid_scale,
-                                 double heavy_scale, double min_path_tt)
+                                 double heavy_scale, double min_path_tt, bool ignore_disconnected_OD)
 {
   m_dta = new MNM_Dta (folder);
   m_dta->build_from_files ();
@@ -261,7 +261,7 @@ Dta::generate_shortest_pathsets (const std::string &folder, int max_iter,
     = MNM::build_pathset (m_dta->m_graph, m_dta->m_od_factory,
                           m_dta->m_link_factory, min_path_tt, max_iter, vot,
                           mid_scale, heavy_scale,
-                          m_dta->m_config->get_int ("max_interval"));
+                          m_dta->m_config->get_int ("max_interval"), ignore_disconnected_OD);
   printf ("driving pathset generated\n");
   MNM::save_driving_path_table (folder, _driving_path_table, "path_table",
                                 "path_table_buffer", true);
