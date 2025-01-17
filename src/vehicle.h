@@ -33,6 +33,10 @@ public:
   {
     return m_class;
   }; // virtual getter for derived class
+  virtual TInt get_subclass ()
+  {
+    return m_subclass;
+  }; // virtual getter for derived class
   virtual TInt get_bus_route_ID ()
   {
     return m_bus_route_ID;
@@ -73,7 +77,7 @@ public:
   TInt m_bus_route_ID;
   // m_pnr only used in multimodal loading
   bool m_pnr;
-
+  TInt m_subclass; // only used in multiclass_subclass loading
   // m_label only used with registration data
   TInt m_label = -1;
 };

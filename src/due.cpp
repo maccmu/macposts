@@ -426,7 +426,7 @@ MNM_Due_Msa::initialize ()
   m_path_table
     = MNM::build_pathset (m_base_dta->m_graph, m_base_dta->m_od_factory,
                           m_base_dta->m_link_factory, 0, 0, m_vot / m_unit_time,
-                          1, 1, m_total_assign_inter);
+                          1, 1, m_total_assign_inter, false);
   // MNM::save_path_table(m_path_table, m_base_dta -> m_od_factory, true);
 
   for (auto _link_it : m_base_dta->m_link_factory->m_link_map)
