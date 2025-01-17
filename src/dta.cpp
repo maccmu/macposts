@@ -149,12 +149,14 @@ MNM_Dta::set_routing ()
                                             m_node_factory, m_link_factory);
       m_routing->init_routing ();
     }
-
+  // TODO: not tested yet since no one uses this
   else if (m_config->get_string ("routing_type") == "Predetermined")
     {
       // single class
       Path_Table *_path_table
-        = MNM::build_pathset (m_graph, m_od_factory, m_link_factory);
+        = MNM::build_pathset (m_graph, m_od_factory, m_link_factory, 0.0, 0,
+                              20., 3,
+                              6, -1, false);
       MNM_Pre_Routing *_pre_routing
         = new MNM_Pre_Routing (_path_table, m_od_factory);
       m_routing
@@ -198,8 +200,6 @@ MNM_Dta::set_routing ()
 
   else if (m_config->get_string ("routing_type") == "Due")
     {
-      // Path_Table *_path_table = MNM::build_pathset(m_graph, m_od_factory,
-      // m_link_factory);
       MNM_ConfReader *_tmp_conf
         = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
       // no existing path_table, use column generation

@@ -5571,7 +5571,7 @@ Path_Table *
 build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                           MNM_Link_Factory *link_factory, TFlt min_path_length,
                           size_t MaxIter, TFlt vot, TFlt Mid_Scale,
-                          TFlt Heavy_Scale, TInt buffer_length)
+                          TFlt Heavy_Scale, TInt buffer_length, bool ignore_disconnected_OD)
 {
   // printf("11\n");
   // MaxIter: maximum iteration to find alternative shortest path, when MaxIter
@@ -5692,9 +5692,17 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
             }
           else
             {
-              throw std::runtime_error (
-                "no path between origin " + std::to_string (_origin_node_ID)
-                + " and destination " + std::to_string (_dest_node_ID));
+              if (ignore_disconnected_OD) {
+                std::cout << "no path between origin " << _origin_node_ID
+                          << " and destination " << _dest_node_ID << std::endl;
+                std::cout << "ignore this OD pair" << std::endl;
+                continue;
+              }
+              else {
+                throw std::runtime_error (
+                  "no path between origin " + std::to_string (_origin_node_ID)
+                  + " and destination " + std::to_string (_dest_node_ID));
+              }
             }
         }
     }

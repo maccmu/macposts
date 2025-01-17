@@ -11,6 +11,7 @@ MNM_Veh::MNM_Veh (TInt ID, TInt start_time)
   m_assign_interval = -1;
   m_path = nullptr;
   m_class = TInt (0);
+  m_subclass = -1;
   m_bus_route_ID = TInt (-1);
   m_pnr = false;
   m_tracked = false;

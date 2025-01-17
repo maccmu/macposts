@@ -448,16 +448,11 @@ public:
   MNM_Veh_Multiclass (TInt ID, TInt vehicle_class, TInt start_time);
   virtual ~MNM_Veh_Multiclass ();
 
-  virtual TInt get_class () override { return m_class; }; // virtual getter
-  virtual TInt get_bus_route_ID () override
-  {
-    return m_bus_route_ID;
-  };                                                    // virtual getter
-  virtual bool get_ispnr () override { return m_pnr; }; // virtual getter
-  virtual TInt get_label () override
-  {
-    return m_label;
-  }; // virtual getter for derived class
+  // virtual getter
+  virtual TInt get_class () override { return m_class; }; 
+  virtual TInt get_bus_route_ID () override { return m_bus_route_ID;};  
+  virtual bool get_ispnr () override { return m_pnr; };
+  virtual TInt get_label () override {return m_label;}; // virtual getter for derived class for emission analysis
 
   TInt m_class;
 };
@@ -743,7 +738,7 @@ Path_Table *build_pathset_multiclass (macposts::Graph &graph,
                                       TFlt min_path_length = 0.0,
                                       size_t MaxIter = 10, TFlt vot = 6.,
                                       TFlt Mid_Scale = 3, TFlt Heavy_Scale = 6,
-                                      TInt buffer_length = -1);
+                                      TInt buffer_length = -1, bool ignore_disconnected_OD = false);
 
 int print_vehicle_route_results (
   MNM_Veh_Factory_Multiclass *veh_factory, const std::string &folder,

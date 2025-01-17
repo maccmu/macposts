@@ -308,13 +308,11 @@ public:
 
   int board_and_alight (TInt timestamp, MNM_Busstop *busstop);
 
-  virtual TInt get_class () override { return m_class; }; // virtual getter
-  virtual TInt get_bus_route_ID () override
-  {
-    return m_bus_route_ID;
-  };                                                      // virtual getter
-  virtual bool get_ispnr () override { return m_pnr; };   // virtual getter
-  virtual TInt get_label () override { return m_label; }; // virtual getter
+  // virtual getter
+  virtual TInt get_class () override { return m_class; }; 
+  virtual TInt get_bus_route_ID () override { return m_bus_route_ID;};  
+  virtual bool get_ispnr () override { return m_pnr; };
+  virtual TInt get_label () override {return m_label;}; // virtual getter for derived class for emission analysis
 
   TInt m_capacity;
   TInt m_bus_route_ID;

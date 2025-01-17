@@ -432,22 +432,28 @@ MNM_Routing_Fixed::~MNM_Routing_Fixed ()
     }
   m_tracker.clear ();
 
-  if ((m_path_table != nullptr) && (!m_path_table->empty ()))
-    {
-      // printf("Address of m_path_table is %p\n", (void *)m_path_table);
-      // printf("%d\n", m_path_table -> size());
-      for (auto _it : *m_path_table)
-        {
-          for (auto _it_it : *(_it.second))
-            {
-              delete _it_it.second;
-            }
-          _it.second->clear ();
-          delete _it.second;
-        }
-      m_path_table->clear ();
-      delete m_path_table;
-    }
+  try {
+    if ((m_path_table != nullptr) && (!m_path_table->empty ()))
+      {
+        // printf("Address of m_path_table is %p\n", (void *)m_path_table);
+        // printf("%d\n", m_path_table -> size());
+        for (auto _it : *m_path_table)
+          {
+            for (auto _it_it : *(_it.second))
+              {
+                delete _it_it.second;
+              }
+            _it.second->clear ();
+            delete _it.second;
+          }
+        m_path_table->clear ();
+        delete m_path_table;
+      }
+  }
+  catch (const std::exception& e) {
+      // Handle any exceptions that might occur during deletion or operations, e.g., double deletion
+      std::cerr << "Exception caught in MNM_Routing_Fixed: " << e.what() << std::endl;
+  }
 }
 
 int
