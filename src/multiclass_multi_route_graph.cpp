@@ -917,8 +917,8 @@ MNM_IO_Multiclass_Subclass::build_graph_vec (const std::string &file_folder,
 {
     // assume the first graph is an overarching graph, and each subsequent graph has a correspoinding path table
     // _num_graph does NOT inlcude the overarching graph
-    // macposts::Graph cannot be copied directly due to unique pointer used, so we use a vector of pointers to graphs
-    // std::vector<macposts::Graph*> graph_vec;
+    // macposts::Graph cannot be copied directly due to unique pointer used for nodes and links
+    // we add move constructor and assignment operator to macposts::Graph to enable this on 01/17/2025
     graph_vec.reserve(num_graph + 1);
 
     std::string _network_name = conf_reader->get_string ("network_name");
@@ -945,350 +945,350 @@ MNM_IO_Multiclass_Subclass::build_graph_vec (const std::string &file_folder,
     return 0;
 }
 
-/**************************************************************************
-                            DTA
-**************************************************************************/
-MNM_Dta_Multiclass_Subclass::MNM_Dta_Multiclass_Subclass (const std::string &file_folder)
-    : MNM_Dta_Multiclass::MNM_Dta_Multiclass (file_folder)
-{
-    initialize();
-    // assume the first graph is an overarching graph, and each subsequent graph has a correspoinding path table
-    // m_num_graph does NOT include the overarching graph
-    m_num_graph = m_config->get_int ("num_graph");
-    m_num_path_table = m_config->get_int ("num_path_table");
-    assert (m_num_graph == m_num_path_table);
-    m_num_subclass_car = m_config->get_int ("num_subclass_car");
-    m_num_subclass_truck = m_config->get_int ("num_subclass_truck");
+// /**************************************************************************
+//                             DTA
+// **************************************************************************/
+// MNM_Dta_Multiclass_Subclass::MNM_Dta_Multiclass_Subclass (const std::string &file_folder)
+//     : MNM_Dta_Multiclass::MNM_Dta_Multiclass (file_folder)
+// {
+//     initialize();
+//     // assume the first graph is an overarching graph, and each subsequent graph has a correspoinding path table
+//     // m_num_graph does NOT include the overarching graph
+//     m_num_graph = m_config->get_int ("num_graph");
+//     m_num_path_table = m_config->get_int ("num_path_table");
+//     assert (m_num_graph == m_num_path_table);
+//     m_num_subclass_car = m_config->get_int ("num_subclass_car");
+//     m_num_subclass_truck = m_config->get_int ("num_subclass_truck");
 
-    m_graph_vec = std::vector<macposts::Graph> ();
+//     m_graph_vec = std::vector<macposts::Graph> ();
 
-    m_subclass_car_graph_mapping = std::unordered_map<int, int> ();
-    m_subclass_car_path_table_mapping = std::unordered_map<int, int> ();
-    m_path_table_subclass_car_mapping = std::unordered_map<int, std::vector<int>> ();
+//     m_subclass_car_graph_mapping = std::unordered_map<int, int> ();
+//     m_subclass_car_path_table_mapping = std::unordered_map<int, int> ();
+//     m_path_table_subclass_car_mapping = std::unordered_map<int, std::vector<int>> ();
 
-    m_subclass_truck_graph_mapping = std::unordered_map<int, int> ();
-    m_subclass_truck_path_table_mapping = std::unordered_map<int, int> ();
-    m_path_table_subclass_truck_mapping = std::unordered_map<int, std::vector<int>> ();
+//     m_subclass_truck_graph_mapping = std::unordered_map<int, int> ();
+//     m_subclass_truck_path_table_mapping = std::unordered_map<int, int> ();
+//     m_path_table_subclass_truck_mapping = std::unordered_map<int, std::vector<int>> ();
 
-    std::string _line;
-    std::vector<std::string> _words;
+//     std::string _line;
+//     std::vector<std::string> _words;
 
-    _line = m_config->get_string("subclass_car_graph_mapping");
-    _words = MNM_IO::split (_line, ',');
-    if ((int)_words.size () != m_num_subclass_car) {
-        std::cout << "Error: car graph mapping size != _num_subclass_car" << std::endl;
-        exit (1);
-    }
-    for (int i = 0; i < m_num_subclass_car; ++i) {
-        m_subclass_car_graph_mapping.insert(std::make_pair(i, std::stoi (_words[i])));
-    }
-    _line = m_config->get_string("subclass_car_path_table_mapping");
-    _words = MNM_IO::split (_line, ',');
-    if ((int)_words.size () != m_num_subclass_car) {
-        std::cout << "Error: car path table mapping size != _num_subclass_car" << std::endl;
-        exit (1);
-    }
-    for (int i = 0; i < m_num_subclass_car; ++i) {
-        m_subclass_car_path_table_mapping.insert(std::make_pair(i, std::stoi (_words[i])));
-        if (m_path_table_subclass_car_mapping.find(std::stoi (_words[i])) == m_path_table_subclass_car_mapping.end ()) {
-            m_path_table_subclass_car_mapping.insert(std::make_pair(std::stoi (_words[i]), std::vector<int> ()));
-        }
-        m_path_table_subclass_car_mapping[std::stoi (_words[i])].push_back (i);
-    }
+//     _line = m_config->get_string("subclass_car_graph_mapping");
+//     _words = MNM_IO::split (_line, ',');
+//     if ((int)_words.size () != m_num_subclass_car) {
+//         std::cout << "Error: car graph mapping size != _num_subclass_car" << std::endl;
+//         exit (1);
+//     }
+//     for (int i = 0; i < m_num_subclass_car; ++i) {
+//         m_subclass_car_graph_mapping.insert(std::make_pair(i, std::stoi (_words[i])));
+//     }
+//     _line = m_config->get_string("subclass_car_path_table_mapping");
+//     _words = MNM_IO::split (_line, ',');
+//     if ((int)_words.size () != m_num_subclass_car) {
+//         std::cout << "Error: car path table mapping size != _num_subclass_car" << std::endl;
+//         exit (1);
+//     }
+//     for (int i = 0; i < m_num_subclass_car; ++i) {
+//         m_subclass_car_path_table_mapping.insert(std::make_pair(i, std::stoi (_words[i])));
+//         if (m_path_table_subclass_car_mapping.find(std::stoi (_words[i])) == m_path_table_subclass_car_mapping.end ()) {
+//             m_path_table_subclass_car_mapping.insert(std::make_pair(std::stoi (_words[i]), std::vector<int> ()));
+//         }
+//         m_path_table_subclass_car_mapping[std::stoi (_words[i])].push_back (i);
+//     }
 
 
-    _line = m_config->get_string("subclass_truck_graph_mapping");
-    _words = MNM_IO::split (_line, ',');
-    if ((int)_words.size () != m_num_subclass_truck) {
-        std::cout << "Error: truck graph mapping size != _num_subclass_truck" << std::endl;
-    }
-    for (int i = 0; i < m_num_subclass_truck; ++i) {
-        m_subclass_truck_graph_mapping.insert(std::make_pair(i, std::stoi (_words[i])));
-    }
-    _line = m_config->get_string("subclass_truck_path_table_mapping");
-    _words = MNM_IO::split (_line, ',');
-    if ((int)_words.size () != m_num_subclass_truck) {
-        std::cout << "Error: truck path table mapping size != _num_subclass_truck" << std::endl;
-        exit (1);
-    }
-    for (int i = 0; i < m_num_subclass_truck; ++i) {
-        m_subclass_truck_path_table_mapping.insert(std::make_pair(i, std::stoi (_words[i])));
-        if (m_path_table_subclass_truck_mapping.find(std::stoi (_words[i])) == m_path_table_subclass_truck_mapping.end ()) {
-            m_path_table_subclass_truck_mapping.insert(std::make_pair(std::stoi (_words[i]), std::vector<int> ()));
-        }
-        m_path_table_subclass_truck_mapping[std::stoi (_words[i])].push_back (i);
-    }
-}
+//     _line = m_config->get_string("subclass_truck_graph_mapping");
+//     _words = MNM_IO::split (_line, ',');
+//     if ((int)_words.size () != m_num_subclass_truck) {
+//         std::cout << "Error: truck graph mapping size != _num_subclass_truck" << std::endl;
+//     }
+//     for (int i = 0; i < m_num_subclass_truck; ++i) {
+//         m_subclass_truck_graph_mapping.insert(std::make_pair(i, std::stoi (_words[i])));
+//     }
+//     _line = m_config->get_string("subclass_truck_path_table_mapping");
+//     _words = MNM_IO::split (_line, ',');
+//     if ((int)_words.size () != m_num_subclass_truck) {
+//         std::cout << "Error: truck path table mapping size != _num_subclass_truck" << std::endl;
+//         exit (1);
+//     }
+//     for (int i = 0; i < m_num_subclass_truck; ++i) {
+//         m_subclass_truck_path_table_mapping.insert(std::make_pair(i, std::stoi (_words[i])));
+//         if (m_path_table_subclass_truck_mapping.find(std::stoi (_words[i])) == m_path_table_subclass_truck_mapping.end ()) {
+//             m_path_table_subclass_truck_mapping.insert(std::make_pair(std::stoi (_words[i]), std::vector<int> ()));
+//         }
+//         m_path_table_subclass_truck_mapping[std::stoi (_words[i])].push_back (i);
+//     }
+// }
 
-MNM_Dta_Multiclass_Subclass::~MNM_Dta_Multiclass_Subclass ()
-{
-    m_subclass_car_graph_mapping.clear ();
-    m_subclass_car_path_table_mapping.clear ();
-    m_subclass_truck_graph_mapping.clear ();
-    m_subclass_truck_path_table_mapping.clear ();
-    for (auto _it : m_path_table_subclass_car_mapping) {
-        _it.second.clear ();
-    }
-    m_path_table_subclass_car_mapping.clear ();
-    for (auto _it : m_path_table_subclass_truck_mapping) {
-        _it.second.clear ();
-    }
-    m_path_table_subclass_truck_mapping.clear ();
-    m_graph_vec.clear ();
-}
+// MNM_Dta_Multiclass_Subclass::~MNM_Dta_Multiclass_Subclass ()
+// {
+//     m_subclass_car_graph_mapping.clear ();
+//     m_subclass_car_path_table_mapping.clear ();
+//     m_subclass_truck_graph_mapping.clear ();
+//     m_subclass_truck_path_table_mapping.clear ();
+//     for (auto _it : m_path_table_subclass_car_mapping) {
+//         _it.second.clear ();
+//     }
+//     m_path_table_subclass_car_mapping.clear ();
+//     for (auto _it : m_path_table_subclass_truck_mapping) {
+//         _it.second.clear ();
+//     }
+//     m_path_table_subclass_truck_mapping.clear ();
+//     m_graph_vec.clear ();
+// }
 
-int
-MNM_Dta_Multiclass_Subclass::initialize ()
-{   
-    MNM_Dta_Multiclass::initialize ();
-    if (m_veh_factory != nullptr) delete m_veh_factory;
-    m_veh_factory = new MNM_Veh_Factory_Multiclass_Subclass ();
-    if (m_od_factory != nullptr) delete m_od_factory;
-    m_od_factory = new MNM_OD_Factory_Multiclass_Subclass ();
-    return 0;
-}
+// int
+// MNM_Dta_Multiclass_Subclass::initialize ()
+// {   
+//     MNM_Dta_Multiclass::initialize ();
+//     if (m_veh_factory != nullptr) delete m_veh_factory;
+//     m_veh_factory = new MNM_Veh_Factory_Multiclass_Subclass ();
+//     if (m_od_factory != nullptr) delete m_od_factory;
+//     m_od_factory = new MNM_OD_Factory_Multiclass_Subclass ();
+//     return 0;
+// }
 
-int 
-MNM_Dta_Multiclass_Subclass::build_from_files ()
-{
-    MNM_IO_Multiclass::build_node_factory_multiclass (m_file_folder, m_config,
-                                                    m_node_factory);
-    MNM_IO_Multiclass::build_link_factory_multiclass (m_file_folder, m_config,
-                                                    m_link_factory);
-    MNM_IO_Multiclass::build_od_factory (m_file_folder, m_config, m_od_factory,
-                                        m_node_factory);
-    MNM_IO_Multiclass_Subclass::build_graph_vec (m_file_folder, m_config, m_num_graph, m_graph_vec);
-    for (int i = 0; i < m_num_graph+1; i++) {
-        std::cout << m_graph_vec[i].size_links () << std::endl;
-        if (m_graph_vec[i].size_links () == 0) {
-            std::cerr << "Graph " << i << " has no links" << std::endl;
-            return -1;
-        }
-    }
-    assert(m_num_graph + 1 == (int)m_graph_vec.size ());
-    // due to unique pointer used by macposts:Graph, we need to transfer ownership
-    // after this the graph vec's size will be reduced by 1
-    m_graph = std::move(m_graph_vec[0]);
-    if (m_graph.size_links () == 0) {
-        std::cerr << "Graph 0 has no links" << std::endl;
-        return -1;
-    }
-    m_graph_vec.erase(m_graph_vec.begin());   // Remove it from the vector
-    assert(m_num_graph == (int)m_graph_vec.size ());
+// int 
+// MNM_Dta_Multiclass_Subclass::build_from_files ()
+// {
+//     MNM_IO_Multiclass::build_node_factory_multiclass (m_file_folder, m_config,
+//                                                     m_node_factory);
+//     MNM_IO_Multiclass::build_link_factory_multiclass (m_file_folder, m_config,
+//                                                     m_link_factory);
+//     MNM_IO_Multiclass::build_od_factory (m_file_folder, m_config, m_od_factory,
+//                                         m_node_factory);
+//     MNM_IO_Multiclass_Subclass::build_graph_vec (m_file_folder, m_config, m_num_graph, m_graph_vec);
+//     for (int i = 0; i < m_num_graph+1; i++) {
+//         std::cout << m_graph_vec[i].size_links () << std::endl;
+//         if (m_graph_vec[i].size_links () == 0) {
+//             std::cerr << "Graph " << i << " has no links" << std::endl;
+//             return -1;
+//         }
+//     }
+//     assert(m_num_graph + 1 == (int)m_graph_vec.size ());
+//     // due to unique pointer used by macposts:Graph, we need to transfer ownership
+//     // after this the graph vec's size will be reduced by 1
+//     m_graph = std::move(m_graph_vec[0]);
+//     if (m_graph.size_links () == 0) {
+//         std::cerr << "Graph 0 has no links" << std::endl;
+//         return -1;
+//     }
+//     m_graph_vec.erase(m_graph_vec.begin());   // Remove it from the vector
+//     assert(m_num_graph == (int)m_graph_vec.size ());
 
-    MNM_IO_Multiclass_Subclass::build_demand_subclass (m_file_folder, m_config,
-                                                      m_od_factory, 0, "MNM_input_demand_car");
-    MNM_IO_Multiclass_Subclass::build_demand_subclass (m_file_folder, m_config,
-                                                       m_od_factory, 1, "MNM_input_demand_truck");
-    MNM_IO_Multiclass::read_origin_car_label_ratio (m_file_folder, m_config,
-                                                    m_od_factory);
-    MNM_IO_Multiclass::read_origin_truck_label_ratio (m_file_folder, m_config,
-                                                    m_od_factory);
-    MNM_IO_Multiclass::build_link_toll_multiclass (m_file_folder, m_config,
-                                                    m_link_factory);
-    MNM_IO_Multiclass::build_link_td_attribute (m_file_folder, m_link_factory);
-    MNM_IO::build_node_td_cost(m_file_folder, m_link_factory);
-    MNM_IO_Multiclass::build_td_adaptive_ratio(m_file_folder, m_config, m_od_factory);
-    // build_workzone();
-    m_workzone = nullptr;
-    set_statistics ();
-    set_gridlock_recorder ();
-    set_routing ();
-    return 0;
-}
+//     MNM_IO_Multiclass_Subclass::build_demand_subclass (m_file_folder, m_config,
+//                                                       m_od_factory, 0, "MNM_input_demand_car");
+//     MNM_IO_Multiclass_Subclass::build_demand_subclass (m_file_folder, m_config,
+//                                                        m_od_factory, 1, "MNM_input_demand_truck");
+//     MNM_IO_Multiclass::read_origin_car_label_ratio (m_file_folder, m_config,
+//                                                     m_od_factory);
+//     MNM_IO_Multiclass::read_origin_truck_label_ratio (m_file_folder, m_config,
+//                                                     m_od_factory);
+//     MNM_IO_Multiclass::build_link_toll_multiclass (m_file_folder, m_config,
+//                                                     m_link_factory);
+//     MNM_IO_Multiclass::build_link_td_attribute (m_file_folder, m_link_factory);
+//     MNM_IO::build_node_td_cost(m_file_folder, m_link_factory);
+//     MNM_IO_Multiclass::build_td_adaptive_ratio(m_file_folder, m_config, m_od_factory);
+//     // build_workzone();
+//     m_workzone = nullptr;
+//     set_statistics ();
+//     set_gridlock_recorder ();
+//     set_routing ();
+//     return 0;
+// }
 
-int 
-MNM_Dta_Multiclass_Subclass::set_routing ()
-{
-    if (m_config->get_string ("routing_type") == "Biclass_Hybrid_Subclass")
-    {
-        auto *_tmp_conf = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
-        // assume m_buffer_length = max_interval, different from multiclass
-        TInt _buffer_len = _tmp_conf->get_int ("buffer_length");
-        if (_buffer_len != m_config->get_int ("max_interval"))
-        {
-            _buffer_len = m_config->get_int ("max_interval");
-        }
-        TInt _route_freq_fixed = _tmp_conf->get_int ("route_frq");
+// int 
+// MNM_Dta_Multiclass_Subclass::set_routing ()
+// {
+//     if (m_config->get_string ("routing_type") == "Biclass_Hybrid_Subclass")
+//     {
+//         auto *_tmp_conf = new MNM_ConfReader (m_file_folder + "/config.conf", "FIXED");
+//         // assume m_buffer_length = max_interval, different from multiclass
+//         TInt _buffer_len = _tmp_conf->get_int ("buffer_length");
+//         if (_buffer_len != m_config->get_int ("max_interval"))
+//         {
+//             _buffer_len = m_config->get_int ("max_interval");
+//         }
+//         TInt _route_freq_fixed = _tmp_conf->get_int ("route_frq");
 
-        std::string _num_driving_path_str = _tmp_conf->get_string ("num_path");
-        std::vector<TInt> _num_driving_path_vec;
-        std::stringstream _ss(_num_driving_path_str);
-        std::string _tmp;
-        while (getline(_ss, _tmp, ',')) {
-            _num_driving_path_vec.push_back(std::stoi(_tmp));
-        }
-        assert(m_num_path_table == (int)_num_driving_path_vec.size());
+//         std::string _num_driving_path_str = _tmp_conf->get_string ("num_path");
+//         std::vector<TInt> _num_driving_path_vec;
+//         std::stringstream _ss(_num_driving_path_str);
+//         std::string _tmp;
+//         while (getline(_ss, _tmp, ',')) {
+//             _num_driving_path_vec.push_back(std::stoi(_tmp));
+//         }
+//         assert(m_num_path_table == (int)_num_driving_path_vec.size());
         
-        std::vector<Path_Table*> path_table_vec = std::vector<Path_Table*>();
-        Path_Table *_driving_path_table = nullptr;
+//         std::vector<Path_Table*> path_table_vec = std::vector<Path_Table*>();
+//         Path_Table *_driving_path_table = nullptr;
 
-        bool _with_buffer = (_tmp_conf->get_string ("choice_portion") == "Buffer");
-        for (int i = 0; i < m_num_path_table; i++) {
-            // the buffer for each path table has all vehicle subclasses, use 0 for some of them as placeholder to keep the same dimension
-            _driving_path_table = MNM_IO::load_path_table (
-                m_file_folder + "/path_table_" + std::to_string (i),
-                m_graph_vec[i],
-                _num_driving_path_vec[i],
-                _with_buffer
-            );
-            path_table_vec.push_back(_driving_path_table);
-        }
+//         bool _with_buffer = (_tmp_conf->get_string ("choice_portion") == "Buffer");
+//         for (int i = 0; i < m_num_path_table; i++) {
+//             // the buffer for each path table has all vehicle subclasses, use 0 for some of them as placeholder to keep the same dimension
+//             _driving_path_table = MNM_IO::load_path_table (
+//                 m_file_folder + "/path_table_" + std::to_string (i),
+//                 m_graph_vec[i],
+//                 _num_driving_path_vec[i],
+//                 _with_buffer
+//             );
+//             path_table_vec.push_back(_driving_path_table);
+//         }
         
-        m_routing = new MNM_Routing_Biclass_Hybrid_Subclass(
-            m_file_folder,          // const std::string &file_folder
-            m_graph,                // macposts::Graph &graph
-            m_graph_vec,            // std::vector<macposts::Graph*> &graph_vec
-            m_statistics,           // MNM_Statistics *statistics
-            m_od_factory,           // MNM_OD_Factory *od_factory
-            m_node_factory,         // MNM_Node_Factory *node_factory
-            m_link_factory,         // MNM_Link_Factory *link_factory
-            path_table_vec,       // std::vector<Path_Table*> path_table_vec
-            m_subclass_car_graph_mapping,  // std::unordered_map<int, int> subclass_car_graph_mapping
-            m_subclass_car_path_table_mapping,  // std::unordered_map<int, int> subclass_car_path_table_mapping
-            m_subclass_truck_graph_mapping,  // std::unordered_map<int, int> subclass_truck_graph_mapping
-            m_subclass_truck_path_table_mapping,  // std::unordered_map<int, int> subclass_truck_path_table_mapping
-            _route_freq_fixed,      // TInt route_frq_fixed
-            _buffer_len         // TInt buffer_length
-        );
+//         m_routing = new MNM_Routing_Biclass_Hybrid_Subclass(
+//             m_file_folder,          // const std::string &file_folder
+//             m_graph,                // macposts::Graph &graph
+//             m_graph_vec,            // std::vector<macposts::Graph*> &graph_vec
+//             m_statistics,           // MNM_Statistics *statistics
+//             m_od_factory,           // MNM_OD_Factory *od_factory
+//             m_node_factory,         // MNM_Node_Factory *node_factory
+//             m_link_factory,         // MNM_Link_Factory *link_factory
+//             path_table_vec,       // std::vector<Path_Table*> path_table_vec
+//             m_subclass_car_graph_mapping,  // std::unordered_map<int, int> subclass_car_graph_mapping
+//             m_subclass_car_path_table_mapping,  // std::unordered_map<int, int> subclass_car_path_table_mapping
+//             m_subclass_truck_graph_mapping,  // std::unordered_map<int, int> subclass_truck_graph_mapping
+//             m_subclass_truck_path_table_mapping,  // std::unordered_map<int, int> subclass_truck_path_table_mapping
+//             _route_freq_fixed,      // TInt route_frq_fixed
+//             _buffer_len         // TInt buffer_length
+//         );
 
-        m_routing->init_routing (nullptr);
+//         m_routing->init_routing (nullptr);
 
-        delete _tmp_conf;
-    }
-    else
-    {
-        throw std::runtime_error (
-            "Wrong routing type for MNM_Routing_Biclass_Hybrid_Subclass");
-    }
+//         delete _tmp_conf;
+//     }
+//     else
+//     {
+//         throw std::runtime_error (
+//             "Wrong routing type for MNM_Routing_Biclass_Hybrid_Subclass");
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
-int
-MNM_Dta_Multiclass_Subclass::load_once (bool verbose, TInt load_int, TInt assign_int)
-{
-    MNM_Origin *_origin;
-    MNM_Dnode *_node;
-    MNM_Dlink *_link;
-    MNM_Destination *_dest;
+// int
+// MNM_Dta_Multiclass_Subclass::load_once (bool verbose, TInt load_int, TInt assign_int)
+// {
+//     MNM_Origin *_origin;
+//     MNM_Dnode *_node;
+//     MNM_Dlink *_link;
+//     MNM_Destination *_dest;
 
-    // update some link attributes over time
-    m_link_factory->update_link_attribute (load_int, verbose);
-    // compute empty network link tt, for adaptive routing
-    if (load_int == 0) m_statistics->update_record (-1);
-    if (verbose)
-    printf ("-------------------------------    Interval %d   "
-            "------------------------------ \n",
-            (int) load_int);
-    // step 1: Origin release vehicle
-    if (verbose)
-    printf ("Releasing!\n");
+//     // update some link attributes over time
+//     m_link_factory->update_link_attribute (load_int, verbose);
+//     // compute empty network link tt, for adaptive routing
+//     if (load_int == 0) m_statistics->update_record (-1);
+//     if (verbose)
+//     printf ("-------------------------------    Interval %d   "
+//             "------------------------------ \n",
+//             (int) load_int);
+//     // step 1: Origin release vehicle
+//     if (verbose)
+//     printf ("Releasing!\n");
 
-    if (load_int % m_assign_freq == 0 || load_int == 0)
-    {
-        for (auto _origin_it = m_od_factory->m_origin_map.begin ();
-            _origin_it != m_od_factory->m_origin_map.end (); _origin_it++)
-        {
-            _origin = _origin_it->second;
-            if (assign_int >= m_total_assign_inter)
-            {
-                _origin->release_one_interval (load_int, m_veh_factory, -1, TFlt (-1));
-            }
-            else
-            {
-                if ((m_config->get_string ("routing_type") == "Biclass_Hybrid_Subclass"))
-                {
-                    TFlt _ad_ratio_car
-                    = m_config->get_float ("adaptive_ratio_car");
-                    if (_ad_ratio_car > 1)
-                    _ad_ratio_car = 1;
-                    if (_ad_ratio_car < 0)
-                    _ad_ratio_car = 0;
+//     if (load_int % m_assign_freq == 0 || load_int == 0)
+//     {
+//         for (auto _origin_it = m_od_factory->m_origin_map.begin ();
+//             _origin_it != m_od_factory->m_origin_map.end (); _origin_it++)
+//         {
+//             _origin = _origin_it->second;
+//             if (assign_int >= m_total_assign_inter)
+//             {
+//                 _origin->release_one_interval (load_int, m_veh_factory, -1, TFlt (-1));
+//             }
+//             else
+//             {
+//                 if ((m_config->get_string ("routing_type") == "Biclass_Hybrid_Subclass"))
+//                 {
+//                     TFlt _ad_ratio_car
+//                     = m_config->get_float ("adaptive_ratio_car");
+//                     if (_ad_ratio_car > 1)
+//                     _ad_ratio_car = 1;
+//                     if (_ad_ratio_car < 0)
+//                     _ad_ratio_car = 0;
 
-                    TFlt _ad_ratio_truck
-                    = m_config->get_float ("adaptive_ratio_truck");
-                    if (_ad_ratio_truck > 1)
-                    _ad_ratio_truck = 1;
-                    if (_ad_ratio_truck < 0)
-                    _ad_ratio_truck = 0;
+//                     TFlt _ad_ratio_truck
+//                     = m_config->get_float ("adaptive_ratio_truck");
+//                     if (_ad_ratio_truck > 1)
+//                     _ad_ratio_truck = 1;
+//                     if (_ad_ratio_truck < 0)
+//                     _ad_ratio_truck = 0;
 
-                    _origin->release_one_interval_biclass (load_int,
-                                                            m_veh_factory,
-                                                            assign_int,
-                                                            _ad_ratio_car,
-                                                            _ad_ratio_truck);
-                }
-                else
-                {
-                    printf ("WARNING:No assignment!\n");
-                }
-            }
-        }
-    }
+//                     _origin->release_one_interval_biclass (load_int,
+//                                                             m_veh_factory,
+//                                                             assign_int,
+//                                                             _ad_ratio_car,
+//                                                             _ad_ratio_truck);
+//                 }
+//                 else
+//                 {
+//                     printf ("WARNING:No assignment!\n");
+//                 }
+//             }
+//         }
+//     }
 
-    if (verbose)
-    printf ("Routing!\n");
-    // step 2: route the vehicle
-    m_routing->update_routing (load_int);
+//     if (verbose)
+//     printf ("Routing!\n");
+//     // step 2: route the vehicle
+//     m_routing->update_routing (load_int);
 
-    if (verbose)
-    printf ("Moving through node!\n");
-    // step 3: move vehicles through node
-    for (auto _node_it = m_node_factory->m_node_map.begin ();
-        _node_it != m_node_factory->m_node_map.end (); _node_it++)
-    {
-        _node = _node_it->second;
-        // printf("node ID is %d\n", _node -> m_node_ID());
-        _node->evolve (load_int);
-    }
+//     if (verbose)
+//     printf ("Moving through node!\n");
+//     // step 3: move vehicles through node
+//     for (auto _node_it = m_node_factory->m_node_map.begin ();
+//         _node_it != m_node_factory->m_node_map.end (); _node_it++)
+//     {
+//         _node = _node_it->second;
+//         // printf("node ID is %d\n", _node -> m_node_ID());
+//         _node->evolve (load_int);
+//     }
 
-    // record queuing vehicles after node evolve, which is num of vehicles in
-    // finished array
-    record_queue_vehicles ();
-    if (verbose)
-    printf ("Moving through link!\n");
-    // step 4: move vehicles through link
-    for (auto _link_it = m_link_factory->m_link_map.begin ();
-        _link_it != m_link_factory->m_link_map.end (); _link_it++)
-    {
-        _link = _link_it->second;
-        if ((m_gridlock_recorder != nullptr)
-            && ((m_config->get_int ("total_interval") <= 0
-                && load_int >= 1.5 * m_total_assign_inter * m_assign_freq)
-                || (m_config->get_int ("total_interval") > 0
-                    && load_int >= 0.95 * m_config->get_int ("total_interval"))))
-        {
-            m_gridlock_recorder->save_one_link (load_int, _link);
-        }
-        _link->clear_incoming_array (load_int);
-        _link->evolve (load_int);
-    }
+//     // record queuing vehicles after node evolve, which is num of vehicles in
+//     // finished array
+//     record_queue_vehicles ();
+//     if (verbose)
+//     printf ("Moving through link!\n");
+//     // step 4: move vehicles through link
+//     for (auto _link_it = m_link_factory->m_link_map.begin ();
+//         _link_it != m_link_factory->m_link_map.end (); _link_it++)
+//     {
+//         _link = _link_it->second;
+//         if ((m_gridlock_recorder != nullptr)
+//             && ((m_config->get_int ("total_interval") <= 0
+//                 && load_int >= 1.5 * m_total_assign_inter * m_assign_freq)
+//                 || (m_config->get_int ("total_interval") > 0
+//                     && load_int >= 0.95 * m_config->get_int ("total_interval"))))
+//         {
+//             m_gridlock_recorder->save_one_link (load_int, _link);
+//         }
+//         _link->clear_incoming_array (load_int);
+//         _link->evolve (load_int);
+//     }
 
-    if (m_emission != nullptr)
-    m_emission->update (m_veh_factory);
+//     if (m_emission != nullptr)
+//     m_emission->update (m_veh_factory);
 
-    if (verbose)
-    printf ("Receiving!\n");
-    // step 5: Destination receive vehicle
-    for (auto _dest_it = m_od_factory->m_destination_map.begin ();
-        _dest_it != m_od_factory->m_destination_map.end (); _dest_it++)
-    {
-        _dest = _dest_it->second;
-        // _dest -> receive(load_int);
-        _dest->receive (load_int, m_routing, m_veh_factory, true);
-    }
+//     if (verbose)
+//     printf ("Receiving!\n");
+//     // step 5: Destination receive vehicle
+//     for (auto _dest_it = m_od_factory->m_destination_map.begin ();
+//         _dest_it != m_od_factory->m_destination_map.end (); _dest_it++)
+//     {
+//         _dest = _dest_it->second;
+//         // _dest -> receive(load_int);
+//         _dest->receive (load_int, m_routing, m_veh_factory, true);
+//     }
 
-    if (verbose)
-    printf ("Update record!\n");
-    // step 5: update record
-    m_statistics->update_record (load_int);
+//     if (verbose)
+//     printf ("Update record!\n");
+//     // step 5: update record
+//     m_statistics->update_record (load_int);
 
-    record_enroute_vehicles ();
-    if (verbose)
-    MNM::print_vehicle_statistics (m_veh_factory);
-    // test();
-    // consistent with loading()
-    m_current_loading_interval = load_int + 1;
-    return 0;
-}
+//     record_enroute_vehicles ();
+//     if (verbose)
+//     MNM::print_vehicle_statistics (m_veh_factory);
+//     // test();
+//     // consistent with loading()
+//     m_current_loading_interval = load_int + 1;
+//     return 0;
+// }
