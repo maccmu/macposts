@@ -162,7 +162,8 @@ MNM_Routing_Adaptive::init_routing (Path_Table *path_table)
         "config.conf to use adaptive routing");
     }
   std::unordered_map<TInt, TInt> *_shortest_path_tree;
-  for (auto _it = m_od_factory->m_destination_map.begin ();
+  if (m_od_factory->m_destination_with_demand_set.size () == 0) {
+    for (auto _it = m_od_factory->m_destination_map.begin ();
        _it != m_od_factory->m_destination_map.end (); _it++)
     {
       _shortest_path_tree = new std::unordered_map<TInt, TInt> ();
@@ -176,6 +177,15 @@ MNM_Routing_Adaptive::init_routing (Path_Table *path_table)
       //   first, -1));
       // }
     }
+  }
+  else {
+    for (auto _it : m_od_factory->m_destination_with_demand_set)
+    {
+      _shortest_path_tree = new std::unordered_map<TInt, TInt> ();
+      m_table->insert (std::pair<MNM_Destination *, std::unordered_map<TInt, TInt> *> (_it, _shortest_path_tree));
+    }
+  }
+  
   for (auto _link_it : m_link_factory->m_link_map)
     {
       m_link_cost.insert (std::pair<TInt, TFlt> (_link_it.first, -1));
@@ -240,7 +250,8 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
       // printf("Calculating the shortest path trees!\n");
       update_link_cost ();
       update_node_cost (timestamp);
-      for (auto _it = m_od_factory->m_destination_map.begin ();
+      if (m_od_factory->m_destination_with_demand_set.size () == 0) {
+        for (auto _it = m_od_factory->m_destination_map.begin ();
            _it != m_od_factory->m_destination_map.end (); _it++)
         {
           // #pragma omp task firstprivate(_it)
@@ -253,17 +264,53 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
           // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
           //                                     m_link_cost,
           //                                     *_shortest_path_tree);
+          // // link cost + node cost
+          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
+          //                                     m_link_cost,
+          //                                     m_node_cost,
+          //                                     *_shortest_path_tree);
+
+          // FIFO is BFS, which may be slower than Dijkstra in some cases
+          // link cost only
+          MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, m_graph,
+                                                  m_link_cost,
+                                                  *_shortest_path_tree);
           // link cost + node cost
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
-                                              m_link_cost,
-                                              m_node_cost,
-                                              *_shortest_path_tree);
-          // MNM_Shortest_Path::all_to_one_FIFO(_dest_node_ID, m_graph,
-          // m_statistics -> m_record_interval_tt, *_shortest_path_tree);
-          // MNM_Shortest_Path::all_to_one_Dijkstra(_dest_node_ID, m_graph,
-          // m_statistics -> m_record_interval_tt, *_shortest_path_tree);
+          // TODO: Dijkstra with node cost is not implemented yet
+
           // }
         }
+      }
+      else {
+        for (auto _it : m_od_factory->m_destination_with_demand_set)
+        {
+          // #pragma omp task firstprivate(_it)
+          // {
+          _dest = _it;
+          _dest_node_ID = _dest->m_dest_node->m_node_ID;
+          // printf("Destination ID: %d\n", (int) _dest_node_ID);
+          _shortest_path_tree = m_table->find (_dest)->second;
+          // // link cost only
+          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
+          //                                     m_link_cost,
+          //                                     *_shortest_path_tree);
+          // // link cost + node cost
+          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
+          //                                     m_link_cost,
+          //                                     m_node_cost,
+          //                                     *_shortest_path_tree);
+
+          // FIFO is BFS, which may be slower than Dijkstra in some cases
+          // link cost only
+          MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, m_graph,
+                                                  m_link_cost,
+                                                  *_shortest_path_tree);
+          // link cost + node cost
+          // TODO: Dijkstra with node cost is not implemented yet
+
+          // }
+        }
+      }
     }
 
   /* route the vehicle in Origin nodes */

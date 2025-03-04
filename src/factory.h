@@ -6,7 +6,7 @@
 #include "enum.h"
 #include "ults.h"
 #include "vehicle.h"
-
+#include <set>
 #include <iostream>
 #include <unordered_map>
 
@@ -86,4 +86,5 @@ public:
   virtual std::pair<MNM_Origin *, MNM_Destination *> get_random_od_pair ();
   std::unordered_map<TInt, MNM_Origin *> m_origin_map;
   std::unordered_map<TInt, MNM_Destination *> m_destination_map;
+  std::set<MNM_Destination *> m_destination_with_demand_set;
 };
