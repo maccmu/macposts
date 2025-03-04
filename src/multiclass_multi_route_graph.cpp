@@ -791,6 +791,7 @@ MNM_IO_Multiclass_Subclass::build_demand_subclass (const std::string &file_folde
                 _D_ID = TInt (std::stoi (_words[1]));
                 _origin = dynamic_cast<MNM_Origin_Multiclass_Subclass *> (od_factory->get_origin (_O_ID));
                 _dest = dynamic_cast<MNM_Destination_Multiclass *> (od_factory->get_destination (_D_ID));
+                od_factory->m_destination_with_demand_set.insert (_dest);
                 for (int q = 0; q < _num_subclass; ++q) 
                 {
                     memset (_demand_vector, 0x0, sizeof (TFlt) * _max_interval * _num_of_minute);
