@@ -3901,6 +3901,7 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
                 od_factory->get_destination (_D_ID));
               _origin->add_dest_demand_multiclass (_dest, _demand_vector_car,
                                                    _demand_vector_truck);
+              od_factory->m_destination_with_demand_set.insert (_dest);
             }
           else
             {
@@ -5660,9 +5661,13 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
       // // link cost only
       // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
       //                                     _free_shortest_path_tree);
-      // link cost + node cost
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map, _node_cost_map,
-                                          _free_shortest_path_tree);
+      MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, graph, _free_cost_map,
+                                              _free_shortest_path_tree);
+      // // link cost + node cost
+      // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map, _node_cost_map,
+      //                                     _free_shortest_path_tree);
+      // TODO: Dijkstra with node cost
+
       for (auto _o_it = od_factory->m_origin_map.begin ();
            _o_it != od_factory->m_origin_map.end (); _o_it++)
         {
@@ -5752,10 +5757,14 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
               // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
               //                                     _mid_cost_map,
               //                                     _mid_shortest_path_tree);
-              // link cost + node cost
-              MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                                  _mid_cost_map, _node_cost_map,
+              MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, graph,
+                                                  _mid_cost_map,
                                                   _mid_shortest_path_tree);
+              // // link cost + node cost
+              // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+              //                                     _mid_cost_map, _node_cost_map,
+              //                                     _mid_shortest_path_tree);
+              // TODO: Dijkstra with node cost
             }
           if (Heavy_Scale > 1)
             {
@@ -5763,10 +5772,14 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
               // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
               //                                     _heavy_cost_map,
               //                                     _heavy_shortest_path_tree);
-              // link cost + node cost
-              MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                                  _heavy_cost_map, _node_cost_map,
-                                                  _heavy_shortest_path_tree);
+              MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, graph,
+                                                      _heavy_cost_map,
+                                                      _heavy_shortest_path_tree);
+              // // link cost + node cost
+              // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+              //                                     _heavy_cost_map, _node_cost_map,
+              //                                     _heavy_shortest_path_tree);
+              // TODO: Dijkstra with node cost
             }
           for (auto _o_it = od_factory->m_origin_map.begin ();
                _o_it != od_factory->m_origin_map.end (); _o_it++)

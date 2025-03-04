@@ -641,6 +641,7 @@ MNM_IO::build_demand (const std::string &file_folder,
               _origin = od_factory->get_origin (_O_ID);
               _dest = od_factory->get_destination (_D_ID);
               _origin->add_dest_demand (_dest, _demand_vector);
+              od_factory->m_destination_with_demand_set.insert (_dest);
             }
           else
             {

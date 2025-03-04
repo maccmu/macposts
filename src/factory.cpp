@@ -258,6 +258,7 @@ MNM_OD_Factory::MNM_OD_Factory ()
 {
   m_origin_map = std::unordered_map<TInt, MNM_Origin *> ();
   m_destination_map = std::unordered_map<TInt, MNM_Destination *> ();
+  m_destination_with_demand_set = std::set<MNM_Destination *> ();
 }
 
 MNM_OD_Factory::~MNM_OD_Factory ()
@@ -274,6 +275,7 @@ MNM_OD_Factory::~MNM_OD_Factory ()
       delete _map_it->second;
     }
   m_destination_map.clear ();
+  m_destination_with_demand_set.clear ();
 }
 
 MNM_Destination *
