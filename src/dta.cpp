@@ -477,8 +477,10 @@ MNM_Dta::check_origin_destination_connectivity ()
     {
       _dest = _it->second;
       _dest_node_ID = _dest->m_dest_node->m_node_ID;
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph, _cost_map,
-                                          _shortest_path_tree);
+      // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph, _cost_map,
+      //                                     _shortest_path_tree);
+      MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, m_graph, _cost_map,
+                                          _shortest_path_tree);       
       for (auto _map_it : m_od_factory->m_origin_map)
         {
           if (_shortest_path_tree
