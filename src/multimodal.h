@@ -964,6 +964,8 @@ public:
 
   std::unordered_map<TInt, TFlt> m_driving_link_cost;
   std::unordered_map<TInt, TFlt> m_bustransit_link_cost;
+  
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> m_node_cost;
 
   bool m_working;
 };

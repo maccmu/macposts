@@ -471,16 +471,15 @@ MNM_Dta::check_origin_destination_connectivity ()
     {
       _cost_map.insert (std::pair<TInt, TFlt> (_map_it.first, TFlt (1)));
     }
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
 
   for (auto _it = m_od_factory->m_destination_map.begin ();
        _it != m_od_factory->m_destination_map.end (); _it++)
     {
       _dest = _it->second;
       _dest_node_ID = _dest->m_dest_node->m_node_ID;
-      // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph, _cost_map,
-      //                                     _shortest_path_tree);
-      MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, m_graph, _cost_map,
-                                          _shortest_path_tree);       
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, m_graph, _cost_map, _node_cost_map,
+                                          _shortest_path_tree, false, "Dijkstra");       
       for (auto _map_it : m_od_factory->m_origin_map)
         {
           if (_shortest_path_tree

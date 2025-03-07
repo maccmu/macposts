@@ -2481,6 +2481,8 @@ Mcdta::generate_paths_to_cover_registered_links ()
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
 
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
+
   if (std::all_of (_link_existing.cbegin (), _link_existing.cend (),
                    [] (bool v) { return v; }))
     {
@@ -2540,9 +2542,9 @@ Mcdta::generate_paths_to_cover_registered_links ()
             }
           else
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_from_node_ID,
-                                                  m_mcdta->m_graph, _cost_map,
-                                                  _shortest_path_tree);
+              MNM_Shortest_Path::all_to_one_sp (_from_node_ID,
+                                                  m_mcdta->m_graph, _cost_map, _node_cost_map,
+                                                  _shortest_path_tree, false, "Dijkstra");
             }
 
           // path from to_node_ID to destination
@@ -2559,9 +2561,9 @@ Mcdta::generate_paths_to_cover_registered_links ()
             }
           else
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_to_node_ID, reversed_graph,
-                                                  _cost_map,
-                                                  _shortest_path_tree_reversed);
+              MNM_Shortest_Path::all_to_one_sp (_to_node_ID, reversed_graph,
+                                                  _cost_map, _node_cost_map,
+                                                  _shortest_path_tree_reversed, false, "Dijkstra");
             }
 
           _origin = nullptr;
@@ -2733,6 +2735,8 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
   int *result_ptr = (int *) result_buf.ptr;
   int *links_ptr = (int *) links_buf.ptr;
 
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
+
   macposts::Graph reversed_graph = MNM_Ults::reverse_graph (m_mcdta->m_graph);
   std::unordered_map<TInt, TFlt> _cost_map = std::unordered_map<TInt, TFlt> ();
   for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
@@ -2782,8 +2786,8 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
         }
       else
         {
-          MNM_Shortest_Path::all_to_one_FIFO (_from_node_ID, m_mcdta->m_graph,
-                                              _cost_map, _shortest_path_tree);
+          MNM_Shortest_Path::all_to_one_sp (_from_node_ID, m_mcdta->m_graph,
+                                              _cost_map, _node_cost_map, _shortest_path_tree, false, "Dijkstra");
         }
 
       // path from to_node_ID to destination
@@ -2800,9 +2804,9 @@ Mcdta::generate_paths_to_cover_links (py::array_t<int> links, int max_iter)
         }
       else
         {
-          MNM_Shortest_Path::all_to_one_FIFO (_to_node_ID, reversed_graph,
-                                              _cost_map,
-                                              _shortest_path_tree_reversed);
+          MNM_Shortest_Path::all_to_one_sp (_to_node_ID, reversed_graph,
+                                              _cost_map, _node_cost_map,
+                                              _shortest_path_tree_reversed, false, "Dijkstra");
         }
 
       for (int k = 0; k < max_iter; ++k)

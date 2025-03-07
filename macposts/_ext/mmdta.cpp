@@ -2415,6 +2415,8 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
 
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
+
   if (std::all_of (_link_existing_driving.cbegin (),
                    _link_existing_driving.cend (), [] (bool v) { return v; }))
     {
@@ -2476,9 +2478,9 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
             }
           else
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_from_node_ID,
-                                                  m_mmdta->m_graph, _cost_map,
-                                                  _shortest_path_tree);
+              MNM_Shortest_Path::all_to_one_sp (_from_node_ID,
+                                                  m_mmdta->m_graph, _cost_map, _node_cost_map,
+                                                  _shortest_path_tree, false, "Dijkstra");
             }
 
           // path from to_node_ID to destination
@@ -2495,9 +2497,9 @@ Mmdta::generate_paths_to_cover_registered_links_driving ()
             }
           else
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_to_node_ID, reversed_graph,
-                                                  _cost_map,
-                                                  _shortest_path_tree_reversed);
+              MNM_Shortest_Path::all_to_one_sp (_to_node_ID, reversed_graph,
+                                                  _cost_map, _node_cost_map,
+                                                  _shortest_path_tree_reversed, false, "Dijkstra");
             }
 
           _origin = nullptr;
@@ -2672,6 +2674,8 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
   auto result = py::array_t<int> (new_shape);
   auto result_buf = result.request ();
   int *result_ptr = (int *) result_buf.ptr;
+  
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
 
   if (std::all_of (_link_existing_bus.cbegin (), _link_existing_bus.cend (),
                    [] (bool v) { return v; })
@@ -2759,10 +2763,10 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             }
           else
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_from_node_ID,
+              MNM_Shortest_Path::all_to_one_sp (_from_node_ID,
                                                   m_mmdta->m_bus_transit_graph,
-                                                  _cost_map,
-                                                  _shortest_path_tree);
+                                                  _cost_map, _node_cost_map,
+                                                  _shortest_path_tree, false, "Dijkstra");
             }
 
           // path from to_node_ID to destination
@@ -2779,9 +2783,9 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             }
           else
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_to_node_ID, reversed_graph,
-                                                  _cost_map,
-                                                  _shortest_path_tree_reversed);
+              MNM_Shortest_Path::all_to_one_sp (_to_node_ID, reversed_graph,
+                                                  _cost_map, _node_cost_map,
+                                                  _shortest_path_tree_reversed, "false", "Dijkstra");
             }
 
           _origin = nullptr;
@@ -2973,10 +2977,10 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           else if (_is_pnr)
             {
               _shortest_path_tree.clear ();
-              MNM_Shortest_Path::all_to_one_FIFO (_mid_dest_node_ID,
+              MNM_Shortest_Path::all_to_one_sp (_mid_dest_node_ID,
                                                   m_mmdta->m_graph,
-                                                  _cost_map_driving,
-                                                  _shortest_path_tree);
+                                                  _cost_map_driving, _node_cost_map,
+                                                  _shortest_path_tree, false, "Dijkstra");
               IAssert (
                 _shortest_path_tree.find (_origin->m_origin_node->m_node_ID)
                   ->second
@@ -3094,10 +3098,10 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             }
           else
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_from_node_ID,
+              MNM_Shortest_Path::all_to_one_sp (_from_node_ID,
                                                   m_mmdta->m_bus_transit_graph,
-                                                  _cost_map,
-                                                  _shortest_path_tree);
+                                                  _cost_map, _node_cost_map,
+                                                  _shortest_path_tree, false, "Dijkstra");
             }
 
           // path from to_node_ID to destination
@@ -3114,9 +3118,9 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
             }
           else
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_to_node_ID, reversed_graph,
-                                                  _cost_map,
-                                                  _shortest_path_tree_reversed);
+              MNM_Shortest_Path::all_to_one_sp (_to_node_ID, reversed_graph,
+                                                  _cost_map, _node_cost_map,
+                                                  _shortest_path_tree_reversed, false, "Dijkstra");
             }
 
           _origin = nullptr;
@@ -3308,10 +3312,10 @@ Mmdta::generate_paths_to_cover_registered_links_bus_walking ()
           else if (_is_pnr)
             {
               _shortest_path_tree.clear ();
-              MNM_Shortest_Path::all_to_one_FIFO (_mid_dest_node_ID,
+              MNM_Shortest_Path::all_to_one_sp (_mid_dest_node_ID,
                                                   m_mmdta->m_graph,
-                                                  _cost_map_driving,
-                                                  _shortest_path_tree);
+                                                  _cost_map_driving, _node_cost_map,
+                                                  _shortest_path_tree, false, "Dijkstra");
               IAssert (
                 _shortest_path_tree.find (_origin->m_origin_node->m_node_ID)
                   ->second
