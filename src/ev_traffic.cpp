@@ -893,6 +893,7 @@ MNM_Routing_Adaptive_With_POIs::check_od_candidate_poi_table_connectivity ()
     {
       _cost_map.insert (std::pair<TInt, TFlt> (_map_it.first, TFlt (1)));
     }
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
 
   for (auto _it : *m_od_candidate_poi_table)
     {
@@ -910,9 +911,9 @@ MNM_Routing_Adaptive_With_POIs::check_od_candidate_poi_table_connectivity ()
               // _origin to _node
               if (!_shortest_path_tree.empty ())
                 _shortest_path_tree.clear ();
-              MNM_Shortest_Path::all_to_one_FIFO (_node->m_node_ID, m_graph,
-                                                  _cost_map,
-                                                  _shortest_path_tree);
+              MNM_Shortest_Path::all_to_one_sp (_node->m_node_ID, m_graph,
+                                                  _cost_map, _node_cost_map,
+                                                  _shortest_path_tree, false, "Dijkstra");
               if (_shortest_path_tree.find (_origin->m_origin_node->m_node_ID)
                     ->second
                   == -1)
@@ -931,9 +932,9 @@ MNM_Routing_Adaptive_With_POIs::check_od_candidate_poi_table_connectivity ()
               // _node to _dest
               if (!_shortest_path_tree.empty ())
                 _shortest_path_tree.clear ();
-              MNM_Shortest_Path::all_to_one_FIFO (_dest->m_dest_node->m_node_ID,
-                                                  m_graph, _cost_map,
-                                                  _shortest_path_tree);
+              MNM_Shortest_Path::all_to_one_sp (_dest->m_dest_node->m_node_ID,
+                                                  m_graph, _cost_map, _node_cost_map,
+                                                  _shortest_path_tree, false, "Dijkstra");
               if (_shortest_path_tree.find (_node->m_node_ID)->second == -1)
                 {
                   printf ("Disconnectivity in Origin %d (Node: %d) - "
@@ -1090,6 +1091,7 @@ MNM_Routing_Adaptive_With_POIs::update_routing (TInt timestamp)
     {
       // printf("Calculating the shortest path trees!\n");
       update_link_cost ();
+      update_node_cost (timestamp);
       for (auto _it = m_od_factory->m_destination_map.begin ();
            _it != m_od_factory->m_destination_map.end (); _it++)
         {
@@ -1099,21 +1101,17 @@ MNM_Routing_Adaptive_With_POIs::update_routing (TInt timestamp)
           _dest_node_ID = _dest->m_dest_node->m_node_ID;
           // printf("Destination ID: %d\n", (int) _dest_node_ID);
           _shortest_path_tree = m_table->find (_dest)->second;
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
-                                              m_link_cost,
-                                              *_shortest_path_tree);
-          // MNM_Shortest_Path::all_to_one_FIFO(_dest_node_ID, m_graph,
-          // m_statistics -> m_record_interval_tt, *_shortest_path_tree);
-          // MNM_Shortest_Path::all_to_one_Dijkstra(_dest_node_ID, m_graph,
-          // m_statistics -> m_record_interval_tt, *_shortest_path_tree);
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, m_graph,
+                                              m_link_cost, m_node_cost,
+                                              *_shortest_path_tree, true, "Dijkstra");
           // }
         }
       for (auto _it : m_mid_POIs)
         {
           _shortest_path_tree = m_table_POIs->find (_it)->second;
-          MNM_Shortest_Path::all_to_one_FIFO (_it->m_node_ID, m_graph,
-                                              m_link_cost,
-                                              *_shortest_path_tree);
+          MNM_Shortest_Path::all_to_one_sp (_it->m_node_ID, m_graph,
+                                              m_link_cost, m_node_cost,
+                                              *_shortest_path_tree, true, "Dijkstra");
         }
       update_best_POI ();
       // update_best_POI2();

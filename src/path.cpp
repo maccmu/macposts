@@ -442,6 +442,7 @@ build_shortest_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
   TInt _dest_node_ID, _origin_node_ID;
   std::unordered_map<TInt, TFlt> _free_cost_map
     = std::unordered_map<TInt, TFlt> ();
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   std::unordered_map<TInt, TInt> _free_shortest_path_tree;
   MNM_Path *_path;
   for (auto _link_it = link_factory->m_link_map.begin ();
@@ -455,10 +456,8 @@ build_shortest_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
        _d_it != od_factory->m_destination_map.end (); _d_it++)
     {
       _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-      // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
-      //                                     _free_shortest_path_tree);
-      MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, graph, _free_cost_map,
-                                          _free_shortest_path_tree);
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph, _free_cost_map, _node_cost_map,
+                                          _free_shortest_path_tree, false, "Dijkstra");
       for (auto _o_it = od_factory->m_origin_map.begin ();
            _o_it != od_factory->m_origin_map.end (); _o_it++)
         {
@@ -572,14 +571,9 @@ build_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
        _d_it != od_factory->m_destination_map.end (); _d_it++)
     {
       _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-      // // link cost only
-      // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
-      //                                     _free_shortest_path_tree);
-      // MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, graph, _free_cost_map,
-      //                                         _free_shortest_path_tree);
       // link cost + node cost
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map, _node_cost_map,
-                                          _free_shortest_path_tree);
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph, _free_cost_map, _node_cost_map,
+                                          _free_shortest_path_tree, true, "Dijkstra");
 
       for (auto _o_it = od_factory->m_origin_map.begin ();
            _o_it != od_factory->m_origin_map.end (); _o_it++)
@@ -655,20 +649,13 @@ build_pathset (macposts::Graph &graph, MNM_OD_Factory *od_factory,
            _d_it != od_factory->m_destination_map.end (); _d_it++)
         {
           _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-          // // link cost
-          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-          //                                     _mid_cost_map,
-          //                                     _mid_shortest_path_tree);
-          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-          //                                     _heavy_cost_map,
-          //                                     _heavy_shortest_path_tree);
           // link cost + node cost
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph,
                                               _mid_cost_map, _node_cost_map,
-                                              _mid_shortest_path_tree);
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
+                                              _mid_shortest_path_tree, true, "Dijkstra");
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph,
                                               _heavy_cost_map, _node_cost_map,
-                                              _heavy_shortest_path_tree);
+                                              _heavy_shortest_path_tree, true, "Dijkstra");
           for (auto _o_it = od_factory->m_origin_map.begin ();
                _o_it != od_factory->m_origin_map.end (); _o_it++)
             {
