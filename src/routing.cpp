@@ -260,24 +260,9 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
           _dest_node_ID = _dest->m_dest_node->m_node_ID;
           // printf("Destination ID: %d\n", (int) _dest_node_ID);
           _shortest_path_tree = m_table->find (_dest)->second;
-          // // link cost only
-          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
-          //                                     m_link_cost,
-          //                                     *_shortest_path_tree);
-          // // link cost + node cost
-          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
-          //                                     m_link_cost,
-          //                                     m_node_cost,
-          //                                     *_shortest_path_tree);
-
-          // FIFO is BFS, which may be slower than Dijkstra in some cases
-          // link cost only
-          MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, m_graph,
-                                                  m_link_cost,
-                                                  *_shortest_path_tree);
-          // link cost + node cost
-          // TODO: Dijkstra with node cost is not implemented yet
-
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, m_graph,
+                                            m_link_cost, m_node_cost,
+                                            *_shortest_path_tree, true, "Dijkstra");
           // }
         }
       }
@@ -290,24 +275,9 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
           _dest_node_ID = _dest->m_dest_node->m_node_ID;
           // printf("Destination ID: %d\n", (int) _dest_node_ID);
           _shortest_path_tree = m_table->find (_dest)->second;
-          // // link cost only
-          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
-          //                                     m_link_cost,
-          //                                     *_shortest_path_tree);
-          // // link cost + node cost
-          // MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_graph,
-          //                                     m_link_cost,
-          //                                     m_node_cost,
-          //                                     *_shortest_path_tree);
-
-          // FIFO is BFS, which may be slower than Dijkstra in some cases
-          // link cost only
-          MNM_Shortest_Path::all_to_one_Dijkstra (_dest_node_ID, m_graph,
-                                                  m_link_cost,
-                                                  *_shortest_path_tree);
-          // link cost + node cost
-          // TODO: Dijkstra with node cost is not implemented yet
-
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, m_graph,
+                                                  m_link_cost, m_node_cost,
+                                                  *_shortest_path_tree, true, "Dijkstra");
           // }
         }
       }
