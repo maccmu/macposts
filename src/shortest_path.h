@@ -32,6 +32,22 @@ int all_to_one_Dijkstra (TInt dest_node_ID, const macposts::Graph &graph,
                          std::unordered_map<TInt, TInt *> &output_map,
                          TInt cost_position, TInt dist_position,
                          TInt output_position);
+// with link cost + node cost
+int all_to_one_Dijkstra (TInt dest_node_ID, const macposts::Graph &graph,
+                          const std::unordered_map<TInt, TFlt> &link_cost_map,
+                          const std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> &node_cost_map,
+                          std::unordered_map<TInt, TInt> &output_map);
+// with link cost + node cost, for last time step of TDSP
+int all_to_one_Dijkstra (
+  TInt dest_node_ID, const macposts::Graph &graph,
+  const std::unordered_map<TInt, TFlt *> &link_cost_map,
+  const std::unordered_map<TInt, std::unordered_map<TInt, TFlt *>>
+    &node_cost_map,
+  std::unordered_map<TInt, TFlt *> &dist_to_dest,
+  std::unordered_map<TInt, TInt *> &output_map, TInt cost_position,
+  TInt dist_position, TInt output_position);
+
+
 // with link cost
 int all_to_one_FIFO (TInt dest_node_ID, const macposts::Graph &graph,
                      const std::unordered_map<TInt, TFlt> &cost_map,
@@ -62,6 +78,13 @@ int all_to_one_FIFO (
 int all_to_one_LIFO (TInt dest_node_ID, const macposts::Graph &graph,
                      const std::unordered_map<TInt, TFlt> &cost_map,
                      std::unordered_map<TInt, TInt> &output_map);
+
+int all_to_one_sp(TInt dest_node_ID, const macposts::Graph &graph,
+  const std::unordered_map<TInt, TFlt> &link_cost_map,
+  const std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> &node_cost_map,
+  std::unordered_map<TInt, TInt> &output_map,
+  bool consider_node_cost = false,
+  std::string algorithm = "Dijkstra");
 
 /*------------------------------------------------------------
   TDSP

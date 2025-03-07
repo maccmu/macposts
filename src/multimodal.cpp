@@ -6361,6 +6361,7 @@ MNM_Routing_Multimodal_Adaptive::MNM_Routing_Multimodal_Adaptive (
 
   m_driving_link_cost = std::unordered_map<TInt, TFlt> ();
   m_bustransit_link_cost = std::unordered_map<TInt, TFlt> ();
+  m_node_cost = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
 
   auto *_tmp_config = new MNM_ConfReader (file_folder + "/config.conf", "DTA");
   m_working = _tmp_config->get_float ("adaptive_ratio_passenger") > 0
@@ -6393,6 +6394,7 @@ MNM_Routing_Multimodal_Adaptive::~MNM_Routing_Multimodal_Adaptive ()
   delete m_transit_table;
   m_driving_link_cost.clear ();
   m_bustransit_link_cost.clear ();
+  m_node_cost.clear();
 }
 
 int
@@ -6479,29 +6481,18 @@ MNM_Routing_Multimodal_Adaptive::update_routing (TInt timestamp)
 
           // vehicle
           _shortest_path_tree = m_driving_table->find (_dest)->second;
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_driving_graph,
-                                              m_driving_link_cost,
-                                              *_shortest_path_tree);
-          // MNM_Shortest_Path::all_to_one_FIFO(_dest_node_ID, m_driving_graph,
-          // m_statistics -> m_record_interval_tt, *_shortest_path_tree);
-          // MNM_Shortest_Path::all_to_one_Dijkstra(_dest_node_ID,
-          // m_driving_graph, m_statistics -> m_record_interval_tt,
-          // *_shortest_path_tree);
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, m_driving_graph,
+                                              m_driving_link_cost, m_node_cost,
+                                              *_shortest_path_tree, false, "Dijkstra");
 
           // passenger
           if (is_node (m_transit_graph, _dest_node_ID))
             {
               _shortest_path_tree = m_transit_table->find (_dest)->second;
-              MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID,
+              MNM_Shortest_Path::all_to_one_sp (_dest_node_ID,
                                                   m_transit_graph,
-                                                  m_bustransit_link_cost,
-                                                  *_shortest_path_tree);
-              // MNM_Shortest_Path::all_to_one_FIFO(_dest_node_ID,
-              // m_transit_graph, m_statistics ->
-              // m_record_interval_tt_bus_transit, *_shortest_path_tree);
-              // MNM_Shortest_Path::all_to_one_Dijkstra(_dest_node_ID,
-              // m_transit_graph, m_statistics ->
-              // m_record_interval_tt_bus_transit, *_shortest_path_tree);
+                                                  m_bustransit_link_cost, m_node_cost,
+                                                  *_shortest_path_tree, false, "Dijkstra");
             }
           // }
         }
@@ -9796,7 +9787,7 @@ MNM_Dta_Multimodal::find_connected_pnr_parkinglot_for_destination ()
     {
       _cost_map.insert (std::pair<TInt, TFlt> (_map_it.first, TFlt (1)));
     }
-
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   for (auto _it : m_od_factory->m_destination_map)
     {
       _dest = dynamic_cast<MNM_Destination_Multimodal *> (_it.second);
@@ -9804,8 +9795,8 @@ MNM_Dta_Multimodal::find_connected_pnr_parkinglot_for_destination ()
       if (!is_node (m_bus_transit_graph, _dest_node_ID))
         continue;
       _shortest_path_tree.clear ();
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_bus_transit_graph,
-                                          _cost_map, _shortest_path_tree);
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, m_bus_transit_graph,
+                                          _cost_map, _node_cost_map, _shortest_path_tree, false, "Dijkstra");
 
       // parking_lot-D
       for (auto _map_it : m_parkinglot_factory->m_parking_lot_map)
@@ -9842,7 +9833,7 @@ MNM_Dta_Multimodal::check_bus_transit_connectivity ()
     {
       _cost_map.insert (std::pair<TInt, TFlt> (_map_it.first, TFlt (1)));
     }
-
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   for (auto _it : m_od_factory->m_destination_map)
     {
       _dest = dynamic_cast<MNM_Destination_Multimodal *> (_it.second);
@@ -9850,8 +9841,8 @@ MNM_Dta_Multimodal::check_bus_transit_connectivity ()
       if (!is_node (m_bus_transit_graph, _dest_node_ID))
         continue;
       _shortest_path_tree.clear ();
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_bus_transit_graph,
-                                          _cost_map, _shortest_path_tree);
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, m_bus_transit_graph,
+                                          _cost_map, _node_cost_map, _shortest_path_tree, false, "Dijkstra");
 
       // O-D
       for (auto _map_it : m_od_factory->m_origin_map)
@@ -12764,15 +12755,15 @@ build_shortest_passenger_pathset (
         std::pair<TInt, TFlt> (_link_it.first,
                                _link_it.second->m_fftt / mmdue->m_unit_time));
     }
-
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   for (auto _d_it : od_factory->m_destination_map)
     {
       _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
 
       _free_shortest_path_tree_driving = std::unordered_map<TInt, TInt> ();
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, driving_graph,
-                                          _free_cost_map_driving,
-                                          _free_shortest_path_tree_driving);
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, driving_graph,
+                                          _free_cost_map_driving, _node_cost_map,
+                                          _free_shortest_path_tree_driving, false, "Dijkstra");
       _driving_table.insert (
         std::pair<TInt, std::unordered_map<
                           TInt, TInt>> (_dest_node_ID,
@@ -12783,9 +12774,9 @@ build_shortest_passenger_pathset (
           _free_shortest_path_tree_bustransit
             = std::unordered_map<TInt, TInt> ();
           MNM_Shortest_Path::
-            all_to_one_FIFO (_dest_node_ID, bustransit_graph,
-                             _free_cost_map_bustransit,
-                             _free_shortest_path_tree_bustransit);
+            all_to_one_sp (_dest_node_ID, bustransit_graph,
+                             _free_cost_map_bustransit, _node_cost_map,
+                             _free_shortest_path_tree_bustransit, false, "Dijkstra");
           _bustransit_table.insert (
             std::pair<TInt,
                       std::unordered_map<
@@ -13350,13 +13341,14 @@ build_shortest_driving_pathset (
         std::pair<TInt, TFlt> (_link_it->first,
                                _link_it->second->get_link_tt ()));
     }
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   // printf("1111\n");
   for (auto _d_it = od_factory->m_destination_map.begin ();
        _d_it != od_factory->m_destination_map.end (); _d_it++)
     {
       _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph, _free_cost_map,
-                                          _free_shortest_path_tree);
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph, _free_cost_map, _node_cost_map,
+                                          _free_shortest_path_tree, false, "Dijkstra");
       for (auto _o_it = od_factory->m_origin_map.begin ();
            _o_it != od_factory->m_origin_map.end (); _o_it++)
         {
@@ -13430,12 +13422,12 @@ build_shortest_driving_pathset (
            _d_it != od_factory->m_destination_map.end (); _d_it++)
         {
           _dest_node_ID = _d_it->second->m_dest_node->m_node_ID;
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                              _mid_cost_map,
-                                              _mid_shortest_path_tree);
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                              _heavy_cost_map,
-                                              _heavy_shortest_path_tree);
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph,
+                                              _mid_cost_map, _node_cost_map,
+                                              _mid_shortest_path_tree, false, "Dijkstra");
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph,
+                                              _heavy_cost_map, _node_cost_map,
+                                              _heavy_shortest_path_tree, false, "Dijkstra");
           for (auto _o_it = od_factory->m_origin_map.begin ();
                _o_it != od_factory->m_origin_map.end (); _o_it++)
             {
@@ -13544,6 +13536,7 @@ build_shortest_bustransit_pathset (
   TInt _dest_node_ID, _origin_node_ID;
   Path_Table *_path_table = new Path_Table ();
   std::unordered_map<TInt, MNM_Pathset *> *_new_map = nullptr;
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   for (auto _o_it = od_factory->m_origin_map.begin ();
        _o_it != od_factory->m_origin_map.end (); _o_it++)
     {
@@ -13625,9 +13618,9 @@ build_shortest_bustransit_pathset (
       if (is_node (graph, _dest_node_ID)
           && !graph.connections (_dest_node_ID, Direction::Incoming).empty ())
         {
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                              _free_cost_map,
-                                              _free_shortest_path_tree);
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph,
+                                              _free_cost_map, _node_cost_map,
+                                              _free_shortest_path_tree, false, "Dijkstra");
         }
       else
         {
@@ -13711,12 +13704,12 @@ build_shortest_bustransit_pathset (
               && !graph.connections (_dest_node_ID, Direction::Incoming)
                     .empty ())
             {
-              MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                                  _mid_cost_map,
-                                                  _mid_shortest_path_tree);
-              MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, graph,
-                                                  _heavy_cost_map,
-                                                  _heavy_shortest_path_tree);
+              MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph,
+                                                  _mid_cost_map, _node_cost_map,
+                                                  _mid_shortest_path_tree, false, "Dijkstra");
+              MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, graph,
+                                                  _heavy_cost_map, _node_cost_map,
+                                                  _heavy_shortest_path_tree, false, "Dijkstra");
             }
           else
             {
@@ -13918,7 +13911,7 @@ build_shortest_pnr_pathset (
       _free_cost_map_bustransit.insert (
         std::pair<TInt, TFlt> (_link_it.first, _link_it.second->m_fftt));
     }
-
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   for (auto _d_it : od_factory->m_destination_map)
     {
       _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
@@ -13926,9 +13919,9 @@ build_shortest_pnr_pathset (
       if (is_node (bustransit_graph, _dest_node_ID))
         {
           _free_shortest_path_tree_driving = std::unordered_map<TInt, TInt> ();
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, driving_graph,
-                                              _free_cost_map_driving,
-                                              _free_shortest_path_tree_driving);
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, driving_graph,
+                                              _free_cost_map_driving, _node_cost_map,
+                                              _free_shortest_path_tree_driving, false, "Dijkstra");
           _driving_table.insert (
             std::pair<TInt, std::unordered_map<
                               TInt, TInt>> (_dest_node_ID,
@@ -13941,9 +13934,9 @@ build_shortest_pnr_pathset (
               _free_shortest_path_tree_bustransit
                 = std::unordered_map<TInt, TInt> ();
               MNM_Shortest_Path::
-                all_to_one_FIFO (_dest_node_ID, bustransit_graph,
-                                 _free_cost_map_bustransit,
-                                 _free_shortest_path_tree_bustransit);
+                all_to_one_sp (_dest_node_ID, bustransit_graph,
+                                 _free_cost_map_bustransit, _node_cost_map,
+                                 _free_shortest_path_tree_bustransit, false, "Dijkstra");
               _bustransit_table.insert (
                 std::pair<TInt,
                           std::unordered_map<
@@ -14133,13 +14126,13 @@ build_shortest_pnr_pathset (
               continue;
             }
           MNM_Shortest_Path::
-            all_to_one_FIFO (_dest_node_ID, bustransit_graph,
-                             _mid_cost_map_bustransit,
-                             _mid_shortest_path_tree_bustransit);
+            all_to_one_sp (_dest_node_ID, bustransit_graph,
+                             _mid_cost_map_bustransit, _node_cost_map,
+                             _mid_shortest_path_tree_bustransit, false, "Dijkstra");
           MNM_Shortest_Path::
-            all_to_one_FIFO (_dest_node_ID, bustransit_graph,
-                             _heavy_cost_map_bustransit,
-                             _heavy_shortest_path_tree_bustransit);
+            all_to_one_sp (_dest_node_ID, bustransit_graph,
+                             _heavy_cost_map_bustransit, _node_cost_map,
+                             _heavy_shortest_path_tree_bustransit, "Dijkstra");
           for (auto _o_it = od_factory->m_origin_map.begin ();
                _o_it != od_factory->m_origin_map.end (); _o_it++)
             {
@@ -14174,9 +14167,9 @@ build_shortest_pnr_pathset (
                       _mid_dest_node_ID = _parkinglot->m_dest_node->m_node_ID;
 
                       MNM_Shortest_Path::
-                        all_to_one_FIFO (_mid_dest_node_ID, driving_graph,
-                                         _mid_cost_map_driving,
-                                         _mid_shortest_path_tree_driving);
+                        all_to_one_sp (_mid_dest_node_ID, driving_graph,
+                                         _mid_cost_map_driving, _node_cost_map,
+                                         _mid_shortest_path_tree_driving, false, "Dijkstra");
                       _driving_path_mid
                         = MNM::extract_path (_origin_node_ID, _mid_dest_node_ID,
                                              _mid_shortest_path_tree_driving,
@@ -14189,9 +14182,9 @@ build_shortest_pnr_pathset (
                       IAssert (_bustransit_path_mid != nullptr);
 
                       MNM_Shortest_Path::
-                        all_to_one_FIFO (_mid_dest_node_ID, driving_graph,
-                                         _heavy_cost_map_driving,
-                                         _heavy_shortest_path_tree_driving);
+                        all_to_one_sp (_mid_dest_node_ID, driving_graph,
+                                         _heavy_cost_map_driving, _node_cost_map,
+                                         _heavy_shortest_path_tree_driving, false, "Dijkstra");
                       _driving_path_heavy
                         = MNM::extract_path (_origin_node_ID, _mid_dest_node_ID,
                                              _heavy_shortest_path_tree_driving,
@@ -15332,7 +15325,7 @@ MNM_MM_Due::check_od_mode_connectivity ()
   // pnr
   std::unordered_map<TInt, TInt> _shortest_path_tree_pnr
     = std::unordered_map<TInt, TInt> ();
-
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   for (auto _d_it : m_mmdta->m_od_factory->m_destination_map)
     {
       _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
@@ -15341,15 +15334,15 @@ MNM_MM_Due::check_od_mode_connectivity ()
       _shortest_path_tree_driving.clear ();
       _shortest_path_tree_bustransit.clear ();
       _shortest_path_tree_pnr.clear ();
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, m_mmdta->m_graph,
-                                          _cost_map_driving,
-                                          _shortest_path_tree_driving);
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, m_mmdta->m_graph,
+                                          _cost_map_driving, _node_cost_map,
+                                          _shortest_path_tree_driving, false, "Dijkstra");
       if (_dest_node_in_transit_graph)
         {
-          MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID,
+          MNM_Shortest_Path::all_to_one_sp (_dest_node_ID,
                                               m_mmdta->m_bus_transit_graph,
-                                              _cost_map_bustransit,
-                                              _shortest_path_tree_bustransit);
+                                              _cost_map_bustransit, _node_cost_map,
+                                              _shortest_path_tree_bustransit, false, "Dijkstra");
         }
       for (auto _o_it : m_mmdta->m_od_factory->m_origin_map)
         {
@@ -15449,9 +15442,9 @@ MNM_MM_Due::check_od_mode_connectivity ()
                     {
                       _mid_dest_node_ID = _parkinglot->m_dest_node->m_node_ID;
                       MNM_Shortest_Path::
-                        all_to_one_FIFO (_mid_dest_node_ID, m_mmdta->m_graph,
-                                         _cost_map_driving,
-                                         _shortest_path_tree_pnr);
+                        all_to_one_sp (_mid_dest_node_ID, m_mmdta->m_graph,
+                                         _cost_map_driving, _node_cost_map,
+                                         _shortest_path_tree_pnr, false, "Dijkstra");
                       if (_shortest_path_tree_pnr.find (_origin_node_ID)->second
                           > 0)
                         {
@@ -17078,7 +17071,7 @@ MNM_MM_Due::update_snapshot_route_table (MNM_Dta_Multimodal *mmdta,
     = std::unordered_map<TInt, TInt> ();
   std::unordered_map<TInt, TInt> _shortest_path_tree_bustransit
     = std::unordered_map<TInt, TInt> ();
-
+  std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> _node_cost_map = std::unordered_map<TInt, std::unordered_map<TInt, TFlt>> ();
   for (auto _d_it : mmdta->m_od_factory->m_destination_map)
     {
       _dest_node_ID = _d_it.second->m_dest_node->m_node_ID;
@@ -17087,9 +17080,9 @@ MNM_MM_Due::update_snapshot_route_table (MNM_Dta_Multimodal *mmdta,
         {
           _shortest_path_tree_driving.clear ();
         }
-      MNM_Shortest_Path::all_to_one_FIFO (_dest_node_ID, mmdta->m_graph,
-                                          m_driving_link_cost_map_snapshot,
-                                          _shortest_path_tree_driving);
+      MNM_Shortest_Path::all_to_one_sp (_dest_node_ID, mmdta->m_graph,
+                                          m_driving_link_cost_map_snapshot, _node_cost_map,
+                                          _shortest_path_tree_driving, false, "Dijkstra");
       m_driving_table_snapshot.insert (
         std::pair<
           TInt, std::unordered_map<TInt, TInt>> (_dest_node_ID,
@@ -17102,9 +17095,9 @@ MNM_MM_Due::update_snapshot_route_table (MNM_Dta_Multimodal *mmdta,
               _shortest_path_tree_bustransit.clear ();
             }
           MNM_Shortest_Path::
-            all_to_one_FIFO (_dest_node_ID, mmdta->m_bus_transit_graph,
-                             m_bustransit_link_cost_map_snapshot,
-                             _shortest_path_tree_bustransit);
+            all_to_one_sp (_dest_node_ID, mmdta->m_bus_transit_graph,
+                             m_bustransit_link_cost_map_snapshot, _node_cost_map,
+                             _shortest_path_tree_bustransit, false, "Dijkstra");
           m_bustransit_table_snapshot.insert (
             std::pair<TInt, std::unordered_map<
                               TInt, TInt>> (_dest_node_ID,
