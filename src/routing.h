@@ -52,6 +52,7 @@ public:
   virtual int init_routing (Path_Table *path_table = nullptr) override;
   virtual int update_link_cost ();
   virtual int update_node_cost (int interval);
+  virtual int update_routing_table(TInt timestamp);
   virtual int update_routing (TInt timestamp) override;
   // private:
   MNM_Statistics *m_statistics;
