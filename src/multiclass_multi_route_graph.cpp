@@ -1,6 +1,7 @@
 #include "multiclass_multi_route_graph.h"
 #include <cfloat>
 
+using macposts::graph::Direction;
 
 /**************************************************************************
                             Vehicle
@@ -567,6 +568,162 @@ MNM_Routing_Biclass_Fixed_Subclass::update_routing (TInt timestamp)
   return 0;
 }
 
+/**************** Adaptive Routing ********************/
+MNM_Routing_Adaptive_Subclass::MNM_Routing_Adaptive_Subclass (const std::string &file_folder, macposts::Graph &graph,
+    MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
+    MNM_Node_Factory *node_factory,
+    MNM_Link_Factory *link_factory,
+    TInt veh_class, TInt veh_subclass)
+    : MNM_Routing_Adaptive::MNM_Routing_Adaptive(file_folder, graph, statistics, od_factory, node_factory, link_factory)
+{
+    m_veh_class = veh_class;
+    m_veh_subclass = veh_subclass;
+}
+
+
+MNM_Routing_Adaptive_Subclass::~MNM_Routing_Adaptive_Subclass()
+{
+    ;
+}
+
+int 
+MNM_Routing_Adaptive_Subclass::update_routing (TInt timestamp) 
+{
+    // relying on m_statistics -> m_record_interval_tt, which is obtained in
+    // simulation, not after simulation link::get_link_tt(), based on density
+  
+    // update m_table
+    update_routing_table(timestamp);
+  
+    /* route the vehicle in Origin nodes */
+    // printf("Routing the vehicle!\n");
+    MNM_Origin *_origin;
+    MNM_DMOND *_origin_node;
+    TInt _node_ID, _next_link_ID;
+    MNM_Dlink *_next_link;
+    MNM_Veh_Multiclass_Subclass *_veh;
+    for (auto _origin_it = m_od_factory->m_origin_map.begin ();
+         _origin_it != m_od_factory->m_origin_map.end (); _origin_it++)
+      {
+        _origin = _origin_it->second;
+        _origin_node = _origin->m_origin_node;
+        _node_ID = _origin_node->m_node_ID;
+        for (auto _veh_it = _origin_node->m_in_veh_queue.begin ();
+             _veh_it != _origin_node->m_in_veh_queue.end (); _veh_it++)
+          {
+            _veh = dynamic_cast<MNM_Veh_Multiclass_Subclass*>(*_veh_it);
+            if (_veh->m_type == MNM_TYPE_ADAPTIVE && _veh -> get_class() == m_veh_class && _veh -> get_subclass() == m_veh_subclass)
+              {
+                _next_link_ID = m_table->find (_veh->get_destination ())
+                                  ->second->find (_node_ID)
+                                  ->second;
+                if (_next_link_ID < 0)
+                  {
+                    throw std::runtime_error ("invalid state");
+                  }
+                // printf("From origin, The next link ID will be %d\n",
+                // _next_link_ID());
+                _next_link = m_link_factory->get_link (_next_link_ID);
+                _veh->set_next_link (_next_link);
+                // printf("The next link now it's %d\n", _veh -> get_next_link()
+                // -> m_link_ID()); note that it neither initializes nor updates
+                // _veh -> m_path
+              }
+          }
+      }
+  
+    MNM_Destination *_veh_dest;
+    MNM_Dlink *_link;
+    for (auto _link_it = m_link_factory->m_link_map.begin ();
+         _link_it != m_link_factory->m_link_map.end (); _link_it++)
+      {
+        _link = _link_it->second;
+        _node_ID = _link->m_to_node->m_node_ID;
+        for (auto _veh_it = _link->m_finished_array.begin ();
+             _veh_it != _link->m_finished_array.end (); _veh_it++)
+          {
+            _veh = dynamic_cast<MNM_Veh_Multiclass_Subclass*>(*_veh_it);
+            if (_veh->m_type == MNM_TYPE_ADAPTIVE && _veh -> get_class() == m_veh_class && _veh -> get_subclass() == m_veh_subclass)
+              {
+                if (_link != _veh->get_current_link ())
+                  {
+                    throw std::runtime_error ("wrong current link");
+                  }
+                _veh_dest = _veh->get_destination ();
+                if (_veh_dest->m_dest_node->m_node_ID == _node_ID)
+                  {
+                    _veh->set_next_link (nullptr);
+                  }
+                else
+                  {
+                    _next_link_ID = m_table->find (_veh->get_destination ())
+                                      ->second->find (_node_ID)
+                                      ->second;
+                    if (_next_link_ID == -1)
+                      {
+                        printf (
+                          "Something wrong in routing, wrong next link 2\n");
+                        printf ("The node is %d, the vehicle should head to %d\n",
+                                (int) _node_ID,
+                                (int) _veh_dest->m_dest_node->m_node_ID);
+                        auto &&outs
+                          = m_graph.connections (_node_ID, Direction::Outgoing);
+                        int deg = std::distance (outs.begin (), outs.end ());
+                        if (deg > 0)
+                          {
+                            printf ("Assign randomly!\n");
+                            auto it = outs.begin ();
+                            int idx = MNM_Ults::mod (rand (), deg);
+                            while (idx--)
+                              it++;
+                            _next_link_ID = m_graph.get_id (*it);
+                          }
+  
+                        else
+                          {
+                            printf ("Can't do anything!\n");
+                          }
+                      }
+                    _next_link = m_link_factory->get_link (_next_link_ID);
+                    if (_next_link != nullptr)
+                      {
+                        // printf("Checking future\n");
+                        TInt _next_node_ID = _next_link->m_to_node->m_node_ID;
+                        if (_next_node_ID
+                            != _veh->get_destination ()->m_dest_node->m_node_ID)
+                          {
+                            // printf("Destination node is %d\n", _veh ->
+                            // get_destination() -> m_dest_node -> m_node_ID());
+                            if (m_table->find (_veh->get_destination ())
+                                == m_table->end ())
+                              {
+                                printf ("Cannot find Destination\n");
+                              }
+                            if (m_table->find (_veh->get_destination ())
+                                  ->second->find (_next_node_ID)
+                                == m_table->find (_veh->get_destination ())
+                                     ->second->end ())
+                              {
+                                printf ("Cannot find _next_node_ID\n");
+                              }
+                            if (m_table->find (_veh->get_destination ())
+                                  ->second->find (_next_node_ID)
+                                  ->second
+                                == -1)
+                              {
+                                throw std::runtime_error ("invalid state");
+                              }
+                          }
+                      }
+                    _veh->set_next_link (_next_link);
+                  } // end if else
+              }     // end if veh->m_type
+          }         // end for veh_it
+      }             // end for link_it
+  
+    // printf("Finished Routing\n");
+    return 0;
+}
 
 /**************** Hybrid Routing ********************/
 MNM_Routing_Biclass_Hybrid_Subclass::MNM_Routing_Biclass_Hybrid_Subclass(
@@ -586,9 +743,9 @@ MNM_Routing_Biclass_Hybrid_Subclass::MNM_Routing_Biclass_Hybrid_Subclass(
     int _num_subclass_truck = _tmp_config->get_int ("num_subclass_truck");
 
     m_routing_fixed_car_subclass = std::unordered_map<int, MNM_Routing_Biclass_Fixed_Subclass*> ();
-    m_routing_adaptive_car_subclass = std::unordered_map<int, MNM_Routing_Adaptive*> ();
+    m_routing_adaptive_car_subclass = std::unordered_map<int, MNM_Routing_Adaptive_Subclass*> ();
     m_routing_fixed_truck_subclass = std::unordered_map<int, MNM_Routing_Biclass_Fixed_Subclass*> ();
-    m_routing_adaptive_truck_subclass = std::unordered_map<int, MNM_Routing_Adaptive*> ();
+    m_routing_adaptive_truck_subclass = std::unordered_map<int, MNM_Routing_Adaptive_Subclass*> ();
 
     // Initialize the routing algorithm for each subclass
     for (int i = 0; i < _num_subclass_car; ++i)
@@ -603,9 +760,9 @@ MNM_Routing_Biclass_Hybrid_Subclass::MNM_Routing_Biclass_Hybrid_Subclass(
         m_routing_fixed_car_subclass.at(i) -> m_path_table = path_table_vec[subclass_car_path_table_mapping[i]];
 
         m_routing_adaptive_car_subclass.insert(std::make_pair(i, nullptr));
-        m_routing_adaptive_car_subclass[i] = new MNM_Routing_Adaptive (
+        m_routing_adaptive_car_subclass[i] = new MNM_Routing_Adaptive_Subclass (
             file_folder, graph_vec[subclass_car_graph_mapping[i]], statistics, od_factory,
-            node_factory, link_factory);
+            node_factory, link_factory, 0, i);
         // m_routing_adaptive_car_subclass.at(i) -> m_graph = graph_vec[subclass_car_graph_mapping[i]];
         m_routing_adaptive_car_subclass.at(i) -> m_working
             = _tmp_config->get_float ("adaptive_ratio_car") > 0;
@@ -626,8 +783,8 @@ MNM_Routing_Biclass_Hybrid_Subclass::MNM_Routing_Biclass_Hybrid_Subclass(
             i, nullptr
         ));
         m_routing_adaptive_truck_subclass[i] = 
-            new MNM_Routing_Adaptive (file_folder, graph_vec[subclass_truck_graph_mapping[i]], statistics, od_factory,
-                                    node_factory, link_factory);
+            new MNM_Routing_Adaptive_Subclass (file_folder, graph_vec[subclass_truck_graph_mapping[i]], statistics, od_factory,
+                                    node_factory, link_factory, 1, i);
         m_routing_adaptive_truck_subclass.at(i) -> m_working
             = _tmp_config->get_float ("adaptive_ratio_truck") > 0;
     }
