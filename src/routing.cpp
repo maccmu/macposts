@@ -237,14 +237,11 @@ MNM_Routing_Adaptive::update_node_cost (int interval)
 }
 
 int
-MNM_Routing_Adaptive::update_routing (TInt timestamp)
+MNM_Routing_Adaptive::update_routing_table(TInt timestamp)
 {
-  // relying on m_statistics -> m_record_interval_tt, which is obtained in
-  // simulation, not after simulation link::get_link_tt(), based on density
   MNM_Destination *_dest;
   TInt _dest_node_ID;
   std::unordered_map<TInt, TInt> *_shortest_path_tree;
-  // update m_table
   if ((timestamp) % m_routing_freq == 0 || timestamp == 0)
     {
       // printf("Calculating the shortest path trees!\n");
@@ -282,6 +279,17 @@ MNM_Routing_Adaptive::update_routing (TInt timestamp)
         }
       }
     }
+  return 0;
+}
+
+int
+MNM_Routing_Adaptive::update_routing (TInt timestamp)
+{
+  // relying on m_statistics -> m_record_interval_tt, which is obtained in
+  // simulation, not after simulation link::get_link_tt(), based on density
+
+  // update m_table
+  update_routing_table(timestamp);
 
   /* route the vehicle in Origin nodes */
   // printf("Routing the vehicle!\n");

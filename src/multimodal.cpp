@@ -10472,7 +10472,7 @@ MNM_Dta_Multimodal::load_once (bool verbose, TInt load_int, TInt assign_int)
     = dynamic_cast<MNM_Routing_Multimodal_Hybrid *> (m_routing);
 
   if (load_int == 0)
-    m_statistics->update_record (-1);
+    m_statistics->update_record (load_int);
   if (verbose)
     printf ("-------------------------------    Interval %d   "
             "------------------------------ \n",

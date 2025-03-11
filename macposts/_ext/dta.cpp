@@ -27,7 +27,7 @@ class Dta
 public:
   Dta ();
   ~Dta ();
-  int initialize (const std::string &folder);
+  int initialize (const std::string &folder, bool skip_check=false);
   bool check_input_files ();
   int generate_shortest_pathsets (const std::string &folder, int max_iter,
                                   double vot, double mid_scale,
@@ -211,12 +211,12 @@ Dta::~Dta ()
 }
 
 int
-Dta::initialize (const std::string &folder)
+Dta::initialize (const std::string &folder, bool skip_check)
 {
   m_dta = new MNM_Dta (folder);
   m_dta->build_from_files ();
   m_dta->hook_up_node_and_link ();
-  m_dta->is_ok ();
+  if (!skip_check) m_dta->is_ok ();
   Assert (m_dta->m_config->get_string ("routing_type") == "Due"
           || m_dta->m_config->get_string ("routing_type") == "Hybrid"
           || m_dta->m_config->get_string ("routing_type") == "Fixed"

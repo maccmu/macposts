@@ -173,7 +173,7 @@ struct LessThanByCost
 {
   bool operator() (const MNM_Cost *lhs, const MNM_Cost *rhs) const
   {
-    return lhs->m_cost >= rhs->m_cost;
+    return lhs->m_cost > rhs->m_cost;
   }
 };
 
