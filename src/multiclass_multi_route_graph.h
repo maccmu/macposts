@@ -104,6 +104,20 @@ public:
   int m_buffer_start_index;
 };
 
+class MNM_Routing_Adaptive_Subclass : public MNM_Routing_Adaptive
+{
+public:
+  MNM_Routing_Adaptive_Subclass (const std::string &file_folder, macposts::Graph &graph,
+                        MNM_Statistics *statistics, MNM_OD_Factory *od_factory,
+                        MNM_Node_Factory *node_factory,
+                        MNM_Link_Factory *link_factory,
+                        TInt veh_class = 0, TInt veh_subclass = 0);
+  virtual ~MNM_Routing_Adaptive_Subclass () override;
+  virtual int update_routing (TInt timestamp) override;
+
+  int m_veh_class;
+  int m_veh_subclass;
+};
 
 class MNM_Routing_Biclass_Hybrid_Subclass : public MNM_Routing
 {
@@ -122,9 +136,9 @@ public:
   virtual int remove_finished (MNM_Veh *veh, bool del = true) override;
 
   std::unordered_map<int, MNM_Routing_Biclass_Fixed_Subclass*> m_routing_fixed_car_subclass;
-  std::unordered_map<int, MNM_Routing_Adaptive*> m_routing_adaptive_car_subclass;
+  std::unordered_map<int, MNM_Routing_Adaptive_Subclass*> m_routing_adaptive_car_subclass;
   std::unordered_map<int, MNM_Routing_Biclass_Fixed_Subclass*> m_routing_fixed_truck_subclass;
-  std::unordered_map<int, MNM_Routing_Adaptive*> m_routing_adaptive_truck_subclass;
+  std::unordered_map<int, MNM_Routing_Adaptive_Subclass*> m_routing_adaptive_truck_subclass;
 };
 
 /**************************************************************************

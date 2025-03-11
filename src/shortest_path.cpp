@@ -41,9 +41,15 @@ MNM_Shortest_Path::all_to_one_Dijkstra (
         {
           dist_to_dest.insert (
             { _node_id, TFlt (std::numeric_limits<double>::infinity ()) });
-          output_map.insert (
-            { _node_id, -1 }); // If the destination is not accessible the
-                               // output remains -1
+          if (output_map.find (_node_id) != output_map.end ())
+            {
+              output_map.find (_node_id)->second = -1;
+            }
+          else
+            {
+              output_map.insert (std::pair<TInt, TInt> (_node_id, -1));
+            }
+          // If the destination is not accessible the output remains -1
         }
     }
   dist_to_dest[dest_node_ID] = TFlt (0);
@@ -174,9 +180,15 @@ MNM_Shortest_Path::all_to_one_Dijkstra (TInt dest_node_ID, const macposts::Graph
         {
           dist_to_dest.insert (
             { _node_id, TFlt (std::numeric_limits<double>::infinity ()) });
-          output_map.insert (
-            { _node_id, -1 }); // If the destination is not accessible the
-                               // output remains -1
+          if (output_map.find (_node_id) != output_map.end ())
+            {
+              output_map.find (_node_id)->second = -1;
+            }
+          else
+            {
+              output_map.insert (std::pair<TInt, TInt> (_node_id, -1));
+            }
+          // If the destination is not accessible the output remains -1
         }
     }
   dist_to_dest[dest_node_ID] = TFlt (0);
