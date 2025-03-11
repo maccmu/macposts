@@ -11,6 +11,7 @@
 #include <common.h>
 #include <multiclass.h>
 #include <multimodal.h>
+#include <multiclass_multi_route_graph.h>
 
 namespace py = pybind11;
 using SparseMatrixR = Eigen::SparseMatrix<double, Eigen::RowMajor>;
@@ -24,7 +25,7 @@ class Mcdta
 public:
   Mcdta ();
   ~Mcdta ();
-  int initialize (const std::string &folder);
+  int initialize (const std::string &folder, bool skip_check=false);
   bool check_input_files ();
   int generate_shortest_pathsets (const std::string &folder, int max_iter,
                                   double vot, double mid_scale,
@@ -32,6 +33,9 @@ public:
   int install_cc ();
   int install_cc_tree ();
   int run_whole (bool verbose = false);
+  int run_multi_route_graph(const std::string &folder, bool verbose,
+    bool skip_check, int cong_frequency,
+    const std::string &result_folder);
   // FIXME: This returns a Numpy array for consistency, but it should really be
   // better to use a plain list.
   py::array_t<int> get_all_links ();
@@ -367,12 +371,12 @@ Mcdta::~Mcdta ()
 }
 
 int
-Mcdta::initialize (const std::string &folder)
+Mcdta::initialize (const std::string &folder, bool skip_check)
 {
   m_mcdta = new MNM_Dta_Multiclass (folder);
   m_mcdta->build_from_files ();
   m_mcdta->hook_up_node_and_link ();
-  m_mcdta->is_ok ();
+  if (!skip_check) m_mcdta->is_ok ();
   IAssert (m_mcdta->m_config->get_string ("routing_type") == "Biclass_Hybrid"
            || m_mcdta->m_config->get_string ("routing_type")
                 == "Biclass_Hybrid_ColumnGeneration"
@@ -488,6 +492,60 @@ Mcdta::run_whole (bool verbose)
   std::cout.flush ();   // iostream
   std::fflush (stdout); // cstdio
   return 0;
+}
+
+int 
+Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
+  bool skip_check, int cong_frequency,
+  const std::string &result_folder)
+{
+  Assert (m_mcdta == nullptr);
+  MNM_ConfReader *_config
+    = new MNM_ConfReader (folder + "/config.conf", "STAT");
+  std::string _rec_folder = (result_folder == "")
+                              ? _config->get_string ("rec_folder")
+                              : result_folder;
+  delete _config;
+
+  m_mcdta = new MNM_Dta_Multiclass_Subclass(folder);
+	printf("================================ DTA set! =================================\n");
+	
+	m_mcdta -> build_from_files();
+	printf("========================= Finished initialization! ========================\n");
+
+	m_mcdta -> hook_up_node_and_link();
+	printf("====================== Finished node and link hook-up! ====================\n");
+  return 0;
+
+  MNM_Dlink_Multiclass *_link;
+  for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
+    {
+      _link = dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second);
+      _link->install_cumulative_curve_multiclass ();
+    }
+  printf ("====================== Finished node and link hook-up! "
+          "====================\n");
+
+  if (!skip_check)
+    {
+      m_mcdta->is_ok ();
+      printf ("============================ DTA is OK to run! "
+              "============================\n");
+    }
+
+  m_mcdta->pre_loading ();
+  printf ("========================== Finished pre_loading! "
+          "==========================\n");
+
+  printf ("\n\n\n====================================== Start loading! "
+          "=======================================\n");
+  m_mcdta->loading (verbose);
+  printf ("\n====================================== Finished loading! "
+          "=======================================\n\n\n");
+  
+  print_simulation_results (folder + "/" + _rec_folder, cong_frequency);
+  printf ("Finished DNL!\n"); 
+  return 0;      
 }
 
 py::array_t<int>

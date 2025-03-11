@@ -1177,7 +1177,7 @@ MNM_Dta_Multiclass_Subclass::load_once (bool verbose, TInt load_int, TInt assign
     // update some link attributes over time
     m_link_factory->update_link_attribute (load_int, verbose);
     // compute empty network link tt, for adaptive routing
-    if (load_int == 0) m_statistics->update_record (-1);
+    if (load_int == 0) m_statistics->update_record (load_int);
     if (verbose)
     printf ("-------------------------------    Interval %d   "
             "------------------------------ \n",
