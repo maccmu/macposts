@@ -195,6 +195,7 @@ init (py::module &m)
     .def ("check_input_files", &Mcdta::check_input_files)
     .def ("generate_shortest_pathsets", &Mcdta::generate_shortest_pathsets)
     .def ("run_whole", &Mcdta::run_whole, py::arg ("verbose") = false)
+    .def ("run_multi_route_graph", &Mcdta::run_multi_route_graph)
     .def ("install_cc", &Mcdta::install_cc)
     .def ("install_cc_tree", &Mcdta::install_cc_tree)
     .def ("get_travel_stats", &Mcdta::get_travel_stats)
@@ -515,7 +516,6 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
 
 	m_mcdta -> hook_up_node_and_link();
 	printf("====================== Finished node and link hook-up! ====================\n");
-  return 0;
 
   MNM_Dlink_Multiclass *_link;
   for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
@@ -523,7 +523,7 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
       _link = dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second);
       _link->install_cumulative_curve_multiclass ();
     }
-  printf ("====================== Finished node and link hook-up! "
+  printf ("====================== Finished install cumulative curve! "
           "====================\n");
 
   if (!skip_check)
@@ -532,6 +532,37 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
       printf ("============================ DTA is OK to run! "
               "============================\n");
     }
+  
+  for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
+  {
+    if (MNM_Dlink_Multiclass *_mclink = dynamic_cast<MNM_Dlink_Multiclass *> (_link_it.second))
+      {
+        if (std::find (m_link_vec.begin (), m_link_vec.end (), _link_it.second)
+            != m_link_vec.end ())
+          {
+            printf ("Mcdta::run_multi_route_graph, link already exists, skipped\n");
+            continue;
+          }
+        else
+          {
+            // m_link_vec.push_back (_mclink);
+            if (MNM_Dlink_Pq_Multiclass *_mclink_pq = dynamic_cast<MNM_Dlink_Pq_Multiclass*>(_mclink))
+            {
+              continue;
+            }
+            else {
+              m_link_vec.push_back (_mclink);
+            }
+          }
+      }
+    else
+      {
+        throw std::runtime_error (
+          "Mcdta::run_multi_route_graph: link type is not multiclass");
+      }
+  }
+  printf ("====================== Finished registering links! "
+          "====================\n");
 
   m_mcdta->pre_loading ();
   printf ("========================== Finished pre_loading! "
@@ -589,8 +620,8 @@ Mcdta::register_links (py::array_t<int> links)
           if (std::find (m_link_vec.begin (), m_link_vec.end (), _link)
               != m_link_vec.end ())
             {
-              throw std::runtime_error (
-                "Error, Mcdta::register_links, link does not exist");
+              printf ("Mcdta::register_links, link already exists, skipped\n");
+              continue;
             }
           else
             {

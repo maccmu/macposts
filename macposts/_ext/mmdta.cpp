@@ -1183,9 +1183,8 @@ Mmdta::register_links_driving (py::array_t<int> links_driving)
                          _link)
               != m_link_vec_driving.end ())
             {
-              throw std::runtime_error (
-                "Error, Mmdta::register_links_driving, link does not "
-                "exist");
+              printf ("Mmdta::register_links_driving, link already exists, skipped\n");
+              continue;
             }
           else
             {
@@ -1227,9 +1226,8 @@ Mmdta::register_links_walking (py::array_t<int> links_walking)
                          _wlink)
               != m_link_vec_walking.end ())
             {
-              throw std::runtime_error (
-                "Error, Mmdta::register_links_walking, link does not "
-                "exist");
+              printf ("Mmdta::register_links_walking, link already exists, skipped\n");
+              continue;
             }
           else
             {
@@ -1270,8 +1268,8 @@ Mmdta::register_links_bus (py::array_t<int> links_bus)
           if (std::find (m_link_vec_bus.begin (), m_link_vec_bus.end (), _blink)
               != m_link_vec_bus.end ())
             {
-              throw std::runtime_error (
-                "Error, Mmdta::register_links_bus, link does not exist");
+              printf ("Mmdta::register_links_bus, link already exists, skipped\n");
+              continue;
             }
           else
             {
