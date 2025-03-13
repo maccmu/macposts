@@ -1240,8 +1240,8 @@ Dta::register_links (py::array_t<int> links)
       if (std::find (m_link_vec.begin (), m_link_vec.end (), _link)
           != m_link_vec.end ())
         {
-          throw std::runtime_error (
-            "Error, Dta::register_links, link does not exist");
+          printf ("Dta::register_links, link already exists, skipped\n");
+          continue;
         }
       else
         {
