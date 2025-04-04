@@ -303,16 +303,20 @@ class MNM_Veh_Multimodal : public MNM_Veh_Multiclass
 public:
   MNM_Veh_Multimodal (TInt ID, TInt vehicle_class, TInt start_time,
                       TInt capacity = 1, TInt bus_route_ID = TInt (-1),
-                      bool is_pnr = false);
+                      bool is_pnr = false, bool is_metro = false);
   virtual ~MNM_Veh_Multimodal () override;
 
   int board_and_alight (TInt timestamp, MNM_Busstop *busstop);
 
-  // virtual getter
-  virtual TInt get_class () override { return m_class; }; 
-  virtual TInt get_bus_route_ID () override { return m_bus_route_ID;};  
-  virtual bool get_ispnr () override { return m_pnr; };
-  virtual TInt get_label () override {return m_label;}; // virtual getter for derived class for emission analysis
+  virtual TInt get_class () override { return m_class; }; // virtual getter
+  virtual TInt get_bus_route_ID () override
+  {
+    return m_bus_route_ID;
+  };                                                      // virtual getter
+  virtual bool get_ispnr () override { return m_pnr; };   // virtual getter
+  virtual TInt get_label () override { return m_label; }; // virtual getter
+  
+  bool get_ismetro () { return m_metro; };  
 
   TInt m_capacity;
   TInt m_bus_route_ID;
@@ -321,8 +325,10 @@ public:
   TInt m_boarding_lost_intervals;
   TInt m_max_alighting_passengers_per_unit_time;
   TInt m_max_boarding_passengers_per_unit_time;
+  
 
   bool m_pnr;
+  bool m_metro; 
   TFlt m_waiting_time; // intervals, pickup waiting time at origins for mobility
                        // service vehicles
   MNM_PnR_Path *m_pnr_path;
@@ -339,19 +345,29 @@ public:
 class MNM_Veh_Factory_Multimodal : public MNM_Veh_Factory_Multiclass
 {
 public:
-  MNM_Veh_Factory_Multimodal (TInt bus_capacity, TInt min_dwell_intervals,
+  MNM_Veh_Factory_Multimodal (const std::string &file_folder,
+                              TInt bus_capacity, TInt min_dwell_intervals,
                               TInt boarding_lost_intervals,
                               TInt max_alighting_passengers_per_unit_time,
-                              TInt max_boarding_passengers_per_unit_time);
+                              TInt max_boarding_passengers_per_unit_time,
+                              TInt has_metro,
+                              TInt metro_capacity,
+                              TInt metro_min_dwell_intervals, 
+                              TInt metro_boarding_lost_intervals,
+                              TInt metro_max_alighting_passengers_per_unit_time,
+                              TInt metro_max_boarding_passengers_per_unit_time);
   virtual ~MNM_Veh_Factory_Multimodal () override;
 
   MNM_Veh_Multimodal *
   make_veh_multimodal (TInt timestamp, Vehicle_type veh_type, TInt vehicle_cls,
                        TInt capacity = TInt (1), TInt bus_route = TInt (-1),
                        bool is_pnr = false,
-                       TInt pickup_waiting_time = TInt (0));
+                       TInt pickup_waiting_time = TInt (0),
+                       bool is_metro = false);
 
   virtual int remove_finished_veh (MNM_Veh *veh, bool del = true) override;
+
+  std::string m_file_folder;
   virtual int update_veh_stat() override;
   virtual std::string print_vehicle_statistics() override;
 
@@ -360,6 +376,13 @@ public:
   TInt m_boarding_lost_intervals;
   TInt m_max_alighting_passengers_per_unit_time;
   TInt m_max_boarding_passengers_per_unit_time;
+
+  TInt m_has_metro;
+  TInt m_metro_capacity;
+  TInt m_metro_min_dwell_intervals; 
+  TInt m_metro_boarding_lost_intervals;
+  TInt m_metro_max_alighting_passengers_per_unit_time;
+  TInt m_metro_max_boarding_passengers_per_unit_time;
 
   TInt m_num_bus;
   TInt m_enroute_bus;
@@ -411,11 +434,12 @@ public:
                                     TInt assign_interval,
                                     TFlt adaptive_ratio) override;
 
-  virtual int release_one_interval_biclass (TInt current_interval,
+  int release_one_interval_biclass (TInt current_interval,
                                             MNM_Veh_Factory *veh_factory,
                                             TInt assign_interval,
                                             TFlt adaptive_ratio_car,
-                                            TFlt adaptive_ratio_truck) override;
+                                            TFlt adaptive_ratio_truck,
+                                            TFlt adaptive_ratio_pnr);
 
   int release_one_interval_passenger (TInt current_interval,
                                       MNM_Passenger_Factory *passenger_factory,
