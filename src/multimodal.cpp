@@ -1872,7 +1872,7 @@ MNM_Passenger_Factory::remove_finished_passenger (MNM_Passenger *passenger,
 
 MNM_Veh_Multimodal::MNM_Veh_Multimodal (TInt ID, TInt vehicle_class,
                                         TInt start_time, TInt capacity,
-                                        TInt bus_route_ID, bool is_pnr)
+                                        TInt bus_route_ID, bool is_pnr, bool is_metro)
     : MNM_Veh_Multiclass::MNM_Veh_Multiclass (ID, vehicle_class, start_time)
 {
   m_capacity = capacity;
@@ -1888,6 +1888,7 @@ MNM_Veh_Multimodal::MNM_Veh_Multimodal (TInt ID, TInt vehicle_class,
   m_transit_path = nullptr;
   m_pnr_path = nullptr;
   m_passenger_pool = std::deque<MNM_Passenger *> ();
+  m_metro = is_metro;
 }
 
 MNM_Veh_Multimodal::~MNM_Veh_Multimodal ()
@@ -2154,11 +2155,20 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
 *******************************************************************************************************************
 ******************************************************************************************************************/
 MNM_Veh_Factory_Multimodal::MNM_Veh_Factory_Multimodal (
+  const std::string &file_folder,
   TInt bus_capacity, TInt min_dwell_intervals, TInt boarding_lost_intervals,
   TInt max_alighting_passengers_per_unit_time,
-  TInt max_boarding_passengers_per_unit_time)
+  TInt max_boarding_passengers_per_unit_time,
+  TInt has_metro,
+  TInt metro_capacity,
+  TInt metro_min_dwell_intervals, 
+  TInt metro_boarding_lost_intervals,
+  TInt metro_max_alighting_passengers_per_unit_time,
+  TInt metro_max_boarding_passengers_per_unit_time)
     : MNM_Veh_Factory_Multiclass::MNM_Veh_Factory_Multiclass ()
 {
+  m_file_folder = file_folder;
+
   m_bus_capacity = bus_capacity;
   m_min_dwell_intervals = min_dwell_intervals;
   m_boarding_lost_intervals = boarding_lost_intervals;
@@ -2167,6 +2177,16 @@ MNM_Veh_Factory_Multimodal::MNM_Veh_Factory_Multimodal (
   m_max_boarding_passengers_per_unit_time
     = max_boarding_passengers_per_unit_time;
 
+  m_has_metro = has_metro;
+  m_metro_capacity = metro_capacity;
+  m_metro_min_dwell_intervals = metro_min_dwell_intervals;
+  m_metro_boarding_lost_intervals = metro_boarding_lost_intervals;
+  m_metro_max_alighting_passengers_per_unit_time
+    = metro_max_alighting_passengers_per_unit_time;
+  m_metro_max_boarding_passengers_per_unit_time
+    = metro_max_boarding_passengers_per_unit_time;
+
+  // below, the 'bus' is general, could be bus or metro
   m_num_bus = TInt (0);
   m_enroute_bus = TInt (0);
   m_finished_bus = TInt (0);
@@ -2185,22 +2205,36 @@ MNM_Veh_Factory_Multimodal::~MNM_Veh_Factory_Multimodal () { ; }
 MNM_Veh_Multimodal *
 MNM_Veh_Factory_Multimodal::make_veh_multimodal (
   TInt timestamp, Vehicle_type veh_type, TInt vehicle_cls, TInt capacity,
-  TInt bus_route_ID, bool is_pnr, TInt pickup_waiting_time)
+  TInt bus_route_ID, bool is_pnr, TInt pickup_waiting_time, bool is_metro)
 {
   // printf("A vehicle is produce at time %d, ID is %d\n", (int)timestamp,
   // (int)m_num_veh + 1);
   MNM_Veh_Multimodal *_veh
     = new MNM_Veh_Multimodal (m_num_veh + 1, vehicle_cls, timestamp, capacity,
-                              bus_route_ID, is_pnr);
+                              bus_route_ID, is_pnr, is_metro);
   _veh->m_type = veh_type;
   if (vehicle_cls == 1 && bus_route_ID != -1)
     {
-      _veh->m_min_dwell_intervals = m_min_dwell_intervals;
-      _veh->m_boarding_lost_intervals = m_boarding_lost_intervals;
-      _veh->m_max_alighting_passengers_per_unit_time
-        = m_max_alighting_passengers_per_unit_time;
-      _veh->m_max_boarding_passengers_per_unit_time
-        = m_max_boarding_passengers_per_unit_time;
+      if (_veh->m_metro)
+        {
+          _veh->m_capacity = m_metro_capacity;
+          _veh->m_min_dwell_intervals = m_metro_min_dwell_intervals;
+          _veh->m_boarding_lost_intervals = m_metro_boarding_lost_intervals;
+          _veh->m_max_alighting_passengers_per_unit_time
+            = m_metro_max_alighting_passengers_per_unit_time;
+          _veh->m_max_boarding_passengers_per_unit_time
+            = m_metro_max_boarding_passengers_per_unit_time;
+        }
+      else
+        {
+          _veh->m_capacity = m_bus_capacity;
+          _veh->m_min_dwell_intervals = m_min_dwell_intervals;
+          _veh->m_boarding_lost_intervals = m_boarding_lost_intervals;
+          _veh->m_max_alighting_passengers_per_unit_time
+            = m_max_alighting_passengers_per_unit_time;
+          _veh->m_max_boarding_passengers_per_unit_time
+            = m_max_boarding_passengers_per_unit_time;
+        }
     }
   if (_veh->get_ispnr () && vehicle_cls == 0)
     {
@@ -2838,6 +2872,23 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
     }
   // release all bus, which have all veh_type = MNM_TYPE_STATIC, vehicle_cls =
   // 1, and different bus_route
+
+  // to see if there is metro considered, if yes, read the metro route IDs
+  std::set<int> metro_idSet;
+  if (_vfactory->m_has_metro == TInt (1))
+    { 
+      std::ifstream inputFile(_vfactory->m_file_folder + "/metro_ids");
+      if (!inputFile) {
+        throw std::runtime_error("No metro_ids file! Please add this file.");
+      }
+  
+      int id;
+      while (inputFile >> id) { 
+        metro_idSet.insert(id);
+      }
+      inputFile.close();
+    }
+
   for (auto _demand_it = m_demand_bus.begin ();
        _demand_it != m_demand_bus.end (); _demand_it++)
     { // destination
@@ -2851,10 +2902,20 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
 
           for (int i = 0; i < _veh_to_release; ++i)
             {
-              _veh = _vfactory->make_veh_multimodal (current_interval,
-                                                     MNM_TYPE_STATIC, TInt (1),
-                                                     _vfactory->m_bus_capacity,
-                                                     _demand_it_it->first);
+              if (_vfactory->m_has_metro == TInt (1) && metro_idSet.find(_demand_it_it->first) != metro_idSet.end())
+                {
+                  _veh = _vfactory->make_veh_multimodal (current_interval,
+                                                         MNM_TYPE_STATIC, TInt (1),
+                                                         _vfactory->m_metro_capacity,
+                                                         _demand_it_it->first, false, 0, true);
+                }
+              else
+                {
+                  _veh = _vfactory->make_veh_multimodal (current_interval,
+                                                         MNM_TYPE_STATIC, TInt (1),
+                                                         _vfactory->m_bus_capacity,
+                                                         _demand_it_it->first);
+                }
 
               _veh->set_destination (_demand_it->first);
               _veh->set_origin (this);
@@ -2930,7 +2991,7 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
 int
 MNM_Origin_Multimodal::release_one_interval_biclass (
   TInt current_interval, MNM_Veh_Factory *veh_factory, TInt assign_interval,
-  TFlt adaptive_ratio_car, TFlt adaptive_ratio_truck)
+  TFlt adaptive_ratio_car, TFlt adaptive_ratio_truck, TFlt adaptive_ratio_pnr)
 {
   if (assign_interval < 0)
     return 0;
@@ -3045,6 +3106,24 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
     }
   // release all bus, which have all veh_type = MNM_TYPE_STATIC, vehicle_cls =
   // 1, and different bus_route
+
+  // to see if there is metro considered, if yes, read the metro route IDs
+  std::set<int> metro_idSet;
+  if (_vfactory->m_has_metro == TInt (1))
+    { 
+      std::ifstream inputFile(_vfactory->m_file_folder + "/metro_ids");
+  
+      if (!inputFile) {
+          throw std::runtime_error("No metro_ids file! Please add this file.");
+      }
+  
+      int id;
+      while (inputFile >> id) { 
+        metro_idSet.insert(id);
+      }
+      inputFile.close();
+    }
+
   for (auto _demand_it = m_demand_bus.begin ();
        _demand_it != m_demand_bus.end (); _demand_it++)
     { // destination
@@ -3058,10 +3137,20 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
 
           for (int i = 0; i < _veh_to_release; ++i)
             {
-              _veh = _vfactory->make_veh_multimodal (current_interval,
-                                                     MNM_TYPE_STATIC, TInt (1),
-                                                     _vfactory->m_bus_capacity,
-                                                     _demand_it_it->first);
+              if (_vfactory->m_has_metro == TInt (1) && metro_idSet.find(_demand_it_it->first) != metro_idSet.end())
+                {
+                  _veh = _vfactory->make_veh_multimodal (current_interval,
+                                                         MNM_TYPE_STATIC, TInt (1),
+                                                         _vfactory->m_metro_capacity,
+                                                         _demand_it_it->first, false, 0, true);
+                }
+              else
+                {
+                  _veh = _vfactory->make_veh_multimodal (current_interval,
+                                                         MNM_TYPE_STATIC, TInt (1),
+                                                         _vfactory->m_bus_capacity,
+                                                         _demand_it_it->first);
+                }
 
               _veh->set_destination (_demand_it->first);
               _veh->set_origin (this);
@@ -3083,14 +3172,14 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
 
       for (int i = 0; i < _veh_to_release; ++i)
         {
-          if (adaptive_ratio_car == TFlt (0))
+          if (adaptive_ratio_pnr == TFlt (0))
             {
               _veh = _vfactory->make_veh_multimodal (current_interval,
                                                      MNM_TYPE_STATIC, TInt (0),
                                                      TInt (1), TInt (-1), true,
                                                      m_pickup_waiting_time);
             }
-          else if (adaptive_ratio_car == TFlt (1))
+          else if (adaptive_ratio_pnr == TFlt (1))
             {
               _veh
                 = _vfactory->make_veh_multimodal (current_interval,
@@ -3101,7 +3190,7 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
           else
             {
               TFlt _r = MNM_Ults::rand_flt ();
-              if (_r <= adaptive_ratio_car)
+              if (_r <= adaptive_ratio_pnr)
                 {
                   _veh = _vfactory->make_veh_multimodal (current_interval,
                                                          MNM_TYPE_ADAPTIVE,
@@ -9575,7 +9664,8 @@ MNM_Dta_Multimodal::initialize ()
 
   m_passenger_factory = new MNM_Passenger_Factory ();
   m_veh_factory
-    = new MNM_Veh_Factory_Multimodal (TInt (m_config->get_int ("bus_capacity")),
+    = new MNM_Veh_Factory_Multimodal (m_file_folder,
+                                      TInt (m_config->get_int ("bus_capacity")),
                                       TInt (round (
                                         m_config->get_float ("fixed_dwell_time")
                                         / TFlt (m_unit_time))),
@@ -9589,7 +9679,23 @@ MNM_Dta_Multimodal::initialize ()
                                       TInt (round (
                                         TFlt (m_unit_time)
                                         / m_config->get_int (
-                                          "boarding_time_per_passenger"))));
+                                          "boarding_time_per_passenger"))),
+                                          TInt (m_config->get_int ("has_metro")),
+                                          TInt (m_config->get_int ("metro_capacity")),
+                                          TInt (round (
+                                            m_config->get_float ("metro_fixed_dwell_time")
+                                            / TFlt (m_unit_time))),
+                                          TInt (round (m_config->get_float (
+                                                         "metro_boarding_lost_time")
+                                                       / TFlt (m_unit_time))),
+                                          TInt (round (
+                                            TFlt (m_unit_time)
+                                            / m_config->get_int (
+                                              "metro_alighting_time_per_passenger"))),
+                                          TInt (round (
+                                            TFlt (m_unit_time)
+                                            / m_config->get_int (
+                                              "metro_boarding_time_per_passenger"))));
   m_node_factory = new MNM_Node_Factory_Multimodal ();
   m_link_factory = new MNM_Link_Factory_Multimodal ();
   m_od_factory = new MNM_OD_Factory_Multimodal ();
@@ -10598,12 +10704,21 @@ MNM_Dta_Multimodal::load_once (bool verbose, TInt load_int, TInt assign_int)
                     _ad_ratio_truck = 1;
                   if (_ad_ratio_truck < 0)
                     _ad_ratio_truck = 0;
+
+                  TFlt _ad_ratio_pnr
+                    = m_config->get_float ("adaptive_ratio_pnr");
+                  if (_ad_ratio_pnr > 1)
+                    _ad_ratio_pnr = 1;
+                  if (_ad_ratio_pnr < 0)
+                    _ad_ratio_pnr = 0;
+
                   // NOTE: in this case the release function is different
-                  _origin->release_one_interval_biclass (load_int,
+                  _origin_multimodal->release_one_interval_biclass (load_int,
                                                          m_veh_factory,
                                                          assign_int,
                                                          _ad_ratio_car,
-                                                         _ad_ratio_truck);
+                                                         _ad_ratio_truck,
+                                                         _ad_ratio_pnr);
 
                   TFlt _ad_ratio_passenger
                     = m_config->get_float ("adaptive_ratio_passenger");
