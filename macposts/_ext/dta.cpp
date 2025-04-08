@@ -117,7 +117,7 @@ init (py::module &m)
 {
   py::class_<Dta> (m, "Dta")
     .def (py::init<> ())
-    .def ("initialize", &Dta::initialize)
+    .def ("initialize", &Dta::initialize, py::arg ("folder"), py::arg ("skip_check") = false)
     .def ("check_input_files", &Dta::check_input_files)
     .def ("run_whole", &Dta::run_whole, py::arg ("verbose") = false)
     .def ("run_due", &Dta::run_due)

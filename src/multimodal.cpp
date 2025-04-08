@@ -3760,7 +3760,11 @@ MNM_Dlink_Pq_Multimodal::MNM_Dlink_Pq_Multimodal (
   TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
   TFlt ffs_car, TFlt ffs_truck, TFlt unit_time, TFlt veh_convert_factor,
   TFlt flow_scalar)
-    : MNM_Dlink_Pq_Multiclass::MNM_Dlink_Pq_Multiclass (ID, number_of_lane,
+    : MNM_Dlink_Multiclass::MNM_Dlink_Multiclass (ID, number_of_lane,
+      length,  // meters
+      ffs_car, // Free-flow speed (m/s)
+      ffs_truck),
+    MNM_Dlink_Pq_Multiclass::MNM_Dlink_Pq_Multiclass (ID, number_of_lane,
                                                         length,
                                                         lane_hold_cap_car,
                                                         lane_hold_cap_truck,
@@ -4098,7 +4102,11 @@ MNM_Dlink_Ctm_Multimodal::MNM_Dlink_Ctm_Multimodal (
   TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
   TFlt ffs_car, TFlt ffs_truck, TFlt unit_time, TFlt veh_convert_factor,
   TFlt flow_scalar)
-    : MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (ID, number_of_lane,
+    : MNM_Dlink_Multiclass::MNM_Dlink_Multiclass (ID, number_of_lane,
+      length,  // meters
+      ffs_car, // Free-flow speed (m/s)
+      ffs_truck),
+    MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass (ID, number_of_lane,
                                                           length,
                                                           lane_hold_cap_car,
                                                           lane_hold_cap_truck,

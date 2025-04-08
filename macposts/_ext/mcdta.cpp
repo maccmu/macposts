@@ -33,9 +33,6 @@ public:
   int install_cc ();
   int install_cc_tree ();
   int run_whole (bool verbose = false);
-  int run_multi_route_graph(const std::string &folder, bool verbose,
-    bool skip_check, int cong_frequency,
-    const std::string &result_folder);
   // FIXME: This returns a Numpy array for consistency, but it should really be
   // better to use a plain list.
   py::array_t<int> get_all_links ();
@@ -51,6 +48,12 @@ public:
   int run_whole_vehicle_tracking (bool verbose, const std::string &folder,
                                   double sampling_rate = 0.05,
                                   int cong_frequency = 1);
+
+  int run_multi_route_graph(const std::string &folder, bool verbose,
+                            bool skip_check, int cong_frequency,
+                            const std::string &result_folder);
+  int print_simulation_results_subclass (const std::string &folder,
+                                         int cong_frequency = 180);                         
 
   int build_link_cost_map (bool with_congestion_indicator = false);
   int get_link_queue_dissipated_time ();
@@ -191,7 +194,7 @@ init (py::module &m)
 {
   py::class_<Mcdta> (m, "Mcdta")
     .def (py::init<> ())
-    .def ("initialize", &Mcdta::initialize)
+    .def ("initialize", &Mcdta::initialize, py::arg ("folder"), py::arg ("skip_check") = false)
     .def ("check_input_files", &Mcdta::check_input_files)
     .def ("generate_shortest_pathsets", &Mcdta::generate_shortest_pathsets)
     .def ("run_whole", &Mcdta::run_whole, py::arg ("verbose") = false)
@@ -517,11 +520,12 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
 	m_mcdta -> hook_up_node_and_link();
 	printf("====================== Finished node and link hook-up! ====================\n");
 
-  MNM_Dlink_Multiclass *_link;
+  MNM_Dlink_Multiclass_Subclass *_link;
   for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
     {
-      _link = dynamic_cast<MNM_Dlink_Multiclass*>(_link_it.second);
+      _link = dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(_link_it.second);
       _link->install_cumulative_curve_multiclass ();
+      _link->install_cumulative_curve_multiclass_subclass ();
     }
   printf ("====================== Finished install cumulative curve! "
           "====================\n");
@@ -533,9 +537,10 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
               "============================\n");
     }
   
+  // register non-pq links
   for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
   {
-    if (MNM_Dlink_Multiclass *_mclink = dynamic_cast<MNM_Dlink_Multiclass *> (_link_it.second))
+    if (MNM_Dlink_Multiclass_Subclass *_mclink = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (_link_it.second))
       {
         if (std::find (m_link_vec.begin (), m_link_vec.end (), _link_it.second)
             != m_link_vec.end ())
@@ -546,7 +551,7 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
         else
           {
             // m_link_vec.push_back (_mclink);
-            if (MNM_Dlink_Pq_Multiclass *_mclink_pq = dynamic_cast<MNM_Dlink_Pq_Multiclass*>(_mclink))
+            if (MNM_Dlink_Pq_Multiclass_Subclass *_mclink_pq = dynamic_cast<MNM_Dlink_Pq_Multiclass_Subclass*>(_mclink))
             {
               continue;
             }
@@ -574,7 +579,7 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
   printf ("\n====================================== Finished loading! "
           "=======================================\n\n\n");
   
-  print_simulation_results (folder + "/" + _rec_folder, cong_frequency);
+  print_simulation_results_subclass (folder + "/" + _rec_folder, cong_frequency);
   printf ("Finished DNL!\n"); 
   return 0;      
 }
@@ -844,6 +849,268 @@ Mcdta::print_simulation_results (const std::string &folder, int cong_frequency)
       //         _str += _link_m->m_N_in_truck->to_string();
       //         _str +="\nm_N_out_truck: \n";
       //         _str += _link_m->m_N_out_truck->to_string();
+      //         _vis_file2 << _str;
+      //     }
+      // }
+
+      if (_vis_file2.is_open ())
+        _vis_file2.close ();
+    }
+  std::cout << "Finish printing simulation results" << std::endl;
+  return 0;
+}
+
+int 
+Mcdta::print_simulation_results_subclass (const std::string &folder, int cong_frequency)
+{
+  // cong_frequency: number of 5-s interval, 180 means 15 minutes
+  bool output_link_cong;
+  if (cong_frequency > 0)
+    {
+      output_link_cong
+        = true; // if true output link congestion level every cong_frequency
+    }
+  else
+    {
+      output_link_cong = false;
+    }
+  
+  int num_subclass_car = dynamic_cast<MNM_Dta_Multiclass_Subclass*>(m_mcdta) -> m_num_subclass_car;
+  int num_subclass_truck = dynamic_cast<MNM_Dta_Multiclass_Subclass*>(m_mcdta) -> m_num_subclass_truck;
+  MNM_Dlink *_link;
+  MNM_Dlink_Multiclass_Subclass *_link_m;
+  std::string _str1;
+  TFlt _spd;
+  TInt _current_inter = m_mcdta->m_current_loading_interval;
+  std::ofstream _vis_file2;
+  if (output_link_cong)
+    {
+      _vis_file2.open (folder + "/driving_link_cong_raw.txt",
+                       std::ofstream::out);
+      if (!_vis_file2.is_open ())
+        {
+          throw std::runtime_error ("failed to open _vis_file2");
+        }
+
+      _str1 = "timestamp(intervals) driving_link_ID car_inflow car_outflow "
+              "truck_inflow truck_outflow car_tt(s) truck_tt(s) car_fftt(s) "
+              "truck_fftt(s) car_freeflow_speed(mph) car_speed(mph) "
+              "truck_freeflow_speed(mph) truck_speed(mph)";
+      for (int i=0; i<num_subclass_car; ++i)
+      {
+        _str1 += " car_inflow_" + std::to_string(i) + " car_outflow_" + std::to_string(i) + " car_tt_" + std::to_string(i) + "(s)" + " car_speed_" + std::to_string(i) + "(mph)";
+      }
+      for (int i=0; i<num_subclass_truck; ++i)
+      {
+        _str1 += " truck_inflow_" + std::to_string(i) + " truck_outflow_" + std::to_string(i) + " truck_tt_" + std::to_string(i) + "(s)" + " truck_speed_" + std::to_string(i) + "(mph)";
+      }
+      _str1 += "\n";
+      _vis_file2 << _str1;
+
+      TInt _iter = 0;
+      while (_iter + cong_frequency <= _current_inter)
+        {
+          if (_iter % cong_frequency == 0 || _iter == _current_inter - 1)
+            {
+              // printf ("Current loading interval: %d\n", int (_iter));
+              for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
+                {
+                  _link = _link_it.second;
+                  _link_m = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (_link);
+                  _str1 = std::to_string (int (_iter)) + " ";
+                  _str1 += std::to_string (_link->m_link_ID) + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
+                               get_link_inflow_car (_link_m, _iter,
+                                                    _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
+                               get_link_outflow_car (_link_m, _iter,
+                                                     _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
+                               get_link_inflow_truck (_link_m, _iter,
+                                                      _iter + cong_frequency))
+                           + " ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::
+                               get_link_outflow_truck (_link_m, _iter,
+                                                       _iter + cong_frequency))
+                           + " ";
+                  // _str1 +=
+                  // std::to_string(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
+                  // TFlt(_iter + 1), m_mcdta -> m_unit_time, m_mcdta ->
+                  // m_current_loading_interval) * m_mcdta -> m_unit_time) + "
+                  // "; _str1 +=
+                  // std::to_string(MNM_DTA_GRADIENT::get_travel_time_truck(_link_m,
+                  // TFlt(_iter + 1), m_mcdta -> m_unit_time, m_mcdta ->
+                  // m_current_loading_interval) * m_mcdta -> m_unit_time) + "
+                  // ";
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::get_travel_time_car_robust (
+                               _link_m, TFlt (_iter + 1),
+                               TFlt (_iter + cong_frequency + 1),
+                               m_mcdta->m_unit_time,
+                               m_mcdta->m_current_loading_interval)
+                             * m_mcdta->m_unit_time)
+                           + " "; // seconds
+                  _str1 += std::to_string (
+                             MNM_DTA_GRADIENT::get_travel_time_truck_robust (
+                               _link_m, TFlt (_iter + 1),
+                               TFlt (_iter + cong_frequency + 1),
+                               m_mcdta->m_unit_time,
+                               m_mcdta->m_current_loading_interval)
+                             * m_mcdta->m_unit_time)
+                           + " ";
+                  // _str1 += std::to_string (_link_m->get_link_freeflow_tt_car
+                  // ())
+                  //          + " ";
+                  // _str1 += std::to_string
+                  // (_link_m->get_link_freeflow_tt_truck ())
+                  //          + " ";
+                  _str1 += std::to_string (
+                             _link_m->get_link_freeflow_tt_loading_car ()
+                             * m_mcdta->m_unit_time)
+                           + " ";
+                  _str1 += std::to_string (
+                             _link_m->get_link_freeflow_tt_loading_truck ()
+                             * m_mcdta->m_unit_time)
+                           + " ";
+                  // _str1 += std::to_string(_link_m ->
+                  // m_length/(MNM_DTA_GRADIENT::get_travel_time_car(_link_m,
+                  // TFlt(_iter + 1), m_mcdta -> m_unit_time, m_mcdta ->
+                  // m_current_loading_interval) * m_mcdta -> m_unit_time) *
+                  // 3600 / 1600) + " "; _str1 += std::to_string(_link_m ->
+                  // m_length/(MNM_DTA_GRADIENT::get_travel_time_truck(_link_m,
+                  // TFlt(_iter + 1), m_mcdta -> m_unit_time, m_mcdta ->
+                  // m_current_loading_interval) * m_mcdta -> m_unit_time) *
+                  // 3600 / 1600) + "\n";
+
+                  // _str1 += std::to_string (
+                  //            _link_m->m_length
+                  //            / _link_m->get_link_freeflow_tt_car ()
+                  //            * 3600 / 1600)
+                  //          + " "; // mph
+                  _spd = (_link_m->m_length
+                             / (_link_m->get_link_freeflow_tt_loading_car ()
+                                * m_mcdta->m_unit_time)
+                             * 3600. / 1600.);
+                  if (_spd > _link_m -> m_ffs_car * 3600. / 1600.) _spd = _link_m -> m_ffs_car * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + " "; // mph, car ffs
+
+                  _spd = (_link_m->m_length
+                             / (MNM_DTA_GRADIENT::get_travel_time_car_robust (
+                                  _link_m, TFlt (_iter + 1),
+                                  TFlt (_iter + cong_frequency + 1),
+                                  m_mcdta->m_unit_time,
+                                  m_mcdta->m_current_loading_interval)
+                                * m_mcdta->m_unit_time)
+                             * 3600. / 1600.);
+                  if (_spd > _link_m -> m_ffs_car * 3600. / 1600.) _spd = _link_m -> m_ffs_car * 3600. / 1600.;
+                  _str1 += std::to_string (_spd)  + " "; // mph, car actual speed
+
+                  // _str1 += std::to_string (
+                  //            _link_m->m_length
+                  //            / _link_m->get_link_freeflow_tt_truck ()
+                  //            * 3600 / 1600)
+                  //          + " "; // mph
+                  _spd = (_link_m->m_length
+                             / (_link_m->get_link_freeflow_tt_loading_truck ()
+                                * m_mcdta->m_unit_time)
+                             * 3600. / 1600.);
+                  if (_spd > _link_m -> m_ffs_truck * 3600. / 1600.) _spd = _link_m -> m_ffs_truck * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + " "; // mph, truck ffs
+
+                  _spd = (_link_m->m_length
+                             / (MNM_DTA_GRADIENT::get_travel_time_truck_robust (
+                                  _link_m, TFlt (_iter + 1),
+                                  TFlt (_iter + cong_frequency + 1),
+                                  m_mcdta->m_unit_time,
+                                  m_mcdta->m_current_loading_interval)
+                                * m_mcdta->m_unit_time)
+                             * 3600. / 1600.);
+                  if (_spd > _link_m -> m_ffs_truck * 3600. / 1600.) _spd = _link_m -> m_ffs_truck * 3600. / 1600.;
+                  _str1 += std::to_string (_spd) + " "; // mph, truck actual speed
+
+                  for (int i=0; i<num_subclass_car; ++i)
+                  {
+                    _str1 += std::to_string (MNM_DTA_GRADIENT::get_link_inflow_car_subclass (_link_m, _iter, _iter + cong_frequency, i)) + " ";
+                    _str1 += std::to_string (MNM_DTA_GRADIENT::get_link_outflow_car_subclass (_link_m, _iter, _iter + cong_frequency, i)) + " "; 
+                    _str1 += std::to_string (
+                      MNM_DTA_GRADIENT::get_travel_time_car_robust_subclass (
+                        _link_m, TFlt (_iter + 1),
+                        TFlt (_iter + cong_frequency + 1),
+                        m_mcdta->m_unit_time,
+                        m_mcdta->m_current_loading_interval, i) * m_mcdta->m_unit_time) + " "; // seconds
+                    _spd = (_link_m->m_length
+                      / (MNM_DTA_GRADIENT::get_travel_time_car_robust_subclass (
+                            _link_m, TFlt (_iter + 1),
+                            TFlt (_iter + cong_frequency + 1),
+                            m_mcdta->m_unit_time,
+                            m_mcdta->m_current_loading_interval, i) * m_mcdta->m_unit_time) * 3600. / 1600.);
+                    if (_spd > _link_m -> m_ffs_car * 3600. / 1600.) _spd = _link_m -> m_ffs_car * 3600. / 1600.;
+                    _str1 += std::to_string (_spd)  + " "; // mph
+                    
+                  }
+                  for (int i=0; i<num_subclass_truck; ++i)
+                  {
+                    _str1 += std::to_string (MNM_DTA_GRADIENT::get_link_inflow_truck_subclass (_link_m, _iter, _iter + cong_frequency, i)) + " ";
+                    _str1 += std::to_string (MNM_DTA_GRADIENT::get_link_outflow_truck_subclass (_link_m, _iter, _iter + cong_frequency, i)) + " "; 
+                    _str1 += std::to_string (
+                      MNM_DTA_GRADIENT::get_travel_time_truck_robust_subclass (
+                        _link_m, TFlt (_iter + 1),
+                        TFlt (_iter + cong_frequency + 1),
+                        m_mcdta->m_unit_time,
+                        m_mcdta->m_current_loading_interval, i) * m_mcdta->m_unit_time) + " "; // seconds
+                    _spd = (_link_m->m_length
+                      / (MNM_DTA_GRADIENT::get_travel_time_truck_robust_subclass (
+                            _link_m, TFlt (_iter + 1),
+                            TFlt (_iter + cong_frequency + 1),
+                            m_mcdta->m_unit_time,
+                            m_mcdta->m_current_loading_interval, i) * m_mcdta->m_unit_time) * 3600. / 1600.);
+                    if (_spd > _link_m -> m_ffs_truck * 3600. / 1600.) _spd = _link_m -> m_ffs_truck * 3600. / 1600.;
+                    _str1 += std::to_string (_spd)  + " "; // mph
+                  }
+                  _str1.pop_back();
+                  _str1 += "\n";
+                  _vis_file2 << _str1;
+                }
+            }
+          _iter += 1;
+        }
+
+      // // save cc of some links
+      // _str1 = "\n\n **************************** driving link cc ****************************"; 
+      // for (auto _link_it : m_mcdta->m_link_factory->m_link_map) 
+      // {
+      //     _link = _link_it.second;
+      //     if (_link->m_link_ID() == 4) {
+      //         _link_m = dynamic_cast<MNM_Dlink_Multiclass_Subclass *>(_link);
+      //         _str1 += "\nlink_ID: " + std::to_string(_link->m_link_ID());
+      //         _str1 +="\nm_N_in_car: \n";
+      //         _str1 += _link_m->m_N_in_car->to_string();
+      //         _str1 +="\nm_N_out_car: \n";
+      //         _str1 += _link_m->m_N_out_car->to_string();
+      //         _str1 +="\nm_N_in_truck: \n";
+      //         _str1 += _link_m->m_N_in_truck->to_string();
+      //         _str1 +="\nm_N_out_truck: \n";
+      //         _str1 += _link_m->m_N_out_truck->to_string();
+      //         for (int i=0; i<m_mcdta-> m_num_subclass_car; ++i)
+      //         {
+      //           _str1 +="\nm_N_in_car_subclass " + "i " + ": \n";
+      //           _str1 += _link_m->m_N_in_car_subclass.at(i)->to_string();
+      //           _str1 +="\nm_N_out_car_subclass " + "i " + ": \n";
+      //           _str1 += _link_m->m_N_out_car_subclass.at(i)->to_string();
+      //         }
+      //         for (int i=0; i<m_mcdta-> m_num_subclass_truck; ++i)
+      //         {
+      //           _str1 +="\nm_N_in_truck_subclass " + "i " + ": \n";
+      //           _str1 += _link_m->m_N_in_truck_subclass.at(i)->to_string();
+      //           _str1 +="\nm_N_out_truck_subclass " + "i " + ": \n";
+      //           _str1 += _link_m->m_N_out_truck_subclass.at(i)->to_string();
+      //         }
       //         _vis_file2 << _str;
       //     }
       // }

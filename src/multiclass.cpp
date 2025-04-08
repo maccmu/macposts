@@ -2553,10 +2553,51 @@ MNM_Dnode_Inout_Multiclass::prepare_supplyANDdemand ()
 }
 
 int
+MNM_Dnode_Inout_Multiclass::move_one_vehicle (TInt timestamp, MNM_Dlink *_in_link, MNM_Dlink *_out_link, MNM_Veh *_veh,
+                                              size_t _in_link_i, size_t _out_link_j, size_t _offset)
+{
+  MNM_Dlink_Multiclass *_olink = dynamic_cast<MNM_Dlink_Multiclass *> (_out_link);
+  _out_link->m_incoming_array.push_back (_veh);
+  _veh->set_current_link (_out_link);
+  // accumulated miles for non-Pq links
+  _veh->update_miles_traveled (_in_link);
+  if (_veh->get_class() == 0)
+  {
+    m_veh_moved_car[_in_link_i * _offset + _out_link_j] += 1;
+    if (_olink->m_N_in_tree_car != nullptr)
+    {
+      _olink->m_N_in_tree_car
+        ->add_flow (TFlt (timestamp + 1),
+                    1 / m_flow_scalar,
+                    _veh->m_path,
+                    _veh->m_assign_interval);
+    }
+  }
+  else
+  {
+    IAssert (_veh->get_class() == 1);
+    // Assume the cc and cc_tree only account for non-bus truck
+    if (_veh->get_bus_route_ID () == -1)
+    {
+      m_veh_moved_truck[_in_link_i * _offset + _out_link_j] += 1;
+      if (_olink->m_N_in_tree_truck != nullptr)
+      {
+        _olink->m_N_in_tree_truck
+          ->add_flow (TFlt (timestamp + 1),
+                      1 / m_flow_scalar,
+                      _veh->m_path,
+                      _veh->m_assign_interval);
+      }
+    }
+  }
+  return 0;
+}
+
+int
 MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
 {
   MNM_Dlink *_in_link, *_out_link;
-  MNM_Dlink_Multiclass *_olink;
+  // MNM_Dlink_Multiclass *_olink;
   size_t _offset = m_out_link_array.size ();
   TFlt _to_move;
   TFlt _equiv_num;
@@ -2614,82 +2655,83 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                           _r = 0;
                           if (_r <= _to_move / _equiv_num)
                             {
-                              _out_link->m_incoming_array.push_back (_veh);
-                              _veh->set_current_link (_out_link);
-                              // accumulated miles for non-Pq links
-                              _veh->update_miles_traveled (_in_link);
-                              if (_veh->m_class == 0)
-                                {
-                                  m_veh_moved_car[i * _offset + j] += 1;
-                                  _olink
-                                    = dynamic_cast<MNM_Dlink_Multiclass *> (
-                                      _out_link);
-                                  if (_olink->m_N_in_tree_car != nullptr)
-                                    {
-                                      _olink->m_N_in_tree_car
-                                        ->add_flow (TFlt (timestamp + 1),
-                                                    1 / m_flow_scalar,
-                                                    _veh->m_path,
-                                                    _veh->m_assign_interval);
-                                    }
-                                }
-                              else
-                                {
-                                  IAssert (_veh->m_class == 1);
-                                  // only for non-bus truck
-                                  if (_veh->get_bus_route_ID () == -1)
-                                    m_veh_moved_truck[i * _offset + j] += 1;
-                                  _olink
-                                    = dynamic_cast<MNM_Dlink_Multiclass *> (
-                                      _out_link);
-                                  if (_olink->m_N_in_tree_truck != nullptr)
-                                    {
-                                      _olink->m_N_in_tree_truck
-                                        ->add_flow (TFlt (timestamp + 1),
-                                                    1 / m_flow_scalar,
-                                                    _veh->m_path,
-                                                    _veh->m_assign_interval);
-                                    }
-                                }
-                              _veh_it
-                                = _in_link->m_finished_array.erase (_veh_it);
+                              move_one_vehicle (timestamp, _in_link, _out_link, _veh, i, j, _offset);
+                              // _out_link->m_incoming_array.push_back (_veh);
+                              // _veh->set_current_link (_out_link);
+                              // // accumulated miles for non-Pq links
+                              // _veh->update_miles_traveled (_in_link);
+                              // if (_veh->m_class == 0)
+                              //   {
+                              //     m_veh_moved_car[i * _offset + j] += 1;
+                              //     _olink
+                              //       = dynamic_cast<MNM_Dlink_Multiclass *> (
+                              //         _out_link);
+                              //     if (_olink->m_N_in_tree_car != nullptr)
+                              //       {
+                              //         _olink->m_N_in_tree_car
+                              //           ->add_flow (TFlt (timestamp + 1),
+                              //                       1 / m_flow_scalar,
+                              //                       _veh->m_path,
+                              //                       _veh->m_assign_interval);
+                              //       }
+                              //   }
+                              // else
+                              //   {
+                              //     IAssert (_veh->m_class == 1);
+                              //     // only for non-bus truck
+                              //     if (_veh->get_bus_route_ID () == -1)
+                              //       m_veh_moved_truck[i * _offset + j] += 1;
+                              //     _olink
+                              //       = dynamic_cast<MNM_Dlink_Multiclass *> (
+                              //         _out_link);
+                              //     if (_olink->m_N_in_tree_truck != nullptr)
+                              //       {
+                              //         _olink->m_N_in_tree_truck
+                              //           ->add_flow (TFlt (timestamp + 1),
+                              //                       1 / m_flow_scalar,
+                              //                       _veh->m_path,
+                              //                       _veh->m_assign_interval);
+                              //       }
+                              //   }
+                              _veh_it = _in_link->m_finished_array.erase (_veh_it);
                             }
                         }
                       else
                         {
-                          _out_link->m_incoming_array.push_back (_veh);
-                          _veh->set_current_link (_out_link);
-                          // accumulated miles for non-Pq links
-                          _veh->update_miles_traveled (_in_link);
-                          if (_veh->m_class == 0)
-                            {
-                              m_veh_moved_car[i * _offset + j] += 1;
-                              _olink = dynamic_cast<MNM_Dlink_Multiclass *> (
-                                _out_link);
-                              if (_olink->m_N_in_tree_car != nullptr)
-                                {
-                                  _olink->m_N_in_tree_car
-                                    ->add_flow (TFlt (timestamp + 1),
-                                                1 / m_flow_scalar, _veh->m_path,
-                                                _veh->m_assign_interval);
-                                }
-                            }
-                          else
-                            {
-                              IAssert (_veh->m_class == 1);
-                              // only for non-bus truck
-                              if (_veh->get_bus_route_ID () == -1)
-                                m_veh_moved_truck[i * _offset + j] += 1;
-                              _olink = dynamic_cast<MNM_Dlink_Multiclass *> (
-                                _out_link);
-                              if (_olink->m_N_in_tree_truck != nullptr)
-                                {
-                                  _olink->m_N_in_tree_truck
-                                    ->add_flow (TFlt (timestamp + 1),
-                                                1 / m_flow_scalar, _veh->m_path,
-                                                _veh->m_assign_interval);
-                                }
-                            }
+                          move_one_vehicle (timestamp, _in_link, _out_link, _veh, i, j, _offset);
+                          // _out_link->m_incoming_array.push_back (_veh);
+                          // _veh->set_current_link (_out_link);
+                          // // accumulated miles for non-Pq links
+                          // _veh->update_miles_traveled (_in_link);
+                          // if (_veh->m_class == 0)
+                          //   {
+                          //     m_veh_moved_car[i * _offset + j] += 1;
+                          //     _olink = dynamic_cast<MNM_Dlink_Multiclass *> (
+                          //       _out_link);
+                          //     if (_olink->m_N_in_tree_car != nullptr)
+                          //       {
+                          //         _olink->m_N_in_tree_car
+                          //           ->add_flow (TFlt (timestamp + 1),
+                          //                       1 / m_flow_scalar, _veh->m_path,
+                          //                       _veh->m_assign_interval);
+                          //       }
+                          //   }
+                          // else
+                          //   {
+                          //     IAssert (_veh->m_class == 1);
+                          //     // only for non-bus truck
+                          //     if (_veh->get_bus_route_ID () == -1)
+                          //       m_veh_moved_truck[i * _offset + j] += 1;
+                          //     _olink = dynamic_cast<MNM_Dlink_Multiclass *> (
+                          //       _out_link);
+                          //     if (_olink->m_N_in_tree_truck != nullptr)
+                          //       {
+                          //         _olink->m_N_in_tree_truck
+                          //           ->add_flow (TFlt (timestamp + 1),
+                          //                       1 / m_flow_scalar, _veh->m_path,
+                          //                       _veh->m_assign_interval);
+                          //       }
+                          //   }
                           _veh_it = _in_link->m_finished_array.erase (_veh_it);
                         }
                       _to_move -= _equiv_num;

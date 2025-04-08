@@ -160,10 +160,579 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
 }
 
 /**************************************************************************
+                            Link
+**************************************************************************/
+MNM_Dlink_Multiclass_Subclass::MNM_Dlink_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs_car,
+    TFlt ffs_truck, TInt num_car_subclass, TInt num_truck_subclass)
+    : MNM_Dlink_Multiclass::MNM_Dlink_Multiclass(ID, number_of_lane, length, ffs_car, ffs_truck)
+{
+  // seperate N-curves for private car and truck subclasses
+  m_N_in_car_subclass = std::unordered_map<int, MNM_Cumulative_Curve *>();
+  m_N_out_car_subclass = std::unordered_map<int, MNM_Cumulative_Curve *>();
+  m_N_in_truck_subclass = std::unordered_map<int, MNM_Cumulative_Curve *>();
+  m_N_out_truck_subclass = std::unordered_map<int, MNM_Cumulative_Curve *>();
+
+  // seperate N-curve_trees for private car and truck subclasses
+  m_N_in_tree_car_subclass = std::unordered_map<int, MNM_Tree_Cumulative_Curve *>();
+  m_N_out_tree_car_subclass = std::unordered_map<int, MNM_Tree_Cumulative_Curve *>();
+  m_N_in_tree_truck_subclass = std::unordered_map<int, MNM_Tree_Cumulative_Curve *>();
+  m_N_out_tree_truck_subclass = std::unordered_map<int, MNM_Tree_Cumulative_Curve *>();
+
+  for (int i = 0; i < num_car_subclass; ++i) 
+  {
+    m_N_in_car_subclass.insert(std::make_pair(i, nullptr));
+    m_N_out_car_subclass.insert(std::make_pair(i, nullptr));
+    m_N_in_tree_car_subclass.insert(std::make_pair(i, nullptr));
+    m_N_out_tree_car_subclass.insert(std::make_pair(i, nullptr));
+  }
+
+  for (int i = 0; i < num_truck_subclass; ++i) 
+  {
+    m_N_in_truck_subclass.insert(std::make_pair(i, nullptr));
+    m_N_out_truck_subclass.insert(std::make_pair(i, nullptr));
+    m_N_in_tree_truck_subclass.insert(std::make_pair(i, nullptr));
+    m_N_out_tree_truck_subclass.insert(std::make_pair(i, nullptr));
+  }
+}
+
+MNM_Dlink_Multiclass_Subclass::~MNM_Dlink_Multiclass_Subclass ()
+{
+    for (int i = 0; i < (int)m_N_in_car_subclass.size(); ++i) 
+    {
+      if (m_N_in_car_subclass.at(i) != nullptr) delete m_N_in_car_subclass.at(i);
+      if (m_N_out_car_subclass.at(i) != nullptr) delete m_N_out_car_subclass.at(i);
+      if (m_N_in_tree_car_subclass.at(i) != nullptr) delete m_N_in_tree_car_subclass.at(i);
+      if (m_N_out_tree_car_subclass.at(i) != nullptr) delete m_N_out_tree_car_subclass.at(i);
+    }
+    m_N_in_car_subclass.clear();
+    m_N_out_car_subclass.clear();
+    m_N_in_tree_car_subclass.clear();
+    m_N_out_tree_car_subclass.clear();
+
+    for (int i = 0; i < (int)m_N_in_truck_subclass.size(); ++i) 
+    {
+      if (m_N_in_truck_subclass.at(i) != nullptr) delete m_N_in_truck_subclass.at(i);
+      if (m_N_out_truck_subclass.at(i) != nullptr) delete m_N_out_truck_subclass.at(i);
+      if (m_N_in_tree_truck_subclass.at(i) != nullptr) delete m_N_in_tree_truck_subclass.at(i);
+      if (m_N_out_tree_truck_subclass.at(i) != nullptr) delete m_N_out_tree_truck_subclass.at(i);
+    }
+    m_N_in_truck_subclass.clear();
+    m_N_out_truck_subclass.clear();
+    m_N_in_tree_truck_subclass.clear();
+    m_N_out_tree_truck_subclass.clear();  
+}
+
+int MNM_Dlink_Multiclass_Subclass::install_cumulative_curve_multiclass_subclass ()
+{
+    for (int i = 0; i < (int)m_N_in_car_subclass.size(); ++i) 
+    {
+        if (m_N_in_car_subclass.at(i) != nullptr) delete m_N_in_car_subclass.at(i);
+        if (m_N_out_car_subclass.at(i) != nullptr) delete m_N_out_car_subclass.at(i);
+        m_N_in_car_subclass.at(i) = new MNM_Cumulative_Curve ();
+        m_N_out_car_subclass.at(i) = new MNM_Cumulative_Curve ();
+
+        m_N_in_car_subclass.at(i)->add_record (std::pair<TFlt, TFlt> (TFlt (0), TFlt (0)));
+        m_N_out_car_subclass.at(i)->add_record (std::pair<TFlt, TFlt> (TFlt (0), TFlt (0)));
+    }
+    for (int i = 0; i < (int)m_N_in_truck_subclass.size(); ++i) 
+    {
+        if (m_N_in_truck_subclass.at(i) != nullptr) delete m_N_in_truck_subclass.at(i);
+        if (m_N_out_truck_subclass.at(i) != nullptr) delete m_N_out_truck_subclass.at(i);
+        m_N_in_truck_subclass.at(i) = new MNM_Cumulative_Curve ();
+        m_N_out_truck_subclass.at(i) = new MNM_Cumulative_Curve ();
+
+        m_N_in_truck_subclass.at(i)->add_record (std::pair<TFlt, TFlt> (TFlt (0), TFlt (0)));
+        m_N_out_truck_subclass.at(i)->add_record (std::pair<TFlt, TFlt> (TFlt (0), TFlt (0)));
+    }
+    return 0;
+}
+  
+// use this one instead of the one in Dlink class
+int MNM_Dlink_Multiclass_Subclass::install_cumulative_curve_tree_multiclass_subclass ()
+{
+    for (int i = 0; i < (int)m_N_in_car_subclass.size(); ++i) 
+    {
+        if (m_N_in_tree_car_subclass.at(i) != nullptr) delete m_N_in_tree_car_subclass.at(i);
+        if (m_N_out_tree_car_subclass.at(i) != nullptr) delete m_N_out_tree_car_subclass.at(i);
+
+        // !!! Close all cc_tree if only doing loading to save a lot of memory !!!
+        m_N_in_tree_car_subclass.at(i) = new MNM_Tree_Cumulative_Curve ();
+        // m_N_out_tree_car_subclass.at(i) = new MNM_Tree_Cumulative_Curve();
+        
+    }
+    for (int i = 0; i < (int)m_N_in_truck_subclass.size(); ++i) 
+    {
+        if (m_N_in_tree_truck_subclass.at(i) != nullptr) delete m_N_in_tree_truck_subclass.at(i);
+        if (m_N_out_tree_truck_subclass.at(i) != nullptr) delete m_N_out_tree_truck_subclass.at(i);
+
+        // !!! Close all cc_tree if only doing loading to save a lot of memory !!!
+        m_N_in_tree_truck_subclass.at(i) = new MNM_Tree_Cumulative_Curve ();
+        // m_N_out_tree_truck_subclass.at(i) = new MNM_Tree_Cumulative_Curve();
+    }
+    return 0;
+}
+
+MNM_Dlink_Ctm_Multiclass_Subclass::MNM_Dlink_Ctm_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+    TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+    TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar, 
+    TInt num_car_subclass, TInt num_truck_subclass)
+    : MNM_Dlink_Multiclass::MNM_Dlink_Multiclass(ID, number_of_lane, length, ffs_car, ffs_truck),
+    MNM_Dlink_Ctm_Multiclass::MNM_Dlink_Ctm_Multiclass(ID, number_of_lane, length,
+        lane_hold_cap_car, lane_hold_cap_truck,
+        lane_flow_cap_car, lane_flow_cap_truck,
+        ffs_car, ffs_truck, unit_time,
+        veh_convert_factor, flow_scalar), 
+    MNM_Dlink_Multiclass_Subclass::MNM_Dlink_Multiclass_Subclass(ID, number_of_lane, length, ffs_car,
+        ffs_truck, num_car_subclass, num_truck_subclass)
+{
+    ;
+}
+
+MNM_Dlink_Ctm_Multiclass_Subclass::~MNM_Dlink_Ctm_Multiclass_Subclass ()
+{
+    ;
+}
+
+MNM_Dlink_Pq_Multiclass_Subclass::MNM_Dlink_Pq_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+    TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+    TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar,
+    TInt num_car_subclass, TInt num_truck_subclass)
+    : MNM_Dlink_Multiclass::MNM_Dlink_Multiclass(ID, number_of_lane, length, ffs_car, ffs_truck),
+    MNM_Dlink_Pq_Multiclass::MNM_Dlink_Pq_Multiclass(ID, number_of_lane, length,
+        lane_hold_cap_car, lane_hold_cap_truck,
+        lane_flow_cap_car, lane_flow_cap_truck,
+        ffs_car, ffs_truck, unit_time,
+        veh_convert_factor, flow_scalar),
+    MNM_Dlink_Multiclass_Subclass::MNM_Dlink_Multiclass_Subclass(ID, number_of_lane, length, ffs_car,
+        ffs_truck, num_car_subclass, num_truck_subclass)
+{
+    ;
+}
+
+MNM_Dlink_Pq_Multiclass_Subclass::~MNM_Dlink_Pq_Multiclass_Subclass ()
+{
+    ;
+}
+
+MNM_Dlink_Lq_Multiclass_Subclass::MNM_Dlink_Lq_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+    TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+    TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar,
+    TInt num_car_subclass, TInt num_truck_subclass)
+    : MNM_Dlink_Multiclass::MNM_Dlink_Multiclass(ID, number_of_lane, length, ffs_car, ffs_truck),
+    MNM_Dlink_Lq_Multiclass::MNM_Dlink_Lq_Multiclass(ID, number_of_lane, length,
+        lane_hold_cap_car, lane_hold_cap_truck,
+        lane_flow_cap_car, lane_flow_cap_truck,
+        ffs_car, ffs_truck, unit_time,
+        veh_convert_factor, flow_scalar),
+    MNM_Dlink_Multiclass_Subclass::MNM_Dlink_Multiclass_Subclass(ID, number_of_lane, length, ffs_car,
+        ffs_truck, num_car_subclass, num_truck_subclass)
+{
+    ;
+}
+
+MNM_Dlink_Lq_Multiclass_Subclass::~MNM_Dlink_Lq_Multiclass_Subclass ()
+{
+    ;
+}
+
+MNM_Link_Factory_Multiclass_Subclass::MNM_Link_Factory_Multiclass_Subclass() 
+: MNM_Link_Factory_Multiclass::MNM_Link_Factory_Multiclass ()
+{
+
+}
+
+MNM_Link_Factory_Multiclass_Subclass::~MNM_Link_Factory_Multiclass_Subclass ()
+{
+    ;
+}
+
+MNM_Dlink *
+MNM_Link_Factory_Multiclass_Subclass::make_link_multiclass_subclass (
+    TInt ID, DLink_type_multiclass link_type, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car,
+    TFlt lane_flow_cap_truck, TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar, TInt num_car_subclass, TInt num_truck_subclass)
+{
+    MNM_Dlink *_link;
+    switch (link_type)
+      {
+      case MNM_TYPE_CTM_MULTICLASS:
+        _link
+          = new MNM_Dlink_Ctm_Multiclass_Subclass (ID, number_of_lane, length,
+                                          lane_hold_cap_car, lane_hold_cap_truck,
+                                          lane_flow_cap_car, lane_flow_cap_truck,
+                                          ffs_car, ffs_truck, unit_time,
+                                          veh_convert_factor, flow_scalar,
+                                          num_car_subclass, num_truck_subclass);
+        break;
+      case MNM_TYPE_LQ_MULTICLASS:
+        _link
+          = new MNM_Dlink_Lq_Multiclass_Subclass (ID, number_of_lane, length,
+                                         lane_hold_cap_car, lane_hold_cap_truck,
+                                         lane_flow_cap_car, lane_flow_cap_truck,
+                                         ffs_car, ffs_truck, unit_time,
+                                         veh_convert_factor, flow_scalar,
+                                         num_car_subclass, num_truck_subclass);
+        break;
+      case MNM_TYPE_PQ_MULTICLASS:
+        _link
+          = new MNM_Dlink_Pq_Multiclass_Subclass (ID, number_of_lane, length,
+                                         lane_hold_cap_car, lane_hold_cap_truck,
+                                         lane_flow_cap_car, lane_flow_cap_truck,
+                                         ffs_car, ffs_truck, unit_time,
+                                         veh_convert_factor, flow_scalar,
+                                         num_car_subclass, num_truck_subclass);
+        break;
+      default:
+        throw std::runtime_error ("unknown link type");
+      }
+    m_link_map.insert ({ ID, _link });
+    return _link;
+}
+
+/**************************************************************************
+                            Node
+**************************************************************************/
+MNM_DMOND_Multiclass_Subclass::MNM_DMOND_Multiclass_Subclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor) 
+    : MNM_DMOND_Multiclass::MNM_DMOND_Multiclass(ID, flow_scalar, veh_convert_factor)
+{
+    ;
+}
+
+MNM_DMOND_Multiclass_Subclass::~MNM_DMOND_Multiclass_Subclass ()
+{
+    ;
+}
+
+int 
+MNM_DMOND_Multiclass_Subclass::evolve (TInt timestamp)
+{
+    MNM_Dlink *_link;
+    MNM_Veh_Multiclass_Subclass *_veh;
+    MNM_Dlink_Pq_Multiclass_Subclass *_next_link;
+  
+    for (unsigned i = 0; i < m_out_link_array.size (); ++i)
+    {
+        _link = m_out_link_array[i];
+        m_out_volume[_link] = 0;
+    }
+  
+    /* compute out flow */
+    std::deque<MNM_Veh *>::iterator _que_it = m_in_veh_queue.begin ();
+    while (_que_it != m_in_veh_queue.end ())
+    {
+        _veh = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (*_que_it);
+        _link = _veh->get_next_link ();
+        if (_veh->m_class == 0)
+        {
+            m_out_volume[_link] += 1;
+        }
+        else
+        {
+            _next_link = dynamic_cast<MNM_Dlink_Pq_Multiclass_Subclass *> (_link);
+            // m_out_volume[_link] += _next_link -> m_veh_convert_factor;
+            m_out_volume[_link] += 1;
+        }
+        _que_it++;
+    }
+    for (unsigned i = 0; i < m_out_link_array.size (); ++i)
+    {
+        _link = m_out_link_array[i];
+        if ((_link->get_link_supply () * m_flow_scalar)
+            < TFlt (m_out_volume[_link]))
+        {
+            m_out_volume[_link] = TInt (
+                MNM_Ults::round (_link->get_link_supply () * m_flow_scalar));
+        }
+    }
+  
+    /* move vehicle */
+    TInt _moved_car, _moved_truck;
+    for (unsigned i = 0; i < m_out_link_array.size (); ++i)
+    {
+        _link = m_out_link_array[i];
+        _next_link = dynamic_cast<MNM_Dlink_Pq_Multiclass_Subclass *> (_link);
+        _moved_car = 0;
+        _moved_truck = 0;
+        _que_it = m_in_veh_queue.begin ();
+        while (_que_it != m_in_veh_queue.end ())
+        {
+            if (m_out_volume[_link] > 0)
+            {
+                _veh = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (*_que_it);
+                if (_veh->get_next_link () == _link)
+                {
+                    _link->m_incoming_array.push_back (_veh);
+                    _veh->set_current_link (_link);
+                    if (_veh->m_class == 0)
+                    {
+                        m_out_volume[_link] -= 1;
+                        _moved_car += 1;
+                        // update car subclass cc
+                        _next_link -> m_N_in_car_subclass.at(_veh -> get_subclass()) -> add_increment (
+                            std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                                    TFlt (1) / m_flow_scalar));
+                    }
+                    else
+                    {
+                        
+                        // m_out_volume[_link] -= _next_link -> m_veh_convert_factor;
+                        m_out_volume[_link] -= 1;
+                        // only for non-bus truck
+                        if (_veh->get_bus_route_ID () == -1)
+                        {
+                            _moved_truck += 1;
+                            // update truck subclass cc
+                            _next_link -> m_N_in_truck_subclass.at(_veh -> get_subclass()) -> add_increment (
+                                std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                                        TFlt (1) / m_flow_scalar));
+                        }
+                        
+                    }
+                    _que_it = m_in_veh_queue.erase (_que_it); // c++ 11
+                }
+                else
+                {
+                    _que_it++;
+                }
+            }
+            else
+            {
+                break; // break while loop
+            }
+        }
+        // record cc for both classes
+        if (_next_link->m_N_in_car != nullptr && _moved_car > 0)
+        {
+            _next_link->m_N_in_car->add_increment (
+                std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                        TFlt (_moved_car) / m_flow_scalar));
+        }
+        if (_next_link->m_N_in_truck != nullptr && _moved_truck > 0)
+        {
+            _next_link->m_N_in_truck->add_increment (
+                std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                        TFlt (_moved_truck) / m_flow_scalar));
+        }
+    // printf("car: %d, truck: %d\n", _moved_car, _moved_truck);
+    }
+    return 0;
+}
+
+MNM_DMDND_Multiclass_Subclass::MNM_DMDND_Multiclass_Subclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor)
+    : MNM_DMDND_Multiclass::MNM_DMDND_Multiclass (ID, flow_scalar, veh_convert_factor)
+{
+    ;
+}
+
+MNM_DMDND_Multiclass_Subclass::~MNM_DMDND_Multiclass_Subclass ()
+{
+    ;
+}
+
+int 
+MNM_DMDND_Multiclass_Subclass::evolve (TInt timestamp) 
+{
+    MNM_Dlink *_link;
+    MNM_Dlink_Pq_Multiclass_Subclass *_from_link;
+    MNM_Veh_Multiclass_Subclass *_veh;
+    size_t _size;
+    TInt _moved_car, _moved_truck;
+    for (size_t i = 0; i < m_in_link_array.size (); ++i)
+    {
+        _moved_car = 0;
+        _moved_truck = 0;
+        _link = m_in_link_array[i];
+        _from_link = dynamic_cast<MNM_Dlink_Pq_Multiclass_Subclass *> (_link);
+        _size = _link->m_finished_array.size ();
+        for (size_t j = 0; j < _size; ++j)
+        {
+            _veh = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (_link->m_finished_array.front ());
+            if (_veh->get_next_link () != nullptr)
+            {
+                throw std::runtime_error ("invalid state");
+            }
+            m_out_veh_queue.push_back (_veh);
+            _veh->set_current_link (nullptr);
+            if (_veh->m_class == 0)
+            {
+                _moved_car += 1;
+                // update car subclass cc
+                _from_link->m_N_out_car_subclass.at(_veh -> get_subclass())->add_increment (
+                    std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                            TFlt (1) / m_flow_scalar));
+            }
+            else
+            {
+                // only for non-bus truck
+                if (_veh->get_bus_route_ID () == -1)
+                {
+                    _moved_truck += 1;
+                    // update truck subclass cc
+                    _from_link->m_N_out_truck_subclass.at(_veh -> get_subclass())->add_increment (
+                        std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                                TFlt (1) / m_flow_scalar));
+                }
+            }
+            _link->m_finished_array.pop_front ();
+        }
+        // record cc for both classes
+        if (_from_link->m_N_out_car != nullptr && _moved_car > 0)
+        {
+            _from_link->m_N_out_car->add_increment (
+                std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                        TFlt (_moved_car) / m_flow_scalar));
+        }
+        if (_from_link->m_N_out_truck != nullptr && _moved_truck > 0)
+        {
+            _from_link->m_N_out_truck->add_increment (
+                std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                        TFlt (_moved_truck) / m_flow_scalar));
+        }
+    }
+    return 0;
+}
+
+MNM_Dnode_Inout_Multiclass_Subclass::MNM_Dnode_Inout_Multiclass_Subclass (TInt ID, TFlt flow_scalar,
+    TFlt veh_convert_factor) 
+    : MNM_Dnode_Inout_Multiclass::MNM_Dnode_Inout_Multiclass(ID, flow_scalar, veh_convert_factor)
+{
+    ;
+}
+
+MNM_Dnode_Inout_Multiclass_Subclass::~MNM_Dnode_Inout_Multiclass_Subclass()
+{
+    ;
+}
+
+int 
+MNM_Dnode_Inout_Multiclass_Subclass::move_one_vehicle (TInt timestamp, MNM_Dlink *_in_link, MNM_Dlink *_out_link, MNM_Veh *_veh,
+    size_t _in_link_i, size_t _out_link_j, size_t _offset)
+{
+    MNM_Dlink_Multiclass_Subclass *_ilink = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (_in_link);
+    MNM_Dlink_Multiclass_Subclass *_olink = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (_out_link);
+    _out_link->m_incoming_array.push_back (_veh);
+    _veh->set_current_link (_out_link);
+    // accumulated miles for non-Pq links
+    _veh->update_miles_traveled (_in_link);
+    if (_veh->get_class() == 0)
+    {
+        m_veh_moved_car[_in_link_i * _offset + _out_link_j] += 1;
+        
+        _ilink -> m_N_out_car_subclass.at(_veh -> get_subclass()) -> add_increment (
+            std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+        _olink -> m_N_in_car_subclass.at(_veh -> get_subclass()) -> add_increment (
+            std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+        if (_olink -> m_N_in_tree_car_subclass.at(_veh -> get_subclass()) != nullptr) 
+        {
+            _olink -> m_N_in_tree_car_subclass.at(_veh -> get_subclass())
+                ->add_flow (TFlt (timestamp + 1),
+                            1 / m_flow_scalar,
+                            _veh->m_path,
+                            _veh->m_assign_interval);
+        }
+        if (_olink->m_N_in_tree_car != nullptr)
+        {
+            _olink->m_N_in_tree_car
+                ->add_flow (TFlt (timestamp + 1),
+                            1 / m_flow_scalar,
+                            _veh->m_path,
+                            _veh->m_assign_interval);
+        }
+    }
+    else
+    {
+        IAssert (_veh->get_class() == 1);
+        // Assume the cc and cc_tree only account for non-bus truck
+        if (_veh->get_bus_route_ID () == -1)
+        {
+            m_veh_moved_truck[_in_link_i * _offset + _out_link_j] += 1;
+
+            _ilink -> m_N_out_truck_subclass.at(_veh -> get_subclass()) -> add_increment (
+                std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+            _olink -> m_N_in_truck_subclass.at(_veh -> get_subclass()) -> add_increment (
+                std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+            if (_olink -> m_N_in_tree_truck_subclass.at(_veh -> get_subclass()) != nullptr) 
+            {
+                _olink -> m_N_in_tree_truck_subclass.at(_veh -> get_subclass())
+                    ->add_flow (TFlt (timestamp + 1),
+                                1 / m_flow_scalar,
+                                _veh->m_path,
+                                _veh->m_assign_interval);
+            }
+            if (_olink->m_N_in_tree_truck != nullptr)
+            {
+                _olink->m_N_in_tree_truck
+                    ->add_flow (TFlt (timestamp + 1),
+                                1 / m_flow_scalar,
+                                _veh->m_path,
+                                _veh->m_assign_interval);
+            }
+        }
+    }
+    return 0;
+}
+
+MNM_Dnode_FWJ_Multiclass_Subclass::MNM_Dnode_FWJ_Multiclass_Subclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor)
+    : MNM_Dnode_Inout_Multiclass_Subclass::MNM_Dnode_Inout_Multiclass_Subclass(ID, flow_scalar, veh_convert_factor),
+    MNM_Dnode_FWJ_Multiclass::MNM_Dnode_FWJ_Multiclass(ID, flow_scalar, veh_convert_factor),
+    MNM_Dnode_Inout_Multiclass::MNM_Dnode_Inout_Multiclass(ID, flow_scalar, veh_convert_factor)
+{
+    ;
+}
+
+MNM_Dnode_FWJ_Multiclass_Subclass::~MNM_Dnode_FWJ_Multiclass_Subclass ()
+{
+    ;
+}
+
+MNM_Node_Factory_Multiclass_Subclass::MNM_Node_Factory_Multiclass_Subclass ()
+    : MNM_Node_Factory_Multiclass::MNM_Node_Factory_Multiclass ()
+{
+    ;
+}
+
+MNM_Node_Factory_Multiclass_Subclass::~MNM_Node_Factory_Multiclass_Subclass ()
+{
+    ;
+}
+
+MNM_Dnode *
+MNM_Node_Factory_Multiclass_Subclass::make_node_multiclass_subclass (
+  TInt ID, DNode_type_multiclass node_type, TFlt flow_scalar,
+  TFlt veh_convert_factor)
+{
+  MNM_Dnode *_node;
+  switch (node_type)
+    {
+    case MNM_TYPE_FWJ_MULTICLASS:
+      _node
+        = new MNM_Dnode_FWJ_Multiclass_Subclass (ID, flow_scalar, veh_convert_factor);
+      break;
+    case MNM_TYPE_ORIGIN_MULTICLASS:
+      _node = new MNM_DMOND_Multiclass_Subclass (ID, flow_scalar, veh_convert_factor);
+      break;
+    case MNM_TYPE_DEST_MULTICLASS:
+      _node = new MNM_DMDND_Multiclass_Subclass (ID, flow_scalar, veh_convert_factor);
+      break;
+    default:
+      throw std::runtime_error ("unknown node type");
+    }
+  m_node_map.insert ({ ID, _node });
+  return _node;
+}
+
+/**************************************************************************
                             Origin
 **************************************************************************/
 MNM_Origin_Multiclass_Subclass::MNM_Origin_Multiclass_Subclass (TInt ID, TInt max_interval,
-                                              TFlt flow_scalar, TInt frequency)
+                                                                TFlt flow_scalar, TInt frequency)
     : MNM_Origin_Multiclass::MNM_Origin_Multiclass (ID, max_interval, flow_scalar, frequency)
 {
     m_demand_car_subclass = std::unordered_map<MNM_Destination_Multiclass * , std::unordered_map<int, TFlt *>> ();
@@ -1103,6 +1672,439 @@ MNM_IO_Multiclass_Subclass::build_graph_vec (const std::string &file_folder,
     return 0;
 }
 
+int 
+MNM_IO_Multiclass_Subclass::build_node_factory_multiclass_subclass (const std::string &file_folder,
+                                                                    MNM_ConfReader *conf_reader,
+                                                                    MNM_Node_Factory *node_factory,
+                                                                    const std::string &file_name)
+{
+    /* find file */
+    std::string _node_file_name = file_folder + "/" + file_name;
+    std::ifstream _node_file;
+    _node_file.open (_node_file_name, std::ios::in);
+    
+    /* read config */
+    TInt _num_of_node = conf_reader->get_int ("num_of_node");
+    TFlt _flow_scalar = conf_reader->get_float ("flow_scalar");
+    
+    /* read file */
+    std::string _line;
+    std::vector<std::string> _words;
+    TInt _node_ID;
+    std::string _type;
+    TFlt _veh_convert_factor;
+    
+    MNM_Node_Factory_Multiclass_Subclass *_node_factory = dynamic_cast<MNM_Node_Factory_Multiclass_Subclass *> (node_factory);
+    if (_node_file.is_open ())
+    {
+        for (int i = 0; i < _num_of_node;)
+        {
+            std::getline (_node_file, _line);
+            _line = trim (_line);
+            if (_line.empty () || _line[0] == '#')
+            {
+                continue;
+            }
+            ++i;
+            _words = split (_line, ' ');
+            if (_words.size () == 3)
+            {
+                _node_ID = TInt (std::stoi (_words[0]));
+                _type = trim (_words[1]);
+                _veh_convert_factor = TFlt (std::stod (_words[2]));
+                if (_type == "FWJ")
+                {
+                    _node_factory->make_node_multiclass_subclass (_node_ID,
+                                                            MNM_TYPE_FWJ_MULTICLASS,
+                                                            _flow_scalar,
+                                                            _veh_convert_factor);
+                    continue;
+                }
+                if (_type == "DMOND")
+                {
+                    _node_factory
+                        ->make_node_multiclass_subclass (_node_ID,
+                                                MNM_TYPE_ORIGIN_MULTICLASS,
+                                                _flow_scalar, _veh_convert_factor);
+                    continue;
+                }
+                if (_type == "DMDND")
+                {
+                    _node_factory->make_node_multiclass_subclass (_node_ID,
+                                                            MNM_TYPE_DEST_MULTICLASS,
+                                                            _flow_scalar,
+                                                            _veh_convert_factor);
+                    continue;
+                }
+                throw std::runtime_error ("unknown node type: " + _type);
+            }
+            else
+            {
+                throw std::runtime_error ("failed to parse line: " + _line);
+            }
+        }
+        _node_file.close ();
+    }
+    return 0;
+}
+
+int MNM_IO_Multiclass_Subclass::build_link_factory_multiclass_subclass (const std::string &file_folder,
+                                                                        MNM_ConfReader *conf_reader,
+                                                                        MNM_Link_Factory *link_factory,
+                                                                        const std::string &file_name)
+{
+    /* find file */
+    std::string _link_file_name = file_folder + "/" + file_name;
+    std::ifstream _link_file;
+    _link_file.open (_link_file_name, std::ios::in);
+
+    /* read config */
+    TInt _num_of_link = conf_reader->get_int ("num_of_link");
+    TFlt _flow_scalar = conf_reader->get_float ("flow_scalar");
+    TFlt _unit_time = conf_reader->get_float ("unit_time");
+    TInt _num_car_subclass = conf_reader->get_int ("num_subclass_car");
+    TInt _num_truck_subclass = conf_reader->get_int ("num_subclass_truck");
+
+    /* read file */
+    std::string _line;
+    std::vector<std::string> _words;
+    TInt _link_ID;
+    TFlt _lane_hold_cap_car;
+    TFlt _lane_flow_cap_car;
+    TInt _number_of_lane;
+    TFlt _length;
+    TFlt _ffs_car;
+    std::string _type;
+    // new in multiclass vehicle case
+    TFlt _lane_hold_cap_truck;
+    TFlt _lane_flow_cap_truck;
+    TFlt _ffs_truck;
+    TFlt _veh_convert_factor;
+
+    MNM_Link_Factory_Multiclass_Subclass *_link_factory = dynamic_cast<MNM_Link_Factory_Multiclass_Subclass *> (link_factory);
+
+    if (_link_file.is_open ())
+    {
+        for (int i = 0; i < _num_of_link;)
+        {
+            std::getline (_link_file, _line);
+            _line = trim (_line);
+            if (_line.empty () || _line[0] == '#')
+            {
+                continue;
+            }
+            ++i;
+            _words = split (_line, ' ');
+            if (_words.size () == 11)
+            {
+                _link_ID = TInt (std::stoi (_words[0]));
+                _type = trim (_words[1]);
+                _length = TFlt (std::stod (_words[2]));
+                _ffs_car = TFlt (std::stod (_words[3]));
+                _lane_flow_cap_car = TFlt (
+                    std::stod (_words[4])); // flow capacity (vehicles/hour/lane)
+                _lane_hold_cap_car = TFlt (
+                    std::stod (_words[5])); // jam density (vehicles/mile/lane)
+                _number_of_lane = TInt (std::stoi (_words[6]));
+                // new in multiclass vehicle case
+                _ffs_truck = TFlt (std::stod (_words[7]));
+                _lane_flow_cap_truck = TFlt (std::stod (_words[8]));
+                _lane_hold_cap_truck = TFlt (std::stod (_words[9]));
+                _veh_convert_factor = TFlt (std::stod (_words[10]));
+
+                /* unit conversion */
+                // mile -> meter, hour -> second
+                _length = _length * TFlt (1600);                 // m
+                _ffs_car = _ffs_car * TFlt (1600) / TFlt (3600); // m/s
+                _lane_flow_cap_car
+                    = _lane_flow_cap_car / TFlt (3600); // vehicles/s/lane
+                _lane_hold_cap_car
+                    = _lane_hold_cap_car / TFlt (1600); // vehicles/m/lane
+                _ffs_truck = _ffs_truck * TFlt (1600) / TFlt (3600); // m/s
+                _lane_flow_cap_truck
+                    = _lane_flow_cap_truck / TFlt (3600); // vehicles/s/lane
+                _lane_hold_cap_truck
+                    = _lane_hold_cap_truck / TFlt (1600); // vehicles/m/lane
+
+                /* build */
+                if (_type == "PQ")
+                {
+                    _link_factory->make_link_multiclass_subclass (_link_ID,
+                                                        MNM_TYPE_PQ_MULTICLASS,
+                                                        _number_of_lane, _length,
+                                                        _lane_hold_cap_car,
+                                                        _lane_hold_cap_truck,
+                                                        _lane_flow_cap_car,
+                                                        _lane_flow_cap_truck,
+                                                        _ffs_car, _ffs_truck,
+                                                        _unit_time,
+                                                        _veh_convert_factor,
+                                                        _flow_scalar,
+                                                        _num_car_subclass,
+                                                        _num_truck_subclass);
+                    continue;
+                }
+                if (_type == "LQ")
+                {
+                    _link_factory->make_link_multiclass_subclass (_link_ID,
+                                                        MNM_TYPE_LQ_MULTICLASS,
+                                                        _number_of_lane, _length,
+                                                        _lane_hold_cap_car,
+                                                        _lane_hold_cap_truck,
+                                                        _lane_flow_cap_car,
+                                                        _lane_flow_cap_truck,
+                                                        _ffs_car, _ffs_truck,
+                                                        _unit_time,
+                                                        _veh_convert_factor,
+                                                        _flow_scalar,
+                                                        _num_car_subclass,
+                                                        _num_truck_subclass);
+                    continue;
+                }
+                if (_type == "CTM")
+                {
+                    _link_factory->make_link_multiclass_subclass (_link_ID,
+                                                        MNM_TYPE_CTM_MULTICLASS,
+                                                        _number_of_lane, _length,
+                                                        _lane_hold_cap_car,
+                                                        _lane_hold_cap_truck,
+                                                        _lane_flow_cap_car,
+                                                        _lane_flow_cap_truck,
+                                                        _ffs_car, _ffs_truck,
+                                                        _unit_time,
+                                                        _veh_convert_factor,
+                                                        _flow_scalar,
+                                                        _num_car_subclass,
+                                                        _num_truck_subclass);
+                    continue;
+                }
+                throw std::runtime_error ("unknown link type: " + _type);
+            }
+            else
+            {
+              throw std::runtime_error ("failed to parse line: " + _line);
+            }
+        }
+        _link_file.close ();
+    }
+    return 0;
+}
+
+
+namespace MNM
+{
+int
+print_vehicle_statistics (MNM_Veh_Factory_Multiclass_Subclass *veh_factory)
+{
+    printf (
+    "############################################### Vehicle Statistics ###############################################\n \
+    Released Vehicle Total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d,\n \
+    Total Travel Time: %.2f intervals,\n \
+    Released Car Driving %d, Enroute Car Driving %d, Finished Car Driving %d,\n \
+    Released Truck %d, Enroute Truck %d, Finished Truck %d,\n \
+    Total Travel Time Car: %.2f intervals, Total Travel Time Truck: %.2f intervals\n \
+    \n",
+    veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
+    veh_factory->m_total_time, veh_factory->m_num_car,
+    veh_factory->m_enroute_car, veh_factory->m_finished_car,
+    veh_factory->m_num_truck, veh_factory->m_enroute_truck,
+    veh_factory->m_finished_truck, veh_factory->m_total_time_car,
+    veh_factory->m_total_time_truck);
+
+    for (auto _it : veh_factory -> m_num_car_subclass) 
+    {
+        printf("Car Subclass %d: Released Total %d, Enroute Total %d, Finished Total %d, Total travel time %.2f intervals\n", 
+                _it.first, _it.second, 
+                veh_factory -> m_enroute_car_subclass.find(_it.first) == veh_factory -> m_enroute_car_subclass.end() ? 0 : veh_factory -> m_enroute_car_subclass.at(_it.first), 
+                veh_factory -> m_finished_car_subclass.find(_it.first) == veh_factory -> m_finished_car_subclass.end() ? 0 : veh_factory -> m_finished_car_subclass.at(_it.first), 
+                veh_factory -> m_total_time_car_subclass.find(_it.first) == veh_factory -> m_total_time_car_subclass.end() ? 0. : veh_factory -> m_total_time_car_subclass.at(_it.first));
+    }
+
+    for (auto _it : veh_factory -> m_num_truck_subclass) 
+    {
+        printf("Truck Subclass %d: Released Total %d, Enroute Total %d, Finished Total %d, Total travel time %.2f intervals\n", 
+                _it.first, _it.second, 
+                veh_factory -> m_enroute_truck_subclass.find(_it.first) == veh_factory -> m_enroute_truck_subclass.end() ? 0 : veh_factory -> m_enroute_truck_subclass.at(_it.first), 
+                veh_factory -> m_finished_truck_subclass.find(_it.first) == veh_factory -> m_finished_truck_subclass.end() ? 0 : veh_factory -> m_finished_truck_subclass.at(_it.first), 
+                veh_factory -> m_total_time_truck_subclass.find(_it.first) == veh_factory -> m_total_time_truck_subclass.end() ? 0 : veh_factory -> m_total_time_truck_subclass.at(_it.first));
+    }
+    printf("############################################### Vehicle Statistics ###############################################\n");
+    return 0;
+}
+}
+
+
+/**************************************************************************
+                            DTA Gradient
+**************************************************************************/
+namespace MNM_DTA_GRADIENT
+{
+TFlt
+get_link_inflow_car_subclass (MNM_Dlink_Multiclass_Subclass *link, TInt start_time, TInt end_time, int veh_subclass)
+{
+  if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_link_inflow_car_subclass link is null");
+    }
+  if (link->m_N_in_car_subclass.at(veh_subclass) == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_link_inflow_car_subclass link cumulative curve is not installed");
+    }
+  return link->m_N_in_car_subclass.at(veh_subclass)->get_result (TFlt (end_time))
+         - link->m_N_in_car_subclass.at(veh_subclass)->get_result (TFlt (start_time));
+}
+
+TFlt
+get_link_outflow_car_subclass (MNM_Dlink_Multiclass_Subclass *link, TInt start_time, TInt end_time, int veh_subclass)
+{
+  if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_link_outflow_car_subclass link is null");
+    }
+  if (link->m_N_out_car_subclass.at(veh_subclass) == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_link_outflow_car_subclass link cumulative curve is not installed");
+    }
+  return link->m_N_out_car_subclass.at(veh_subclass)->get_result (TFlt (end_time))
+         - link->m_N_out_car_subclass.at(veh_subclass)->get_result (TFlt (start_time));
+}
+
+TFlt
+get_link_inflow_truck_subclass (MNM_Dlink_Multiclass_Subclass *link, TInt start_time, TInt end_time, int veh_subclass)
+{
+  if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_link_inflow_truck_subclass link is null");
+    }
+  if (link->m_N_in_truck_subclass.at(veh_subclass) == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_link_inflow_truck_subclass link cumulative curve is not installed");
+    }
+  return link->m_N_in_truck_subclass.at(veh_subclass)->get_result (TFlt (end_time))
+         - link->m_N_in_truck_subclass.at(veh_subclass)->get_result (TFlt (start_time));
+}
+
+TFlt
+get_link_outflow_truck_subclass (MNM_Dlink_Multiclass_Subclass *link, TInt start_time, TInt end_time, int veh_subclass)
+{
+  if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_link_outflow_truck_subclass link is null");
+    }
+  if (link->m_N_out_truck_subclass.at(veh_subclass) == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_link_outflow_truck_subclass link cumulative curve is not installed");
+    }
+  return link->m_N_out_truck_subclass.at(veh_subclass)->get_result (TFlt (end_time))
+         - link->m_N_out_truck_subclass.at(veh_subclass)->get_result (TFlt (start_time));
+}
+
+TFlt 
+get_travel_time_car_subclass (MNM_Dlink_Multiclass_Subclass *link, TFlt start_time,
+                            TFlt unit_interval, TInt end_loading_timestamp, int veh_subclass)
+{
+    if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_travel_time_car_subclass link is null");
+    }
+    if (link->m_N_in_car_subclass.at(veh_subclass) == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_travel_time_car_subclass link cumulative curve is not installed");
+    }
+
+    // TFlt fftt = link -> get_link_freeflow_tt_car() / unit_interval;
+    TFlt fftt = TFlt (int (
+        link->get_link_freeflow_tt_loading_car ())); // actual intervals in loading
+
+    if (link->m_last_valid_time < 0)
+    {
+      link->m_last_valid_time
+        = get_last_valid_time (link->m_N_in_car, link->m_N_out_car,
+                               end_loading_timestamp);
+    }
+    IAssert (link->m_last_valid_time >= 0);
+
+    return get_travel_time_from_cc (start_time, link->m_N_in_car_subclass.at(veh_subclass),
+                                    link->m_N_out_car_subclass.at(veh_subclass), link->m_last_valid_time,
+                                    fftt);
+}
+
+TFlt get_travel_time_car_robust_subclass (MNM_Dlink_Multiclass_Subclass *link, TFlt start_time,
+                                        TFlt end_time, TFlt unit_interval,
+                                        TInt end_loading_timestamp, int veh_subclass,
+                                        TInt num_trials)
+{
+    IAssert (end_time > start_time);
+    num_trials = num_trials > TInt (end_time - start_time)
+                   ? TInt (end_time - start_time)
+                   : num_trials;
+    TFlt _delta = (end_time - start_time) / TFlt (num_trials);
+    TFlt _ave_tt = TFlt (0);
+    for (int i = 0; i < num_trials; ++i)
+    {
+        _ave_tt += get_travel_time_car_subclass (link, start_time + TFlt (i) * _delta,
+                                                 unit_interval, end_loading_timestamp, veh_subclass);
+    }
+    return _ave_tt / TFlt (num_trials);
+}
+
+TFlt get_travel_time_truck_subclass (MNM_Dlink_Multiclass_Subclass *link, TFlt start_time,
+                                    TFlt unit_interval, TInt end_loading_timestamp, int veh_subclass)
+{
+    if (link == nullptr)
+    {
+      throw std::runtime_error ("Error, get_travel_time_truck_subclass link is null");
+    }
+    if (link->m_N_in_truck_subclass.at(veh_subclass) == nullptr)
+    {
+      throw std::runtime_error (
+        "Error, get_travel_time_truck_subclass link cumulative curve is not installed");
+    }
+    // printf("%.2f\n", start_time);
+
+    // TFlt fftt = link -> get_link_freeflow_tt_truck() / unit_interval;
+    TFlt fftt = TFlt (int (
+    link
+      ->get_link_freeflow_tt_loading_truck ())); // actual intervals in loading
+
+    if (link->m_last_valid_time_truck < 0)
+    {
+      link->m_last_valid_time_truck
+        = get_last_valid_time (link->m_N_in_truck, link->m_N_out_truck,
+                               end_loading_timestamp);
+    }
+    IAssert (link->m_last_valid_time_truck >= 0);
+
+    return get_travel_time_from_cc (start_time, link->m_N_in_truck_subclass.at(veh_subclass),
+                                    link->m_N_out_truck_subclass.at(veh_subclass),
+                                    link->m_last_valid_time_truck, fftt);
+}
+
+TFlt get_travel_time_truck_robust_subclass (MNM_Dlink_Multiclass_Subclass *link, TFlt start_time,
+                                            TFlt end_time, TFlt unit_interval,
+                                            TInt end_loading_timestamp, int veh_subclass,
+                                            TInt num_trials)
+{
+    IAssert (end_time > start_time);
+    num_trials = num_trials > TInt (end_time - start_time)
+                   ? TInt (end_time - start_time)
+                   : num_trials;
+    TFlt _delta = (end_time - start_time) / TFlt (num_trials);
+    TFlt _ave_tt = TFlt (0);
+    for (int i = 0; i < num_trials; ++i)
+      {
+        _ave_tt += get_travel_time_truck_subclass (link, start_time + TFlt (i) * _delta,
+                                                    unit_interval, end_loading_timestamp, veh_subclass);
+      }
+    return _ave_tt / TFlt (num_trials);
+}
+}
+
 /**************************************************************************
                             DTA
 **************************************************************************/
@@ -1201,6 +2203,10 @@ MNM_Dta_Multiclass_Subclass::initialize ()
     MNM_Dta_Multiclass::initialize ();
     if (m_veh_factory != nullptr) delete m_veh_factory;
     m_veh_factory = new MNM_Veh_Factory_Multiclass_Subclass ();
+    if (m_node_factory != nullptr) delete m_node_factory;
+    m_node_factory = new MNM_Node_Factory_Multiclass_Subclass ();
+    if (m_link_factory != nullptr) delete m_link_factory;
+    m_link_factory = new MNM_Link_Factory_Multiclass_Subclass ();
     if (m_od_factory != nullptr) delete m_od_factory;
     m_od_factory = new MNM_OD_Factory_Multiclass_Subclass ();
     return 0;
@@ -1209,10 +2215,14 @@ MNM_Dta_Multiclass_Subclass::initialize ()
 int 
 MNM_Dta_Multiclass_Subclass::build_from_files ()
 {
-    MNM_IO_Multiclass::build_node_factory_multiclass (m_file_folder, m_config,
-                                                    m_node_factory);
-    MNM_IO_Multiclass::build_link_factory_multiclass (m_file_folder, m_config,
-                                                    m_link_factory);
+    MNM_IO_Multiclass_Subclass::build_node_factory_multiclass_subclass (m_file_folder, m_config,
+                                                                        m_node_factory);
+    MNM_IO_Multiclass_Subclass::build_link_factory_multiclass_subclass (m_file_folder, m_config,
+                                                                        m_link_factory);
+    // MNM_IO_Multiclass::build_node_factory_multiclass (m_file_folder, m_config,
+    //                                                  m_node_factory);
+    // MNM_IO_Multiclass::build_link_factory_multiclass (m_file_folder, m_config,
+    //                                                   m_link_factory);
     MNM_IO_Multiclass::build_od_factory (m_file_folder, m_config, m_od_factory,
                                         m_node_factory);
     MNM_IO_Multiclass_Subclass::build_graph_vec (m_file_folder, m_config, m_num_graph, m_graph_vec);
@@ -1443,8 +2453,9 @@ MNM_Dta_Multiclass_Subclass::load_once (bool verbose, TInt load_int, TInt assign
     m_statistics->update_record (load_int);
 
     record_enroute_vehicles ();
-    if (verbose)
-    MNM::print_vehicle_statistics (m_veh_factory);
+    if (verbose) 
+    // MNM::print_vehicle_statistics (m_veh_factory);
+    MNM::print_vehicle_statistics (dynamic_cast<MNM_Veh_Factory_Multiclass_Subclass*>(m_veh_factory));
     // test();
     // consistent with loading()
     m_current_loading_interval = load_int + 1;

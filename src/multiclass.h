@@ -94,7 +94,7 @@ public:
 /// (currently only for car & truck two classes)
 /// (see: Z. (Sean) Qian et al./Trans. Res. Part B 99 (2017) 183-204)
 
-class MNM_Dlink_Ctm_Multiclass : public MNM_Dlink_Multiclass
+class MNM_Dlink_Ctm_Multiclass : virtual public MNM_Dlink_Multiclass
 {
 public:
   MNM_Dlink_Ctm_Multiclass (TInt ID, TInt number_of_lane, TFlt length,
@@ -204,7 +204,7 @@ public:
 
 /// Multiclass Link-Queue Model
 
-class MNM_Dlink_Lq_Multiclass : public MNM_Dlink_Multiclass
+class MNM_Dlink_Lq_Multiclass : virtual public MNM_Dlink_Multiclass
 {
 public:
   MNM_Dlink_Lq_Multiclass (TInt ID, TInt number_of_lane, TFlt length,
@@ -268,7 +268,7 @@ public:
 
 /// Multiclass Point-Queue Model
 
-class MNM_Dlink_Pq_Multiclass : public MNM_Dlink_Multiclass
+class MNM_Dlink_Pq_Multiclass : virtual public MNM_Dlink_Multiclass
 {
 public:
   MNM_Dlink_Pq_Multiclass (TInt ID, TInt number_of_lane, TFlt length,
@@ -351,6 +351,8 @@ protected:
   int prepare_supplyANDdemand ();
   virtual int compute_flow () { return 0; };
   // int flow_to_vehicle();
+  virtual int move_one_vehicle (TInt timestamp, MNM_Dlink *_in_link, MNM_Dlink *_out_link, MNM_Veh *_veh,
+                                size_t _in_link_i, size_t _out_link_j, size_t _offset);
   int move_vehicle (TInt timestamp);
   int record_cumulative_curve (TInt timestamp);
   TFlt *m_demand;          // 2d
@@ -363,7 +365,7 @@ protected:
 
 /// FWJ node
 
-class MNM_Dnode_FWJ_Multiclass : public MNM_Dnode_Inout_Multiclass
+class MNM_Dnode_FWJ_Multiclass : virtual public MNM_Dnode_Inout_Multiclass
 {
 public:
   MNM_Dnode_FWJ_Multiclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor);
@@ -373,7 +375,7 @@ public:
 
 /// General Road Junction node
 
-class MNM_Dnode_GRJ_Multiclass : public MNM_Dnode_Inout_Multiclass
+class MNM_Dnode_GRJ_Multiclass : virtual public MNM_Dnode_Inout_Multiclass
 {
 public:
   MNM_Dnode_GRJ_Multiclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor);
