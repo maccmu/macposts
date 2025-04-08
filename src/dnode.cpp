@@ -377,6 +377,31 @@ MNM_Dnode_Inout::record_cumulative_curve (TInt timestamp)
   return 0;
 }
 
+int 
+MNM_Dnode_Inout::move_one_vehicle (TInt timestamp, MNM_Dlink *_in_link, MNM_Dlink *_out_link, MNM_Veh *_veh,
+                                  size_t _in_link_i, size_t _out_link_j, size_t _offset)
+{
+  _out_link->m_incoming_array.push_back (_veh);
+  _veh->set_current_link (_out_link);
+  // accumulated miles for non-Pq links
+  _veh->update_miles_traveled (_in_link);
+  if (_out_link->m_N_in_tree != nullptr)
+  {
+    _out_link->m_N_in_tree
+      ->add_flow (TFlt (timestamp + 1),
+                  TFlt (1) / m_flow_scalar, _veh->m_path,
+                  _veh->m_assign_interval);
+  }
+  if (_in_link->m_N_out_tree != nullptr)
+  {
+    _in_link->m_N_out_tree
+      ->add_flow (TFlt (timestamp + 1),
+                  TFlt (1) / m_flow_scalar, _veh->m_path,
+                  _veh->m_assign_interval);
+  }
+  return 0;
+}
+
 int
 MNM_Dnode_Inout::move_vehicle (TInt timestamp)
 {
@@ -411,27 +436,28 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
                   _veh = *_veh_it;
                   if (_veh->get_next_link () == _out_link)
                     {
-                      _out_link->m_incoming_array.push_back (_veh);
-                      _veh->set_current_link (_out_link);
-                      // accumulated miles for non-Pq links
-                      _veh->update_miles_traveled (_in_link);
+                      move_one_vehicle (timestamp, _in_link, _out_link, _veh, 0, 0, 0);
+                      // _out_link->m_incoming_array.push_back (_veh);
+                      // _veh->set_current_link (_out_link);
+                      // // accumulated miles for non-Pq links
+                      // _veh->update_miles_traveled (_in_link);
                       // c++ 11
                       _veh_it = _in_link->m_finished_array.erase (_veh_it);
                       _num_to_move -= 1;
-                      if (_out_link->m_N_in_tree != nullptr)
-                        {
-                          _out_link->m_N_in_tree
-                            ->add_flow (TFlt (timestamp + 1),
-                                        TFlt (1) / m_flow_scalar, _veh->m_path,
-                                        _veh->m_assign_interval);
-                        }
-                      if (_in_link->m_N_out_tree != nullptr)
-                        {
-                          _in_link->m_N_out_tree
-                            ->add_flow (TFlt (timestamp + 1),
-                                        TFlt (1) / m_flow_scalar, _veh->m_path,
-                                        _veh->m_assign_interval);
-                        }
+                      // if (_out_link->m_N_in_tree != nullptr)
+                      //   {
+                      //     _out_link->m_N_in_tree
+                      //       ->add_flow (TFlt (timestamp + 1),
+                      //                   TFlt (1) / m_flow_scalar, _veh->m_path,
+                      //                   _veh->m_assign_interval);
+                      //   }
+                      // if (_in_link->m_N_out_tree != nullptr)
+                      //   {
+                      //     _in_link->m_N_out_tree
+                      //       ->add_flow (TFlt (timestamp + 1),
+                      //                   TFlt (1) / m_flow_scalar, _veh->m_path,
+                      //                   _veh->m_assign_interval);
+                      //   }
                     }
                   else
                     {

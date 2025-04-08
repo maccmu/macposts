@@ -49,6 +49,132 @@ public:
 };
 
 /**************************************************************************
+                            Link
+**************************************************************************/
+class MNM_Dlink_Multiclass_Subclass : virtual public MNM_Dlink_Multiclass
+{
+public:
+  MNM_Dlink_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs_car,
+    TFlt ffs_truck, TInt num_car_subclass, TInt num_truck_subclass);
+  virtual ~MNM_Dlink_Multiclass_Subclass () override;
+
+  // seperate N-curves for private car and truck subclasses
+  std::unordered_map<int, MNM_Cumulative_Curve *>m_N_in_car_subclass;
+  std::unordered_map<int, MNM_Cumulative_Curve *>m_N_out_car_subclass;
+  std::unordered_map<int, MNM_Cumulative_Curve *>m_N_in_truck_subclass;
+  std::unordered_map<int, MNM_Cumulative_Curve *>m_N_out_truck_subclass;
+
+  // seperate N-curve_trees for private car and truck subclasses
+  std::unordered_map<int, MNM_Tree_Cumulative_Curve *>m_N_in_tree_car_subclass;
+  std::unordered_map<int, MNM_Tree_Cumulative_Curve *>m_N_out_tree_car_subclass;
+  std::unordered_map<int, MNM_Tree_Cumulative_Curve *>m_N_in_tree_truck_subclass;
+  std::unordered_map<int, MNM_Tree_Cumulative_Curve *>m_N_out_tree_truck_subclass;
+
+  // use this one instead of the one in Dlink class
+  int install_cumulative_curve_multiclass_subclass ();
+  // use this one instead of the one in Dlink class
+  int install_cumulative_curve_tree_multiclass_subclass ();
+};
+
+class MNM_Dlink_Ctm_Multiclass_Subclass : public MNM_Dlink_Ctm_Multiclass, public MNM_Dlink_Multiclass_Subclass
+{
+public:
+  MNM_Dlink_Ctm_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+    TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+    TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar, 
+    TInt num_car_subclass, TInt num_truck_subclass);
+  virtual ~MNM_Dlink_Ctm_Multiclass_Subclass () override;
+};
+
+class MNM_Dlink_Pq_Multiclass_Subclass : public MNM_Dlink_Pq_Multiclass, public MNM_Dlink_Multiclass_Subclass
+{
+public:
+  MNM_Dlink_Pq_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+    TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+    TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar,
+    TInt num_car_subclass, TInt num_truck_subclass);
+  virtual ~MNM_Dlink_Pq_Multiclass_Subclass () override;
+};
+
+class MNM_Dlink_Lq_Multiclass_Subclass : public MNM_Dlink_Lq_Multiclass, public MNM_Dlink_Multiclass_Subclass
+{
+public:
+  MNM_Dlink_Lq_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
+    TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
+    TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar,
+    TInt num_car_subclass, TInt num_truck_subclass);
+  virtual ~MNM_Dlink_Lq_Multiclass_Subclass () override;
+};
+
+class MNM_Link_Factory_Multiclass_Subclass : public MNM_Link_Factory_Multiclass
+{
+public:
+  MNM_Link_Factory_Multiclass_Subclass ();
+  virtual ~MNM_Link_Factory_Multiclass_Subclass () override;
+
+  // use this one instead of make_link in the base class
+  MNM_Dlink *make_link_multiclass_subclass (
+    TInt ID, DLink_type_multiclass link_type, TInt number_of_lane, TFlt length,
+    TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car,
+    TFlt lane_flow_cap_truck, TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
+    TFlt veh_convert_factor, TFlt flow_scalar, TInt num_car_subclass, TInt num_truck_subclass);
+};
+
+/**************************************************************************
+                            Node
+**************************************************************************/
+class MNM_DMOND_Multiclass_Subclass : public MNM_DMOND_Multiclass
+{
+public:
+  MNM_DMOND_Multiclass_Subclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor);
+  virtual ~MNM_DMOND_Multiclass_Subclass () override;
+  virtual int evolve (TInt timestamp) override;
+};
+
+class MNM_DMDND_Multiclass_Subclass : public MNM_DMDND_Multiclass
+{
+public:
+  MNM_DMDND_Multiclass_Subclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor);
+  virtual ~MNM_DMDND_Multiclass_Subclass () override;
+  virtual int evolve (TInt timestamp) override;
+};
+
+class MNM_Dnode_Inout_Multiclass_Subclass : virtual public MNM_Dnode_Inout_Multiclass
+{
+public:
+  MNM_Dnode_Inout_Multiclass_Subclass (TInt ID, TFlt flow_scalar,
+                                      TFlt veh_convert_factor);
+  virtual ~MNM_Dnode_Inout_Multiclass_Subclass () override;
+  virtual int move_one_vehicle (TInt timestamp, MNM_Dlink *_in_link, MNM_Dlink *_out_link, MNM_Veh *_veh,
+    size_t _in_link_i, size_t _out_link_j, size_t _offset) override;
+  // virtual int evolve (TInt timestamp) override;
+};
+
+class MNM_Dnode_FWJ_Multiclass_Subclass : public MNM_Dnode_Inout_Multiclass_Subclass, public MNM_Dnode_FWJ_Multiclass
+{
+public:
+  MNM_Dnode_FWJ_Multiclass_Subclass (TInt ID, TFlt flow_scalar, TFlt veh_convert_factor);
+  virtual ~MNM_Dnode_FWJ_Multiclass_Subclass () override;
+};
+
+class MNM_Node_Factory_Multiclass_Subclass : public MNM_Node_Factory_Multiclass
+{
+public:
+  MNM_Node_Factory_Multiclass_Subclass ();
+  virtual ~MNM_Node_Factory_Multiclass_Subclass () override;
+
+  // use this one instead of make_node in the base class
+  MNM_Dnode *make_node_multiclass_subclass (TInt ID, DNode_type_multiclass node_type,
+                                            TFlt flow_scalar, TFlt veh_convert_factor);
+};
+
+/**************************************************************************
                             Origin
 **************************************************************************/
 
@@ -56,7 +182,7 @@ class MNM_Origin_Multiclass_Subclass : public MNM_Origin_Multiclass
 {
 public:
     MNM_Origin_Multiclass_Subclass (TInt ID, TInt max_interval, TFlt flow_scalar,
-                            TInt frequency);
+                                    TInt frequency);
     virtual ~MNM_Origin_Multiclass_Subclass () override;
 
     virtual int release_one_interval_biclass (TInt current_interval,
@@ -80,8 +206,8 @@ public:
   MNM_OD_Factory_Multiclass_Subclass ();
   virtual ~MNM_OD_Factory_Multiclass_Subclass () override;
   virtual MNM_Origin_Multiclass_Subclass *make_origin (TInt ID, TInt max_interval,
-                                              TFlt flow_scalar,
-                                              TInt frequency) override;
+                                                      TFlt flow_scalar,
+                                                      TInt frequency) override;
 };
 
 /**************************************************************************
@@ -159,6 +285,50 @@ public:
                               MNM_ConfReader *conf_reader,
                               int num_graph,
                               std::vector<macposts::Graph> &graph_vec);
+
+  static int build_node_factory_multiclass_subclass (const std::string &file_folder,
+                                                      MNM_ConfReader *conf_reader,
+                                                      MNM_Node_Factory *node_factory,
+                                                      const std::string &file_name
+                                                      = "MNM_input_node");
+  static int build_link_factory_multiclass_subclass (const std::string &file_folder,
+                                            MNM_ConfReader *conf_reader,
+                                            MNM_Link_Factory *link_factory,
+                                            const std::string &file_name
+                                            = "MNM_input_link");
+};
+
+namespace MNM
+{
+int print_vehicle_statistics (MNM_Veh_Factory_Multiclass_Subclass *veh_factory);
+};
+
+/**************************************************************************
+                            DTA Gradient
+**************************************************************************/
+namespace MNM_DTA_GRADIENT
+{
+TFlt get_link_inflow_car_subclass (MNM_Dlink_Multiclass_Subclass *link, TInt start_time,
+                                  TInt end_time, int veh_subclass);
+TFlt get_link_outflow_car_subclass (MNM_Dlink_Multiclass_Subclass *link, TInt start_time,
+                                    TInt end_time, int veh_subclass);
+TFlt get_link_inflow_truck_subclass (MNM_Dlink_Multiclass_Subclass *link, TInt start_time,
+                                    TInt end_time, int veh_subclass);
+TFlt get_link_outflow_truck_subclass (MNM_Dlink_Multiclass_Subclass *link, TInt start_time,
+                                      TInt end_time, int veh_subclass);
+
+TFlt get_travel_time_car_subclass (MNM_Dlink_Multiclass_Subclass *link, TFlt start_time,
+                                   TFlt unit_interval, TInt end_loading_timestamp, int veh_subclass);
+TFlt get_travel_time_car_robust_subclass (MNM_Dlink_Multiclass_Subclass *link, TFlt start_time,
+                                          TFlt end_time, TFlt unit_interval,
+                                          TInt end_loading_timestamp, int veh_subclass,
+                                          TInt num_trials = TInt (10));
+TFlt get_travel_time_truck_subclass (MNM_Dlink_Multiclass_Subclass *link, TFlt start_time,
+                                    TFlt unit_interval, TInt end_loading_timestamp, int veh_subclass);
+TFlt get_travel_time_truck_robust_subclass (MNM_Dlink_Multiclass_Subclass *link, TFlt start_time,
+                                            TFlt end_time, TFlt unit_interval,
+                                            TInt end_loading_timestamp, int veh_subclass,
+                                            TInt num_trials = TInt (10));
 };
 
 /**************************************************************************

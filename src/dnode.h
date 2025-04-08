@@ -89,6 +89,8 @@ protected:
   int prepare_supplyANDdemand ();
   virtual int compute_flow () { return 0; };
   int round_flow_to_vehicle ();
+  virtual int move_one_vehicle (TInt timestamp, MNM_Dlink *_in_link, MNM_Dlink *_out_link, MNM_Veh *_veh,
+                            size_t _in_link_i, size_t _out_link_j, size_t _offset);
   int move_vehicle (TInt timestamp);
   int record_cumulative_curve (TInt timestamp);
   TFlt *m_demand;     // 2d array
