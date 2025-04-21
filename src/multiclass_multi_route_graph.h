@@ -70,6 +70,9 @@ public:
   std::unordered_map<int, MNM_Tree_Cumulative_Curve *>m_N_in_tree_truck_subclass;
   std::unordered_map<int, MNM_Tree_Cumulative_Curve *>m_N_out_tree_truck_subclass;
 
+  std::unordered_map<int, TFlt> m_toll_car_subclass;
+  std::unordered_map<int, TFlt> m_toll_truck_subclass;
+
   // use this one instead of the one in Dlink class
   int install_cumulative_curve_multiclass_subclass ();
   // use this one instead of the one in Dlink class
@@ -112,11 +115,20 @@ public:
   virtual ~MNM_Dlink_Lq_Multiclass_Subclass () override;
 };
 
+struct td_link_attribute_row_biclass_subclass : public td_link_attribute_row_biclass
+{
+  std::unordered_map<TInt, TFlt> toll_car;
+  std::unordered_map<TInt, TFlt> toll_truck;
+};
+
 class MNM_Link_Factory_Multiclass_Subclass : public MNM_Link_Factory_Multiclass
 {
 public:
   MNM_Link_Factory_Multiclass_Subclass ();
   virtual ~MNM_Link_Factory_Multiclass_Subclass () override;
+
+  virtual int update_link_attribute (TInt interval,
+    bool verbose = false) override;
 
   // use this one instead of make_link in the base class
   MNM_Dlink *make_link_multiclass_subclass (
@@ -124,6 +136,10 @@ public:
     TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck, TFlt lane_flow_cap_car,
     TFlt lane_flow_cap_truck, TFlt ffs_car, TFlt ffs_truck, TFlt unit_time,
     TFlt veh_convert_factor, TFlt flow_scalar, TInt num_car_subclass, TInt num_truck_subclass);
+
+  // <interval, <link_ID, attribute>>
+  std::unordered_map<int, std::unordered_map<int, td_link_attribute_row_biclass_subclass *> *>
+    *m_td_link_attribute_table;
 };
 
 /**************************************************************************
@@ -239,6 +255,7 @@ public:
                         MNM_Link_Factory *link_factory,
                         TInt veh_class = 0, TInt veh_subclass = 0);
   virtual ~MNM_Routing_Adaptive_Subclass () override;
+  virtual int update_link_cost () override;
   virtual int update_routing (TInt timestamp) override;
 
   int m_veh_class;
@@ -296,6 +313,10 @@ public:
                                             MNM_Link_Factory *link_factory,
                                             const std::string &file_name
                                             = "MNM_input_link");
+  static int build_link_td_attribute_multiclass_subclass (const std::string &file_folder,
+                                      MNM_Link_Factory *link_factory, int num_subclass_car, int num_subclass_truck,
+                                      const std::string &file_name
+                                      = "MNM_input_link_td_attribute");
 };
 
 namespace MNM
