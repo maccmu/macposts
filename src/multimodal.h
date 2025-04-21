@@ -329,6 +329,7 @@ public:
 
   bool m_pnr;
   bool m_metro; 
+  bool m_stop_boarding;
   TFlt m_waiting_time; // intervals, pickup waiting time at origins for mobility
                        // service vehicles
   MNM_PnR_Path *m_pnr_path;

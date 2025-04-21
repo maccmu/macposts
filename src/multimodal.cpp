@@ -483,7 +483,7 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
 
   // no remaining capacity for arriving bus
   if (_num_alighting_passengers == 0 && _remaining_capacity == 0
-      && veh_multimodal->m_stopped_intervals == 0)
+      && veh_multimodal->m_stopped_intervals == 0 && veh_multimodal->m_metro == false) //metro still stops if no remaining capacity
     {
       _min_dwell_intervals = 0;
     }
@@ -511,13 +511,27 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
 
   if (veh_multimodal->m_stopped_intervals < _min_dwell_intervals
       || _num_alighting_passengers > 0
-      || (_num_boarding_passengers > 0 && _remaining_capacity > 0))
+      || (_num_boarding_passengers > 0 && _remaining_capacity > 0 && veh_multimodal->m_stop_boarding == false))
     {
+      // if the veh is metro, always stop boarding once it exceeds the _min_dwell_intervals
+      // not in use, considering that the metro can wait beyond the _min_dwell_intervals and keep boarding just like bus
+      // if (veh_multimodal->m_metro == true && veh_multimodal->m_stopped_intervals >= _min_dwell_intervals)
+      //   {
+      //     IAssert (m_passed_bus_counter == flow_scalar);
+      //     // reset bus counter
+      //     m_passed_bus_counter = 0;
+      //     // actually, veh_multimodal->m_stop_boarding is useless for metro, since the stopping interval is fixed for metro
+      //     veh_multimodal->m_stop_boarding = false;
+      //     return _held;
+      //   }
+      
       // hold the bus, move the bus to a different location of queue
       from_queue->pop_front ();
       held_queue->push_back (veh);
       veh_multimodal->m_stopped_intervals += 1;
       _held = true;
+      // always keep m_stop_boarding as false after potential use
+      veh_multimodal->m_stop_boarding = false;
       return _held;
     }
   else
@@ -526,6 +540,8 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
       IAssert (m_passed_bus_counter == flow_scalar);
       // reset bus counter
       m_passed_bus_counter = 0;
+      // always keep m_stop_boarding as false after potential use
+      veh_multimodal->m_stop_boarding = false;
       return _held;
     }
 
@@ -1889,6 +1905,7 @@ MNM_Veh_Multimodal::MNM_Veh_Multimodal (TInt ID, TInt vehicle_class,
   m_pnr_path = nullptr;
   m_passenger_pool = std::deque<MNM_Passenger *> ();
   m_metro = is_metro;
+  m_stop_boarding = false; // for bus, stop boarding when the current interval is not fulle used, i.e., the total boarding passengers is less than the max that can be boarded
 }
 
 MNM_Veh_Multimodal::~MNM_Veh_Multimodal ()
@@ -2139,6 +2156,15 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
               _passenger_it
                 = _walking_link->m_finished_array.erase (_passenger_it);
               _boarding_counter += 1;
+            }
+        if (_boarding_counter < (m_max_boarding_passengers_per_unit_time * busstop->m_flow_scalar))
+            { // if the current interval is not fully used, i.e., the total boarding passengers is less than the max that can be boarded, stop boarding in the next interval
+              // note the condition is: next is beyond the min_dwell_intervals and no alighting passengers in the next interval (this is garanteed by the condition in function hold_bus)
+              m_stop_boarding = true;
+            }
+        else
+            {
+              m_stop_boarding = false;
             }
         }
     }
@@ -9674,11 +9700,11 @@ MNM_Dta_Multimodal::initialize ()
                                                    / TFlt (m_unit_time))),
                                       TInt (round (
                                         TFlt (m_unit_time)
-                                        / m_config->get_int (
+                                        / m_config->get_float (
                                           "alighting_time_per_passenger"))),
                                       TInt (round (
                                         TFlt (m_unit_time)
-                                        / m_config->get_int (
+                                        / m_config->get_float (
                                           "boarding_time_per_passenger"))),
                                           TInt (m_config->get_int ("has_metro")),
                                           TInt (m_config->get_int ("metro_capacity")),
@@ -9690,11 +9716,11 @@ MNM_Dta_Multimodal::initialize ()
                                                        / TFlt (m_unit_time))),
                                           TInt (round (
                                             TFlt (m_unit_time)
-                                            / m_config->get_int (
+                                            / m_config->get_float (
                                               "metro_alighting_time_per_passenger"))),
                                           TInt (round (
                                             TFlt (m_unit_time)
-                                            / m_config->get_int (
+                                            / m_config->get_float (
                                               "metro_boarding_time_per_passenger"))));
   m_node_factory = new MNM_Node_Factory_Multimodal ();
   m_link_factory = new MNM_Link_Factory_Multimodal ();
