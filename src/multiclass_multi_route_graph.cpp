@@ -300,6 +300,89 @@ MNM_Dlink_Ctm_Multiclass_Subclass::~MNM_Dlink_Ctm_Multiclass_Subclass ()
     ;
 }
 
+std::vector<TFlt> 
+MNM_Dlink_Ctm_Multiclass_Subclass::get_link_flow_emission_car_subclass(int subclass, int ev_label)
+{
+    TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+    for (int i = 0; i < m_num_cells; ++i)
+      {
+        for (auto veh : m_cell_array[i]->m_veh_queue_car)
+          {
+            auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+            if (_veh_multiclass->m_subclass == subclass) {
+                if (_veh_multiclass->m_label == ev_label)
+                {
+                    _total_volume_ev += 1;
+                }
+                else
+                {
+                    _total_volume_nonev += 1;
+                }
+            }
+          }
+      }
+    for (auto veh : m_finished_array)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+        if (_veh_multiclass->m_class == 0 && _veh_multiclass->m_subclass == subclass)
+          {
+            if (_veh_multiclass->m_label == ev_label)
+              {
+                _total_volume_ev += 1;
+              }
+            else
+              {
+                _total_volume_nonev += 1;
+              }
+          }
+      }
+    std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                             TFlt (_total_volume_ev) / m_flow_scalar };
+    return _r;
+}
+
+std::vector<TFlt> 
+MNM_Dlink_Ctm_Multiclass_Subclass::get_link_flow_emission_truck_subclass(int subclass, int ev_label)
+{
+  TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+  for (int i = 0; i < m_num_cells; ++i)
+    {
+      for (auto veh : m_cell_array[i]->m_veh_queue_truck)
+        {
+          auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+          if (_veh_multiclass->m_subclass == subclass) {
+            if (_veh_multiclass->m_label == ev_label)
+            {
+              _total_volume_ev += 1;
+            }
+            else
+            {
+              _total_volume_nonev += 1;
+            }
+          }
+        }
+    }
+  for (auto veh : m_finished_array)
+    {
+      auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+      if (_veh_multiclass->m_class == 1 && _veh_multiclass->m_subclass == subclass)
+        {
+          if (_veh_multiclass->m_label == ev_label)
+            {
+              _total_volume_ev += 1;
+            }
+          else
+            {
+              _total_volume_nonev += 1;
+            }
+        }
+    }
+  std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                           TFlt (_total_volume_ev) / m_flow_scalar };
+  return _r;
+}
+
+
 MNM_Dlink_Pq_Multiclass_Subclass::MNM_Dlink_Pq_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
     TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
     TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
@@ -323,6 +406,88 @@ MNM_Dlink_Pq_Multiclass_Subclass::~MNM_Dlink_Pq_Multiclass_Subclass ()
     ;
 }
 
+std::vector<TFlt> 
+MNM_Dlink_Pq_Multiclass_Subclass::get_link_flow_emission_car_subclass(int subclass, int ev_label)
+{
+    TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+  
+    for (auto veh_it : m_veh_pool)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh_it.first);
+        if (_veh_multiclass->m_class == 0 && _veh_multiclass->m_subclass == subclass)
+          {
+            if (_veh_multiclass->m_label == ev_label)
+              {
+                _total_volume_ev += 1;
+              }
+            else
+              {
+                _total_volume_nonev += 1;
+              }
+          }
+      }
+  
+    for (auto veh : m_finished_array)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+        if (_veh_multiclass->m_class == 0 && _veh_multiclass->m_subclass == subclass)
+          {
+            if (_veh_multiclass->m_label == ev_label)
+              {
+                _total_volume_ev += 1;
+              }
+            else
+              {
+                _total_volume_nonev += 1;
+              }
+          }
+      }
+    std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                             TFlt (_total_volume_ev) / m_flow_scalar };
+    return _r;
+}
+
+std::vector<TFlt> 
+MNM_Dlink_Pq_Multiclass_Subclass::get_link_flow_emission_truck_subclass(int subclass, int ev_label)
+{
+    TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+  
+    for (auto veh_it : m_veh_pool)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh_it.first);
+        if (_veh_multiclass->m_class == 1 && _veh_multiclass->m_subclass == subclass)
+          {
+            if (_veh_multiclass->m_label == ev_label)
+              {
+                _total_volume_ev += 1;
+              }
+            else
+              {
+                _total_volume_nonev += 1;
+              }
+          }
+      }
+  
+    for (auto veh : m_finished_array)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+        if (_veh_multiclass->m_class == 1 && _veh_multiclass->m_subclass == subclass)
+          {
+            if (_veh_multiclass->m_label == ev_label)
+              {
+                _total_volume_ev += 1;
+              }
+            else
+              {
+                _total_volume_nonev += 1;
+              }
+          }
+      }
+    std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                             TFlt (_total_volume_ev) / m_flow_scalar };
+    return _r;
+}
+
 MNM_Dlink_Lq_Multiclass_Subclass::MNM_Dlink_Lq_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
     TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
     TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
@@ -344,6 +509,87 @@ MNM_Dlink_Lq_Multiclass_Subclass::MNM_Dlink_Lq_Multiclass_Subclass (TInt ID, TIn
 MNM_Dlink_Lq_Multiclass_Subclass::~MNM_Dlink_Lq_Multiclass_Subclass ()
 {
     ;
+}
+
+std::vector<TFlt> 
+MNM_Dlink_Lq_Multiclass_Subclass::get_link_flow_emission_car_subclass(int subclass, int ev_label)
+{
+    TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+  
+    for (auto veh : m_veh_queue_car)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+        if (_veh_multiclass->m_subclass == subclass) {
+            if (_veh_multiclass->m_label == ev_label)
+            {
+                _total_volume_ev += 1;
+            }
+            else
+            {
+                _total_volume_nonev += 1;
+            }
+        }
+      }
+  
+    for (auto veh : m_finished_array)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+        if (_veh_multiclass->m_class == 0 && _veh_multiclass->m_subclass == subclass)
+          {
+            if (_veh_multiclass->m_label == ev_label)
+              {
+                _total_volume_ev += 1;
+              }
+            else
+              {
+                _total_volume_nonev += 1;
+              }
+          }
+      }
+    std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                             TFlt (_total_volume_ev) / m_flow_scalar };
+    return _r;
+}
+
+std::vector<TFlt> 
+MNM_Dlink_Lq_Multiclass_Subclass::get_link_flow_emission_truck_subclass(int subclass, int ev_label)
+{
+    TInt _total_volume_ev = 0, _total_volume_nonev = 0;
+  
+    for (auto veh : m_veh_queue_truck)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+        if (_veh_multiclass->m_subclass == subclass) {
+            if (_veh_multiclass->m_label == ev_label)
+            {
+                _total_volume_ev += 1;
+            }
+            else
+            {
+                _total_volume_nonev += 1;
+            }
+        }
+        
+      }
+  
+    for (auto veh : m_finished_array)
+      {
+        auto _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
+        if (_veh_multiclass->m_class == 1 && _veh_multiclass->m_subclass == subclass)
+          {
+            if (_veh_multiclass->m_label == ev_label)
+              {
+                _total_volume_ev += 1;
+              }
+            else
+              {
+                _total_volume_nonev += 1;
+              }
+          }
+      }
+    std::vector<TFlt> _r = { TFlt (_total_volume_nonev) / m_flow_scalar,
+                             TFlt (_total_volume_ev) / m_flow_scalar };
+    return _r;
 }
 
 MNM_Link_Factory_Multiclass_Subclass::MNM_Link_Factory_Multiclass_Subclass() 
@@ -1509,6 +1755,276 @@ MNM_Routing_Biclass_Hybrid_Subclass::remove_finished (MNM_Veh *veh, bool del)
     return 0;
 }
 
+
+/**************************************************************************
+                            Emission
+**************************************************************************/
+MNM_Cumulative_Emission_Multiclass_Subclass::MNM_Cumulative_Emission_Multiclass_Subclass (TFlt unit_time, TInt freq, int num_car_subclass, int num_truck_subclass,
+    TInt ev_label_car, TInt ev_label_truck) 
+    : MNM_Cumulative_Emission_Multiclass::MNM_Cumulative_Emission_Multiclass (unit_time, freq, ev_label_car, ev_label_truck)
+{
+    m_num_car_subclass = num_car_subclass;
+    m_num_truck_subclass = num_truck_subclass;
+
+    m_fuel_car_subclass = std::unordered_map<int, TFlt> ();
+    m_CO2_car_subclass = std::unordered_map<int, TFlt> ();
+    m_HC_car_subclass = std::unordered_map<int, TFlt> ();
+    m_CO_car_subclass = std::unordered_map<int, TFlt> ();
+    m_NOX_car_subclass = std::unordered_map<int, TFlt> ();
+    m_VMT_car_subclass = std::unordered_map<int, TFlt> ();
+    m_VMT_ev_car_subclass = std::unordered_map<int, TFlt> ();
+  
+    m_fuel_truck_subclass = std::unordered_map<int, TFlt> ();
+    m_CO2_truck_subclass = std::unordered_map<int, TFlt> ();
+    m_HC_truck_subclass = std::unordered_map<int, TFlt> ();
+    m_CO_truck_subclass = std::unordered_map<int, TFlt> ();
+    m_NOX_truck_subclass = std::unordered_map<int, TFlt> ();
+    m_VMT_truck_subclass = std::unordered_map<int, TFlt> ();
+    m_VMT_ev_truck_subclass = std::unordered_map<int, TFlt> ();
+  
+    m_VHT_car_subclass = std::unordered_map<int, TFlt> ();
+    m_VHT_truck_subclass = std::unordered_map<int, TFlt> ();
+
+    for (int i = 0; i < m_num_car_subclass; ++i) {
+        m_fuel_car_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_CO2_car_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_HC_car_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_CO_car_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_NOX_car_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_VMT_car_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_VMT_ev_car_subclass.insert(std::make_pair(i, TFlt(0)));
+    }
+
+    for (int i = 0; i < m_num_truck_subclass; ++i) {
+        m_fuel_truck_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_CO2_truck_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_HC_truck_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_CO_truck_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_NOX_truck_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_VMT_truck_subclass.insert(std::make_pair(i, TFlt(0)));
+        m_VMT_ev_truck_subclass.insert(std::make_pair(i, TFlt(0)));
+    }
+}
+
+MNM_Cumulative_Emission_Multiclass_Subclass::~MNM_Cumulative_Emission_Multiclass_Subclass () 
+{
+    m_fuel_car_subclass.clear();
+    m_CO2_car_subclass.clear();
+    m_HC_car_subclass.clear();
+    m_CO_car_subclass.clear();
+    m_NOX_car_subclass.clear();
+    m_VMT_car_subclass.clear();
+    m_VMT_ev_car_subclass.clear();
+  
+    m_fuel_truck_subclass.clear();
+    m_CO2_truck_subclass.clear();
+    m_HC_truck_subclass.clear();
+    m_CO_truck_subclass.clear();
+    m_NOX_truck_subclass.clear();
+    m_VMT_truck_subclass.clear();
+    m_VMT_ev_truck_subclass.clear();
+  
+    m_VHT_car_subclass.clear();
+    m_VHT_truck_subclass.clear();
+}
+
+int 
+MNM_Cumulative_Emission_Multiclass_Subclass::update (MNM_Veh_Factory *veh_factory)
+{
+  // assume car truck the same speed on the same link when computing the
+  // emissions possible to change to more accurate speeds for cars and trucks
+  TFlt _v, _nonev_ct_car, _ev_ct_car, _nonev_ct_truck, _ev_ct_truck;
+  std::unordered_map<int, TFlt> _nonev_ct_car_subclass = std::unordered_map<int, TFlt> ();
+  std::unordered_map<int, TFlt> _ev_ct_car_subclass = std::unordered_map<int, TFlt> ();
+  std::unordered_map<int, TFlt> _nonev_ct_truck_subclass = std::unordered_map<int, TFlt> ();
+  std::unordered_map<int, TFlt> _ev_ct_truck_subclass = std::unordered_map<int, TFlt> ();
+  TFlt _v_converted;
+  std::vector<TFlt> _veh_ct;
+  for (MNM_Dlink *link : m_link_vector)
+    {
+      MNM_Dlink_Multiclass_Subclass *_mlink
+        = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (link);
+      IAssert (_mlink != nullptr);
+      _v = _mlink->m_length / _mlink->get_link_tt (); // m/s
+      _v_converted = _v * TFlt (3600) / TFlt (1600);  // mile / hour
+      _v_converted = std::max (_v_converted, TFlt (5));
+      _v_converted = std::min (_v_converted, TFlt (65));
+
+      _veh_ct = _mlink->get_link_flow_emission_car (m_ev_label);
+      IAssert (_veh_ct.size () == 2);
+      _nonev_ct_car = _veh_ct[0];
+      _ev_ct_car = _veh_ct[1];
+
+      _veh_ct = _mlink->get_link_flow_emission_truck (m_ev_label_truck);
+      IAssert (_veh_ct.size () == 2);
+      _nonev_ct_truck = _veh_ct[0];
+      _ev_ct_truck = _veh_ct[1];
+    
+      _nonev_ct_car_subclass.clear();
+      _ev_ct_car_subclass.clear();
+      for (int i = 0; i < m_num_car_subclass; ++i) {
+        _veh_ct = _mlink->get_link_flow_emission_car_subclass (i, m_ev_label);
+        IAssert (_veh_ct.size () == 2);
+        _nonev_ct_car_subclass.insert(std::make_pair(i, _veh_ct[0]));
+        _ev_ct_car_subclass.insert(std::make_pair(i, _veh_ct[1]));
+      }
+
+      _nonev_ct_truck_subclass.clear();
+      _ev_ct_truck_subclass.clear();
+      for (int i = 0; i < m_num_truck_subclass; ++i) {
+        _veh_ct = _mlink->get_link_flow_emission_truck_subclass (i, m_ev_label_truck);
+        IAssert (_veh_ct.size () == 2);
+        _nonev_ct_truck_subclass.insert(std::make_pair(i, _veh_ct[0]));
+        _ev_ct_truck_subclass.insert(std::make_pair(i, _veh_ct[1]));
+      }
+
+      // cars
+      m_fuel += calculate_fuel_rate (_v_converted)
+                * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car;
+      m_CO2 += calculate_CO2_rate (_v_converted)
+               * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car;
+      m_HC += calculate_HC_rate (_v_converted)
+              * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car;
+      m_CO += calculate_CO_rate (_v_converted)
+              * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car;
+      m_NOX += calculate_NOX_rate (_v_converted)
+               * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car;
+      m_VMT += (_v * m_unit_time / TFlt (1600)) * (_nonev_ct_car + _ev_ct_car);
+      m_VMT_ev += (_v * m_unit_time / TFlt (1600)) * _ev_ct_car;
+
+      for (int i = 0; i < m_num_car_subclass; ++i) {
+        m_fuel_car_subclass[i] += calculate_fuel_rate (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car_subclass[i];
+        m_CO2_car_subclass[i] += calculate_CO2_rate (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car_subclass[i];
+        m_HC_car_subclass[i] += calculate_HC_rate (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car_subclass[i];
+        m_CO_car_subclass[i] += calculate_CO_rate (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car_subclass[i];
+        m_NOX_car_subclass[i] += calculate_NOX_rate (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_car_subclass[i];
+        m_VMT_car_subclass[i] += (_v * m_unit_time / TFlt (1600)) * (_nonev_ct_car_subclass[i] + _ev_ct_car_subclass[i]);
+        m_VMT_ev_car_subclass[i] += (_v * m_unit_time / TFlt (1600)) * _ev_ct_car_subclass[i];
+        m_VHT_car_subclass[i] +=  m_unit_time * (_nonev_ct_car_subclass[i] + _ev_ct_car_subclass[i]) / TFlt (3600);
+      }
+
+      // trucks
+      m_fuel_truck += calculate_fuel_rate_truck (_v_converted)
+                      * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck;
+      m_CO2_truck += calculate_CO2_rate_truck (_v_converted)
+                     * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck;
+      m_HC_truck += calculate_HC_rate_truck (_v_converted)
+                    * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck;
+      m_CO_truck += calculate_CO_rate_truck (_v_converted)
+                    * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck;
+      m_NOX_truck += calculate_NOX_rate_truck (_v_converted)
+                     * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck;
+      m_VMT_truck
+        += (_v * m_unit_time / TFlt (1600)) * (_nonev_ct_truck + _ev_ct_truck);
+      m_VMT_ev_truck += (_v * m_unit_time / TFlt (1600)) * _ev_ct_truck;
+
+      for (int i = 0; i < m_num_truck_subclass; ++i) {
+        m_fuel_truck_subclass[i] += calculate_fuel_rate_truck (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck_subclass[i];
+        m_CO2_truck_subclass[i] += calculate_CO2_rate_truck (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck_subclass[i];
+        m_HC_truck_subclass[i] += calculate_HC_rate_truck (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck_subclass[i];
+        m_CO_truck_subclass[i] += calculate_CO_rate_truck (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck_subclass[i];
+        m_NOX_truck_subclass[i] += calculate_NOX_rate_truck (_v_converted) * (_v * m_unit_time / TFlt (1600)) * _nonev_ct_truck_subclass[i];
+        m_VMT_truck_subclass[i] += (_v * m_unit_time / TFlt (1600)) * (_nonev_ct_truck_subclass[i] + _ev_ct_truck_subclass[i]);
+        m_VMT_ev_truck_subclass[i] += (_v * m_unit_time / TFlt (1600)) * _ev_ct_truck_subclass[i];
+        m_VHT_truck_subclass[i] +=  m_unit_time * (_nonev_ct_truck_subclass[i] + _ev_ct_truck_subclass[i]) / TFlt (3600);
+      }
+
+      // VHT (hours)
+      m_VHT_car += m_unit_time * (_nonev_ct_car + _ev_ct_car) / 3600;
+      m_VHT_truck += m_unit_time * (_nonev_ct_truck + _ev_ct_truck) / 3600;
+    }
+  // trips
+  MNM_Veh *_veh;
+  MNM_Veh_Multiclass_Subclass *_veh_multiclass;
+  for (auto pair_it : veh_factory->m_veh_map)
+    {
+      _veh = pair_it.second;
+      _veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (_veh);
+      if (m_link_set.find (_veh_multiclass->m_current_link)
+          != m_link_set.end ())
+        {
+          if (_veh_multiclass->m_class == 0)
+            {
+              m_car_set.insert (_veh_multiclass);
+            }
+          if (_veh_multiclass->m_class == 1)
+            {
+              m_truck_set.insert (_veh_multiclass);
+            }
+        }
+    }
+
+  return 0;
+}
+
+std::string
+MNM_Cumulative_Emission_Multiclass_Subclass::output ()
+{
+    std::string _s = "";
+
+    _s += "The emission stats for total cars are: \n";
+    _s += "fuel: " + std::to_string (m_fuel) + " gallons, ";
+    _s += "CO2: " + std::to_string (m_CO2) + " g, ";
+    _s += "HC: " + std::to_string (m_HC) + " g, ";
+    _s += "CO: " + std::to_string (m_CO) + " g, ";
+    _s += "NOX: " + std::to_string (m_NOX) + " g, ";
+    _s += "Total Car VMT: " + std::to_string (m_VMT) + " miles, ";
+    _s += "EV Car VMT: " + std::to_string (m_VMT_ev) + " miles, ";
+    _s += "Total Car VHT: " + std::to_string (m_VHT_car) + " hours, ";
+    _s += "number of trips: " + std::to_string (int (m_car_set.size ()))
+            + " trips\n";
+
+    for (int i = 0; i < m_num_car_subclass; ++i) {
+        _s += "The emission stats for car subclass " + std::to_string(i) + " are: \n";
+        _s += "fuel: " + std::to_string (m_fuel_car_subclass[i]) + " gallons, ";
+        _s += "CO2: " + std::to_string (m_CO2_car_subclass[i]) + " g, ";
+        _s += "HC: " + std::to_string (m_HC_car_subclass[i]) + " g, ";
+        _s += "CO: " + std::to_string (m_CO_car_subclass[i]) + " g, ";
+        _s += "NOX: " + std::to_string (m_NOX_car_subclass[i]) + " g, ";
+        _s += "Total Car " + std::to_string(i) + " VMT: " + std::to_string (m_VMT_car_subclass[i]) + " miles, ";
+        _s += "EV Car " + std::to_string(i) + " VMT: " + std::to_string (m_VMT_ev_car_subclass[i]) + " miles, ";
+        _s += "Car " + std::to_string(i) + " VHT: " + std::to_string (m_VHT_car_subclass[i]) + " hours\n";
+    }
+
+    _s += "The emission stats for total trucks are: \n";
+    _s += "fuel: " + std::to_string (m_fuel_truck) + " gallons, ";
+    _s += "CO2: " + std::to_string (m_CO2_truck) + " g, ";
+    _s += "HC: " + std::to_string (m_HC_truck) + " g, ";
+    _s += "CO: " + std::to_string (m_CO_truck) + " g, ";
+    _s += "NOX: " + std::to_string (m_NOX_truck) + " g, ";
+    _s += "Total Truck VMT: " + std::to_string (m_VMT_truck) + " miles, ";
+    _s += "EV Truck VMT: " + std::to_string (m_VMT_ev_truck) + " miles, ";
+    _s += "Total Truck VHT: " + std::to_string (m_VHT_truck) + " hours, ";
+    _s += "number of trips: " + std::to_string (int (m_truck_set.size ()))
+            + " trips\n";
+
+    for (int i = 0; i < m_num_truck_subclass; ++i) {
+        _s += "The emission stats for truck subclass " + std::to_string(i) + " are: \n";
+        _s += "fuel: " + std::to_string (m_fuel_truck_subclass[i]) + " gallons, ";
+        _s += "CO2: " + std::to_string (m_CO2_truck_subclass[i]) + " g, ";
+        _s += "HC: " + std::to_string (m_HC_truck_subclass[i]) + " g, ";
+        _s += "CO: " + std::to_string (m_CO_truck_subclass[i]) + " g, ";
+        _s += "NOX: " + std::to_string (m_NOX_truck_subclass[i]) + " g, ";
+        _s += "Total Truck " + std::to_string(i) + " VMT: " + std::to_string (m_VMT_truck_subclass[i]) + " miles, ";
+        _s += "EV Truck " + std::to_string(i) + " VMT: " + std::to_string (m_VMT_ev_truck_subclass[i]) + " miles, ";
+        _s += "Truck " + std::to_string(i) + " VHT: " + std::to_string (m_VHT_truck_subclass[i]) + " hours\n";
+    }
+
+    std::cout << _s << std::endl;
+    // printf ("The emission stats for cars are: ");
+    // printf ("fuel: %lf gallons, CO2: %lf g, HC: %lf g, CO: %lf g, NOX: %lf g, "
+    //         "Total VMT: %lf miles, EV VMT: %lf miles, VHT: %lf hours, %d trips\n",
+    //         m_fuel, m_CO2, m_HC, m_CO, m_NOX, m_VMT, m_VMT_ev, m_VHT_car,
+    //         int (m_car_set.size ()));
+
+    // printf ("The emission stats for trucks are: ");
+    // printf ("fuel: %lf gallons, CO2: %lf g, HC: %lf g, CO: %lf g, NOX: %lf g, "
+    //         "Total VMT: %lf miles, EV VMT: %lf miles, VHT: %lf hours, %d trips\n",
+    //         m_fuel_truck, m_CO2_truck, m_HC_truck, m_CO_truck, m_NOX_truck,
+    //         m_VMT_truck, m_VMT_ev_truck, m_VHT_truck, int (m_truck_set.size ()));
+    return _s;
+}
+
 /**************************************************************************
                             IO
 **************************************************************************/
@@ -2296,13 +2812,7 @@ MNM_Dta_Multiclass_Subclass::MNM_Dta_Multiclass_Subclass (const std::string &fil
     : MNM_Dta_Multiclass::MNM_Dta_Multiclass (file_folder)
 {
     initialize();
-    // assume the first graph is an overarching graph, and each subsequent graph has a correspoinding path table
-    // m_num_graph does NOT include the overarching graph
-    m_num_graph = m_config->get_int ("num_graph");
-    m_num_path_table = m_config->get_int ("num_path_table");
-    assert (m_num_graph == m_num_path_table);
-    m_num_subclass_car = m_config->get_int ("num_subclass_car");
-    m_num_subclass_truck = m_config->get_int ("num_subclass_truck");
+    
 
     m_graph_vec = std::vector<macposts::Graph> ();
 
@@ -2385,6 +2895,15 @@ int
 MNM_Dta_Multiclass_Subclass::initialize ()
 {   
     MNM_Dta_Multiclass::initialize ();
+    
+    // assume the first graph is an overarching graph, and each subsequent graph has a correspoinding path table
+    // m_num_graph does NOT include the overarching graph
+    m_num_graph = m_config->get_int ("num_graph");
+    m_num_path_table = m_config->get_int ("num_path_table");
+    assert (m_num_graph == m_num_path_table);
+    m_num_subclass_car = m_config->get_int ("num_subclass_car");
+    m_num_subclass_truck = m_config->get_int ("num_subclass_truck");
+
     if (m_veh_factory != nullptr) delete m_veh_factory;
     m_veh_factory = new MNM_Veh_Factory_Multiclass_Subclass ();
     if (m_node_factory != nullptr) delete m_node_factory;
@@ -2393,6 +2912,31 @@ MNM_Dta_Multiclass_Subclass::initialize ()
     m_link_factory = new MNM_Link_Factory_Multiclass_Subclass ();
     if (m_od_factory != nullptr) delete m_od_factory;
     m_od_factory = new MNM_OD_Factory_Multiclass_Subclass ();
+
+    if (m_emission != nullptr) delete m_emission;
+    TInt _ev_label_car, _ev_label_truck;
+    try
+    {
+    _ev_label_car = m_config->get_int ("ev_label_car");
+    }
+    catch (const std::invalid_argument &ia)
+    {
+        std::cout << "ev_label_car does not exist in config.conf/DTA, use "
+                    "default value -2 instead\n";
+        _ev_label_car = -2;
+    }
+    try
+    {
+        _ev_label_truck = m_config->get_int ("ev_label_truck");
+    }
+    catch (const std::invalid_argument &ia)
+    {
+        std::cout << "ev_label_truck does not exist in config.conf/DTA, use "
+                    "default value -2 instead\n";
+        _ev_label_truck = -2;
+    }
+    m_emission = new MNM_Cumulative_Emission_Multiclass_Subclass (TFlt (m_unit_time), 0, m_num_subclass_car, m_num_subclass_truck,
+                                                                 _ev_label_car, _ev_label_truck);
     return 0;
 }
 
