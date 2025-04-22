@@ -579,6 +579,21 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
   printf ("\n====================================== Finished loading! "
           "=======================================\n\n\n");
   
+  // Redirect stdout to a file named "output.txt"
+	FILE* log_file = freopen((folder + "/" + _rec_folder + "/simulation.txt").c_str(), "w", stdout);
+	if (log_file == nullptr) {
+        // Handle the error if freopen fails
+        fprintf(stderr, "Failed to open the file for writing.\n");
+        return 1; // Exit with an error code
+    }
+	// freopen((folder + "/" + rec_folder + "/simulation.txt").c_str(), "w", stdout);
+	// Now printf will write to "output.txt" instead of the terminal
+	MNM::print_vehicle_statistics (dynamic_cast<MNM_Veh_Factory_Multiclass_Subclass*>(m_mcdta -> m_veh_factory));
+	// Close the file
+	fclose(stdout);
+	// Redirect stdout back to the terminal
+  freopen("CON", "w", stdout);
+
   print_simulation_results_subclass (folder + "/" + _rec_folder, cong_frequency);
   printf ("Finished DNL!\n"); 
   return 0;      

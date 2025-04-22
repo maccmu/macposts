@@ -77,6 +77,17 @@ public:
   int install_cumulative_curve_multiclass_subclass ();
   // use this one instead of the one in Dlink class
   int install_cumulative_curve_tree_multiclass_subclass ();
+
+  virtual std::vector<TFlt> get_link_flow_emission_car_subclass(int subclass, int ev_label) 
+  {
+    std::vector<TFlt> _r = { TFlt (0), TFlt (0) };
+    return _r;
+  };
+  virtual std::vector<TFlt> get_link_flow_emission_truck_subclass(int subclass, int ev_label)
+  {
+    std::vector<TFlt> _r = { TFlt (0), TFlt (0) };
+    return _r;
+  };
 };
 
 class MNM_Dlink_Ctm_Multiclass_Subclass : public MNM_Dlink_Ctm_Multiclass, public MNM_Dlink_Multiclass_Subclass
@@ -89,6 +100,8 @@ public:
     TFlt veh_convert_factor, TFlt flow_scalar, 
     TInt num_car_subclass, TInt num_truck_subclass);
   virtual ~MNM_Dlink_Ctm_Multiclass_Subclass () override;
+  virtual std::vector<TFlt> get_link_flow_emission_car_subclass(int subclass, int ev_label) override;
+  virtual std::vector<TFlt> get_link_flow_emission_truck_subclass(int subclass, int ev_label) override;
 };
 
 class MNM_Dlink_Pq_Multiclass_Subclass : public MNM_Dlink_Pq_Multiclass, public MNM_Dlink_Multiclass_Subclass
@@ -101,6 +114,8 @@ public:
     TFlt veh_convert_factor, TFlt flow_scalar,
     TInt num_car_subclass, TInt num_truck_subclass);
   virtual ~MNM_Dlink_Pq_Multiclass_Subclass () override;
+  virtual std::vector<TFlt> get_link_flow_emission_car_subclass(int subclass, int ev_label) override;
+  virtual std::vector<TFlt> get_link_flow_emission_truck_subclass(int subclass, int ev_label) override;
 };
 
 class MNM_Dlink_Lq_Multiclass_Subclass : public MNM_Dlink_Lq_Multiclass, public MNM_Dlink_Multiclass_Subclass
@@ -113,6 +128,8 @@ public:
     TFlt veh_convert_factor, TFlt flow_scalar,
     TInt num_car_subclass, TInt num_truck_subclass);
   virtual ~MNM_Dlink_Lq_Multiclass_Subclass () override;
+  virtual std::vector<TFlt> get_link_flow_emission_car_subclass(int subclass, int ev_label) override;
+  virtual std::vector<TFlt> get_link_flow_emission_truck_subclass(int subclass, int ev_label) override;
 };
 
 struct td_link_attribute_row_biclass_subclass : public td_link_attribute_row_biclass
@@ -282,6 +299,48 @@ public:
   std::unordered_map<int, MNM_Routing_Adaptive_Subclass*> m_routing_adaptive_car_subclass;
   std::unordered_map<int, MNM_Routing_Biclass_Fixed_Subclass*> m_routing_fixed_truck_subclass;
   std::unordered_map<int, MNM_Routing_Adaptive_Subclass*> m_routing_adaptive_truck_subclass;
+};
+
+/**************************************************************************
+                            Emission
+**************************************************************************/
+class MNM_Cumulative_Emission_Multiclass_Subclass : public MNM_Cumulative_Emission_Multiclass
+{
+public:
+  // -1 is the default veh -> m_label value, use -2 ad ev label
+  MNM_Cumulative_Emission_Multiclass_Subclass (TFlt unit_time, TInt freq, int num_car_subclass, int num_truck_subclass,
+                                        TInt ev_label_car = -2,
+                                        TInt ev_label_truck = -2);
+  virtual ~MNM_Cumulative_Emission_Multiclass_Subclass () override;
+
+
+  virtual int update (MNM_Veh_Factory *veh_factory) override;
+  virtual std::string output () override;
+
+  int m_num_car_subclass;
+  int m_num_truck_subclass;
+
+  std::unordered_map<int, TFlt> m_fuel_car_subclass;
+  std::unordered_map<int, TFlt> m_CO2_car_subclass;
+  std::unordered_map<int, TFlt> m_HC_car_subclass;
+  std::unordered_map<int, TFlt> m_CO_car_subclass;
+  std::unordered_map<int, TFlt> m_NOX_car_subclass;
+  std::unordered_map<int, TFlt> m_VMT_car_subclass;
+  std::unordered_map<int, TFlt> m_VMT_ev_car_subclass;
+
+  std::unordered_map<int, TFlt> m_fuel_truck_subclass;
+  std::unordered_map<int, TFlt> m_CO2_truck_subclass;
+  std::unordered_map<int, TFlt> m_HC_truck_subclass;
+  std::unordered_map<int, TFlt> m_CO_truck_subclass;
+  std::unordered_map<int, TFlt> m_NOX_truck_subclass;
+  std::unordered_map<int, TFlt> m_VMT_truck_subclass;
+  std::unordered_map<int, TFlt> m_VMT_ev_truck_subclass;
+
+  std::unordered_map<int, TFlt> m_VHT_car_subclass;
+  std::unordered_map<int, TFlt> m_VHT_truck_subclass;
+
+  // std::unordered_map<int, std::unordered_set<MNM_Veh*>> m_car_subclass_set;
+  // std::unordered_map<int, std::unordered_set<MNM_Veh*>> m_truck_subclass_set;
 };
 
 /**************************************************************************

@@ -4402,6 +4402,8 @@ MNM_Dta_Multiclass::initialize ()
   m_unit_time = m_config->get_int ("unit_time");
   m_flow_scalar = m_config->get_int ("flow_scalar");
   // printf("5\n");
+  if (m_emission != nullptr)
+    delete m_emission;
   TInt _ev_label_car, _ev_label_truck;
   try
     {
