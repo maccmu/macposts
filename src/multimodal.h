@@ -41,7 +41,7 @@ public:
   MNM_Busstop (TInt ID, TInt linkID, TFlt linkloc, TFlt flow_scalar);
   virtual ~MNM_Busstop ();
 
-  virtual bool hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
+  virtual bool hold_bus (TInt timestamp, MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
                          std::deque<MNM_Veh *> *from_queue,
                          std::deque<MNM_Veh *> *held_queue, int flow_scalar)
   {
@@ -96,7 +96,7 @@ public:
   virtual ~MNM_Busstop_Virtual () override;
   int install_cumulative_curve_multiclass ();
 
-  virtual bool hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
+  virtual bool hold_bus (TInt timestamp,MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
                          std::deque<MNM_Veh *> *from_queue,
                          std::deque<MNM_Veh *> *held_queue,
                          int flow_scalar) override;
@@ -317,7 +317,7 @@ public:
   virtual TInt get_label () override { return m_label; }; // virtual getter
   
   bool get_ismetro () { return m_metro; };  
-
+  TInt m_route_order;
   TInt m_capacity;
   TInt m_bus_route_ID;
   TInt m_min_dwell_intervals;
@@ -326,6 +326,7 @@ public:
   TInt m_max_alighting_passengers_per_unit_time;
   TInt m_max_boarding_passengers_per_unit_time;
   
+ 
 
   bool m_pnr;
   bool m_metro; 
@@ -337,6 +338,20 @@ public:
   std::deque<MNM_Passenger *> m_passenger_pool;
 };
 
+struct BoardingAlightingRecord {
+  TInt timestamp = -1;
+  TInt bus_id = -1;
+  TInt route_id = -1;
+  TInt route_order = -1;
+  TInt stop_id = -1;
+  TInt boarding = 0;
+  TInt alighting = 0;
+};
+extern std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_bt_stop_board_count;
+extern std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_pnr_stop_board_count;
+extern std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_bt_stop_alight_count;
+extern std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_pnr_stop_alight_count;
+extern std::vector<BoardingAlightingRecord> g_boarding_alighting_records;
 /******************************************************************************************************************
 *******************************************************************************************************************
                                                                                                 Vehicle Factory
