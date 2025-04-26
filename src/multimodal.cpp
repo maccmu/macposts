@@ -4236,7 +4236,7 @@ MNM_Dlink_Pq_Multimodal::evolve (TInt timestamp)
                                           &_held_queue, int (m_flow_scalar));
                   if (_held)
                     {
-                      // m_stopped_intervals has been updated in (), so
+                      // m_stopped_intervals has been updated in hold_bus(), so
                       // when stopped intervals - 1 >= time for opening and
                       // closing door
                       if (_veh_multimodal->m_stopped_intervals
