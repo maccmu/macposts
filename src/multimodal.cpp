@@ -4,6 +4,13 @@
 
 #include "multimodal.h"
 #include <cfloat>
+#include <map>
+#include <tuple>
+std::vector<BoardingAlightingRecord> g_boarding_alighting_records;
+std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_bt_stop_board_count;
+std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_pnr_stop_board_count;
+std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_bt_stop_alight_count;
+std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_pnr_stop_alight_count;
 
 using macposts::graph::Direction;
 
@@ -364,7 +371,7 @@ MNM_Busstop_Virtual::install_cumulative_curve_multiclass ()
 }
 
 bool
-MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
+MNM_Busstop_Virtual::hold_bus (TInt timestamp, MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
                                std::deque<MNM_Veh *> *from_queue,
                                std::deque<MNM_Veh *> *held_queue,
                                int flow_scalar)
@@ -402,6 +409,15 @@ MNM_Busstop_Virtual::hold_bus (MNM_Veh *veh, MNM_Veh_Multimodal *veh_multimodal,
     {
       // IAssert(veh_multimodal -> m_passenger_pool.size() == 0);
       m_passed_bus_counter += 1;
+      BoardingAlightingRecord record;
+      record.timestamp = timestamp;
+      record.bus_id = veh_multimodal->m_veh_ID;
+      record.route_id = veh_multimodal->m_bus_route_ID;
+      record.route_order = veh_multimodal->m_route_order;
+      record.stop_id = this->m_busstop_ID;  
+      record.boarding = 0;
+      record.alighting = 0;
+      g_boarding_alighting_records.push_back(record);
       return _held;
     }
 
@@ -1903,6 +1919,7 @@ MNM_Veh_Multimodal::MNM_Veh_Multimodal (TInt ID, TInt vehicle_class,
   m_path = nullptr;
   m_transit_path = nullptr;
   m_pnr_path = nullptr;
+  //m_route_order = -1; 
   m_passenger_pool = std::deque<MNM_Passenger *> ();
   m_metro = is_metro;
   m_stop_boarding = false; // for bus, stop boarding when the current interval is not fulle used, i.e., the total boarding passengers is less than the max that can be boarded
@@ -1964,9 +1981,25 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
           _walking_link->m_finished_array.push_back (_passenger);
           _passenger->m_waiting_time = 0;
           _passenger->set_current_link (_walking_link);
+       
+          TInt path_id;
+          TInt interval = _passenger->m_assign_interval;
+          TInt stop_id = busstop->m_busstop_ID;
+          TInt order = this->m_route_order;
+
+          if (_passenger->m_pnr) {
+            path_id = _passenger->m_pnr_path->m_path_ID;
+            std::tuple<TInt, TInt, TInt, TInt> key = std::make_tuple(path_id, interval, stop_id, order);
+            g_path_interval_pnr_stop_alight_count[key]++;
+    
+          } else {
+            path_id = _passenger->m_transit_path->m_path_ID;
+            std::tuple<TInt, TInt, TInt, TInt> key = std::make_tuple(path_id, interval, stop_id, order);
+            g_path_interval_bt_stop_alight_count[key]++;
+          }
           _passenger_it = m_passenger_pool.erase (_passenger_it);
           _alighting_counter += 1;
-
+          g_boarding_alighting_records.back().alighting += 1;
           // update cc tree for passengers about to alight at this bus stop
           // update cc for passengers about to alight at this bus stop
           IAssert (_busstop_virtual->m_bus_in_link != nullptr);
@@ -2153,9 +2186,28 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
                                     _passenger->m_assign_interval);
                     }
                 }
+              TInt path_id;
+              TInt interval = _passenger->m_assign_interval;
+              TInt stop_id = busstop->m_busstop_ID;
+              TInt order = this->m_route_order;
+                
+              if (_passenger->m_pnr) {
+                  path_id = _passenger->m_pnr_path->m_path_ID;
+                  std::tuple<TInt, TInt, TInt, TInt> key = std::make_tuple(path_id, interval, stop_id, order);
+                  g_path_interval_pnr_stop_board_count[key]++;
+                  
+              } else {
+                  path_id = _passenger->m_transit_path->m_path_ID;
+                  std::tuple<TInt, TInt, TInt, TInt> key = std::make_tuple(path_id, interval, stop_id, order);
+                  g_path_interval_bt_stop_board_count[key]++;
+                  
+              }
+                
+              
               _passenger_it
                 = _walking_link->m_finished_array.erase (_passenger_it);
               _boarding_counter += 1;
+              g_boarding_alighting_records.back().boarding += 1;
             }
         if (_boarding_counter < (m_max_boarding_passengers_per_unit_time * busstop->m_flow_scalar))
             { // if the current interval is not fully used, i.e., the total boarding passengers is less than the max that can be boarded, stop boarding in the next interval
@@ -2236,6 +2288,16 @@ MNM_Veh_Factory_Multimodal::make_veh_multimodal (
     = new MNM_Veh_Multimodal (m_num_veh + 1, vehicle_cls, timestamp, capacity,
                               bus_route_ID, is_pnr, is_metro);
   _veh->m_type = veh_type;
+  // Assign route order for buses
+  static std::unordered_map<TInt, TInt> route_bus_counter;
+  if (vehicle_cls == 1 && bus_route_ID != -1) 
+  {
+    route_bus_counter[bus_route_ID]++;
+    _veh->m_route_order = route_bus_counter[bus_route_ID];
+  } else {
+    _veh->m_route_order = -1;  // Not a bus
+  }
+  
   if (vehicle_cls == 1 && bus_route_ID != -1)
     {
       if (_veh->m_metro)
@@ -4104,11 +4166,11 @@ MNM_Dlink_Pq_Multimodal::evolve (TInt timestamp)
                   && _que_it->second == _busstop_it.second)
                 {
                   _held
-                    = _busstop->hold_bus (_veh, _veh_multimodal, &_from_queue,
+                    = _busstop->hold_bus (timestamp, _veh, _veh_multimodal, &_from_queue,
                                           &_held_queue, int (m_flow_scalar));
                   if (_held)
                     {
-                      // m_stopped_intervals has been updated in hold_bus(), so
+                      // m_stopped_intervals has been updated in (), so
                       // when stopped intervals - 1 >= time for opening and
                       // closing door
                       if (_veh_multimodal->m_stopped_intervals
@@ -4408,7 +4470,7 @@ MNM_Dlink_Ctm_Multimodal::move_veh_queue_in_cell (
                       // intervals
 
                       // only stop bus every m_flow_scalar vehicles
-                      _held = _busstop->hold_bus (_veh, _veh_multimodal,
+                      _held = _busstop->hold_bus (timestamp,_veh, _veh_multimodal,
                                                   from_queue, &_held_queue,
                                                   int (m_flow_scalar));
                       if (_held)
@@ -4561,7 +4623,7 @@ MNM_Dlink_Ctm_Multimodal::move_veh_queue_in_last_cell (TInt timestamp)
                               // only stop bus every m_flow_scalar vehicles
                               _held
                                 = _busstop
-                                    ->hold_bus (_veh, _veh_multimodal,
+                                    ->hold_bus (timestamp,_veh, _veh_multimodal,
                                                 &(m_cell_array[m_num_cells - 1]
                                                     ->m_veh_queue_truck),
                                                 &_held_queue,
@@ -4652,7 +4714,7 @@ MNM_Dlink_Ctm_Multimodal::move_veh_queue_in_last_cell (TInt timestamp)
                               // only stop bus every m_flow_scalar vehicles
                               _held
                                 = _busstop
-                                    ->hold_bus (_veh, _veh_multimodal,
+                                    ->hold_bus (timestamp,_veh, _veh_multimodal,
                                                 &(m_cell_array[m_num_cells - 1]
                                                     ->m_veh_queue_truck),
                                                 &_held_queue,
