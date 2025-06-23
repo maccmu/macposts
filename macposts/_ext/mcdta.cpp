@@ -29,7 +29,8 @@ public:
   bool check_input_files ();
   int generate_shortest_pathsets (const std::string &folder, int max_iter,
                                   double vot, double mid_scale,
-                                  double heavy_scale, double min_path_tt = 0., bool ignore_disconnected_OD = false);
+                                  double heavy_scale, double min_path_tt = 0., bool ignore_disconnected_OD = false,
+                                  bool use_external_link_tt = false, const std::string &external_link_tt_file = "st_link_tt");
   int install_cc ();
   int install_cc_tree ();
   int run_whole (bool verbose = false);
@@ -196,7 +197,16 @@ init (py::module &m)
     .def (py::init<> ())
     .def ("initialize", &Mcdta::initialize, py::arg ("folder"), py::arg ("skip_check") = false)
     .def ("check_input_files", &Mcdta::check_input_files)
-    .def ("generate_shortest_pathsets", &Mcdta::generate_shortest_pathsets)
+    .def ("generate_shortest_pathsets", &Mcdta::generate_shortest_pathsets,
+          py::arg("folder"),
+          py::arg("max_iter"),
+          py::arg("vot"),
+          py::arg("mid_scale"),
+          py::arg("heavy_scale"),
+          py::arg("min_path_tt") = 0.0,
+          py::arg("ignore_disconnected_OD") = false,
+          py::arg("use_external_link_tt") = false,
+          py::arg("external_link_tt_file") = "st_link_tt") // it should be a full absolute path
     .def ("run_whole", &Mcdta::run_whole, py::arg ("verbose") = false)
     .def ("run_multi_route_graph", &Mcdta::run_multi_route_graph)
     .def ("install_cc", &Mcdta::install_cc)
@@ -425,7 +435,8 @@ Mcdta::check_input_files ()
 int
 Mcdta::generate_shortest_pathsets (const std::string &folder, int max_iter,
                                    double vot, double mid_scale,
-                                   double heavy_scale, double min_path_tt, bool ignore_disconnected_OD)
+                                   double heavy_scale, double min_path_tt, bool ignore_disconnected_OD,
+                                   bool use_external_link_tt, const std::string &external_link_tt_file)
 {
   // m_mcdta = new MNM_Dta_Multiclass(folder);
   // m_mcdta -> build_from_files();
@@ -439,7 +450,7 @@ Mcdta::generate_shortest_pathsets (const std::string &folder, int max_iter,
                                      m_mcdta->m_link_factory, min_path_tt,
                                      max_iter, vot, mid_scale, heavy_scale,
                                      2 * m_mcdta->m_config->get_int ("max_interval"),
-                                     ignore_disconnected_OD);
+                                     ignore_disconnected_OD, use_external_link_tt, external_link_tt_file);
   printf ("driving pathset generated\n");
   MNM::save_driving_path_table (folder, _driving_path_table, "path_table",
                                 "path_table_buffer", true);

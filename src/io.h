@@ -71,6 +71,10 @@ public:
   build_link_toll (const std::string &file_folder, MNM_ConfReader *conf_reader,
                    MNM_Link_Factory *link_factory,
                    const std::string &file_name = "MNM_input_link_toll");
+  static int read_st_link_cost (const std::string &file_folder,
+                                std::unordered_map<TInt, TFlt *> &st_link_cost,
+                                const TInt num_rows, 
+                                const std::string &file_name = "stsp_link_cost");
   static int read_td_link_cost (const std::string &file_folder,
                                 std::unordered_map<TInt, TFlt *> &td_link_cost,
                                 const TInt num_rows, const TInt num_timestamps,
