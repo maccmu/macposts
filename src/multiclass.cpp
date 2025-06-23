@@ -5616,8 +5616,16 @@ Path_Table *
 build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
                           MNM_Link_Factory *link_factory, TFlt min_path_length,
                           size_t MaxIter, TFlt vot, TFlt Mid_Scale,
-                          TFlt Heavy_Scale, TInt buffer_length, bool ignore_disconnected_OD)
+                          TFlt Heavy_Scale, TInt buffer_length, bool ignore_disconnected_OD,
+                          bool use_external_link_tt, const std::string &external_link_tt_file)
 {
+  std::unordered_map<TInt, TFlt *> _st_link_tt = std::unordered_map<TInt, TFlt *> ();
+  if (use_external_link_tt)
+  {
+    if (external_link_tt_file.empty()) throw std::runtime_error("external_link_tt_file is empty");
+    // since external_link_tt_file is already a full absolute path, we do not need folder
+    MNM_IO::read_st_link_cost("", _st_link_tt, (int)link_factory->m_link_map.size(), external_link_tt_file);
+  }
   // printf("11\n");
   // MaxIter: maximum iteration to find alternative shortest path, when MaxIter
   // = 0, just shortest path Mid_Scale and Heavy_Scale are different penalties
@@ -5676,7 +5684,7 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
     {
       _free_cost_map.insert (
         std::pair<TInt, TFlt> (_link_it->first,
-                               vot * _link_it->second->get_link_tt ()
+                               vot * (use_external_link_tt ? _st_link_tt.at(_link_it->first)[0] : _link_it->second->get_link_tt ())
                                  + _link_it->second->m_toll));
     }
   // use max node cost
@@ -5892,6 +5900,13 @@ build_pathset_multiclass (macposts::Graph &graph, MNM_OD_Factory *od_factory,
     _it.second.clear();
   }
   _node_cost_map.clear();
+
+  if (use_external_link_tt && !_st_link_tt.empty()) {
+    for (auto &_it : _st_link_tt) {
+      delete[] _it.second;
+    }
+    _st_link_tt.clear();
+  }
 
   return _path_table;
 }
