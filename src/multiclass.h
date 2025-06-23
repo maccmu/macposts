@@ -740,7 +740,8 @@ Path_Table *build_pathset_multiclass (macposts::Graph &graph,
                                       TFlt min_path_length = 0.0,
                                       size_t MaxIter = 10, TFlt vot = 6.,
                                       TFlt Mid_Scale = 3, TFlt Heavy_Scale = 6,
-                                      TInt buffer_length = -1, bool ignore_disconnected_OD = false);
+                                      TInt buffer_length = -1, bool ignore_disconnected_OD = false,
+                                      bool use_external_link_tt = false, const std::string &external_link_tt_file = "st_link_tt");
 
 int print_vehicle_route_results (
   MNM_Veh_Factory_Multiclass *veh_factory, const std::string &folder,

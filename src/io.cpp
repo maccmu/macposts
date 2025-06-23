@@ -1438,6 +1438,16 @@ MNM_IO::split (const std::string &text, char sep)
   return tokens;
 }
 
+int 
+MNM_IO::read_st_link_cost (const std::string &file_folder,
+  std::unordered_map<TInt, TFlt *> &st_link_cost,
+  const TInt num_rows, 
+  const std::string &file_name)
+{
+  read_td_link_cost (file_folder, st_link_cost, num_rows, 1, file_name);
+  return 0;
+}
+
 int
 MNM_IO::read_td_link_cost (const std::string &file_folder,
                            std::unordered_map<TInt, TFlt *> &td_link_cost,
@@ -1453,7 +1463,7 @@ MNM_IO::read_td_link_cost (const std::string &file_folder,
     }
 
   /* find file */
-  std::string _file_name = file_folder + "/" + file_name;
+  std::string _file_name = file_folder.empty() ? file_name : file_folder + "/" + file_name;
   std::ifstream _file;
   _file.open (_file_name, std::ios::in);
 
