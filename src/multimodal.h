@@ -352,6 +352,8 @@ public:
                        TInt pickup_waiting_time = TInt (0));
 
   virtual int remove_finished_veh (MNM_Veh *veh, bool del = true) override;
+  virtual int update_veh_stat() override;
+  virtual std::string print_vehicle_statistics() override;
 
   TInt m_bus_capacity;
   TInt m_min_dwell_intervals;
@@ -364,6 +366,8 @@ public:
   TInt m_finished_bus;
 
   TFlt m_total_time_bus;
+  TFlt m_total_delay_bus;
+  TFlt m_total_miles_bus;
 
   TInt m_num_car_pnr;
   TInt m_enroute_car_pnr;
