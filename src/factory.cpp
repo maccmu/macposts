@@ -12,6 +12,8 @@ MNM_Veh_Factory::MNM_Veh_Factory ()
   m_finished = TInt (0);
 
   m_total_time = TFlt (0);
+  m_total_delay = TFlt (0);
+  m_total_miles = TFlt (0);
 }
 
 MNM_Veh_Factory::~MNM_Veh_Factory ()
@@ -54,6 +56,8 @@ MNM_Veh_Factory::remove_finished_veh (MNM_Veh *veh, bool del)
 
   IAssert (veh->m_finish_time > veh->m_start_time);
   m_total_time += (veh->m_finish_time - veh->m_start_time);
+  m_total_delay += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
+  m_total_miles += veh -> m_miles_traveled;
 
   if (del)
     {
@@ -64,6 +68,36 @@ MNM_Veh_Factory::remove_finished_veh (MNM_Veh *veh, bool del)
   m_enroute -= 1;
   IAssert (m_num_veh == m_finished + m_enroute);
   return 0;
+}
+
+int 
+MNM_Veh_Factory::update_veh_stat ()
+{
+  // account for enroute vehicles, do it only once at the end of DNL
+  // only consider the complete links those vehicle traversed
+  MNM_Veh *_veh;
+  for (auto _map_it : m_veh_map)
+  {
+    _veh = _map_it.second;
+    IAssert (_veh->m_finish_time < 0);
+    m_total_time += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+    m_total_delay += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+    m_total_miles += _veh->m_miles_traveled;
+  }
+  return 0;
+}
+
+std::string 
+MNM_Veh_Factory::print_vehicle_statistics ()
+{
+  // note veh_factory->update_veh_stat() is called before this function, if not, this only includes finished vehicles' stat
+  std::ostringstream oss;
+  oss << "############################################### Vehicle Statistics ###############################################\n"
+      << "Released Vehicle total " << m_num_veh << ", Enroute Vehicle Total " << m_enroute << ", Finished Vehicle Total " << m_finished << ",\n"
+      << "Total Miles Traveled: " << std::fixed << m_total_miles << " miles, Total Travel Time: " << std::fixed << m_total_time << " intervals, Total Delayed Time: " << std::fixed << m_total_delay << " intervals\n"
+      << "############################################## Vehicle Statistics ###############################################\n";
+  return oss.str();
+  
 }
 
 /**************************************************************************

@@ -2170,7 +2170,10 @@ MNM_Veh_Factory_Multimodal::MNM_Veh_Factory_Multimodal (
   m_num_bus = TInt (0);
   m_enroute_bus = TInt (0);
   m_finished_bus = TInt (0);
+
   m_total_time_bus = TFlt (0);
+  m_total_delay_bus = TFlt (0);
+  m_total_miles_bus = TFlt (0);
 
   m_num_car_pnr = TInt (0);
   m_enroute_car_pnr = TInt (0);
@@ -2253,6 +2256,7 @@ MNM_Veh_Factory_Multimodal::remove_finished_veh (MNM_Veh *veh, bool del)
           m_enroute_car -= 1;
         }
       m_total_time_car += (veh->m_finish_time - veh->m_start_time);
+      m_total_delay_car += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
     }
   else if (veh->get_class () == 1)
     {
@@ -2261,12 +2265,14 @@ MNM_Veh_Factory_Multimodal::remove_finished_veh (MNM_Veh *veh, bool del)
           m_finished_truck += 1;
           m_enroute_truck -= 1;
           m_total_time_truck += (veh->m_finish_time - veh->m_start_time);
+          m_total_delay_truck += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         }
       else
         {
           m_finished_bus += 1;
           m_enroute_bus -= 1;
           m_total_time_bus += (veh->m_finish_time - veh->m_start_time);
+          m_total_delay_bus += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         }
     }
   MNM_Veh_Factory::remove_finished_veh (veh, del);
@@ -2275,6 +2281,62 @@ MNM_Veh_Factory_Multimodal::remove_finished_veh (MNM_Veh *veh, bool del)
   IAssert (m_num_truck == m_finished_truck + m_enroute_truck);
   IAssert (m_num_car_pnr == m_finished_car_pnr + m_enroute_car_pnr);
   return 0;
+}
+
+int
+MNM_Veh_Factory_Multimodal::update_veh_stat()
+{
+  // account for enroute vehicles, do it only once at the end of DNL
+  // only consider the complete links those vehicle traversed
+  MNM_Veh *_veh;
+  for (auto _map_it : m_veh_map)
+  {
+    _veh = _map_it.second;
+    IAssert (_veh->m_finish_time < 0);
+    m_total_time += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+    m_total_delay += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+    m_total_miles += _veh->m_miles_traveled;
+
+    if (_veh->get_class () == 0)
+    {
+      m_total_time_car += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+      m_total_delay_car += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      m_total_miles_car += _veh->m_miles_traveled;
+    }
+    else if (_veh->get_class () == 1)
+    {
+      if (_veh->get_bus_route_ID () == TInt (-1)) {
+        m_total_time_truck += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+        m_total_delay_truck += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+        m_total_miles_truck += _veh->m_miles_traveled;
+      }
+      else {
+        m_total_time_bus += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+        m_total_delay_bus += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+        m_total_miles_bus += _veh->m_miles_traveled;
+      }
+    }
+  }
+  return 0;
+}
+
+std::string 
+MNM_Veh_Factory_Multimodal::print_vehicle_statistics ()
+{
+  // note veh_factory->update_veh_stat() is called before this function, if not, this only includes finished vehicles' stat
+  std::ostringstream oss;
+  oss << "############################################### Vehicle Statistics ###############################################\n"
+      << "Released Vehicle total " << m_num_veh << ", Enroute Vehicle Total " << m_enroute << ", Finished Vehicle Total " << m_finished << ",\n"
+      << "Total Miles Traveled: " << std::fixed << m_total_miles << " miles, Total Travel Time: " << std::fixed << m_total_time << " intervals, Total Delayed Time: " << std::fixed << m_total_delay << " intervals,\n"
+      << "Released Car Driving " << m_num_car << ", Enroute Car Driving " << m_enroute_car << ", Finished Car Driving " << m_finished_car << ",\n"
+      << "Released Car PnR " << m_num_car_pnr << ", Enroute Car PnR " << m_enroute_car_pnr << ", Finished Car PnR " << m_finished_car_pnr << ",\n"
+      << "Total Miles Traveled Car: " << std::fixed << m_total_miles_car << " miles, Total Travel Time Car: " << std::fixed << m_total_time_car << " intervals, Total Delayed Time Car: " << std::fixed << m_total_delay_car << " intervals,\n"
+      << "Released Truck " << m_num_truck << ", Enroute Truck " << m_enroute_truck << ", Finished Truck " << m_finished_truck << ",\n"
+      << "Total Miles Traveled Truck: " << std::fixed  << m_total_miles_truck << " miles, Total Travel Time Truck: " << std::fixed << m_total_time_truck << " intervals, Total Delayed Time Truck: " << std::fixed << m_total_delay_truck << " intervals,\n"
+      << "Released Bus " << m_num_bus << ", Enroute Bus " << m_enroute_bus << ", Finished Bus " << m_finished_bus << ",\n"
+      << "Total Miles Traveled Bus: " << std::fixed << m_total_miles_bus << " miles, Total Travel Time Bus: " << std::fixed << m_total_time_bus << " intervals, Total Delayed Time Bus: " << std::fixed << m_total_delay_bus << " intervals\n"
+      << "############################################### Vehicle Statistics ###############################################\n";
+  return oss.str();
 }
 
 /******************************************************************************************************************
@@ -10781,6 +10843,7 @@ MNM_Dta_Multimodal::loading (bool verbose)
           ++_assign_inter;
         }
     }
+  m_veh_factory -> update_veh_stat();
   if (verbose)
     {
       MNM::print_vehicle_statistics (
@@ -12651,25 +12714,32 @@ print_passenger_statistics (MNM_Passenger_Factory *passenger_factory)
 int
 print_vehicle_statistics (MNM_Veh_Factory_Multimodal *veh_factory)
 {
-  printf (
-    "############################################### Vehicle Statistics ###############################################\n \
-    Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d,\n \
-    Total Travel Time: %.2f intervals,\n \
-    Released Car Driving %d, Enroute Car Driving %d, Finished Car Driving %d,\n \
-    Released Car PnR %d, Enroute Car PnR %d, Finished Car PnR %d,\n \
-    Released Truck %d, Enroute Truck %d, Finished Truck %d,\n \
-    Released Bus %d, Enroute Bus %d, Finished Bus %d,\n \
-    Total Travel Time Car: %.2f intervals, Total Travel Time Truck: %.2f intervals, Total Travel Time Bus: %.2f intervals\n \
-    ############################################### Vehicle Statistics ###############################################\n",
-    veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
-    veh_factory->m_total_time, veh_factory->m_num_car,
-    veh_factory->m_enroute_car, veh_factory->m_finished_car,
-    veh_factory->m_num_car_pnr, veh_factory->m_enroute_car_pnr,
-    veh_factory->m_finished_car_pnr, veh_factory->m_num_truck,
-    veh_factory->m_enroute_truck, veh_factory->m_finished_truck,
-    veh_factory->m_num_bus, veh_factory->m_enroute_bus,
-    veh_factory->m_finished_bus, veh_factory->m_total_time_car,
-    veh_factory->m_total_time_truck, veh_factory->m_total_time_bus);
+//   printf (
+// "############################################### Vehicle Statistics ###############################################\n\
+// Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d,\n\
+// Total Miles Traveled: %.2f miles, Total Travel Time: %.2f intervals, Total Delayed Time: %.2f intervals,\n\
+// Released Car Driving %d, Enroute Car Driving %d, Finished Car Driving %d,\n\
+// Released Car PnR %d, Enroute Car PnR %d, Finished Car PnR %d,\n\
+// Total Miles Traveled Car: %.2f miles, Total Travel Time Car: %.2f intervals, Total Delayed Time Car: %.2f intervals,\n\
+// Released Truck %d, Enroute Truck %d, Finished Truck %d,\n\
+// Total Miles Traveled Truck: %.2f miles, Total Travel Time Truck: %.2f intervals, Total Delayed Time Truck: %.2f intervals,\n\
+// Released Bus %d, Enroute Bus %d, Finished Bus %d,\n\
+// Total Miles Traveled Bus: %.2f miles, Total Travel Time Bus: %.2f intervals, Total Delayed Time Bus: %.2f intervals\n\
+// ############################################### Vehicle Statistics ###############################################\n",
+//     veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
+//     veh_factory->m_total_miles, veh_factory->m_total_time, veh_factory->m_total_delay, 
+
+//     veh_factory->m_num_car, veh_factory->m_enroute_car, veh_factory->m_finished_car,
+//     veh_factory->m_num_car_pnr, veh_factory->m_enroute_car_pnr, veh_factory->m_finished_car_pnr, 
+//     veh_factory->m_total_miles_car, veh_factory->m_total_time_car, veh_factory->m_total_delay_car,
+
+//     veh_factory->m_num_truck, veh_factory->m_enroute_truck, veh_factory->m_finished_truck,
+//     veh_factory->m_total_miles_truck, veh_factory->m_total_time_truck, veh_factory->m_total_delay_truck,
+
+//     veh_factory->m_num_bus, veh_factory->m_enroute_bus, veh_factory->m_finished_bus,
+//     veh_factory->m_total_miles_bus, veh_factory->m_total_time_bus, veh_factory->m_total_delay_bus);
+
+  std::cout << veh_factory -> print_vehicle_statistics () << std::endl;
   return 0;
 }
 

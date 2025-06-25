@@ -48,6 +48,7 @@ public:
                                    int cong_frequency = 180,
                                    const std::string &result_folder = "");
   py::array_t<double> get_travel_stats ();
+  std::string print_travel_stats ();
   std::string print_emission_stats ();
   int print_simulation_results (const std::string &folder,
                                 int cong_frequency = 180);
@@ -127,6 +128,7 @@ init (py::module &m)
     .def ("install_cc", &Dta::install_cc)
     .def ("install_cc_tree", &Dta::install_cc_tree)
     .def ("get_travel_stats", &Dta::get_travel_stats)
+    .def ("print_travel_stats", &Dta::print_travel_stats)
     .def ("print_emission_stats", &Dta::print_emission_stats)
     .def ("get_cur_loading_interval", &Dta::get_cur_loading_interval)
     .def ("print_simulation_results", &Dta::print_simulation_results)
@@ -618,7 +620,7 @@ Dta::run_dnl_delivery_traffic (const std::string &folder, bool verbose,
          + std::to_string (int (_released_delivery_car)) + "\n"
          + "Total car tt: " + std::to_string (TFlt (_tot_tt_car))
          + " hours\n\n";
-
+  _str += print_travel_stats ();
   _str += print_emission_stats ();
   std::cout << _str << std::endl;
   _vis_file << _str;
@@ -740,7 +742,7 @@ Dta::run_dnl_electrified_traffic (const std::string &folder, bool verbose,
                            - int (_home_charged_electrified_car))
          + "\n" + "Total car tt: " + std::to_string (TFlt (_tot_tt_car))
          + " hours\n\n";
-
+  _str += print_travel_stats ();
   _str += print_emission_stats ();
   std::cout << _str << std::endl;
   _vis_file << _str;
@@ -812,40 +814,58 @@ Dta::get_all_links ()
 py::array_t<double>
 Dta::get_travel_stats ()
 {
-  // finished
-  TInt _count_car = 0;
-  TFlt _tot_tt_car = 0.0;
+  // // finished
+  // TInt _count_car = 0;
+  // TFlt _tot_tt_car = 0.0;
 
-  auto *_veh_factory = dynamic_cast<MNM_Veh_Factory *> (m_dta->m_veh_factory);
-  _count_car = _veh_factory->m_finished;
-  _tot_tt_car = _veh_factory->m_total_time * m_dta->m_unit_time / 3600.0;
+  // auto *_veh_factory = dynamic_cast<MNM_Veh_Factory *> (m_dta->m_veh_factory);
+  // _count_car = _veh_factory->m_finished;
+  // _tot_tt_car = _veh_factory->m_total_time * m_dta->m_unit_time / 3600.0;
 
-  // unfinished
-  MNM_Veh *_veh;
-  int _end_time = get_cur_loading_interval ();
-  for (auto _map_it : m_dta->m_veh_factory->m_veh_map)
-    {
-      _veh = _map_it.second;
-      IAssert (_veh->m_finish_time < 0);
-      _count_car += 1;
-      _tot_tt_car
-        += (_end_time - _veh->m_start_time) * m_dta->m_unit_time / 3600.0;
-    }
+  // // unfinished
+  // MNM_Veh *_veh;
+  // int _end_time = get_cur_loading_interval ();
+  // for (auto _map_it : m_dta->m_veh_factory->m_veh_map)
+  //   {
+  //     _veh = _map_it.second;
+  //     IAssert (_veh->m_finish_time < 0);
+  //     _count_car += 1;
+  //     _tot_tt_car
+  //       += (_end_time - _veh->m_start_time) * m_dta->m_unit_time / 3600.0;
+  //   }
+
+  // // for all released vehicles
+  // int new_shape[1] = { 4 };
+  // auto result = py::array_t<double> (new_shape);
+  // auto result_buf = result.request ();
+  // double *result_ptr = (double *) result_buf.ptr;
+  // result_ptr[0] = _count_car / m_dta->m_flow_scalar; // released vehicles
+  // result_ptr[1]
+  //   = _tot_tt_car / m_dta->m_flow_scalar; // VHT of released vehicles
+  // result_ptr[2]
+  //   = _veh_factory->m_enroute / m_dta->m_flow_scalar; // enroute vehicles
+  // result_ptr[3]
+  //   = _veh_factory->m_finished / m_dta->m_flow_scalar; // finished vehicles
 
   // for all released vehicles
-  int new_shape[1] = { 4 };
+  int new_shape[1] = { 6 };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
   double *result_ptr = (double *) result_buf.ptr;
-  result_ptr[0] = _count_car / m_dta->m_flow_scalar; // released vehicles
-  result_ptr[1]
-    = _tot_tt_car / m_dta->m_flow_scalar; // VHT of released vehicles
-  result_ptr[2]
-    = _veh_factory->m_enroute / m_dta->m_flow_scalar; // enroute vehicles
-  result_ptr[3]
-    = _veh_factory->m_finished / m_dta->m_flow_scalar; // finished vehicles
+  result_ptr[0] = m_dta -> m_veh_factory -> m_num_veh / m_dta->m_flow_scalar; // released vehicles
+  result_ptr[1] = m_dta -> m_veh_factory -> m_enroute / m_dta->m_flow_scalar; // enroute vehicles
+  result_ptr[2] = m_dta -> m_veh_factory -> m_finished / m_dta->m_flow_scalar; // finished vehicles
+  result_ptr[3] = m_dta -> m_veh_factory -> m_total_miles / m_dta->m_flow_scalar; // VMT of released vehicles
+  result_ptr[4] = m_dta -> m_veh_factory -> m_total_time * m_dta -> m_unit_time / 3600. / m_dta->m_flow_scalar; // VHT of released vehicles in hours
+  result_ptr[5] = m_dta -> m_veh_factory -> m_total_delay * m_dta -> m_unit_time / 60. / m_dta -> m_veh_factory -> m_num_veh; // average delay of released vehicles in minutes
 
   return result;
+}
+
+std::string 
+Dta::print_travel_stats ()
+{
+  return m_dta -> m_veh_factory -> print_vehicle_statistics();
 }
 
 std::string

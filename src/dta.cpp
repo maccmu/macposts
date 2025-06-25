@@ -718,6 +718,7 @@ MNM_Dta::loading (bool verbose)
           ++_assign_inter;
         }
     }
+  m_veh_factory -> update_veh_stat ();
   if (verbose)
     {
       MNM::print_vehicle_statistics (m_veh_factory);
@@ -797,13 +798,16 @@ print_vehicle_statistics (MNM_Veh_Factory *veh_factory)
   // printf("Released vehicle %d, Enroute vehicle %d, Finished vehicle %d\n",
   // _total_veh(), _enroute_veh(), _finished_veh());
 
-  printf (
-    "############################################### Vehicle Statistics ###############################################\n \
-  Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d\n \
-  Total Travel Time: %.2f intervals\n \
-  ############################################### Vehicle Statistics ###############################################\n",
-    veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
-    veh_factory->m_total_time);
+  // printf (
+  //   "############################################### Vehicle Statistics ###############################################\n \
+  // Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d,\n \
+  // Total Miles Traveled: %.2f miles, Total Travel Time: %.2f intervals, Total Delayed Time: %.2f intervals\n \
+  // ############################################### Vehicle Statistics ###############################################\n",
+  //   veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
+  //   veh_factory->m_total_miles, veh_factory->m_total_time, veh_factory->m_total_delay); 
+  // // note veh_factory->update_veh_stat() is called before this function, if not, this only includes finished vehicles' stat
+
+  std::cout << veh_factory -> print_vehicle_statistics() << std::endl;
   return 0;
 }
 

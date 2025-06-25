@@ -64,13 +64,15 @@ MNM_Veh_Electrified::charge ()
 }
 
 int
-MNM_Veh_Electrified::update_miles_traveled (MNM_Dlink *link)
+MNM_Veh_Electrified::update_miles_traveled (MNM_Dlink *link, int timestamp)
 {
   if (dynamic_cast<MNM_Dlink_Pq *> (link) == nullptr)
     {
       m_miles_traveled += link->m_length / 1600.; // meter -> mile
       m_miles_traveled_after_charging += link->m_length / 1600.;
     }
+  m_cumulative_freeflow_time += link -> get_link_freeflow_tt_loading();
+  m_last_link_exiting_time = timestamp;
   return 0;
 }
 

@@ -8,6 +8,8 @@ MNM_Veh::MNM_Veh (TInt ID, TInt start_time)
   m_start_time = start_time;
   m_finish_time = -1;
   m_miles_traveled = 0.;
+  m_last_link_exiting_time = -1;
+  m_cumulative_freeflow_time = 0;
   m_assign_interval = -1;
   m_path = nullptr;
   m_class = TInt (0);
@@ -92,11 +94,13 @@ MNM_Veh::set_origin (MNM_Origin *origin)
 }
 
 int
-MNM_Veh::update_miles_traveled (MNM_Dlink *link)
+MNM_Veh::update_miles_traveled (MNM_Dlink *link, int timestamp)
 {
   if (dynamic_cast<MNM_Dlink_Pq *> (link) == nullptr)
     {
       m_miles_traveled += link->m_length / 1600.; // meter -> mile
     }
+  m_cumulative_freeflow_time += link -> get_link_freeflow_tt_loading();
+  m_last_link_exiting_time = timestamp;
   return 0;
 }

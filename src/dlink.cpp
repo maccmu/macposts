@@ -949,7 +949,7 @@ MNM_Dlink_Lq::get_link_freeflow_tt_loading ()
 {
   // throw std::runtime_error("Error, MNM_Dlink_Lq::get_link_freeflow_tt_loading
   // NOT implemented");
-  return MNM_Ults::round_up_time (m_length / m_ffs);
+  return MNM_Ults::round_up_time (m_length / m_ffs / m_unit_time);
 }
 
 /**************************************************************************
@@ -1450,9 +1450,10 @@ MNM_Dlink_Ltm::get_link_tt_from_flow (TFlt flow)
 TInt
 MNM_Dlink_Ltm::get_link_freeflow_tt_loading ()
 {
-  throw std::runtime_error (
-    "Error, MNM_Dlink_Ltm::get_link_freeflow_tt_loading NOT implemented");
-  return 0;
+  // throw std::runtime_error (
+  //   "Error, MNM_Dlink_Ltm::get_link_freeflow_tt_loading NOT implemented");
+  // return 0;
+  return MNM_Ults::round_up_time (m_length / m_ffs / m_unit_time);
 }
 
 void

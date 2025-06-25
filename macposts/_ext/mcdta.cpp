@@ -43,6 +43,7 @@ public:
   py::array_t<int> get_registered_links ();
   int get_cur_loading_interval ();
   py::array_t<double> get_travel_stats ();
+  std::string print_travel_stats ();
   std::string print_emission_stats ();
   int print_simulation_results (const std::string &folder,
                                 int cong_frequency = 180);
@@ -212,6 +213,7 @@ init (py::module &m)
     .def ("install_cc", &Mcdta::install_cc)
     .def ("install_cc_tree", &Mcdta::install_cc_tree)
     .def ("get_travel_stats", &Mcdta::get_travel_stats)
+    .def ("print_travel_stats", &Mcdta::print_travel_stats)
     .def ("print_emission_stats", &Mcdta::print_emission_stats)
     .def ("get_cur_loading_interval", &Mcdta::get_cur_loading_interval)
     .def_property_readonly ("links", &Mcdta::get_all_links, "IDs of all links.")
@@ -683,6 +685,12 @@ int
 Mcdta::get_cur_loading_interval ()
 {
   return m_mcdta->m_current_loading_interval;
+}
+
+std::string 
+Mcdta::print_travel_stats ()
+{
+  return m_mcdta -> m_veh_factory -> print_vehicle_statistics();
 }
 
 std::string
@@ -1161,84 +1169,111 @@ Mcdta::run_whole_vehicle_tracking (bool verbose, const std::string &folder,
 py::array_t<double>
 Mcdta::get_travel_stats ()
 {
-  // finished
-  TInt _count_car = 0, _count_truck = 0;
-  TFlt _tot_tt_car = 0.0, _tot_tt_truck = 0.0;
+  // // finished
+  // TInt _count_car = 0, _count_truck = 0;
+  // TFlt _tot_tt_car = 0.0, _tot_tt_truck = 0.0;
 
-  auto *_veh_factory
-    = dynamic_cast<MNM_Veh_Factory_Multiclass *> (m_mcdta->m_veh_factory);
-  _count_car = _veh_factory->m_finished_car;
-  _count_truck = _veh_factory->m_finished_truck;
-  _tot_tt_car = _veh_factory->m_total_time_car * m_mcdta->m_unit_time / 3600.0;
-  _tot_tt_truck
-    = _veh_factory->m_total_time_truck * m_mcdta->m_unit_time / 3600.0;
+  // auto *_veh_factory
+  //   = dynamic_cast<MNM_Veh_Factory_Multiclass *> (m_mcdta->m_veh_factory);
+  // _count_car = _veh_factory->m_finished_car;
+  // _count_truck = _veh_factory->m_finished_truck;
+  // _tot_tt_car = _veh_factory->m_total_time_car * m_mcdta->m_unit_time / 3600.0;
+  // _tot_tt_truck
+  //   = _veh_factory->m_total_time_truck * m_mcdta->m_unit_time / 3600.0;
 
-  // unfinished
-  MNM_Veh_Multiclass *_veh;
-  int _end_time = get_cur_loading_interval ();
-  for (auto _map_it : m_mcdta->m_veh_factory->m_veh_map)
-    {
-      _veh = dynamic_cast<MNM_Veh_Multiclass *> (_map_it.second);
-      IAssert (_veh->m_finish_time < 0);
-      if (_veh->m_class == 0)
-        {
-          _count_car += 1;
-          _tot_tt_car
-            += (_end_time - _veh->m_start_time) * m_mcdta->m_unit_time / 3600.0;
-        }
-      else
-        {
-          _count_truck += 1;
-          _tot_tt_truck
-            += (_end_time - _veh->m_start_time) * m_mcdta->m_unit_time / 3600.0;
-        }
-    }
-
-  // // for vehicles not deleted
-  // MNM_Veh_Multiclass* _veh;
-  // int _end_time = get_cur_loading_interval();
-  // for (auto _map_it : m_mcdta -> m_veh_factory -> m_veh_map){
-  //     _veh = dynamic_cast<MNM_Veh_Multiclass *>(_map_it.second);
-  //     if (_veh -> m_class == 0){
+  // // unfinished
+  // MNM_Veh_Multiclass *_veh;
+  // int _end_time = get_cur_loading_interval ();
+  // for (auto _map_it : m_mcdta->m_veh_factory->m_veh_map)
+  //   {
+  //     _veh = dynamic_cast<MNM_Veh_Multiclass *> (_map_it.second);
+  //     IAssert (_veh->m_finish_time < 0);
+  //     if (_veh->m_class == 0)
+  //       {
   //         _count_car += 1;
-  //         if (_veh -> m_finish_time > 0) {
-  //             _tot_tt_car += (_veh -> m_finish_time - _veh -> m_start_time) *
-  //             m_mcdta -> m_unit_time / 3600.0;
-  //         }
-  //         else {
-  //             _tot_tt_car += (_end_time - _veh -> m_start_time) * m_mcdta ->
-  //             m_unit_time / 3600.0;
-  //         }
-  //     }
-  //     else {
+  //         _tot_tt_car
+  //           += (_end_time - _veh->m_start_time) * m_mcdta->m_unit_time / 3600.0;
+  //       }
+  //     else
+  //       {
   //         _count_truck += 1;
-  //         if (_veh -> m_finish_time > 0) {
-  //             _tot_tt_truck += (_veh -> m_finish_time - _veh -> m_start_time)
-  //             * m_mcdta -> m_unit_time / 3600.0;
-  //         }
-  //         else {
-  //             _tot_tt_truck += (_end_time - _veh -> m_start_time) * m_mcdta
-  //             -> m_unit_time / 3600.0;
-  //         }
-  //     }
-  // }
+  //         _tot_tt_truck
+  //           += (_end_time - _veh->m_start_time) * m_mcdta->m_unit_time / 3600.0;
+  //       }
+  //   }
 
-  // printf("\n\nTotal car: %d, Total truck: %d, Total car tt: %.2f hours, Total
-  // truck tt: %.2f hours\n\n",
-  //        int(_count_car/m_mcdta -> m_flow_scalar), int(_count_truck/m_mcdta
-  //        -> m_flow_scalar), TFlt(_tot_tt_car/m_mcdta -> m_flow_scalar),
-  //        TFlt(_tot_tt_truck/m_mcdta -> m_flow_scalar));
-  // m_mcdta -> m_emission -> output();
+  // // // for vehicles not deleted
+  // // MNM_Veh_Multiclass* _veh;
+  // // int _end_time = get_cur_loading_interval();
+  // // for (auto _map_it : m_mcdta -> m_veh_factory -> m_veh_map){
+  // //     _veh = dynamic_cast<MNM_Veh_Multiclass *>(_map_it.second);
+  // //     if (_veh -> m_class == 0){
+  // //         _count_car += 1;
+  // //         if (_veh -> m_finish_time > 0) {
+  // //             _tot_tt_car += (_veh -> m_finish_time - _veh -> m_start_time) *
+  // //             m_mcdta -> m_unit_time / 3600.0;
+  // //         }
+  // //         else {
+  // //             _tot_tt_car += (_end_time - _veh -> m_start_time) * m_mcdta ->
+  // //             m_unit_time / 3600.0;
+  // //         }
+  // //     }
+  // //     else {
+  // //         _count_truck += 1;
+  // //         if (_veh -> m_finish_time > 0) {
+  // //             _tot_tt_truck += (_veh -> m_finish_time - _veh -> m_start_time)
+  // //             * m_mcdta -> m_unit_time / 3600.0;
+  // //         }
+  // //         else {
+  // //             _tot_tt_truck += (_end_time - _veh -> m_start_time) * m_mcdta
+  // //             -> m_unit_time / 3600.0;
+  // //         }
+  // //     }
+  // // }
+
+  // // printf("\n\nTotal car: %d, Total truck: %d, Total car tt: %.2f hours, Total
+  // // truck tt: %.2f hours\n\n",
+  // //        int(_count_car/m_mcdta -> m_flow_scalar), int(_count_truck/m_mcdta
+  // //        -> m_flow_scalar), TFlt(_tot_tt_car/m_mcdta -> m_flow_scalar),
+  // //        TFlt(_tot_tt_truck/m_mcdta -> m_flow_scalar));
+  // // m_mcdta -> m_emission -> output();
+
+  // // for all released vehicles
+  // int new_shape[1] = { 4 };
+  // auto result = py::array_t<double> (new_shape);
+  // auto result_buf = result.request ();
+  // double *result_ptr = (double *) result_buf.ptr;
+  // result_ptr[0] = _count_car / m_mcdta->m_flow_scalar;
+  // result_ptr[1] = _count_truck / m_mcdta->m_flow_scalar;
+  // result_ptr[2] = _tot_tt_car / m_mcdta->m_flow_scalar;
+  // result_ptr[3] = _tot_tt_truck / m_mcdta->m_flow_scalar;
 
   // for all released vehicles
-  int new_shape[1] = { 4 };
+  int new_shape[1] = { 18 };
   auto result = py::array_t<double> (new_shape);
   auto result_buf = result.request ();
   double *result_ptr = (double *) result_buf.ptr;
-  result_ptr[0] = _count_car / m_mcdta->m_flow_scalar;
-  result_ptr[1] = _count_truck / m_mcdta->m_flow_scalar;
-  result_ptr[2] = _tot_tt_car / m_mcdta->m_flow_scalar;
-  result_ptr[3] = _tot_tt_truck / m_mcdta->m_flow_scalar;
+  result_ptr[0] = m_mcdta -> m_veh_factory -> m_num_veh / m_mcdta->m_flow_scalar; // released vehicles
+  result_ptr[1] = m_mcdta -> m_veh_factory -> m_enroute / m_mcdta->m_flow_scalar; // enroute vehicles
+  result_ptr[2] = m_mcdta -> m_veh_factory -> m_finished / m_mcdta->m_flow_scalar; // finished vehicles
+  result_ptr[3] = m_mcdta -> m_veh_factory -> m_total_miles / m_mcdta->m_flow_scalar; // VMT of released vehicles
+  result_ptr[4] = m_mcdta -> m_veh_factory -> m_total_time * m_mcdta -> m_unit_time / 3600. / m_mcdta->m_flow_scalar; // VHT of released vehicles in hours
+  result_ptr[5] = m_mcdta -> m_veh_factory -> m_total_delay * m_mcdta -> m_unit_time / 60. / m_mcdta -> m_veh_factory -> m_num_veh; // average delay of released vehicles in minutes
+  
+  auto *_veh_factory = dynamic_cast<MNM_Veh_Factory_Multiclass *> (m_mcdta->m_veh_factory);
+  result_ptr[6] = _veh_factory -> m_num_car / m_mcdta->m_flow_scalar; // released cars
+  result_ptr[7] = _veh_factory -> m_enroute_car / m_mcdta->m_flow_scalar; // enroute cars
+  result_ptr[8] = _veh_factory -> m_finished_car / m_mcdta->m_flow_scalar; // finished cars
+  result_ptr[9] = _veh_factory -> m_total_miles_car / m_mcdta->m_flow_scalar; // VMT of released cars
+  result_ptr[10] = _veh_factory -> m_total_time_car * m_mcdta -> m_unit_time / 3600. / m_mcdta->m_flow_scalar; // VHT of released cars in hours
+  result_ptr[11] = _veh_factory -> m_total_delay_car * m_mcdta -> m_unit_time / 60. / _veh_factory -> m_num_car; // average delay of released cars in minutes
+
+  result_ptr[12] = _veh_factory -> m_num_truck / m_mcdta->m_flow_scalar; // released trucks
+  result_ptr[13] = _veh_factory -> m_enroute_truck / m_mcdta->m_flow_scalar; // enroute trucks
+  result_ptr[14] = _veh_factory -> m_finished_truck / m_mcdta->m_flow_scalar; // finished trucks
+  result_ptr[15] = _veh_factory -> m_total_miles_truck / m_mcdta->m_flow_scalar; // VMT of released trucks
+  result_ptr[16] = _veh_factory -> m_total_time_truck * m_mcdta -> m_unit_time / 3600. / m_mcdta->m_flow_scalar; // VHT of released trucks in hours
+  result_ptr[17] = _veh_factory -> m_total_delay_truck * m_mcdta -> m_unit_time / 60. / _veh_factory -> m_num_truck; // average delay of released trucks in minutes
 
   return result;
 }
