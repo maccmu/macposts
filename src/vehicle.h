@@ -50,7 +50,7 @@ public:
     return m_label;
   }; // virtual getter for derived class
 
-  virtual int update_miles_traveled (MNM_Dlink *link);
+  virtual int update_miles_traveled (MNM_Dlink *link, int timestamp);
 
   // private:
   Vehicle_type m_type;
@@ -71,6 +71,10 @@ public:
                                   // visualization
 
   TFlt m_miles_traveled;
+  // travel time of exiting the last link in number of unit intervals, used as nominal finish time for VHT
+  TInt m_last_link_exiting_time;
+  // cumulative freeflow time in number of unit intervals
+  TInt m_cumulative_freeflow_time;
 
   TInt m_class;
   // m_bus_route only used in multimodal loading

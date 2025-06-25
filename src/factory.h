@@ -28,7 +28,11 @@ public:
   TInt m_enroute;
   TInt m_finished;
   TFlt m_total_time; // intervals
+  TFlt m_total_delay; // intervals
+  TFlt m_total_miles;
   virtual int remove_finished_veh (MNM_Veh *veh, bool del = true);
+  virtual int update_veh_stat ();
+  virtual std::string print_vehicle_statistics ();
 };
 
 class MNM_Node_Factory

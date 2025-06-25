@@ -455,7 +455,7 @@ public:
   virtual TInt get_bus_route_ID () override { return m_bus_route_ID;};  
   virtual bool get_ispnr () override { return m_pnr; };
   virtual TInt get_label () override {return m_label;}; // virtual getter for derived class for emission analysis
-
+  virtual int update_miles_traveled (MNM_Dlink *link, int timestamp) override;
   TInt m_class;
 };
 
@@ -473,6 +473,8 @@ public:
   MNM_Veh_Multiclass *
   make_veh_multiclass (TInt timestamp, Vehicle_type veh_type, TInt vehicle_cls);
   virtual int remove_finished_veh (MNM_Veh *veh, bool del = true) override;
+  virtual int update_veh_stat () override;
+  virtual std::string print_vehicle_statistics () override;
   TInt m_num_car;
   TInt m_num_truck;
   TInt m_enroute_car;
@@ -481,6 +483,10 @@ public:
   TInt m_finished_truck;
   TFlt m_total_time_car;   // intervals
   TFlt m_total_time_truck; // intervals
+  TFlt m_total_delay_car;   // intervals
+  TFlt m_total_delay_truck; // intervals
+  TFlt m_total_miles_car;
+  TFlt m_total_miles_truck;
 };
 
 class MNM_Node_Factory_Multiclass : public MNM_Node_Factory

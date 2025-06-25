@@ -27,12 +27,12 @@ MNM_Dlink_Multiclass::MNM_Dlink_Multiclass (
   m_N_in_tree_truck = nullptr;
   m_N_out_tree_truck = nullptr;
 
-  // average waiting time per vehicle = tot_wait_time/(tot_num_car +
+  // average link waiting time per vehicle = tot_wait_time/(tot_num_car +
   // tot_num_truck)
   m_tot_wait_time_at_intersection = 0; // seconds
-  // average waiting time per car = tot_car_wait_time/tot_num_car
+  // average link waiting time per car = tot_car_wait_time/tot_num_car
   m_tot_wait_time_at_intersection_car = 0; // seconds
-  // average waiting time per truck = tot_truck_wait_time/tot_num_truck
+  // average link waiting time per truck = tot_truck_wait_time/tot_num_truck
   m_tot_wait_time_at_intersection_truck = 0; // seconds
 
   // flag of spill back on this link
@@ -1961,7 +1961,7 @@ MNM_Dlink_Lq_Multiclass::get_link_freeflow_tt_loading_car ()
   // throw std::runtime_error("Error,
   // MNM_Dlink_Lq_Multiclass::get_link_freeflow_tt_loading_car NOT
   // implemented");
-  return MNM_Ults::round_up_time (m_length / m_ffs_car);
+  return MNM_Ults::round_up_time (m_length / m_ffs_car / m_unit_time);
 }
 
 TInt
@@ -1970,7 +1970,7 @@ MNM_Dlink_Lq_Multiclass::get_link_freeflow_tt_loading_truck ()
   // throw std::runtime_error("Error,
   // MNM_Dlink_Lq_Multiclass::get_link_freeflow_tt_loading_truck NOT
   // implemented");
-  return MNM_Ults::round_up_time (m_length / m_ffs_truck);
+  return MNM_Ults::round_up_time (m_length / m_ffs_truck / m_unit_time);
 }
 
 /// Multiclass point queue model
@@ -2560,7 +2560,7 @@ MNM_Dnode_Inout_Multiclass::move_one_vehicle (TInt timestamp, MNM_Dlink *_in_lin
   _out_link->m_incoming_array.push_back (_veh);
   _veh->set_current_link (_out_link);
   // accumulated miles for non-Pq links
-  _veh->update_miles_traveled (_in_link);
+  _veh->update_miles_traveled (_in_link, timestamp);
   if (_veh->get_class() == 0)
   {
     m_veh_moved_car[_in_link_i * _offset + _out_link_j] += 1;
@@ -2659,7 +2659,7 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                               // _out_link->m_incoming_array.push_back (_veh);
                               // _veh->set_current_link (_out_link);
                               // // accumulated miles for non-Pq links
-                              // _veh->update_miles_traveled (_in_link);
+                              // _veh->update_miles_traveled (_in_link, timestamp);
                               // if (_veh->m_class == 0)
                               //   {
                               //     m_veh_moved_car[i * _offset + j] += 1;
@@ -2702,7 +2702,7 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                           // _out_link->m_incoming_array.push_back (_veh);
                           // _veh->set_current_link (_out_link);
                           // // accumulated miles for non-Pq links
-                          // _veh->update_miles_traveled (_in_link);
+                          // _veh->update_miles_traveled (_in_link, timestamp);
                           // if (_veh->m_class == 0)
                           //   {
                           //     m_veh_moved_car[i * _offset + j] += 1;
@@ -3359,6 +3359,26 @@ MNM_Veh_Multiclass::MNM_Veh_Multiclass (TInt ID, TInt vehicle_class,
 
 MNM_Veh_Multiclass::~MNM_Veh_Multiclass () { ; }
 
+int
+MNM_Veh_Multiclass::update_miles_traveled (MNM_Dlink *link, int timestamp)
+{
+  if (dynamic_cast<MNM_Dlink_Pq *> (link) == nullptr)
+    {
+      m_miles_traveled += link->m_length / 1600.; // meter -> mile
+    }
+  if (m_class == 0) {
+    m_cumulative_freeflow_time += dynamic_cast<MNM_Dlink_Multiclass*>(link) -> get_link_freeflow_tt_loading_car();
+  }
+  else if (m_class == 1) {
+    m_cumulative_freeflow_time += dynamic_cast<MNM_Dlink_Multiclass*>(link) -> get_link_freeflow_tt_loading_truck();
+  }
+  else {
+    throw std::runtime_error ("unknown vehicle class");
+  }
+  m_last_link_exiting_time = timestamp;
+  return 0;
+}
+
 ///
 /// Multiclass Factory
 ///
@@ -3376,6 +3396,10 @@ MNM_Veh_Factory_Multiclass::MNM_Veh_Factory_Multiclass ()
   m_finished_truck = TInt (0);
   m_total_time_car = TFlt (0);
   m_total_time_truck = TFlt (0);
+  m_total_delay_car = TFlt (0);
+  m_total_delay_truck = TFlt (0);
+  m_total_miles_car = TFlt (0);
+  m_total_miles_truck = TFlt (0);
 }
 
 MNM_Veh_Factory_Multiclass::~MNM_Veh_Factory_Multiclass () { ; }
@@ -3419,17 +3443,67 @@ MNM_Veh_Factory_Multiclass::remove_finished_veh (MNM_Veh *veh, bool del)
       m_finished_car += 1;
       m_enroute_car -= 1;
       m_total_time_car += (veh->m_finish_time - veh->m_start_time);
+      m_total_delay_car += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
+      m_total_miles_car += veh->m_miles_traveled;
     }
   else if (_veh_multiclass->m_class == 1)
     {
       m_finished_truck += 1;
       m_enroute_truck -= 1;
       m_total_time_truck += (veh->m_finish_time - veh->m_start_time);
+      m_total_delay_truck += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
+      m_total_miles_truck += veh->m_miles_traveled;
     }
   MNM_Veh_Factory::remove_finished_veh (veh, del);
   IAssert (m_num_car == m_finished_car + m_enroute_car);
   IAssert (m_num_truck == m_finished_truck + m_enroute_truck);
   return 0;
+}
+
+int 
+MNM_Veh_Factory_Multiclass::update_veh_stat ()
+{
+  // account for enroute vehicles, do it only once at the end of DNL
+  // only consider the complete links those vehicle traversed
+  MNM_Veh *_veh;
+  for (auto _map_it : m_veh_map)
+  {
+    _veh = _map_it.second;
+    IAssert (_veh->m_finish_time < 0);
+    m_total_time += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+    m_total_delay += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+    m_total_miles += _veh->m_miles_traveled;
+
+    if (_veh->get_class () == 0)
+    {
+      m_total_time_car += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+      m_total_delay_car += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      m_total_miles_car += _veh->m_miles_traveled;
+    }
+    else if (_veh->get_class () == 1)
+    {
+      m_total_time_truck += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+      m_total_delay_truck += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      m_total_miles_truck += _veh->m_miles_traveled;
+    }
+  }
+  return 0;
+}
+
+std::string 
+MNM_Veh_Factory_Multiclass::print_vehicle_statistics ()
+{
+  // note veh_factory->update_veh_stat() is called before this function, if not, this only includes finished vehicles' stat
+  std::ostringstream oss;
+  oss << "############################################### Vehicle Statistics ###############################################\n"
+      << "Released Vehicle total " << m_num_veh << ", Enroute Vehicle Total " << m_enroute << ", Finished Vehicle Total " << m_finished << ",\n"
+      << "Total Miles Traveled: " << std::fixed << m_total_miles << " miles, Total Travel Time: " << std::fixed << m_total_time << " intervals, Total Delayed Time: " << std::fixed << m_total_delay << " intervals,\n"
+      << "Released Car Driving " << m_num_car << ", Enroute Car Driving " << m_enroute_car << ", Finished Car Driving " << m_finished_car << ",\n"
+      << "Total Miles Traveled Car: " << std::fixed << m_total_miles_car << " miles, Total Travel Time Car: " << std::fixed << m_total_time_car << " intervals, Total Delayed Time Car: " << std::fixed << m_total_delay_car << " intervals,\n"
+      << "Released Truck " << m_num_truck << ", Enroute Truck " << m_enroute_truck << ", Finished Truck " << m_finished_truck << ",\n"
+      << "Total Miles Traveled Truck: " << std::fixed << m_total_miles_truck << " miles, Total Travel Time Truck: " << std::fixed << m_total_time_truck << " intervals, Total Delayed Time Truck: " << std::fixed << m_total_delay_truck << " intervals\n"
+      << "############################################### Vehicle Statistics ###############################################\n";
+  return oss.str();
 }
 
 /// Node factory
@@ -5595,20 +5669,26 @@ namespace MNM
 int
 print_vehicle_statistics (MNM_Veh_Factory_Multiclass *veh_factory)
 {
-  printf (
-    "############################################### Vehicle Statistics ###############################################\n \
-	Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d,\n \
-	Total Travel Time: %.2f intervals,\n \
-	Released Car Driving %d, Enroute Car Driving %d, Finished Car Driving %d,\n \
-	Released Truck %d, Enroute Truck %d, Finished Truck %d,\n \
-	Total Travel Time Car: %.2f intervals, Total Travel Time Truck: %.2f intervals\n \
-	############################################### Vehicle Statistics ###############################################\n",
-    veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
-    veh_factory->m_total_time, veh_factory->m_num_car,
-    veh_factory->m_enroute_car, veh_factory->m_finished_car,
-    veh_factory->m_num_truck, veh_factory->m_enroute_truck,
-    veh_factory->m_finished_truck, veh_factory->m_total_time_car,
-    veh_factory->m_total_time_truck);
+//   printf (
+// "############################################### Vehicle Statistics ###############################################\n \
+// Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d,\n\
+// Total Miles Traveled: %.2f miles, Total Travel Time: %.2f intervals, Total Delayed Time: %.2f intervals,\n\
+// Released Car Driving %d, Enroute Car Driving %d, Finished Car Driving %d,\n\
+// Total Miles Traveled Car: %.2f miles, Total Travel Time Car: %.2f intervals, Total Delayed Time Car: %.2f intervals,\n\
+// Released Truck %d, Enroute Truck %d, Finished Truck %d,\n\
+// Total Miles Traveled Truck: %.2f miles, Total Travel Time Truck: %.2f intervals, Total Delayed Time Truck: %.2f intervals\n\
+// ############################################### Vehicle Statistics ###############################################\n",
+//     veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
+//     veh_factory->m_total_miles, veh_factory->m_total_time, veh_factory->m_total_delay,
+
+//     veh_factory->m_num_car, veh_factory->m_enroute_car, veh_factory->m_finished_car,
+//     veh_factory->m_total_miles_car, veh_factory->m_total_time_car, veh_factory->m_total_delay_car,
+
+//     veh_factory->m_num_truck, veh_factory->m_enroute_truck, veh_factory->m_finished_truck, 
+//     veh_factory->m_total_miles_truck, veh_factory->m_total_time_truck, veh_factory->m_total_delay_truck);
+//   // note veh_factory->update_veh_stat() is called before this function, if not, this only includes finished vehicles' stat
+
+  std::cout << veh_factory -> print_vehicle_statistics() << std::endl;
   return 0;
 }
 

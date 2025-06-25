@@ -29,8 +29,12 @@ MNM_Veh_Factory_Multiclass_Subclass::MNM_Veh_Factory_Multiclass_Subclass ()
     m_enroute_truck_subclass = std::unordered_map<int, int> ();
     m_finished_car_subclass = std::unordered_map<int, int> ();
     m_finished_truck_subclass = std::unordered_map<int, int> ();
+    m_total_miles_car_subclass =  std::unordered_map<int, TFlt> ();
+    m_total_miles_truck_subclass = std::unordered_map<int, TFlt> ();
     m_total_time_car_subclass = std::unordered_map<int, TFlt> ();
     m_total_time_truck_subclass = std::unordered_map<int, TFlt> ();
+    m_total_delay_car_subclass = std::unordered_map<int, TFlt> ();
+    m_total_delay_truck_subclass = std::unordered_map<int, TFlt> ();
 }
 
 MNM_Veh_Factory_Multiclass_Subclass::~MNM_Veh_Factory_Multiclass_Subclass ()
@@ -41,8 +45,12 @@ MNM_Veh_Factory_Multiclass_Subclass::~MNM_Veh_Factory_Multiclass_Subclass ()
     m_enroute_truck_subclass.clear ();
     m_finished_car_subclass.clear ();
     m_finished_truck_subclass.clear ();
+    m_total_miles_car_subclass.clear ();
+    m_total_miles_truck_subclass.clear ();
     m_total_time_car_subclass.clear ();
     m_total_time_truck_subclass.clear ();
+    m_total_delay_car_subclass.clear ();
+    m_total_delay_truck_subclass.clear ();
 }
 
 MNM_Veh_Multiclass_Subclass * 
@@ -107,11 +115,13 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
     MNM_Veh_Multiclass_Subclass *_veh_multiclass = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (veh);
     IAssert (_veh_multiclass != nullptr);
     IAssert (veh->m_finish_time > veh->m_start_time);
-    if (_veh_multiclass->m_class == 0)
+    if (veh -> get_class() == 0)
     {
         m_finished_car += 1;
         m_enroute_car -= 1;
+        m_total_miles_car += veh -> m_miles_traveled;
         m_total_time_car += (veh->m_finish_time - veh->m_start_time);
+        m_total_delay_car += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         if (m_finished_car_subclass.find(_veh_multiclass->m_subclass) == m_finished_car_subclass.end())
         {
             m_finished_car_subclass[_veh_multiclass->m_subclass] = 1;
@@ -123,18 +133,24 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
         m_enroute_car_subclass[_veh_multiclass->m_subclass] -= 1;
         if (m_total_time_car_subclass.find(_veh_multiclass->m_subclass) == m_total_time_car_subclass.end())
         {
+            m_total_miles_car_subclass[_veh_multiclass->m_subclass] = veh -> m_miles_traveled;
             m_total_time_car_subclass[_veh_multiclass->m_subclass] = (veh->m_finish_time - veh->m_start_time);
+            m_total_delay_car_subclass[_veh_multiclass->m_subclass] = std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         }
         else
         {
+            m_total_miles_car_subclass[_veh_multiclass->m_subclass] += veh -> m_miles_traveled;
             m_total_time_car_subclass[_veh_multiclass->m_subclass] += (veh->m_finish_time - veh->m_start_time); 
+            m_total_delay_car_subclass[_veh_multiclass->m_subclass] += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         } 
     }
-    else if (_veh_multiclass->m_class == 1)
+    else if (veh -> get_class() == 1)
     {
         m_finished_truck += 1;
         m_enroute_truck -= 1;
+        m_total_miles_truck += veh -> m_miles_traveled;
         m_total_time_truck += (veh->m_finish_time - veh->m_start_time);
+        m_total_delay_truck += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         if (m_finished_truck_subclass.find(_veh_multiclass->m_subclass) == m_finished_truck_subclass.end())
         {
             m_finished_truck_subclass[_veh_multiclass->m_subclass] = 1;
@@ -146,17 +162,58 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
         m_enroute_truck_subclass[_veh_multiclass->m_subclass] -= 1;
         if (m_total_time_truck_subclass.find(_veh_multiclass->m_subclass) == m_total_time_truck_subclass.end())
         {
+            m_total_miles_truck_subclass[_veh_multiclass->m_subclass] = veh -> m_miles_traveled;
             m_total_time_truck_subclass[_veh_multiclass->m_subclass] = (veh->m_finish_time - veh->m_start_time);
+            m_total_delay_truck_subclass[_veh_multiclass->m_subclass] = std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         }
         else
         {
+            m_total_miles_truck_subclass[_veh_multiclass->m_subclass] += veh -> m_miles_traveled;
             m_total_time_truck_subclass[_veh_multiclass->m_subclass] += (veh->m_finish_time - veh->m_start_time); 
+            m_total_delay_truck_subclass[_veh_multiclass->m_subclass] += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         } 
     }
     MNM_Veh_Factory::remove_finished_veh (veh, del);
     IAssert (m_num_car == m_finished_car + m_enroute_car);
     IAssert (m_num_truck == m_finished_truck + m_enroute_truck);
     return 0;
+}
+
+std::string 
+MNM_Veh_Factory_Multiclass_Subclass::print_vehicle_statistics ()
+{
+  // note veh_factory->update_veh_stat() is called before this function, if not, this only includes finished vehicles' stat
+  std::ostringstream oss;
+  oss << "############################################### Vehicle Statistics ###############################################\n"
+      << "Released Vehicle total " << m_num_veh << ", Enroute Vehicle Total " << m_enroute << ", Finished Vehicle Total " << m_finished << ",\n"
+      << "Total Miles Traveled: " << std::fixed << m_total_miles << " miles, Total Travel Time: " << std::fixed << m_total_time << " intervals, Total Delayed Time: " << std::fixed << m_total_delay << " intervals,\n"
+      << "Released Car Driving " << m_num_car << ", Enroute Car Driving " << m_enroute_car << ", Finished Car Driving " << m_finished_car << ",\n"
+      << "Total Miles Traveled Car: " << std::fixed << m_total_miles_car << " miles, Total Travel Time Car: " << std::fixed << m_total_time_car << " intervals, Total Delayed Time Car: " << std::fixed << m_total_delay_car << " intervals,\n"
+      << "Released Truck " << m_num_truck << ", Enroute Truck " << m_enroute_truck << ", Finished Truck " << m_finished_truck << ",\n"
+      << "Total Miles Traveled Truck: " << std::fixed << m_total_miles_truck << " miles, Total Travel Time Truck: " << std::fixed << m_total_time_truck << " intervals, Total Delayed Time Truck: " << std::fixed << m_total_delay_truck << " intervals\n";
+
+  for (auto _it : m_num_car_subclass)
+  {
+      oss << "Car Subclass " << _it.first << ": Released Total " << _it.second << ", Enroute Total "
+          << (m_enroute_car_subclass.find(_it.first) == m_enroute_car_subclass.end() ? 0 : m_enroute_car_subclass.at(_it.first)) << ", Finished Total "
+          << (m_finished_car_subclass.find(_it.first) == m_finished_car_subclass.end() ? 0 : m_finished_car_subclass.at(_it.first)) << ", Total Miles Traveled: "
+          << std::fixed << (m_total_miles_car_subclass.find(_it.first) == m_total_miles_car_subclass.end() ? 0. : m_total_miles_car_subclass.at(_it.first)) << " miles, Total Travel Time: "
+          << std::fixed << (m_total_time_car_subclass.find(_it.first) == m_total_time_car_subclass.end() ? 0. : m_total_time_car_subclass.at(_it.first)) << " intervals, Total Delayed Time: "
+          << std::fixed << (m_total_delay_car_subclass.find(_it.first) == m_total_delay_car_subclass.end() ? 0. : m_total_delay_car_subclass.at(_it.first)) << " intervals\n";
+  }
+
+  for (auto _it : m_num_truck_subclass)
+  {
+      oss << "Truck Subclass " << _it.first << ": Released Total " << _it.second << ", Enroute Total "
+          << (m_enroute_truck_subclass.find(_it.first) == m_enroute_truck_subclass.end() ? 0 : m_enroute_truck_subclass.at(_it.first)) << ", Finished Total "
+          << (m_finished_truck_subclass.find(_it.first) == m_finished_truck_subclass.end() ? 0 : m_finished_truck_subclass.at(_it.first)) << ", Total Miles Traveled: "
+          << std::fixed << (m_total_miles_truck_subclass.find(_it.first) == m_total_miles_truck_subclass.end() ? 0. : m_total_miles_truck_subclass.at(_it.first)) << " miles, Total Travel Time: "
+          << std::fixed << (m_total_time_truck_subclass.find(_it.first) == m_total_time_truck_subclass.end() ? 0. : m_total_time_truck_subclass.at(_it.first)) << " intervals, Total Delayed Time: "
+          << std::fixed << (m_total_delay_car_subclass.find(_it.first) == m_total_delay_car_subclass.end() ? 0. : m_total_delay_car_subclass.at(_it.first)) << " intervals\n";
+  }
+
+  oss << "############################################### Vehicle Statistics ###############################################\n";
+  return oss.str();
 }
 
 /**************************************************************************
@@ -896,7 +953,7 @@ MNM_Dnode_Inout_Multiclass_Subclass::move_one_vehicle (TInt timestamp, MNM_Dlink
     _out_link->m_incoming_array.push_back (_veh);
     _veh->set_current_link (_out_link);
     // accumulated miles for non-Pq links
-    _veh->update_miles_traveled (_in_link);
+    _veh->update_miles_traveled (_in_link, timestamp);
     if (_veh->get_class() == 0)
     {
         m_veh_moved_car[_in_link_i * _offset + _out_link_j] += 1;
@@ -2596,39 +2653,48 @@ namespace MNM
 int
 print_vehicle_statistics (MNM_Veh_Factory_Multiclass_Subclass *veh_factory)
 {
-    printf (
-    "############################################### Vehicle Statistics ###############################################\n \
-    Released Vehicle Total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d,\n \
-    Total Travel Time: %.2f intervals,\n \
-    Released Car Driving %d, Enroute Car Driving %d, Finished Car Driving %d,\n \
-    Released Truck %d, Enroute Truck %d, Finished Truck %d,\n \
-    Total Travel Time Car: %.2f intervals, Total Travel Time Truck: %.2f intervals\n \
-    \n",
-    veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished,
-    veh_factory->m_total_time, veh_factory->m_num_car,
-    veh_factory->m_enroute_car, veh_factory->m_finished_car,
-    veh_factory->m_num_truck, veh_factory->m_enroute_truck,
-    veh_factory->m_finished_truck, veh_factory->m_total_time_car,
-    veh_factory->m_total_time_truck);
+//   printf (
+// "############################################### Vehicle Statistics ###############################################\n \
+// Released Vehicle total %d, Enroute Vehicle Total %d, Finished Vehicle Total %d,\n\
+// Total Miles Traveled: %.2f miles, Total Travel Time: %.2f intervals, Total Delayed Time: %.2f intervals,\n\
+// Released Car Driving %d, Enroute Car Driving %d, Finished Car Driving %d,\n\
+// Total Miles Traveled Car: %.2f miles, Total Travel Time Car: %.2f intervals, Total Delayed Time Car: %.2f intervals,\n\
+// Released Truck %d, Enroute Truck %d, Finished Truck %d,\n\
+// Total Miles Traveled Truck: %.2f miles, Total Travel Time Truck: %.2f intervals, Total Delayed Time Truck: %.2f intervals\n\
+// ############################################### Vehicle Statistics ###############################################\n",
+//     veh_factory->m_num_veh, veh_factory->m_enroute, veh_factory->m_finished, 
+//     veh_factory->m_total_miles, veh_factory->m_total_time, veh_factory->m_total_delay, 
 
-    for (auto _it : veh_factory -> m_num_car_subclass) 
-    {
-        printf("Car Subclass %d: Released Total %d, Enroute Total %d, Finished Total %d, Total travel time %.2f intervals\n", 
-                _it.first, _it.second, 
-                veh_factory -> m_enroute_car_subclass.find(_it.first) == veh_factory -> m_enroute_car_subclass.end() ? 0 : veh_factory -> m_enroute_car_subclass.at(_it.first), 
-                veh_factory -> m_finished_car_subclass.find(_it.first) == veh_factory -> m_finished_car_subclass.end() ? 0 : veh_factory -> m_finished_car_subclass.at(_it.first), 
-                veh_factory -> m_total_time_car_subclass.find(_it.first) == veh_factory -> m_total_time_car_subclass.end() ? 0. : veh_factory -> m_total_time_car_subclass.at(_it.first));
-    }
+//     veh_factory->m_num_car, veh_factory->m_enroute_car, veh_factory->m_finished_car, 
+//     veh_factory->m_total_miles_car, veh_factory->m_total_time_car, veh_factory->m_total_delay_car,
 
-    for (auto _it : veh_factory -> m_num_truck_subclass) 
-    {
-        printf("Truck Subclass %d: Released Total %d, Enroute Total %d, Finished Total %d, Total travel time %.2f intervals\n", 
-                _it.first, _it.second, 
-                veh_factory -> m_enroute_truck_subclass.find(_it.first) == veh_factory -> m_enroute_truck_subclass.end() ? 0 : veh_factory -> m_enroute_truck_subclass.at(_it.first), 
-                veh_factory -> m_finished_truck_subclass.find(_it.first) == veh_factory -> m_finished_truck_subclass.end() ? 0 : veh_factory -> m_finished_truck_subclass.at(_it.first), 
-                veh_factory -> m_total_time_truck_subclass.find(_it.first) == veh_factory -> m_total_time_truck_subclass.end() ? 0 : veh_factory -> m_total_time_truck_subclass.at(_it.first));
-    }
-    printf("############################################### Vehicle Statistics ###############################################\n");
+//     veh_factory->m_num_truck, veh_factory->m_enroute_truck, veh_factory->m_finished_truck, 
+//     veh_factory->m_total_miles_truck, veh_factory->m_total_time_truck, veh_factory->m_total_delay_truck);
+//   // note veh_factory->update_veh_stat() is called before this function, if not, this only includes finished vehicles' stat
+
+//     for (auto _it : veh_factory -> m_num_car_subclass) 
+//     {
+//         printf("Car Subclass %d: Released Total %d, Enroute Total %d, Finished Total %d, Total Miles Traveled: %.2f miles, Total Travel Time: %.2f intervals, Total Delayed Time: %.2f intervals\n", 
+//                 _it.first, _it.second, 
+//                 veh_factory -> m_enroute_car_subclass.find(_it.first) == veh_factory -> m_enroute_car_subclass.end() ? 0 : veh_factory -> m_enroute_car_subclass.at(_it.first), 
+//                 veh_factory -> m_finished_car_subclass.find(_it.first) == veh_factory -> m_finished_car_subclass.end() ? 0 : veh_factory -> m_finished_car_subclass.at(_it.first), 
+//                 veh_factory -> m_total_miles_car_subclass.find(_it.first) == veh_factory -> m_total_miles_car_subclass.end() ? 0. : veh_factory -> m_total_miles_car_subclass.at(_it.first),
+//                 veh_factory -> m_total_time_car_subclass.find(_it.first) == veh_factory -> m_total_time_car_subclass.end() ? 0. : veh_factory -> m_total_time_car_subclass.at(_it.first),
+//                 veh_factory -> m_total_delay_car_subclass.find(_it.first) == veh_factory -> m_total_delay_car_subclass.end() ? 0. : veh_factory -> m_total_delay_car_subclass.at(_it.first));
+//     }
+
+//     for (auto _it : veh_factory -> m_num_truck_subclass) 
+//     {
+//         printf("Truck Subclass %d: Released Total %d, Enroute Total %d, Finished Total %d, Total Miles Traveled: %.2f miles, Total Travel Time: %.2f intervals, Total Delayed Time: %.2f intervals\n", 
+//                 _it.first, _it.second, 
+//                 veh_factory -> m_enroute_truck_subclass.find(_it.first) == veh_factory -> m_enroute_truck_subclass.end() ? 0 : veh_factory -> m_enroute_truck_subclass.at(_it.first), 
+//                 veh_factory -> m_finished_truck_subclass.find(_it.first) == veh_factory -> m_finished_truck_subclass.end() ? 0 : veh_factory -> m_finished_truck_subclass.at(_it.first), 
+//                 veh_factory -> m_total_miles_truck_subclass.find(_it.first) == veh_factory -> m_total_miles_truck_subclass.end() ? 0. : veh_factory -> m_total_miles_truck_subclass.at(_it.first),
+//                 veh_factory -> m_total_time_truck_subclass.find(_it.first) == veh_factory -> m_total_time_truck_subclass.end() ? 0 : veh_factory -> m_total_time_truck_subclass.at(_it.first),
+//                 veh_factory -> m_total_delay_car_subclass.find(_it.first) == veh_factory -> m_total_delay_car_subclass.end() ? 0. : veh_factory -> m_total_delay_car_subclass.at(_it.first));
+//     }
+//     printf("############################################### Vehicle Statistics ###############################################\n");
+    std::cout << veh_factory -> print_vehicle_statistics() << std::endl;
     return 0;
 }
 }

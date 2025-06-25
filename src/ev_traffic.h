@@ -14,7 +14,7 @@ public:
 
   virtual bool need_charging ();
   int charge ();
-  virtual int update_miles_traveled (MNM_Dlink *link) override;
+  virtual int update_miles_traveled (MNM_Dlink *link, int timestamp) override;
 
   TFlt m_full_range; // unit: miles, the miles the vehicle can travel with the
                      // full battery
