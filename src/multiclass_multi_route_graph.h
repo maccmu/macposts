@@ -37,6 +37,7 @@ public:
   MNM_Veh_Multiclass_Subclass *
   make_veh_multiclass_subclass (TInt timestamp, Vehicle_type veh_type, TInt vehicle_cls, TInt vehicle_subcls);
   virtual int remove_finished_veh (MNM_Veh *veh, bool del = true) override;
+  virtual int update_veh_stat () override;
   virtual std::string print_vehicle_statistics () override;
   std::unordered_map<int, int> m_num_car_subclass;
   std::unordered_map<int, int> m_num_truck_subclass;

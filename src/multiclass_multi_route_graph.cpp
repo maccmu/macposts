@@ -120,7 +120,7 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
         m_finished_car += 1;
         m_enroute_car -= 1;
         m_total_miles_car += veh -> m_miles_traveled;
-        m_total_time_car += (veh->m_finish_time - veh->m_start_time);
+        m_total_time_car += std::max(0, (veh -> m_finish_time - veh->m_start_time));
         m_total_delay_car += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         if (m_finished_car_subclass.find(_veh_multiclass->m_subclass) == m_finished_car_subclass.end())
         {
@@ -134,13 +134,13 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
         if (m_total_time_car_subclass.find(_veh_multiclass->m_subclass) == m_total_time_car_subclass.end())
         {
             m_total_miles_car_subclass[_veh_multiclass->m_subclass] = veh -> m_miles_traveled;
-            m_total_time_car_subclass[_veh_multiclass->m_subclass] = (veh->m_finish_time - veh->m_start_time);
+            m_total_time_car_subclass[_veh_multiclass->m_subclass] = std::max(0, (veh -> m_finish_time - veh->m_start_time));
             m_total_delay_car_subclass[_veh_multiclass->m_subclass] = std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         }
         else
         {
             m_total_miles_car_subclass[_veh_multiclass->m_subclass] += veh -> m_miles_traveled;
-            m_total_time_car_subclass[_veh_multiclass->m_subclass] += (veh->m_finish_time - veh->m_start_time); 
+            m_total_time_car_subclass[_veh_multiclass->m_subclass] += std::max(0, (veh -> m_finish_time - veh->m_start_time)); 
             m_total_delay_car_subclass[_veh_multiclass->m_subclass] += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         } 
     }
@@ -149,7 +149,7 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
         m_finished_truck += 1;
         m_enroute_truck -= 1;
         m_total_miles_truck += veh -> m_miles_traveled;
-        m_total_time_truck += (veh->m_finish_time - veh->m_start_time);
+        m_total_time_truck += std::max(0, (veh -> m_finish_time - veh->m_start_time));
         m_total_delay_truck += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         if (m_finished_truck_subclass.find(_veh_multiclass->m_subclass) == m_finished_truck_subclass.end())
         {
@@ -163,13 +163,13 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
         if (m_total_time_truck_subclass.find(_veh_multiclass->m_subclass) == m_total_time_truck_subclass.end())
         {
             m_total_miles_truck_subclass[_veh_multiclass->m_subclass] = veh -> m_miles_traveled;
-            m_total_time_truck_subclass[_veh_multiclass->m_subclass] = (veh->m_finish_time - veh->m_start_time);
+            m_total_time_truck_subclass[_veh_multiclass->m_subclass] = std::max(0, (veh -> m_finish_time - veh->m_start_time));
             m_total_delay_truck_subclass[_veh_multiclass->m_subclass] = std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         }
         else
         {
             m_total_miles_truck_subclass[_veh_multiclass->m_subclass] += veh -> m_miles_traveled;
-            m_total_time_truck_subclass[_veh_multiclass->m_subclass] += (veh->m_finish_time - veh->m_start_time); 
+            m_total_time_truck_subclass[_veh_multiclass->m_subclass] += std::max(0, (veh -> m_finish_time - veh->m_start_time)); 
             m_total_delay_truck_subclass[_veh_multiclass->m_subclass] += std::max(0, (veh->m_finish_time - veh->m_start_time) - veh -> m_cumulative_freeflow_time);
         } 
     }
@@ -177,6 +177,61 @@ MNM_Veh_Factory_Multiclass_Subclass::remove_finished_veh (MNM_Veh *veh, bool del
     IAssert (m_num_car == m_finished_car + m_enroute_car);
     IAssert (m_num_truck == m_finished_truck + m_enroute_truck);
     return 0;
+}
+
+int 
+MNM_Veh_Factory_Multiclass_Subclass::update_veh_stat ()
+{
+  // account for enroute vehicles, do it only once at the end of DNL
+  // only consider the complete links those vehicle traversed
+  for (auto _map_it : m_veh_map)
+  {
+    auto *_veh = dynamic_cast<MNM_Veh_Multiclass_Subclass *> (_map_it.second);
+    IAssert (_veh->m_finish_time < 0);
+    m_total_time += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+    m_total_delay += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+    m_total_miles += _veh->m_miles_traveled;
+
+    if (_veh->get_class () == 0)
+    {
+      m_total_time_car += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+      m_total_delay_car += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      m_total_miles_car += _veh->m_miles_traveled;
+
+      if (m_total_time_car_subclass.find(_veh->m_subclass) == m_total_time_car_subclass.end())
+      {
+          m_total_miles_car_subclass[_veh->m_subclass] = _veh -> m_miles_traveled;
+          m_total_time_car_subclass[_veh->m_subclass] = std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+          m_total_delay_car_subclass[_veh->m_subclass] = std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      }
+      else
+      {
+          m_total_miles_car_subclass[_veh->m_subclass] += _veh -> m_miles_traveled;
+          m_total_time_car_subclass[_veh->m_subclass] += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time)); 
+          m_total_delay_car_subclass[_veh->m_subclass] += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      } 
+    }
+    else if (_veh->get_class () == 1)
+    {
+      m_total_time_truck += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+      m_total_delay_truck += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      m_total_miles_truck += _veh->m_miles_traveled;
+
+      if (m_total_time_truck_subclass.find(_veh->m_subclass) == m_total_time_truck_subclass.end())
+      {
+          m_total_miles_truck_subclass[_veh->m_subclass] = _veh -> m_miles_traveled;
+          m_total_time_truck_subclass[_veh->m_subclass] = std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time));
+          m_total_delay_truck_subclass[_veh->m_subclass] = std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      }
+      else
+      {
+          m_total_miles_truck_subclass[_veh->m_subclass] += _veh -> m_miles_traveled;
+          m_total_time_truck_subclass[_veh->m_subclass] += std::max(0, (_veh -> m_last_link_exiting_time - _veh->m_start_time)); 
+          m_total_delay_truck_subclass[_veh->m_subclass] += std::max(0, (_veh->m_last_link_exiting_time - _veh->m_start_time) - _veh -> m_cumulative_freeflow_time);
+      } 
+    }
+  }
+  return 0;
 }
 
 std::string 
