@@ -209,7 +209,7 @@ MNM_Veh_Factory_Multiclass_Subclass::print_vehicle_statistics ()
           << (m_finished_truck_subclass.find(_it.first) == m_finished_truck_subclass.end() ? 0 : m_finished_truck_subclass.at(_it.first)) << ", Total Miles Traveled: "
           << std::fixed << (m_total_miles_truck_subclass.find(_it.first) == m_total_miles_truck_subclass.end() ? 0. : m_total_miles_truck_subclass.at(_it.first)) << " miles, Total Travel Time: "
           << std::fixed << (m_total_time_truck_subclass.find(_it.first) == m_total_time_truck_subclass.end() ? 0. : m_total_time_truck_subclass.at(_it.first)) << " intervals, Total Delayed Time: "
-          << std::fixed << (m_total_delay_car_subclass.find(_it.first) == m_total_delay_car_subclass.end() ? 0. : m_total_delay_car_subclass.at(_it.first)) << " intervals\n";
+          << std::fixed << (m_total_delay_truck_subclass.find(_it.first) == m_total_delay_truck_subclass.end() ? 0. : m_total_delay_truck_subclass.at(_it.first)) << " intervals\n";
   }
 
   oss << "############################################### Vehicle Statistics ###############################################\n";
