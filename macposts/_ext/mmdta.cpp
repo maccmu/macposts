@@ -4494,30 +4494,39 @@ Mmdta::get_path_tt_car (py::array_t<int> link_IDs,
 
   return result;
 }
+
 py::array_t<double>
 Mmdta::get_bus_boarding_alighting_record()
 {
+    const auto& busstop_map = m_mmdta->m_busstop_factory->m_busstop_map;
 
-    int num_record = g_boarding_alighting_records.size();
-
-    if (num_record == 0) {
-        return py::array_t<double>({0, 7});
+    int total_size = 0;
+    for (const auto& kv : busstop_map) {
+        if (auto* busstop = dynamic_cast<MNM_Busstop_Virtual*>(kv.second)) {
+            total_size += busstop->m_boarding_alighting_record.records.size();
+        }
     }
 
-    // Allocate output array: timestamp, bus_id, route_id, route_order, stop_id, boarding, alighting
-    auto result = py::array_t<double>({num_record, 7});
+    auto result = py::array_t<double>({total_size, 8});
     auto r = result.mutable_unchecked<2>();
 
     TFlt flow_scalar = m_mmdta->m_flow_scalar;
-    for (int i = 0; i < num_record; ++i) {
-        const auto& rec = g_boarding_alighting_records[i];
-        r(i, 0) = rec.timestamp;
-        r(i, 1) = rec.bus_id;
-        r(i, 2) = rec.route_id;
-        r(i, 3) = (rec.route_order+1)/flow_scalar;
-        r(i, 4) = rec.stop_id;
-        r(i, 5) = rec.boarding/flow_scalar;   
-        r(i, 6) = rec.alighting/flow_scalar; 
+    int idx = 0;
+
+    for (const auto& kv : busstop_map) {
+        if (auto* busstop = dynamic_cast<MNM_Busstop_Virtual*>(kv.second)) {
+            for (const auto& rec : busstop->m_boarding_alighting_record.records) {
+                r(idx, 0) = rec.arrival_time;
+                r(idx, 1) = rec.bus_id;
+                r(idx, 2) = rec.route_id;
+                r(idx, 3) = rec.route_order / flow_scalar;
+                r(idx, 4) = rec.stop_id;
+                r(idx, 5) = rec.boarding / flow_scalar;
+                r(idx, 6) = rec.alighting / flow_scalar;
+                r(idx, 7) = rec.departure_time;
+                idx += 1;
+            }
+        }
     }
 
     return result;
@@ -4525,23 +4534,31 @@ Mmdta::get_bus_boarding_alighting_record()
 
 py::tuple Mmdta::get_sparse_dar_matrix_bt_by_round()
 {
-    const auto& board_map  = g_path_interval_bt_stop_board_count;
-    const auto& alight_map = g_path_interval_bt_stop_alight_count;
-
     std::set<std::pair<TInt, TInt>> col_key_set;
     std::set<std::tuple<TInt, TInt, std::string>> row_key_set;
 
-    for (const auto& kv : board_map)
-        col_key_set.insert({std::get<0>(kv.first), std::get<1>(kv.first)});
-    for (const auto& kv : alight_map)
-        col_key_set.insert({std::get<0>(kv.first), std::get<1>(kv.first)});
+    const auto& busstop_map = m_mmdta->m_busstop_factory->m_busstop_map;
 
-    for (const auto& rec : g_boarding_alighting_records) {
-        TInt stop_id = rec.stop_id;
-        TInt order   = (rec.route_order + 1) / m_mmdta->m_flow_scalar;
-      
-        row_key_set.insert({stop_id, order, "board"});
-        row_key_set.insert({stop_id, order, "alight"});
+    for (const auto& kv : busstop_map) {
+        auto* busstop = dynamic_cast<MNM_Busstop_Virtual*>(kv.second);
+        if (!busstop) continue;
+
+        for (const auto& rec : busstop->m_boarding_alighting_record.records) {
+            TInt stop_id = rec.stop_id;
+            TInt order   = rec.route_order / m_mmdta->m_flow_scalar;
+
+            row_key_set.insert({stop_id, order, "board"});
+            row_key_set.insert({stop_id, order, "alight"});
+        }
+
+        const auto& board_map  = busstop->m_boarding_alighting_record.path_interval_bt_stop_board_count;
+        const auto& alight_map = busstop->m_boarding_alighting_record.path_interval_bt_stop_alight_count;
+
+        for (const auto& entry : board_map)
+            col_key_set.insert({std::get<0>(entry.first), std::get<1>(entry.first)});
+
+        for (const auto& entry : alight_map)
+            col_key_set.insert({std::get<0>(entry.first), std::get<1>(entry.first)});
     }
 
     std::vector<std::tuple<TInt, TInt, std::string>> row_reverse(row_key_set.begin(), row_key_set.end());
@@ -4558,42 +4575,49 @@ py::tuple Mmdta::get_sparse_dar_matrix_bt_by_round()
     std::vector<int> col_idx_vec;
     std::vector<double> val_vec;
 
-    for (const auto& kv : alight_map) {
-      TInt stop_id    = std::get<2>(kv.first);
-      TInt raw_order  = std::get<3>(kv.first);
-      TInt order      = (raw_order + 1) / m_mmdta->m_flow_scalar;  
-  
-      auto row_key = std::make_tuple(stop_id, order, "alight");
-      auto col_key = std::make_pair(std::get<0>(kv.first), std::get<1>(kv.first));
-  
-      auto r_it = row_mapping.find(row_key);
-      auto c_it = col_mapping.find(col_key);
-  
-      if (r_it != row_mapping.end() && c_it != col_mapping.end()) {
-          row_idx_vec.push_back(r_it->second);
-          col_idx_vec.push_back(c_it->second);
-          val_vec.push_back(kv.second/ m_mmdta->m_flow_scalar);
-      }
-    }
+    for (const auto& kv : busstop_map) {
+        auto* busstop = dynamic_cast<MNM_Busstop_Virtual*>(kv.second);
+        if (!busstop) continue;
 
-    for (const auto& kv : board_map) {
-      TInt stop_id    = std::get<2>(kv.first);
-      TInt raw_order  = std::get<3>(kv.first);
-      TInt order      = (raw_order + 1) / m_mmdta->m_flow_scalar;  
-  
-      auto row_key = std::make_tuple(stop_id, order, "board");
-      auto col_key = std::make_pair(std::get<0>(kv.first), std::get<1>(kv.first));
-  
-      auto r_it = row_mapping.find(row_key);
-      auto c_it = col_mapping.find(col_key);
-  
-      if (r_it != row_mapping.end() && c_it != col_mapping.end()) {
-          row_idx_vec.push_back(r_it->second);
-          col_idx_vec.push_back(c_it->second);
-          val_vec.push_back(kv.second/ m_mmdta->m_flow_scalar);
-      }
+        const auto& board_map  = busstop->m_boarding_alighting_record.path_interval_bt_stop_board_count;
+        const auto& alight_map = busstop->m_boarding_alighting_record.path_interval_bt_stop_alight_count;
+
+        for (const auto& entry : alight_map) {
+            TInt stop_id   = std::get<2>(entry.first);
+            TInt raw_order = std::get<3>(entry.first);
+            TInt order     = raw_order / m_mmdta->m_flow_scalar;
+
+            auto row_key = std::make_tuple(stop_id, order, "alight");
+            auto col_key = std::make_pair(std::get<0>(entry.first), std::get<1>(entry.first));
+
+            auto r_it = row_mapping.find(row_key);
+            auto c_it = col_mapping.find(col_key);
+
+            if (r_it != row_mapping.end() && c_it != col_mapping.end()) {
+                row_idx_vec.push_back(r_it->second);
+                col_idx_vec.push_back(c_it->second);
+                val_vec.push_back(entry.second / m_mmdta->m_flow_scalar);
+            }
+        }
+
+        for (const auto& entry : board_map) {
+            TInt stop_id   = std::get<2>(entry.first);
+            TInt raw_order = std::get<3>(entry.first);
+            TInt order     = raw_order / m_mmdta->m_flow_scalar;
+
+            auto row_key = std::make_tuple(stop_id, order, "board");
+            auto col_key = std::make_pair(std::get<0>(entry.first), std::get<1>(entry.first));
+
+            auto r_it = row_mapping.find(row_key);
+            auto c_it = col_mapping.find(col_key);
+
+            if (r_it != row_mapping.end() && c_it != col_mapping.end()) {
+                row_idx_vec.push_back(r_it->second);
+                col_idx_vec.push_back(c_it->second);
+                val_vec.push_back(entry.second / m_mmdta->m_flow_scalar);
+            }
+        }
     }
-  
 
     py::list row_names;
     for (const auto& r : row_reverse)
@@ -4614,27 +4638,31 @@ py::tuple Mmdta::get_sparse_dar_matrix_bt_by_round()
 
 py::tuple Mmdta::get_sparse_dar_matrix_pnr_by_round()
 {
-    const auto& board_map  = g_path_interval_pnr_stop_board_count;
-    const auto& alight_map = g_path_interval_pnr_stop_alight_count;
-
     std::set<std::pair<TInt, TInt>> col_key_set;
-    for (const auto& kv : board_map)
-        col_key_set.insert({std::get<0>(kv.first), std::get<1>(kv.first)});
-    for (const auto& kv : alight_map)
-        col_key_set.insert({std::get<0>(kv.first), std::get<1>(kv.first)});
-
-    std::vector<std::pair<TInt, TInt>> col_reverse(col_key_set.begin(), col_key_set.end());
-    std::map<std::pair<TInt, TInt>, int> col_mapping;
-    for (int i = 0; i < (int)col_reverse.size(); ++i)
-        col_mapping[col_reverse[i]] = i;
-
-    // === 2. stop_id × vehicle_order × board/alight ===
     std::set<std::tuple<TInt, TInt, std::string>> row_key_set;
-    for (const auto& rec : g_boarding_alighting_records) {
-        TInt stop_id = rec.stop_id;
-        TInt order   = (rec.route_order + 1) / m_mmdta->m_flow_scalar;
-        row_key_set.insert({stop_id, order, "board"});
-        row_key_set.insert({stop_id, order, "alight"});
+
+    const auto& busstop_map = m_mmdta->m_busstop_factory->m_busstop_map;
+
+    for (const auto& kv : busstop_map) {
+        auto* busstop = dynamic_cast<MNM_Busstop_Virtual*>(kv.second);
+        if (!busstop) continue;
+
+        for (const auto& rec : busstop->m_boarding_alighting_record.records) {
+            TInt stop_id = rec.stop_id;
+            TInt order   = rec.route_order / m_mmdta->m_flow_scalar;
+
+            row_key_set.insert({stop_id, order, "board"});
+            row_key_set.insert({stop_id, order, "alight"});
+        }
+
+        const auto& board_map  = busstop->m_boarding_alighting_record.path_interval_pnr_stop_board_count;
+        const auto& alight_map = busstop->m_boarding_alighting_record.path_interval_pnr_stop_alight_count;
+
+        for (const auto& entry : board_map)
+            col_key_set.insert({std::get<0>(entry.first), std::get<1>(entry.first)});
+
+        for (const auto& entry : alight_map)
+            col_key_set.insert({std::get<0>(entry.first), std::get<1>(entry.first)});
     }
 
     std::vector<std::tuple<TInt, TInt, std::string>> row_reverse(row_key_set.begin(), row_key_set.end());
@@ -4642,44 +4670,57 @@ py::tuple Mmdta::get_sparse_dar_matrix_pnr_by_round()
     for (int i = 0; i < (int)row_reverse.size(); ++i)
         row_mapping[row_reverse[i]] = i;
 
+    std::vector<std::pair<TInt, TInt>> col_reverse(col_key_set.begin(), col_key_set.end());
+    std::map<std::pair<TInt, TInt>, int> col_mapping;
+    for (int i = 0; i < (int)col_reverse.size(); ++i)
+        col_mapping[col_reverse[i]] = i;
+
     std::vector<int> row_idx_vec;
     std::vector<int> col_idx_vec;
     std::vector<double> val_vec;
 
-    for (const auto& kv : alight_map) {
-      TInt stop_id    = std::get<2>(kv.first);
-      TInt raw_order  = std::get<3>(kv.first);
-      TInt order      = (raw_order + 1) / m_mmdta->m_flow_scalar;  
-  
-      auto row_key = std::make_tuple(stop_id, order, "alight");
-      auto col_key = std::make_pair(std::get<0>(kv.first), std::get<1>(kv.first));
-  
-      auto r_it = row_mapping.find(row_key);
-      auto c_it = col_mapping.find(col_key);
-  
-      if (r_it != row_mapping.end() && c_it != col_mapping.end()) {
-          row_idx_vec.push_back(r_it->second);
-          col_idx_vec.push_back(c_it->second);
-          val_vec.push_back(kv.second/ m_mmdta->m_flow_scalar);
-      }
-    }
+    for (const auto& kv : busstop_map) {
+        auto* busstop = dynamic_cast<MNM_Busstop_Virtual*>(kv.second);
+        if (!busstop) continue;
 
-    for (const auto& kv : board_map) {
-      TInt stop_id    = std::get<2>(kv.first);
-      TInt raw_order  = std::get<3>(kv.first);
-      TInt order      = (raw_order + 1) / m_mmdta->m_flow_scalar;  
-  
-      auto row_key = std::make_tuple(stop_id, order, "board");
-      auto col_key = std::make_pair(std::get<0>(kv.first), std::get<1>(kv.first));
-  
-      auto r_it = row_mapping.find(row_key);
-      auto c_it = col_mapping.find(col_key);
-  
-      if (r_it != row_mapping.end() && c_it != col_mapping.end()) {
-          row_idx_vec.push_back(r_it->second);
-          col_idx_vec.push_back(c_it->second);
-          val_vec.push_back(kv.second/ m_mmdta->m_flow_scalar);
-      }
+        const auto& board_map  = busstop->m_boarding_alighting_record.path_interval_pnr_stop_board_count;
+        const auto& alight_map = busstop->m_boarding_alighting_record.path_interval_pnr_stop_alight_count;
+
+        for (const auto& entry : alight_map) {
+            TInt stop_id   = std::get<2>(entry.first);
+            TInt raw_order = std::get<3>(entry.first);
+            TInt order     = raw_order / m_mmdta->m_flow_scalar;
+
+            auto row_key = std::make_tuple(stop_id, order, "alight");
+            auto col_key = std::make_pair(std::get<0>(entry.first), std::get<1>(entry.first));
+
+            auto r_it = row_mapping.find(row_key);
+            auto c_it = col_mapping.find(col_key);
+
+            if (r_it != row_mapping.end() && c_it != col_mapping.end()) {
+                row_idx_vec.push_back(r_it->second);
+                col_idx_vec.push_back(c_it->second);
+                val_vec.push_back(entry.second / m_mmdta->m_flow_scalar);
+            }
+        }
+
+        for (const auto& entry : board_map) {
+            TInt stop_id   = std::get<2>(entry.first);
+            TInt raw_order = std::get<3>(entry.first);
+            TInt order     = raw_order / m_mmdta->m_flow_scalar;
+
+            auto row_key = std::make_tuple(stop_id, order, "board");
+            auto col_key = std::make_pair(std::get<0>(entry.first), std::get<1>(entry.first));
+
+            auto r_it = row_mapping.find(row_key);
+            auto c_it = col_mapping.find(col_key);
+
+            if (r_it != row_mapping.end() && c_it != col_mapping.end()) {
+                row_idx_vec.push_back(r_it->second);
+                col_idx_vec.push_back(c_it->second);
+                val_vec.push_back(entry.second / m_mmdta->m_flow_scalar);
+            }
+        }
     }
 
     py::list row_names;

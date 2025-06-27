@@ -246,6 +246,7 @@ MNM_Link_Factory::get_link (TInt ID)
   auto _link_it = m_link_map.find (ID);
   if (_link_it == m_link_map.end ())
     {
+      printf ("No such link ID %d\n", (int) ID);
       throw std::runtime_error (
         "Error, MNM_Link_Factory::get_link, link does not exist");
     }

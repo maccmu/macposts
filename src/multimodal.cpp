@@ -6,11 +6,6 @@
 #include <cfloat>
 #include <map>
 #include <tuple>
-std::vector<BoardingAlightingRecord> g_boarding_alighting_records;
-std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_bt_stop_board_count;
-std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_pnr_stop_board_count;
-std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_bt_stop_alight_count;
-std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_pnr_stop_alight_count;
 
 using macposts::graph::Direction;
 
@@ -409,15 +404,6 @@ MNM_Busstop_Virtual::hold_bus (TInt timestamp, MNM_Veh *veh, MNM_Veh_Multimodal 
     {
       // IAssert(veh_multimodal -> m_passenger_pool.size() == 0);
       m_passed_bus_counter += 1;
-      BoardingAlightingRecord record;
-      record.timestamp = timestamp;
-      record.bus_id = veh_multimodal->m_veh_ID;
-      record.route_id = veh_multimodal->m_bus_route_ID;
-      record.route_order = veh_multimodal->m_route_order;
-      record.stop_id = this->m_busstop_ID;  
-      record.boarding = 0;
-      record.alighting = 0;
-      g_boarding_alighting_records.push_back(record);
       return _held;
     }
 
@@ -509,6 +495,19 @@ MNM_Busstop_Virtual::hold_bus (TInt timestamp, MNM_Veh *veh, MNM_Veh_Multimodal 
     {
       // just arriving
       // IAssert(m_passed_bus_counter == flow_scalar - 1);
+      
+      // initialize a record for this real bus at this stop
+      Record record;
+      record.arrival_time = timestamp;
+      record.bus_id = veh_multimodal->m_veh_ID;
+      record.route_id = veh_multimodal->m_bus_route_ID;
+      record.route_order = veh_multimodal->m_route_order;
+      record.stop_id = m_busstop_ID;
+      record.boarding = 0;
+      record.alighting = 0;
+      record.departure_time = -1; // not departed yet
+      m_boarding_alighting_record.records.push_back(record);
+
       if (m_passed_bus_counter != flow_scalar - 1)
         {
           throw std::runtime_error ("m_passed_bus_counter is wrong");
@@ -558,6 +557,21 @@ MNM_Busstop_Virtual::hold_bus (TInt timestamp, MNM_Veh *veh, MNM_Veh_Multimodal 
       m_passed_bus_counter = 0;
       // always keep m_stop_boarding as false after potential use
       veh_multimodal->m_stop_boarding = false;
+      // record the departure time: first find the record, and then update the departure time
+      Record *_this_record = nullptr;
+      for (auto& rec : m_boarding_alighting_record.records) {
+          if (rec.route_order == veh_multimodal->m_route_order) {
+              _this_record = &rec;
+              break;
+          }
+      }
+      if (_this_record == nullptr) {
+          std::cerr << "BoardingAlightingRecord not found for stop_id "
+                    << m_busstop_ID
+                    << " and veh order " << veh_multimodal->m_route_order << std::endl;
+          throw std::runtime_error("BoardingAlightingRecord not found for the specified stop_id and veh order.");
+      }
+      _this_record->departure_time = timestamp;
       return _held;
     }
 
@@ -1919,7 +1933,7 @@ MNM_Veh_Multimodal::MNM_Veh_Multimodal (TInt ID, TInt vehicle_class,
   m_path = nullptr;
   m_transit_path = nullptr;
   m_pnr_path = nullptr;
-  //m_route_order = -1; 
+  m_route_order = -1; 
   m_passenger_pool = std::deque<MNM_Passenger *> ();
   m_metro = is_metro;
   m_stop_boarding = false; // for bus, stop boarding when the current interval is not fulle used, i.e., the total boarding passengers is less than the max that can be boarded
@@ -1946,6 +1960,21 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
   MNM_Bus_Link *_bus_link;
   TInt _alighting_counter = 0;
   TInt _boarding_counter = 0;
+
+  Record *_this_record = nullptr;
+  for (auto& rec : _busstop_virtual->m_boarding_alighting_record.records) {
+      if (rec.route_order == m_route_order) {
+          _this_record = &rec;
+          break;
+      }
+  }
+  if (_this_record == nullptr) {
+      std::cerr << "BoardingAlightingRecord not found for stop_id "
+                << busstop->m_busstop_ID
+                << " and veh order " << m_route_order << std::endl;
+      throw std::runtime_error("BoardingAlightingRecord not found for the specified stop_id and veh order.");
+  }
+
   // Simultaneous boarding and alighting
   // alighting
   auto _passenger_it = m_passenger_pool.begin ();
@@ -1985,21 +2014,23 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
           TInt path_id;
           TInt interval = _passenger->m_assign_interval;
           TInt stop_id = busstop->m_busstop_ID;
-          TInt order = this->m_route_order;
+          TInt order = m_route_order;
 
           if (_passenger->m_pnr) {
             path_id = _passenger->m_pnr_path->m_path_ID;
             std::tuple<TInt, TInt, TInt, TInt> key = std::make_tuple(path_id, interval, stop_id, order);
-            g_path_interval_pnr_stop_alight_count[key]++;
+            _busstop_virtual->m_boarding_alighting_record.path_interval_pnr_stop_alight_count[key]++;
     
           } else {
             path_id = _passenger->m_transit_path->m_path_ID;
             std::tuple<TInt, TInt, TInt, TInt> key = std::make_tuple(path_id, interval, stop_id, order);
-            g_path_interval_bt_stop_alight_count[key]++;
+            _busstop_virtual->m_boarding_alighting_record.path_interval_bt_stop_alight_count[key]++;
           }
+          _this_record->alighting += 1;
+        
           _passenger_it = m_passenger_pool.erase (_passenger_it);
           _alighting_counter += 1;
-          g_boarding_alighting_records.back().alighting += 1;
+
           // update cc tree for passengers about to alight at this bus stop
           // update cc for passengers about to alight at this bus stop
           IAssert (_busstop_virtual->m_bus_in_link != nullptr);
@@ -2189,25 +2220,24 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
               TInt path_id;
               TInt interval = _passenger->m_assign_interval;
               TInt stop_id = busstop->m_busstop_ID;
-              TInt order = this->m_route_order;
+              TInt order = m_route_order;
                 
               if (_passenger->m_pnr) {
                   path_id = _passenger->m_pnr_path->m_path_ID;
                   std::tuple<TInt, TInt, TInt, TInt> key = std::make_tuple(path_id, interval, stop_id, order);
-                  g_path_interval_pnr_stop_board_count[key]++;
+                  _busstop_virtual->m_boarding_alighting_record.path_interval_pnr_stop_board_count[key]++;
                   
               } else {
                   path_id = _passenger->m_transit_path->m_path_ID;
                   std::tuple<TInt, TInt, TInt, TInt> key = std::make_tuple(path_id, interval, stop_id, order);
-                  g_path_interval_bt_stop_board_count[key]++;
-                  
+                  _busstop_virtual->m_boarding_alighting_record.path_interval_bt_stop_board_count[key]++;
               }
-                
-              
+              _this_record->boarding += 1;
+
               _passenger_it
                 = _walking_link->m_finished_array.erase (_passenger_it);
               _boarding_counter += 1;
-              g_boarding_alighting_records.back().boarding += 1;
+
             }
         if (_boarding_counter < (m_max_boarding_passengers_per_unit_time * busstop->m_flow_scalar))
             { // if the current interval is not fully used, i.e., the total boarding passengers is less than the max that can be boarded, stop boarding in the next interval
@@ -2283,7 +2313,7 @@ MNM_Veh_Factory_Multimodal::~MNM_Veh_Factory_Multimodal () { ; }
 MNM_Veh_Multimodal *
 MNM_Veh_Factory_Multimodal::make_veh_multimodal (
   TInt timestamp, Vehicle_type veh_type, TInt vehicle_cls, TInt capacity,
-  TInt bus_route_ID, bool is_pnr, TInt pickup_waiting_time, bool is_metro)
+  TInt bus_route_ID, bool is_pnr, TInt pickup_waiting_time, bool is_metro, TInt route_order)
 {
   // printf("A vehicle is produce at time %d, ID is %d\n", (int)timestamp,
   // (int)m_num_veh + 1);
@@ -2291,16 +2321,8 @@ MNM_Veh_Factory_Multimodal::make_veh_multimodal (
     = new MNM_Veh_Multimodal (m_num_veh + 1, vehicle_cls, timestamp, capacity,
                               bus_route_ID, is_pnr, is_metro);
   _veh->m_type = veh_type;
-  // Assign route order for buses
-  static std::unordered_map<TInt, TInt> route_bus_counter;
-  if (vehicle_cls == 1 && bus_route_ID != -1) 
-  {
-    route_bus_counter[bus_route_ID]++;
-    _veh->m_route_order = route_bus_counter[bus_route_ID];
-  } else {
-    _veh->m_route_order = -1;  // Not a bus
-  }
-  
+  _veh->m_route_order = route_order; // Set the route order for the vehicle; always be -1 for vehs other than bus/metro
+
   if (vehicle_cls == 1 && bus_route_ID != -1)
     {
       if (_veh->m_metro)
@@ -2699,6 +2721,9 @@ MNM_Origin_Multimodal::MNM_Origin_Multimodal (TInt ID, TInt max_interval,
   m_walking_out_links_vec = std::vector<MNM_Walking_Link *> ();
   m_in_passenger_queue = std::deque<MNM_Passenger *> ();
   m_pickup_waiting_time = pickup_waiting_time;
+
+  m_released_buses = TInt (0); // > 0 for bus/metro origins only
+  m_num_of_minute = TInt (frequency * 5 / 60);
 }
 
 MNM_Origin_Multimodal::~MNM_Origin_Multimodal ()
@@ -2792,10 +2817,10 @@ int
 MNM_Origin_Multimodal::add_dest_demand_bus (MNM_Destination_Multimodal *dest,
                                             TInt routeID, TFlt *demand_bus)
 {
-  // split (15-mins demand) to (15 * 1-minute demand)
+  // e.g., split (15-mins demand) to (15 * 1-minute demand)
   // bus demand
-  double *_demand_bus = new double[m_max_assign_interval * 15]();
-  for (int i = 0; i < m_max_assign_interval * 15; ++i)
+  double *_demand_bus = new double[m_max_assign_interval * m_num_of_minute]();
+  for (int i = 0; i < m_max_assign_interval * m_num_of_minute; ++i)
     {
       _demand_bus[i] = TFlt (demand_bus[i]);
     }
@@ -2818,8 +2843,8 @@ MNM_Origin_Multimodal::add_dest_demand_pnr_car (
   MNM_Destination_Multimodal *dest, TFlt *demand_pnr_car)
 {
   // split (15-mins demand) to (15 * 1-minute demand)
-  double *_demand_pnr_car = new double[m_max_assign_interval * 15]();
-  for (int i = 0; i < m_max_assign_interval * 15; ++i)
+  double *_demand_pnr_car = new double[m_max_assign_interval * m_num_of_minute]();
+  for (int i = 0; i < m_max_assign_interval * m_num_of_minute; ++i)
     {
       _demand_pnr_car[i] = TFlt (demand_pnr_car[i]);
     }
@@ -2832,8 +2857,8 @@ MNM_Origin_Multimodal::add_dest_demand_passenger_bus (
   MNM_Destination_Multimodal *dest, TFlt *demand_passenger_bus)
 {
   // split (15-mins demand) to (15 * 1-minute demand)
-  double *_demand_passenger_bus = new double[m_max_assign_interval * 15]();
-  for (int i = 0; i < m_max_assign_interval * 15; ++i)
+  double *_demand_passenger_bus = new double[m_max_assign_interval * m_num_of_minute]();
+  for (int i = 0; i < m_max_assign_interval * m_num_of_minute; ++i)
     {
       _demand_passenger_bus[i] = TFlt (demand_passenger_bus[i]);
     }
@@ -2990,19 +3015,20 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
 
           for (int i = 0; i < _veh_to_release; ++i)
             {
+              m_released_buses += 1;
               if (_vfactory->m_has_metro == TInt (1) && metro_idSet.find(_demand_it_it->first) != metro_idSet.end())
                 {
                   _veh = _vfactory->make_veh_multimodal (current_interval,
                                                          MNM_TYPE_STATIC, TInt (1),
                                                          _vfactory->m_metro_capacity,
-                                                         _demand_it_it->first, false, 0, true);
+                                                         _demand_it_it->first, false, 0, true, m_released_buses);
                 }
               else
                 {
                   _veh = _vfactory->make_veh_multimodal (current_interval,
                                                          MNM_TYPE_STATIC, TInt (1),
                                                          _vfactory->m_bus_capacity,
-                                                         _demand_it_it->first);
+                                                         _demand_it_it->first, false, 0, false, m_released_buses);
                 }
 
               _veh->set_destination (_demand_it->first);
@@ -3070,8 +3096,9 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
         }
     }
   // https://stackoverflow.com/questions/6926433/how-to-shuffle-a-stdvector
-  std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
-                       m_origin_node->m_in_veh_queue.end ());
+  // Because we want to keep the order of transit vehicles, we do not shuffle here; but can modify to allow shuffle for cars/trucks
+  // std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
+  //                      m_origin_node->m_in_veh_queue.end ());
 
   return 0;
 }
@@ -3225,19 +3252,20 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
 
           for (int i = 0; i < _veh_to_release; ++i)
             {
+              m_released_buses += 1;
               if (_vfactory->m_has_metro == TInt (1) && metro_idSet.find(_demand_it_it->first) != metro_idSet.end())
                 {
                   _veh = _vfactory->make_veh_multimodal (current_interval,
                                                          MNM_TYPE_STATIC, TInt (1),
                                                          _vfactory->m_metro_capacity,
-                                                         _demand_it_it->first, false, 0, true);
+                                                         _demand_it_it->first, false, 0, true, m_released_buses);
                 }
               else
                 {
                   _veh = _vfactory->make_veh_multimodal (current_interval,
                                                          MNM_TYPE_STATIC, TInt (1),
                                                          _vfactory->m_bus_capacity,
-                                                         _demand_it_it->first);
+                                                         _demand_it_it->first, false, 0, false, m_released_buses);
                 }
 
               _veh->set_destination (_demand_it->first);
@@ -3305,8 +3333,9 @@ MNM_Origin_Multimodal::release_one_interval_biclass (
         }
     }
   // https://stackoverflow.com/questions/6926433/how-to-shuffle-a-stdvector
-  std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
-                       m_origin_node->m_in_veh_queue.end ());
+  // Because we want to keep the order of transit vehicles, we do not shuffle here; but can modify to allow shuffle for cars/trucks
+  // std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
+  //                      m_origin_node->m_in_veh_queue.end ());
   return 0;
 }
 
@@ -8887,7 +8916,8 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
         {
           std::getline (_bus_demand_file, _line);
           _words = split (trim (_line), ' ');
-          if (TInt (_words.size ()) == (_max_interval + 3))
+          // flexible for the cases either when the bus_demand file is in 1-minute precision or in the assigen_interval precision
+          if (TInt (_words.size ()) == (_max_interval * _num_of_minute + 3) || TInt (_words.size ()) == (_max_interval + 3))  
             {
               _origin_ID = TInt (std::stoi (_words[0]));
               _dest_ID = TInt (std::stoi (_words[1]));
@@ -8895,7 +8925,19 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
               memset (_demand_vector_bus, 0x0,
                       sizeof (TFlt) * _max_interval * _num_of_minute);
               if (use_explicit_bus)
-                {
+                { 
+                  if (TInt (_words.size ()) == (_max_interval * _num_of_minute + 3))
+                  {
+                    // directly read the GTFS (1-minute precision)
+                    for (int j = 0; j < _max_interval * _num_of_minute; ++j)
+                    {
+                      _demand_bus = TFlt (std::stod (_words[j + 3]));
+                      _demand_vector_bus[j] = _demand_bus;
+                    }
+                  }
+                  else
+                  {
+                  // the following is for the case when the bus_demand file is the assigen_interval precision
                   // the releasing strategy is assigning vehicles per 1 minute,
                   // so disaggregate 15-min demand into 1-min demand
                   for (int j = 0; j < _max_interval; ++j)
@@ -8938,6 +8980,7 @@ MNM_IO_Multimodal::build_vehicle_demand_multimodal (
                             "Wrong init_demand_split\n");
                         }
                     }
+                  }    
                 }
               _origin = dynamic_cast<MNM_Origin_Multimodal *> (
                 od_factory->get_origin (_origin_ID));

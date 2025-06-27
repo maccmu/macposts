@@ -89,6 +89,25 @@ public:
 /**************************************************************************
                                                 Virtual Bus Stop
 **************************************************************************/
+struct Record {
+  TInt arrival_time = -1;
+  TInt bus_id = -1;
+  TInt route_id = -1;
+  TInt route_order = -1;
+  TInt stop_id = -1;
+  TInt boarding = 0;
+  TInt alighting = 0;
+  TInt departure_time = -1;
+};
+
+struct BoardingAlightingRecord {
+  std::vector<Record> records;
+  std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> path_interval_bt_stop_board_count;
+  std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> path_interval_pnr_stop_board_count;
+  std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> path_interval_bt_stop_alight_count;
+  std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> path_interval_pnr_stop_alight_count;
+};
+
 class MNM_Busstop_Virtual : public MNM_Busstop
 {
 public:
@@ -131,6 +150,9 @@ public:
   TInt m_historical_waiting_time = -1; // intervals
   TInt m_max_alighting_passengers_per_unit_time;
   TInt m_max_boarding_passengers_per_unit_time;
+
+  BoardingAlightingRecord m_boarding_alighting_record;
+
 
   //    MNM_Cumulative_Curve *m_N_in_car;
   //    MNM_Cumulative_Curve *m_N_out_car;
@@ -338,20 +360,6 @@ public:
   std::deque<MNM_Passenger *> m_passenger_pool;
 };
 
-struct BoardingAlightingRecord {
-  TInt timestamp = -1;
-  TInt bus_id = -1;
-  TInt route_id = -1;
-  TInt route_order = -1;
-  TInt stop_id = -1;
-  TInt boarding = 0;
-  TInt alighting = 0;
-};
-extern std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_bt_stop_board_count;
-extern std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_pnr_stop_board_count;
-extern std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_bt_stop_alight_count;
-extern std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> g_path_interval_pnr_stop_alight_count;
-extern std::vector<BoardingAlightingRecord> g_boarding_alighting_records;
 /******************************************************************************************************************
 *******************************************************************************************************************
                                                                                                 Vehicle Factory
@@ -379,7 +387,8 @@ public:
                        TInt capacity = TInt (1), TInt bus_route = TInt (-1),
                        bool is_pnr = false,
                        TInt pickup_waiting_time = TInt (0),
-                       bool is_metro = false);
+                       bool is_metro = false,
+                       TInt route_order = TInt (-1));
 
   virtual int remove_finished_veh (MNM_Veh *veh, bool del = true) override;
 
@@ -485,6 +494,9 @@ public:
   std::vector<MNM_Walking_Link *> m_walking_out_links_vec;
 
   TInt m_pickup_waiting_time; // for mobility service
+
+  TInt m_released_buses; // for origin bus stops only
+  TInt m_num_of_minute; 
 };
 
 /******************************************************************************************************************
