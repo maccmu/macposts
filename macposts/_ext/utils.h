@@ -13,8 +13,8 @@ namespace macposts
 {
 // The default random number generator.
 static std::mt19937 rng;
-// FIXME: Upper bound for travel time (?).
-static const double TT_UPPER_BOUND = 20;
+// FIXME: Upper bound for travel time (?), largest TTI from speed data.
+static const double TT_UPPER_BOUND = 50;
 
 namespace utils
 {
