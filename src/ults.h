@@ -20,10 +20,10 @@ int copy_file (const char *srce_file, const char *dest_file);
 int copy_file (std::string srce_file, std::string dest_file);
 
 TFlt roundoff (TFlt value, unsigned char prec);
-bool approximate_equal (TFlt a, TFlt b, TFlt p = 1e-4);
-bool approximate_less_than (TFlt a, TFlt b, TFlt p = 1e-4);
+bool approximate_equal (TFlt a, TFlt b, TFlt p = 5e-5);
+bool approximate_less_than (TFlt a, TFlt b, TFlt p = 5e-5);
 
-int round_up_time (TFlt time, TFlt p = 1e-4);
+int round_up_time (TFlt time, TFlt p = 5e-5);
 int round_down_time (TFlt time);
 
 macposts::Graph reverse_graph (const macposts::Graph &graph);
