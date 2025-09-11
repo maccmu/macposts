@@ -11246,7 +11246,16 @@ get_bus_waiting_time (MNM_Busstop_Virtual *busstop, TFlt start_time,
                         : 2 * end_loading_timestamp;
     }
   else
-    {
+    { 
+      printf("cc_in: %.6f, cc_out: %.6f, time: %f, busstop_id: %d\n",
+             _cc_in, _cc_out, start_time,
+             busstop->m_busstop_ID);
+      std::cout << "N_in output: " 
+          << busstop->m_N_in_bus->to_string() 
+          << std::endl;
+      std::cout << "N_out output: " 
+          << busstop->m_N_out_bus->to_string() 
+          << std::endl;
       throw std::runtime_error (
         "Error, get_bus_waiting_time out cc larger than in cc");
       return -1;
