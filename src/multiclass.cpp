@@ -6046,11 +6046,12 @@ print_vehicle_route_results (
           // determined which vehicle needs to be tracked among vehicle just
           // being released
           if (_flg && (veh_it.second->m_start_time == interval)
-              && (veh_it.second->m_current_link != nullptr)
+              // && (veh_it.second->m_current_link != nullptr)
               && (veh_it.second->m_next_link != nullptr)
               && !(veh_it.second->m_tracked))
             {
-              if (veh_it.second->m_current_link->m_from_node->m_node_ID
+              // vehicle just being released still on the OD connector and the next link is not updated at this time interval
+              if (veh_it.second->m_next_link->m_from_node->m_node_ID
                   == veh_it.second->m_origin->m_origin_node->m_node_ID)
                 {
                   if (OD_pair_tracked.empty ())
