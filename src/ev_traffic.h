@@ -229,4 +229,6 @@ public:
   virtual int set_routing () override;
   virtual bool is_ok () override;
   virtual int load_once (bool verbose, TInt load_int, TInt assign_int) override;
+
+  virtual int generate_candidate_charging_stations(TFlt buffer_size = 1., TFlt buffer_size_threshold = 1., TFlt increment = 1.);
 };

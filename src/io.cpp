@@ -217,7 +217,7 @@ MNM_IO::build_od_factory (const std::string &file_folder,
             }
           ++i;
           _words = split (_line, ' ');
-          if (_words.size () == 2)
+          if (_words.size () >= 2)
             {
               // std::cout << "Processing: " << _line << "\n";
               _origin_ID = TInt (std::stoi (_words[0]));
@@ -243,7 +243,7 @@ MNM_IO::build_od_factory (const std::string &file_folder,
             }
           ++i;
           _words = split (_line, ' ');
-          if (_words.size () == 2)
+          if (_words.size () >= 2)
             {
               // std::cout << "Processing: " << _line << "\n";
               _dest_ID = TInt (std::stoi (_words[0]));
