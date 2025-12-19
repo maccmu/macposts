@@ -2125,6 +2125,167 @@ MNM_Dta_EV::is_ok ()
   return _flag;
 }
 
+int 
+MNM_Dta_EV::generate_candidate_charging_stations(TFlt buffer_size, TFlt buffer_size_threshold, TFlt increment)
+{
+  TFlt _buffer_size_increment;
+
+  MNM_IO::build_node_factory(m_file_folder, m_config, m_node_factory);
+  MNM_IO_EV::add_charging_station_node(m_file_folder, m_config, m_node_factory);
+  std::cout << "# of nodes: " << m_node_factory -> m_node_map.size() << "\n";  // including normal nodes + charging stations
+  MNM_IO::build_link_factory(m_file_folder, m_config, m_link_factory);
+  std::cout << "# of links: " << m_link_factory -> m_link_map.size() << "\n";
+  MNM_IO_EV::build_od_factory_ev(m_file_folder, m_config, m_od_factory, m_node_factory);
+  std::cout << "# of OD pairs: " << m_od_factory -> m_origin_map.size() << "\n";
+  
+  m_graph = MNM_IO::build_graph(m_file_folder, m_config);
+
+  // this path_table is generated without considering charging stations and additional PQ links
+  MNM_ConfReader* _tmp_conf = new MNM_ConfReader(m_file_folder + "/config.conf", "FIXED");
+  Path_Table *_path_table = MNM_IO::load_path_table(m_file_folder + "/" + _tmp_conf -> get_string("path_file_name"), 
+                                                    m_graph, _tmp_conf -> get_int("num_path"), false);
+  delete _tmp_conf;
+
+  std::unordered_map<TInt, TFlt> _cost_map;
+  for (auto _map_it : m_link_factory -> m_link_map){
+      // the PQ link length is 1 mile
+      _cost_map.insert(std::pair<TInt, TFlt>(_map_it.first, _map_it.second -> m_length/1600.)); // mile
+      
+  }
+  
+  std::vector<MNM_Charging_Station*> m_mid_POIs = std::vector<MNM_Charging_Station*>();
+  std::unordered_map<TInt, TInt>* _shortest_path_tree;
+  std::unordered_map<MNM_Charging_Station*, std::unordered_map<TInt, TInt>*>* _charging_station_sp_map = new std::unordered_map<MNM_Charging_Station*, std::unordered_map<TInt, TInt>*>();
+  for (auto _it : m_node_factory -> m_node_map) {
+      if (auto _charging_station = dynamic_cast<MNM_Charging_Station*>(_it.second)) {
+          m_mid_POIs.push_back(_charging_station);
+          if (_charging_station_sp_map -> find(_charging_station) == _charging_station_sp_map -> end()) {
+              printf("Build shortest path tree for charging station %d\n", _charging_station -> m_node_ID);
+              _shortest_path_tree = new std::unordered_map<TInt, TInt>();
+              MNM_Shortest_Path::all_to_one_FIFO(_charging_station -> m_node_ID, m_graph, _cost_map, *_shortest_path_tree);
+              Assert(!_shortest_path_tree -> empty());
+              _charging_station_sp_map -> insert(std::make_pair(_charging_station, _shortest_path_tree));
+          }
+      }
+  }
+  printf("\n\n\n");
+  TInt _O_ID, _O_node_ID, _D_ID, _D_node_ID, _charging_station_ID;
+  TFlt _distance;
+  OD_Candidate_POI_Table *m_od_candidate_poi_table = new OD_Candidate_POI_Table();
+  MNM_Origin *_origin;
+  MNM_Destination *_dest;
+  MNM_Path *_tmp_path;
+
+  for (auto _it : *_path_table)
+  {
+      _O_node_ID = _it.first;
+      _origin = ((MNM_DMOND*)m_node_factory -> get_node(_O_node_ID)) -> m_origin;
+      _O_ID = _origin -> m_Origin_ID;
+      if (m_od_candidate_poi_table -> find(_origin) == m_od_candidate_poi_table -> end()) {
+          m_od_candidate_poi_table -> insert(std::make_pair(_origin, new std::unordered_map<MNM_Destination*, std::vector<MNM_Dnode*>*>()));
+      }
+      for (auto _it_it : *(_it.second))
+      {
+          _D_node_ID = _it_it.first;
+          _dest = ((MNM_DMDND*)m_node_factory -> get_node(_D_node_ID)) -> m_dest;
+          _D_ID = _dest -> m_Dest_ID;
+          if (m_od_candidate_poi_table -> find(_origin) -> second -> find(_dest) == m_od_candidate_poi_table -> find(_origin) -> second -> end()) {
+              m_od_candidate_poi_table -> find(_origin) -> second -> insert(std::make_pair(_dest, new std::vector<MNM_Dnode*>()));
+          }
+          IAssert(_it_it.second -> m_path_vec.size() == 1);
+          printf("Process OD pair (%d, %d)\n", _O_ID, _D_ID);
+          printf("candidate charging station: ");
+          auto _candidate_charging_station_vec = m_od_candidate_poi_table -> find(_origin) -> second -> find(_dest) -> second;
+          // for (auto _path : _it_it.second -> m_path_vec) {
+          //     for (auto _node_ID : _path -> m_node_vec) {
+          //         for (auto _it_it_it : *_charging_station_sp_map) {
+          //             _shortest_path_tree = _it_it_it.second;
+          //             if (_shortest_path_tree -> find(_node_ID) -> second != -1) {
+          //                 _path = MNM::extract_path(_node_ID, _it_it_it.first->m_node_ID, *_shortest_path_tree, m_graph);
+          //                 _distance = MNM::get_path_tt_snapshot(_path, _cost_map);
+          //                 delete _path;
+          //                 if (_distance <= buffer_size) {
+          //                     printf("%d ", _it_it_it.first -> m_node_ID());
+          //                     _candidate_charging_station_vec -> push_back(_it_it_it.first);
+          //                 }
+          //             }
+          //         }
+          //     }
+          // }
+          _buffer_size_increment = 0.;
+          while(_candidate_charging_station_vec -> empty()) {
+              if (buffer_size + _buffer_size_increment > buffer_size_threshold) {
+                  break;
+              }
+              for (auto _path : _it_it.second -> m_path_vec) {
+                  for (auto _node_ID : _path -> m_node_vec) {
+                      for (auto _it_it_it : *_charging_station_sp_map) {
+                          _shortest_path_tree = _it_it_it.second;
+                          if (_shortest_path_tree -> find(_node_ID) -> second != -1) {
+                              _tmp_path = MNM::extract_path(_node_ID, _it_it_it.first->m_node_ID, *_shortest_path_tree, m_graph);
+                              _distance = MNM::get_path_tt_snapshot(_tmp_path, _cost_map);
+                              delete _tmp_path;
+                              if (_distance <= buffer_size + _buffer_size_increment) {
+                                  if (std::find(_candidate_charging_station_vec -> begin(), _candidate_charging_station_vec -> end(), _it_it_it.first) ==
+                                      _candidate_charging_station_vec -> end()) {
+                                      printf("%d ", _it_it_it.first -> m_node_ID);
+                                      _candidate_charging_station_vec -> push_back(_it_it_it.first);
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+              _buffer_size_increment += increment;
+          }
+          if (_candidate_charging_station_vec -> empty()) {
+              printf("empty ");
+          }
+          // else {
+          //     std::set<MNM_Dnode*> _candidate_charging_station_set(_candidate_charging_station_vec -> begin(), _candidate_charging_station_vec -> end());
+          //     _candidate_charging_station_vec -> clear();
+          //     std::move(_candidate_charging_station_set.begin(), _candidate_charging_station_set.end(), std::back_inserter(*_candidate_charging_station_vec));
+          //     if (_candidate_charging_station_vec -> empty() || !_candidate_charging_station_set.empty()) {
+          //         printf("debug");
+          //     }
+          //     Assert(!_candidate_charging_station_vec -> empty() && _candidate_charging_station_set.empty());
+          // }
+          printf("\n\n");
+      }
+  }
+
+  // save results
+  MNM_IO_EV::save_candidate_poi_table(*m_od_candidate_poi_table, m_file_folder + "/MNM_input_candidate_charging_station");
+
+  // garbage collection
+  for (auto _it : *_path_table)
+  {
+      for (auto _it_it : *(_it.second))
+      {
+          delete _it_it.second;
+      }
+      _it.second->clear ();
+      delete _it.second;
+  }
+  _path_table->clear ();
+  delete _path_table;
+
+  MNM_IO_EV::destruct_candidate_poi_table(m_od_candidate_poi_table);
+  for (auto _it : *_charging_station_sp_map) {
+      _it.second -> clear();
+      delete _it.second;
+  }
+  _charging_station_sp_map -> clear();
+  delete _charging_station_sp_map;
+
+  delete m_config;
+  delete m_link_factory;
+  delete m_od_factory;
+  delete m_node_factory;
+  printf("END find candidate charging stations for each OD pair!\n");
+  return 0;
+}
+
 int
 MNM_Dta_EV::load_once (bool verbose, TInt load_int, TInt assign_int)
 {
