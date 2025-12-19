@@ -47,6 +47,7 @@ public:
                                    bool skip_check = false,
                                    int cong_frequency = 180,
                                    const std::string &result_folder = "");
+  int generate_candidate_charging_stations (const std::string &folder, TFlt buffer_size, TFlt buffer_size_threshold, TFlt increment);
   py::array_t<double> get_travel_stats ();
   std::string print_travel_stats ();
   std::string print_emission_stats ();
@@ -120,6 +121,8 @@ init (py::module &m)
     .def (py::init<> ())
     .def ("initialize", &Dta::initialize, py::arg ("folder"), py::arg ("skip_check") = false)
     .def ("check_input_files", &Dta::check_input_files)
+    .def ("generate_shortest_pathsets", &Dta::generate_shortest_pathsets)
+    .def ("generate_candidate_charging_stations", &Dta::generate_candidate_charging_stations)
     .def ("run_whole", &Dta::run_whole, py::arg ("verbose") = false)
     .def ("run_due", &Dta::run_due)
     .def ("run_dso", &Dta::run_dso)
@@ -786,6 +789,19 @@ Dta::run_dnl_electrified_traffic (const std::string &folder, bool verbose,
                                            m_dta->m_node_factory);
 
   printf ("Finished DNL!\n");
+  return 0;
+}
+
+int 
+Dta::generate_candidate_charging_stations (const std::string &folder, TFlt buffer_size, TFlt buffer_size_threshold, TFlt increment)
+{
+  Assert (m_dta == nullptr);
+
+  m_dta = new MNM_Dta_EV (folder);
+  printf ("================================ DTA set! "
+          "=================================\n");
+
+  dynamic_cast<MNM_Dta_EV*>(m_dta) -> generate_candidate_charging_stations(buffer_size, buffer_size_threshold, increment);
   return 0;
 }
 
