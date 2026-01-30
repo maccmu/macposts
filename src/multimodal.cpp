@@ -2723,7 +2723,7 @@ MNM_Origin_Multimodal::MNM_Origin_Multimodal (TInt ID, TInt max_interval,
   m_pickup_waiting_time = pickup_waiting_time;
 
   m_released_buses = TInt (0); // > 0 for bus/metro origins only
-  m_num_of_minute = TInt (frequency * 5 / 60);
+  m_num_of_minute = TInt (frequency * 5 / 60); // currently works with 15-mins frequency; other frequencies not tested
 }
 
 MNM_Origin_Multimodal::~MNM_Origin_Multimodal ()
