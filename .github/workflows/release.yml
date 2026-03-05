@@ -64,7 +64,7 @@ jobs:
         CIBW_ARCHS_MACOS: "auto64 universal2"
         # We do not support PyPy (for now).
         CIBW_SKIP: "pp*"
-        # Install dependencies inside the manylinux container
+        # Pre-install dependencies inside the manylinux container
         CIBW_BEFORE_ALL_LINUX: |
           yum install -y openssl-devel
           # Ensure cmake >= 3.10
