@@ -43,12 +43,38 @@ jobs:
         submodules: true
         persist-credentials: false
 
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+
+    - name: Install build dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install cmake openssl
+
+    - name: Install build dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        choco install cmake openssl
+
     - uses: pypa/cibuildwheel@v2.17.0
       env:
         CIBW_ARCHS: auto64
         CIBW_ARCHS_MACOS: "auto64 universal2"
         # We do not support PyPy (for now).
         CIBW_SKIP: "pp*"
+        # Install dependencies inside the manylinux container
+        CIBW_BEFORE_ALL_LINUX: |
+          yum install -y openssl-devel
+          # Ensure cmake >= 3.10
+          yum install -y cmake3 || yum install -y cmake
+
+        CIBW_BEFORE_BUILD: |
+          pip install --upgrade pip
+          pip install cmake
+
+        CIBW_BUILD_VERBOSITY: 1
 
     - uses: actions/upload-artifact@v4
       with:
