@@ -381,6 +381,7 @@ public:
                                       MNM_Link_Factory *link_factory, int num_subclass_car, int num_subclass_truck,
                                       const std::string &file_name
                                       = "MNM_input_link_td_attribute");
+  static int build_union_ID_path_mapping (std::unordered_map<TInt, TInt> &ID_path_mapping, const std::string &mapping_file_name);
 };
 
 namespace MNM
@@ -441,4 +442,9 @@ public:
   int m_num_path_table;
   int m_num_subclass_car;
   int m_num_subclass_truck;
+
+  // for register paths in DODE
+  int update_path_ID(Path_Table *path_table, std::unordered_map<TInt, TInt> &union_ID_path_mapping);
+  // <path table, <original path ID, path ID in union path table>>
+  std::unordered_map<TInt, std::unordered_map<TInt, TInt>> m_union_ID_path_mapping;
 };

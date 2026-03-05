@@ -863,9 +863,12 @@ MNM_DMOND_Multiclass_Subclass::evolve (TInt timestamp)
                         m_out_volume[_link] -= 1;
                         _moved_car += 1;
                         // update car subclass cc
-                        _next_link -> m_N_in_car_subclass.at(_veh -> get_subclass()) -> add_increment (
-                            std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
-                                                    TFlt (1) / m_flow_scalar));
+                        if (_next_link->m_N_in_car_subclass.at(_veh -> get_subclass()) != nullptr)
+                        {
+                            _next_link -> m_N_in_car_subclass.at(_veh -> get_subclass()) -> add_increment (
+                                std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                                        TFlt (1) / m_flow_scalar));
+                        }
                     }
                     else
                     {
@@ -877,9 +880,12 @@ MNM_DMOND_Multiclass_Subclass::evolve (TInt timestamp)
                         {
                             _moved_truck += 1;
                             // update truck subclass cc
-                            _next_link -> m_N_in_truck_subclass.at(_veh -> get_subclass()) -> add_increment (
-                                std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
-                                                        TFlt (1) / m_flow_scalar));
+                            if (_next_link->m_N_in_truck_subclass.at(_veh -> get_subclass()) != nullptr)
+                            {
+                                _next_link -> m_N_in_truck_subclass.at(_veh -> get_subclass()) -> add_increment (
+                                    std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                                            TFlt (1) / m_flow_scalar));
+                            }
                         }
                         
                     }
@@ -952,9 +958,12 @@ MNM_DMDND_Multiclass_Subclass::evolve (TInt timestamp)
             {
                 _moved_car += 1;
                 // update car subclass cc
-                _from_link->m_N_out_car_subclass.at(_veh -> get_subclass())->add_increment (
-                    std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
-                                            TFlt (1) / m_flow_scalar));
+                if (_from_link->m_N_out_car_subclass.at(_veh -> get_subclass()) != nullptr)
+                {
+                    _from_link->m_N_out_car_subclass.at(_veh -> get_subclass())->add_increment (
+                        std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                                TFlt (1) / m_flow_scalar));
+                }
             }
             else
             {
@@ -963,9 +972,12 @@ MNM_DMDND_Multiclass_Subclass::evolve (TInt timestamp)
                 {
                     _moved_truck += 1;
                     // update truck subclass cc
-                    _from_link->m_N_out_truck_subclass.at(_veh -> get_subclass())->add_increment (
-                        std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
-                                                TFlt (1) / m_flow_scalar));
+                    if (_from_link->m_N_out_truck_subclass.at(_veh -> get_subclass()) != nullptr)
+                    {
+                        _from_link->m_N_out_truck_subclass.at(_veh -> get_subclass())->add_increment (
+                            std::pair<TFlt, TFlt> (TFlt (timestamp + 1),
+                                                    TFlt (1) / m_flow_scalar));
+                    }
                 }
             }
             _link->m_finished_array.pop_front ();
@@ -1013,10 +1025,16 @@ MNM_Dnode_Inout_Multiclass_Subclass::move_one_vehicle (TInt timestamp, MNM_Dlink
     {
         m_veh_moved_car[_in_link_i * _offset + _out_link_j] += 1;
         
-        _ilink -> m_N_out_car_subclass.at(_veh -> get_subclass()) -> add_increment (
-            std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
-        _olink -> m_N_in_car_subclass.at(_veh -> get_subclass()) -> add_increment (
-            std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+        if (_ilink -> m_N_out_car_subclass.at(_veh -> get_subclass()) != nullptr)
+        {
+            _ilink -> m_N_out_car_subclass.at(_veh -> get_subclass()) -> add_increment (
+                std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+        }
+        if (_olink -> m_N_in_car_subclass.at(_veh -> get_subclass()) != nullptr)
+        {
+            _olink -> m_N_in_car_subclass.at(_veh -> get_subclass()) -> add_increment (
+                std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+        }
         if (_olink -> m_N_in_tree_car_subclass.at(_veh -> get_subclass()) != nullptr) 
         {
             _olink -> m_N_in_tree_car_subclass.at(_veh -> get_subclass())
@@ -1042,10 +1060,16 @@ MNM_Dnode_Inout_Multiclass_Subclass::move_one_vehicle (TInt timestamp, MNM_Dlink
         {
             m_veh_moved_truck[_in_link_i * _offset + _out_link_j] += 1;
 
-            _ilink -> m_N_out_truck_subclass.at(_veh -> get_subclass()) -> add_increment (
-                std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
-            _olink -> m_N_in_truck_subclass.at(_veh -> get_subclass()) -> add_increment (
-                std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+            if (_ilink -> m_N_out_truck_subclass.at(_veh -> get_subclass()) != nullptr) 
+            {
+                _ilink -> m_N_out_truck_subclass.at(_veh -> get_subclass())->add_increment (
+                    std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+            }
+            if (_olink -> m_N_in_truck_subclass.at(_veh -> get_subclass()) != nullptr) 
+            {
+                _olink -> m_N_in_truck_subclass.at(_veh -> get_subclass())->add_increment (
+                    std::pair<TFlt, TFlt> (TFlt (timestamp + 1), TFlt (1) / m_flow_scalar));
+            }
             if (_olink -> m_N_in_tree_truck_subclass.at(_veh -> get_subclass()) != nullptr) 
             {
                 _olink -> m_N_in_tree_truck_subclass.at(_veh -> get_subclass())
@@ -1866,6 +1890,7 @@ MNM_Routing_Biclass_Hybrid_Subclass::remove_finished (MNM_Veh *veh, bool del)
     }
     return 0;
 }
+
 
 
 /**************************************************************************
@@ -2703,6 +2728,46 @@ int MNM_IO_Multiclass_Subclass::build_link_td_attribute_multiclass_subclass (con
   return 0;
 }
 
+
+int 
+MNM_IO_Multiclass_Subclass::build_union_ID_path_mapping (std::unordered_map<TInt, TInt> &ID_path_mapping, const std::string &mapping_file_name)
+{
+    /* find file */
+    std::ifstream _file;
+    _file.open (mapping_file_name, std::ios::in);
+
+    ID_path_mapping.clear();
+
+    if (_file.is_open ())
+    {
+        /* read file line by line */
+        std::string _line;
+        std::vector<std::string> _words;
+        std::getline(_file, _line); // header line
+        while (std::getline(_file, _line))
+        {
+            _words.clear();
+            _words = split (_line, ',');
+            if (_words.size() != 2)
+            {
+                throw std::runtime_error ("Error reading path ID mapping file: line format is incorrect");
+            }
+            // original path ID, path ID union path table
+            ID_path_mapping.insert (std::make_pair (TInt (std::stoi (_words[1])), TInt (std::stoi (_words[0]))));
+        }
+        _file.close ();
+        std::cout << "Successfully read path ID mapping file: " << mapping_file_name << std::endl;
+    }
+    else
+    {
+        throw std::runtime_error ("failed to open mapping file: " + mapping_file_name);
+    }
+
+    return 0;
+}
+
+
+
 namespace MNM
 {
 int
@@ -2752,6 +2817,7 @@ print_vehicle_statistics (MNM_Veh_Factory_Multiclass_Subclass *veh_factory)
     std::cout << veh_factory -> print_vehicle_statistics() << std::endl;
     return 0;
 }
+
 }
 
 
@@ -2945,6 +3011,8 @@ MNM_Dta_Multiclass_Subclass::MNM_Dta_Multiclass_Subclass (const std::string &fil
     m_subclass_truck_path_table_mapping = std::unordered_map<int, int> ();
     m_path_table_subclass_truck_mapping = std::unordered_map<int, std::vector<int>> ();
 
+    m_union_ID_path_mapping = std::unordered_map<TInt, std::unordered_map<TInt, TInt>> ();
+
     std::string _line;
     std::vector<std::string> _words;
 
@@ -3010,6 +3078,10 @@ MNM_Dta_Multiclass_Subclass::~MNM_Dta_Multiclass_Subclass ()
     }
     m_path_table_subclass_truck_mapping.clear ();
     m_graph_vec.clear ();
+    for (auto _it : m_union_ID_path_mapping) {
+        _it.second.clear ();
+    }
+    m_union_ID_path_mapping.clear ();
 }
 
 int
@@ -3143,12 +3215,25 @@ MNM_Dta_Multiclass_Subclass::set_routing ()
         bool _with_buffer = (_tmp_conf->get_string ("choice_portion") == "Buffer");
         for (int i = 0; i < m_num_path_table; i++) {
             // the buffer for each path table has all vehicle subclasses, use 0 for some of them as placeholder to keep the same dimension
+            // path ID starts from 0 for each path table, and the path table will only include paths for the corresponding graph
             _driving_path_table = MNM_IO::load_path_table (
                 m_file_folder + "/path_table_" + std::to_string (i),
                 m_graph_vec[i],
                 _num_driving_path_vec[i],
                 _with_buffer
             );
+            // build union ID mapping for path table i, if exists, and update path ID in path table i accordingly, important for DODE
+            m_union_ID_path_mapping.insert(std::make_pair(i, std::unordered_map<TInt, TInt>()));
+            MNM_IO_Multiclass_Subclass::build_union_ID_path_mapping(m_union_ID_path_mapping[i], m_file_folder + "/path_table_" + std::to_string(i) + "_to_union_mapping.csv");
+            if (m_union_ID_path_mapping[i].size() > 0) {
+                int _ret = update_path_ID(_driving_path_table, m_union_ID_path_mapping[i]);
+                if (_ret < 0) {
+                    throw std::runtime_error("Failed to update path ID for path table " + std::to_string(i));
+                }
+            }
+            else {
+                std::cout << "No union ID mapping for path table " << i << std::endl;
+            }
             path_table_vec.push_back(_driving_path_table);
         }
         
@@ -3180,6 +3265,30 @@ MNM_Dta_Multiclass_Subclass::set_routing ()
     }
 
     return 0;
+}
+
+int 
+MNM_Dta_Multiclass_Subclass::update_path_ID(Path_Table *path_table, std::unordered_map<TInt, TInt> &union_ID_path_mapping)
+{
+    for (auto _o_it : *path_table)
+    {
+        for (auto _d_it : *_o_it.second)
+        {
+            for (auto &_path : _d_it.second->m_path_vec)
+            {
+                if (union_ID_path_mapping.find(_path->m_path_ID) != union_ID_path_mapping.end())
+                {
+                    _path->m_path_ID = union_ID_path_mapping[_path->m_path_ID];
+                }
+                else
+                {
+                    std::cerr << "Error: path ID " << _path->m_path_ID << " not found in union ID mapping" << std::endl;
+                    return -1;
+                }
+            }
+        }
+    }
+  return 0;
 }
 
 int
