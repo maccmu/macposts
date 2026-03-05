@@ -48,17 +48,7 @@ jobs:
       with:
         python-version: "3.x"
 
-    - name: Install build dependencies (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        brew install cmake openssl
-
-    - name: Install build dependencies (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        choco install cmake openssl
-
-    - uses: pypa/cibuildwheel@v2.17.0
+    - uses: pypa/cibuildwheel@v2.22.0
       env:
         CIBW_ARCHS: auto64
         CIBW_ARCHS_MACOS: "auto64 universal2"
@@ -68,12 +58,24 @@ jobs:
         # pip >= 25 drops support for Python 3.8, may need to change other files as well
         CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
 
+        # Disable OpenSSL for Linux (manylinux) to avoid source build failure
+        CIBW_ENVIRONMENT_LINUX: CMAKE_ARGS="-DCMAKE_USE_OPENSSL=OFF"
+
+        # musllinux (Alpine) has no pre-built cmake pip wheel; install from apk once
+        CIBW_BEFORE_ALL_LINUX: |
+          if command -v apk &>/dev/null; then
+            apk add cmake ninja
+          fi
+
         CIBW_BEFORE_BUILD: |
           python -m pip install --upgrade pip
-          python -m pip install "cmake>=3.10" ninja
+          cmake --version 2>/dev/null || python -m pip install "cmake>=3.10"
+          python -m pip install ninja "setuptools>=64" "setuptools_scm>=8" wheel
           cmake --version
 
-        CIBW_BUILD_FRONTEND: "pip"
+        # --no-build-isolation: reuse cmake already installed above instead of
+        # letting pip create a fresh isolated env that rebuilds cmake from source
+        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
         CIBW_BUILD_VERBOSITY: 1
 
     - uses: actions/upload-artifact@v4
