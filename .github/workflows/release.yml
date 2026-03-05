@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 jobs:
   sdist:
@@ -56,6 +57,7 @@ jobs:
 
   upload:
     needs: [sdist, wheels]
+    if: startsWith(github.ref, 'refs/tags/')
     name: Upload artifacts to assets
     runs-on: ubuntu-latest
 
