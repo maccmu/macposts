@@ -50,7 +50,11 @@ public:
   int run_whole_vehicle_tracking (bool verbose, const std::string &folder,
                                   double sampling_rate = 0.05,
                                   int cong_frequency = 1);
-
+  
+  int initialize_multi_route_graph (const std::string &folder, bool skip_check=false);
+  int register_paths_multi_route_graph (py::array_t<int> paths);
+  int install_cc_subclass ();
+  int install_cc_tree_subclass ();
   int run_multi_route_graph(const std::string &folder, bool verbose,
                             bool skip_check, int cong_frequency,
                             const std::string &result_folder);
@@ -171,6 +175,7 @@ public:
   std::vector<MNM_Path *> m_path_vec;
   std::set<MNM_Path *> m_path_set;
   std::unordered_map<TInt, MNM_Path *> m_ID_path_mapping;
+  std::set<TInt> m_pathID_set;
 
   // time-varying link tt
   std::unordered_map<TInt, TFlt *> m_link_tt_map;
@@ -209,6 +214,11 @@ init (py::module &m)
           py::arg("use_external_link_tt") = false,
           py::arg("external_link_tt_file") = "st_link_tt") // it should be a full absolute path
     .def ("run_whole", &Mcdta::run_whole, py::arg ("verbose") = false)
+    .def ("initialize", &Mcdta::initialize, py::arg ("folder"), py::arg ("skip_check") = false)
+    .def ("initialize_multi_route_graph", &Mcdta::initialize_multi_route_graph, py::arg ("folder"), py::arg ("skip_check") = false)
+    .def ("register_paths_multi_route_graph", &Mcdta::register_paths_multi_route_graph)
+    .def ("install_cc_subclass", &Mcdta::install_cc_subclass)
+    .def ("install_cc_tree_subclass", &Mcdta::install_cc_tree_subclass)
     .def ("run_multi_route_graph", &Mcdta::run_multi_route_graph)
     .def ("install_cc", &Mcdta::install_cc)
     .def ("install_cc_tree", &Mcdta::install_cc_tree)
@@ -303,6 +313,7 @@ Mcdta::Mcdta ()
   m_path_vec = std::vector<MNM_Path *> ();
   m_path_set = std::set<MNM_Path *> ();
   m_ID_path_mapping = std::unordered_map<TInt, MNM_Path *> ();
+  m_pathID_set = std::set<TInt> ();
 
   m_link_tt_map = std::unordered_map<TInt, TFlt *> ();
   m_link_tt_map_truck = std::unordered_map<TInt, TFlt *> ();
@@ -327,6 +338,9 @@ Mcdta::~Mcdta ()
     }
   m_link_vec.clear ();
   m_path_vec.clear ();
+  m_path_set.clear ();
+  m_ID_path_mapping.clear ();
+  m_pathID_set.clear ();
 
   for (auto _tt_it : m_link_tt_map)
     {
@@ -512,6 +526,78 @@ Mcdta::run_whole (bool verbose)
 }
 
 int 
+Mcdta::initialize_multi_route_graph (const std::string &folder, bool skip_check)
+{
+  Assert (m_mcdta == nullptr);
+  m_mcdta = new MNM_Dta_Multiclass_Subclass(folder);
+	printf("================================ DTA set! =================================\n");
+	
+	m_mcdta -> build_from_files();
+	printf("========================= Finished initialization! ========================\n");
+
+	m_mcdta -> hook_up_node_and_link();
+	printf("====================== Finished node and link hook-up! ====================\n");
+
+  if (!skip_check)
+  {
+    m_mcdta->is_ok ();
+    printf ("============================ DTA is OK to run! "
+            "============================\n");
+  }
+  return 0;
+}
+
+int
+Mcdta::register_paths_multi_route_graph (py::array_t<int> paths)
+{
+  // Only use union path ID here
+  if (m_path_vec.size () > 0)
+    {
+      printf ("Warning, Mcdta::register_paths_multi_route_graph, path exists\n");
+      m_path_vec.clear ();
+      m_path_set.clear ();
+      m_pathID_set.clear ();
+    }
+  auto paths_buf = paths.request ();
+  if (paths_buf.ndim != 1)
+    {
+      throw std::runtime_error (
+        "Mcdta::register_paths_multi_route_graph: Number of dimensions must be one");
+    }
+  int *paths_ptr = (int *) paths_buf.ptr;
+  TInt _path_ID;
+  for (int i = 0; i < paths_buf.shape[0]; i++)
+  {
+    _path_ID = TInt (paths_ptr[i]);
+    m_pathID_set.insert (_path_ID);
+  }
+  Assert (m_path_vec.size () == 0);
+  Assert (m_path_set.size () == 0);
+  return 0;
+}
+
+int
+Mcdta::install_cc_subclass ()
+{
+  for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
+    {
+      dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (_link_it.second)
+        ->install_cumulative_curve_multiclass_subclass ();
+    }
+  return 0;
+}
+
+int
+Mcdta::install_cc_tree_subclass ()
+{
+  for (size_t i = 0; i < m_link_vec.size (); ++i)
+    {
+      dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(m_link_vec[i])->install_cumulative_curve_tree_multiclass_subclass ();
+    }
+  return 0;
+}
+
+int 
 Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
   bool skip_check, int cong_frequency,
   const std::string &result_folder)
@@ -524,63 +610,63 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
                               : result_folder;
   delete _config;
 
-  m_mcdta = new MNM_Dta_Multiclass_Subclass(folder);
-	printf("================================ DTA set! =================================\n");
+  // m_mcdta = new MNM_Dta_Multiclass_Subclass(folder);
+	// printf("================================ DTA set! =================================\n");
 	
-	m_mcdta -> build_from_files();
-	printf("========================= Finished initialization! ========================\n");
+	// m_mcdta -> build_from_files();
+	// printf("========================= Finished initialization! ========================\n");
 
-	m_mcdta -> hook_up_node_and_link();
-	printf("====================== Finished node and link hook-up! ====================\n");
+	// m_mcdta -> hook_up_node_and_link();
+	// printf("====================== Finished node and link hook-up! ====================\n");
 
-  MNM_Dlink_Multiclass_Subclass *_link;
-  for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
-    {
-      _link = dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(_link_it.second);
-      _link->install_cumulative_curve_multiclass ();
-      _link->install_cumulative_curve_multiclass_subclass ();
-    }
-  printf ("====================== Finished install cumulative curve! "
-          "====================\n");
+  // MNM_Dlink_Multiclass_Subclass *_link;
+  // for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
+  //   {
+  //     _link = dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(_link_it.second);
+  //     _link->install_cumulative_curve_multiclass ();
+  //     _link->install_cumulative_curve_multiclass_subclass ();
+  //   }
+  // printf ("====================== Finished install cumulative curve! "
+  //         "====================\n");
 
-  if (!skip_check)
-    {
-      m_mcdta->is_ok ();
-      printf ("============================ DTA is OK to run! "
-              "============================\n");
-    }
+  // if (!skip_check)
+  //   {
+  //     m_mcdta->is_ok ();
+  //     printf ("============================ DTA is OK to run! "
+  //             "============================\n");
+  //   }
   
-  // register non-pq links
-  for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
-  {
-    if (MNM_Dlink_Multiclass_Subclass *_mclink = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (_link_it.second))
-      {
-        if (std::find (m_link_vec.begin (), m_link_vec.end (), _link_it.second)
-            != m_link_vec.end ())
-          {
-            printf ("Mcdta::run_multi_route_graph, link already exists, skipped\n");
-            continue;
-          }
-        else
-          {
-            // m_link_vec.push_back (_mclink);
-            if (MNM_Dlink_Pq_Multiclass_Subclass *_mclink_pq = dynamic_cast<MNM_Dlink_Pq_Multiclass_Subclass*>(_mclink))
-            {
-              continue;
-            }
-            else {
-              m_link_vec.push_back (_mclink);
-            }
-          }
-      }
-    else
-      {
-        throw std::runtime_error (
-          "Mcdta::run_multi_route_graph: link type is not multiclass");
-      }
-  }
-  printf ("====================== Finished registering links! "
-          "====================\n");
+  // // register non-pq links
+  // for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
+  // {
+  //   if (MNM_Dlink_Multiclass_Subclass *_mclink = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (_link_it.second))
+  //     {
+  //       if (std::find (m_link_vec.begin (), m_link_vec.end (), _link_it.second)
+  //           != m_link_vec.end ())
+  //         {
+  //           printf ("Mcdta::run_multi_route_graph, link already exists, skipped\n");
+  //           continue;
+  //         }
+  //       else
+  //         {
+  //           // m_link_vec.push_back (_mclink);
+  //           if (MNM_Dlink_Pq_Multiclass_Subclass *_mclink_pq = dynamic_cast<MNM_Dlink_Pq_Multiclass_Subclass*>(_mclink))
+  //           {
+  //             continue;
+  //           }
+  //           else {
+  //             m_link_vec.push_back (_mclink);
+  //           }
+  //         }
+  //     }
+  //   else
+  //     {
+  //       throw std::runtime_error (
+  //         "Mcdta::run_multi_route_graph: link type is not multiclass");
+  //     }
+  // }
+  // printf ("====================== Finished registering links! "
+  //         "====================\n");
 
   m_mcdta->pre_loading ();
   printf ("========================== Finished pre_loading! "
@@ -2761,6 +2847,7 @@ Mcdta::register_paths (py::array_t<int> paths)
       printf ("Warning, Mcdta::register_paths, path exists\n");
       m_path_vec.clear ();
       m_path_set.clear ();
+      m_pathID_set.clear ();
     }
   auto paths_buf = paths.request ();
   if (paths_buf.ndim != 1)
@@ -2782,9 +2869,16 @@ Mcdta::register_paths (py::array_t<int> paths)
       else
         {
           m_path_vec.push_back (m_ID_path_mapping[_path_ID]);
+          m_pathID_set.insert (_path_ID);
         }
     }
   m_path_set = std::set<MNM_Path *> (m_path_vec.begin (), m_path_vec.end ());
+  if (m_path_set.size () != m_path_vec.size ()
+    || m_pathID_set.size () != m_path_vec.size ())
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::register_paths, duplicated paths or path IDs");
+    }
   return 0;
 }
 
@@ -3642,10 +3736,19 @@ Mcdta::get_car_dar_matrix (py::array_t<int> start_intervals,
                 "Error, Mcdta::get_car_dar_matrix, input end intervals "
                 "exceeds the total loading intervals");
             }
-          MNM_DTA_GRADIENT::add_dar_records_car (_record, m_link_vec[i],
+          if (m_path_set.empty ())
+          {
+            MNM_DTA_GRADIENT::add_dar_records_car (_record, m_link_vec[i],
+                                                 m_pathID_set,
+                                                 TFlt (start_ptr[t]),
+                                                 TFlt (end_ptr[t]));
+          }
+          else {
+            MNM_DTA_GRADIENT::add_dar_records_car (_record, m_link_vec[i],
                                                  m_path_set,
                                                  TFlt (start_ptr[t]),
                                                  TFlt (end_ptr[t]));
+          }
         }
     }
   // _record.size() = num_timesteps x num_links x num_path x
@@ -3722,10 +3825,19 @@ Mcdta::get_truck_dar_matrix (py::array_t<int> start_intervals,
                 "Error, Mcdta::get_truck_dar_matrix, input end intervals "
                 "exceeds the total loading intervals");
             }
-          MNM_DTA_GRADIENT::add_dar_records_truck (_record, m_link_vec[i],
-                                                   m_path_set,
+          if (m_path_set.empty ())
+            {
+              MNM_DTA_GRADIENT::add_dar_records_truck (_record, m_link_vec[i],
+                                                   m_pathID_set,
                                                    TFlt (start_ptr[t]),
                                                    TFlt (end_ptr[t]));
+            }
+            else {
+              MNM_DTA_GRADIENT::add_dar_records_truck (_record, m_link_vec[i],
+                                                      m_path_set,
+                                                      TFlt (start_ptr[t]),
+                                                      TFlt (end_ptr[t]));
+            }
         }
     }
   // path_ID, assign_time, link_ID, start_int, flow
@@ -3825,10 +3937,19 @@ Mcdta::save_car_dar_matrix (py::array_t<int> start_intervals,
                 "exceeds the total loading intervals");
             }
           Assert (_record.empty ());
-          MNM_DTA_GRADIENT::add_dar_records_car (_record, m_link_vec[i],
-                                                 m_path_set,
+          if (m_path_set.empty ())
+          {
+            MNM_DTA_GRADIENT::add_dar_records_car (_record, m_link_vec[i],
+                                                 m_pathID_set,
                                                  TFlt (start_ptr[t]),
                                                  TFlt (end_ptr[t]));
+          }
+          else {
+            MNM_DTA_GRADIENT::add_dar_records_car (_record, m_link_vec[i],
+                                                  m_path_set,
+                                                  TFlt (start_ptr[t]),
+                                                  TFlt (end_ptr[t]));
+          }
           for (size_t j = 0; j < _record.size (); ++j)
             {
               dar_record *tmp_record = _record[j];
@@ -3938,10 +4059,19 @@ Mcdta::save_truck_dar_matrix (py::array_t<int> start_intervals,
                 "exceeds the total loading intervals");
             }
           Assert (_record.empty ());
-          MNM_DTA_GRADIENT::add_dar_records_truck (_record, m_link_vec[i],
-                                                   m_path_set,
+          if (m_path_set.empty ())
+          {
+            MNM_DTA_GRADIENT::add_dar_records_truck (_record, m_link_vec[i],
+                                                   m_pathID_set,
                                                    TFlt (start_ptr[t]),
                                                    TFlt (end_ptr[t]));
+          }
+          else {
+            MNM_DTA_GRADIENT::add_dar_records_truck (_record, m_link_vec[i],
+                                                    m_path_set,
+                                                    TFlt (start_ptr[t]),
+                                                    TFlt (end_ptr[t]));
+          }                                         
           for (size_t j = 0; j < _record.size (); ++j)
             {
               dar_record *tmp_record = _record[j];
