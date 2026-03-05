@@ -21,3 +21,4 @@ tags
 /examples/local_examples/
 /.cache/
 compile_commands.json
+/.claude/
