@@ -1,5 +1,6 @@
 [build-system]
-# 'cmake>=3.10' here may cause pip to try building the Python cmake package from source, which may cause the build to fail in the github workflow.
+# 'cmake>=3.10' here may cause pip to try building the Python cmake package from source,
+# which may cause the build to fail in the github workflow.
 requires = ["setuptools>=64", "setuptools_scm>=8", "wheel", "cmake>=3.10"]
 build-backend = "setuptools.build_meta"
 
