@@ -73,9 +73,10 @@ jobs:
           python -m pip install ninja "setuptools>=64" "setuptools_scm>=8" wheel
           cmake --version
 
-        # --no-build-isolation: reuse cmake already installed above instead of
-        # letting pip create a fresh isolated env that rebuilds cmake from source
-        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
+        # Linux only: --no-build-isolation reuses cmake from apk/pip (above)
+        # so the isolated env never tries to build cmake from source on musllinux.
+        # Windows/macOS have pre-built cmake wheels and don't need this.
+        CIBW_BUILD_FRONTEND_LINUX: "pip; args: --no-build-isolation"
         CIBW_BUILD_VERBOSITY: 1
 
     - uses: actions/upload-artifact@v4
