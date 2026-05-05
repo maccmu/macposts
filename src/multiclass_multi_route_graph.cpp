@@ -389,6 +389,18 @@ int MNM_Dlink_Multiclass_Subclass::install_cumulative_curve_tree_multiclass_subc
     return 0;
 }
 
+TFlt MNM_Dlink_Multiclass_Subclass::get_dynamic_toll_car(TFlt tt)
+{
+    TFlt toll = m_ffs_car / (m_length / tt);
+    return toll;
+}
+
+TFlt MNM_Dlink_Multiclass_Subclass::get_dynamic_toll_truck(TFlt tt)
+{
+    TFlt toll = m_ffs_truck / (m_length / tt);
+    return toll;
+}
+
 MNM_Dlink_Ctm_Multiclass_Subclass::MNM_Dlink_Ctm_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length,
     TFlt lane_hold_cap_car, TFlt lane_hold_cap_truck,
     TFlt lane_flow_cap_car, TFlt lane_flow_cap_truck,
@@ -1574,6 +1586,8 @@ MNM_Routing_Adaptive_Subclass::update_link_cost ()
     { // it.second in seconds
       // tolls for subclass car and truck separately
       // in dollars
+      TFlt dynamic_toll_car = dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(m_link_factory->get_link (_it.first))->get_dynamic_toll_car(_it.second);
+      TFlt dynamic_toll_truck = dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(m_link_factory->get_link (_it.first))->get_dynamic_toll_truck(_it.second);
       if (m_veh_class == 0) {
         m_link_cost[_it.first]
             = _it.second * m_vot + dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(m_link_factory->get_link (_it.first))->m_toll_car_subclass[m_veh_subclass];

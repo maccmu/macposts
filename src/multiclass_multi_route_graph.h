@@ -62,6 +62,8 @@ public:
   MNM_Dlink_Multiclass_Subclass (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs_car,
     TFlt ffs_truck, TInt num_car_subclass, TInt num_truck_subclass);
   virtual ~MNM_Dlink_Multiclass_Subclass () override;
+  virtual TFlt get_dynamic_toll_car(TFlt tt) override;
+  virtual TFlt get_dynamic_toll_truck(TFlt tt) override;
 
   // seperate N-curves for private car and truck subclasses
   std::unordered_map<int, MNM_Cumulative_Curve *>m_N_in_car_subclass;

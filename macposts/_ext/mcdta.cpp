@@ -3762,7 +3762,7 @@ Mcdta::get_car_dar_matrix (py::array_t<int> start_intervals,
     {
       tmp_record = _record[i];
       result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
-      // the count of 1 min interval
+      // the count of 1 min interval or 15 min interval, depending on add_dar_records_car
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
       result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)
@@ -3850,7 +3850,7 @@ Mcdta::get_truck_dar_matrix (py::array_t<int> start_intervals,
     {
       tmp_record = _record[i];
       result_ptr[i * 5 + 0] = (double) tmp_record->path_ID;
-      // the count of 1 min interval
+      // the count of 1 min interval or 15 min interval, depending on add_dar_records_car
       result_ptr[i * 5 + 1] = (double) tmp_record->assign_int;
       result_ptr[i * 5 + 2] = (double) tmp_record->link_ID;
       // the count of unit time interval (5s)

@@ -63,6 +63,9 @@ public:
     return -1;
   }; // intervals
 
+  virtual TFlt get_dynamic_toll_car(TFlt tt) {return 0.0;};
+  virtual TFlt get_dynamic_toll_truck(TFlt tt) {return 0.0;};
+
   DLink_type_multiclass m_link_type;
 
   TFlt m_ffs_car;
