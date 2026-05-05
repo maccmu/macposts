@@ -87,6 +87,8 @@ public:
                                TFlt lane_flow_cap,
                                TFlt ffs);
 
+  virtual TFlt get_dynamic_toll(TFlt tt) {return 0.0;};
+
   // protected:
   DLink_type m_link_type;
   TInt m_link_ID;
