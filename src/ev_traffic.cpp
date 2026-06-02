@@ -565,9 +565,12 @@ MNM_Charging_Station::evolve (TInt timestamp)
       _in_link_ind_array.push_back (i);
     }
 
-  // shuffle the in links, reserve the FIFO
-  std::random_device rng; // random sequence
-  std::shuffle (_in_link_ind_array.begin (), _in_link_ind_array.end (), rng);
+  // shuffle the in links, reserve the FIFO. The previous std::random_device
+  // ignored set_random_state entirely; pass the seeded std::rand explicitly so the
+  // shuffle honors the seed on every platform. (The 2-argument std::random_shuffle
+  // uses an implementation-defined RNG that ignores set_random_state on libc++.)
+  std::random_shuffle (_in_link_ind_array.begin (), _in_link_ind_array.end (),
+                       [] (std::ptrdiff_t n) { return std::rand () % n; });
 
   // move all in_link vehicles to queue, assuming unlimited waiting space
   for (size_t i : _in_link_ind_array)
