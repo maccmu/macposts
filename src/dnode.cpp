@@ -396,9 +396,12 @@ MNM_Dnode_Inout::move_vehicle (TInt timestamp)
     {
       _out_link = m_out_link_array[j];
 
-      // shuffle the in links, reserve the FIFO
+      // shuffle the in links, reserve the FIFO. Pass the seeded std::rand
+      // explicitly; the 2-argument std::random_shuffle uses an implementation-
+      // defined RNG that on libc++ (macOS) ignores set_random_state (GH-28).
       std::random_shuffle (_in_link_ind_array.begin (),
-                           _in_link_ind_array.end ());
+                           _in_link_ind_array.end (),
+                           [] (std::ptrdiff_t n) { return std::rand () % n; });
       for (size_t i : _in_link_ind_array)
         {
           _in_link = m_in_link_array[i];

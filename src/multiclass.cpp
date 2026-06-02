@@ -2572,9 +2572,12 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
     {
       _out_link = m_out_link_array[j];
 
-      // shuffle the in links, reserve the FIFO
+      // shuffle the in links, reserve the FIFO. Pass the seeded std::rand
+      // explicitly; the 2-argument std::random_shuffle uses an implementation-
+      // defined RNG that on libc++ (macOS) ignores set_random_state (GH-28).
       std::random_shuffle (_in_link_ind_array.begin (),
-                           _in_link_ind_array.end ());
+                           _in_link_ind_array.end (),
+                           [] (std::ptrdiff_t n) { return std::rand () % n; });
       for (size_t i : _in_link_ind_array)
         {
           _in_link = m_in_link_array[i];
@@ -3174,8 +3177,11 @@ MNM_Origin_Multiclass::release_one_interval (TInt current_interval,
           m_origin_node->m_in_veh_queue.push_back (_veh);
         }
     }
+  // Pass the seeded std::rand explicitly so the shuffle honors set_random_state on
+  // every platform (the 2-argument form ignores it on libc++/macOS, GH-28).
   std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
-                       m_origin_node->m_in_veh_queue.end ());
+                       m_origin_node->m_in_veh_queue.end (),
+                       [] (std::ptrdiff_t n) { return std::rand () % n; });
   return 0;
 }
 
@@ -3289,8 +3295,11 @@ MNM_Origin_Multiclass::release_one_interval_biclass (
           m_origin_node->m_in_veh_queue.push_back (_veh);
         }
     }
+  // Pass the seeded std::rand explicitly so the shuffle honors set_random_state on
+  // every platform (the 2-argument form ignores it on libc++/macOS, GH-28).
   std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
-                       m_origin_node->m_in_veh_queue.end ());
+                       m_origin_node->m_in_veh_queue.end (),
+                       [] (std::ptrdiff_t n) { return std::rand () % n; });
   return 0;
 }
 
