@@ -178,8 +178,12 @@ MNM_Origin::release_one_interval (TInt current_interval,
           m_origin_node->m_in_veh_queue.push_back (_veh);
         }
     }
+  // Pass the seeded std::rand explicitly: the 2-argument std::random_shuffle uses
+  // an implementation-defined RNG that, on libc++ (macOS), is not the std::rand
+  // reset by set_random_state, breaking reproducibility on Darwin (GH-28).
   std::random_shuffle (m_origin_node->m_in_veh_queue.begin (),
-                       m_origin_node->m_in_veh_queue.end ());
+                       m_origin_node->m_in_veh_queue.end (),
+                       [] (std::ptrdiff_t n) { return std::rand () % n; });
   return 0;
 }
 
