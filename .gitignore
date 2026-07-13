@@ -21,4 +21,12 @@ tags
 /examples/local_examples/
 /.cache/
 compile_commands.json
+# Local agent/session artifacts
+TODO.md
+AGENTS.md
+CLAUDE.md
+.ai_context.md
+CONTEXT.md
 /.claude/
+/.ai_agent/
+/docs/
