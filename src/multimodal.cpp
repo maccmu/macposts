@@ -496,7 +496,7 @@ MNM_Busstop_Virtual::hold_bus (TInt timestamp, MNM_Veh *veh, MNM_Veh_Multimodal 
       // just arriving
       // IAssert(m_passed_bus_counter == flow_scalar - 1);
       
-      // initialize a record for this real bus at this stop
+      // initialize a record for this real bus about to stop at this stop
       Record record;
       record.arrival_time = timestamp;
       record.bus_id = veh_multimodal->m_veh_ID;
@@ -557,7 +557,7 @@ MNM_Busstop_Virtual::hold_bus (TInt timestamp, MNM_Veh *veh, MNM_Veh_Multimodal 
       m_passed_bus_counter = 0;
       // always keep m_stop_boarding as false after potential use
       veh_multimodal->m_stop_boarding = false;
-      // record the departure time: first find the record, and then update the departure time
+      // record the departure time when a real bus about to leave the stop: first find the record, and then update the departure time
       Record *_this_record = nullptr;
       for (auto& rec : m_boarding_alighting_record.records) {
           if (rec.route_order == veh_multimodal->m_route_order) {
@@ -1936,7 +1936,7 @@ MNM_Veh_Multimodal::MNM_Veh_Multimodal (TInt ID, TInt vehicle_class,
   m_route_order = -1; 
   m_passenger_pool = std::deque<MNM_Passenger *> ();
   m_metro = is_metro;
-  m_stop_boarding = false; // for bus, stop boarding when the current interval is not fulle used, i.e., the total boarding passengers is less than the max that can be boarded
+  m_stop_boarding = false; // for bus, stop boarding when the current interval is not fully used, i.e., the total boarding passengers is less than the max that can be boarded
 }
 
 MNM_Veh_Multimodal::~MNM_Veh_Multimodal ()
@@ -2241,7 +2241,7 @@ MNM_Veh_Multimodal::board_and_alight (TInt timestamp, MNM_Busstop *busstop)
             }
         if (_boarding_counter < (m_max_boarding_passengers_per_unit_time * busstop->m_flow_scalar))
             { // if the current interval is not fully used, i.e., the total boarding passengers is less than the max that can be boarded, stop boarding in the next interval
-              // note the condition is: next is beyond the min_dwell_intervals and no alighting passengers in the next interval (this is garanteed by the condition in function hold_bus)
+              // note the condition is: next is beyond the min_dwell_intervals and no alighting passengers in the next interval (this is guaranteed by the condition in function hold_bus)
               m_stop_boarding = true;
             }
         else
@@ -3016,6 +3016,7 @@ MNM_Origin_Multimodal::release_one_interval (TInt current_interval,
           for (int i = 0; i < _veh_to_release; ++i)
             {
               m_released_buses += 1;
+              // vehicle route order = m_released_buses, so it is per-origin and flow-scalar-inflated. But their relative order is preserved, which is important for bus/metro vehicle assignment
               if (_vfactory->m_has_metro == TInt (1) && metro_idSet.find(_demand_it_it->first) != metro_idSet.end())
                 {
                   _veh = _vfactory->make_veh_multimodal (current_interval,

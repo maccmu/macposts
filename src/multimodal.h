@@ -102,6 +102,10 @@ struct Record {
 
 struct BoardingAlightingRecord {
   std::vector<Record> records;
+  // (path_id, assign_interval, stop_id, route_order) → count, 
+  // i.e., how many passengers of a given path departing during a specific assignment interval boarded/alighted a specific bus-trip (route_order) at a specific stop 
+  // Updated in board_and_alight() for each passenger, 
+  // Conceptually similar to CC tree, but used for building DAR matrices per bus trip (rotue_order)
   std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> path_interval_bt_stop_board_count;
   std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> path_interval_pnr_stop_board_count;
   std::map<std::tuple<TInt, TInt, TInt, TInt>, TInt> path_interval_bt_stop_alight_count;
@@ -459,6 +463,12 @@ public:
                                     TInt assign_interval,
                                     TFlt adaptive_ratio) override;
 
+  // CAVEAT: this adds a 6th param (adaptive_ratio_pnr), so it does NOT override
+  // the 5-arg MNM_Origin::release_one_interval_biclass virtual -- it hides it.
+  // Must be called through a MNM_Origin_Multimodal* static type (as done in
+  // MNM_Dta_Multimodal::load_once). If ever called on a base MNM_Origin* /
+  // MNM_Origin_Multiclass* pointing at a multimodal origin (5-arg call), it will
+  // silently dispatch to the multiclass version and skip all PnR/bus release.
   int release_one_interval_biclass (TInt current_interval,
                                             MNM_Veh_Factory *veh_factory,
                                             TInt assign_interval,

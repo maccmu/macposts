@@ -4534,6 +4534,11 @@ Mmdta::get_bus_boarding_alighting_record()
 
 py::tuple Mmdta::get_sparse_dar_matrix_bt_by_round()
 {
+    // DAR per bus trip
+    // returns a py::tuple of (row_idx, col_idx, values, row_names, col_names):
+    // rows = (stop_id, route_order, "board"|"alight") — a specific board/alight event on a specific bus trip at a stop;
+    // columns = (path_id, interval) — the demand path/interval that produced it;
+    // values = the counts from these maps.
     std::set<std::pair<TInt, TInt>> col_key_set;
     std::set<std::tuple<TInt, TInt, std::string>> row_key_set;
 
@@ -4638,6 +4643,11 @@ py::tuple Mmdta::get_sparse_dar_matrix_bt_by_round()
 
 py::tuple Mmdta::get_sparse_dar_matrix_pnr_by_round()
 {
+    // DAR per bus trip
+    // returns a py::tuple of (row_idx, col_idx, values, row_names, col_names):
+    // rows = (stop_id, route_order, "board"|"alight") — a specific board/alight event on a specific bus trip at a stop;
+    // columns = (path_id, interval) — the demand path/interval that produced it;
+    // values = the counts from these maps.
     std::set<std::pair<TInt, TInt>> col_key_set;
     std::set<std::tuple<TInt, TInt, std::string>> row_key_set;
 
