@@ -941,7 +941,12 @@ MNM_IO::load_path_table (const std::string &node_seq_file_name,
 
         for (int i = 0; i < Num_Path;)
         {
-          std::getline (_path_table_link_seq_file, _line);
+          if (!std::getline (_path_table_link_seq_file, _line))
+            {
+              throw std::runtime_error (
+                "MNM_IO::load_path_table, path_table_link_seq file ended "
+                "before num_path paths were read");
+            }
           _line = trim (_line);
           if (_line.empty () || _line[0] == '#')
             {
@@ -952,9 +957,14 @@ MNM_IO::load_path_table (const std::string &node_seq_file_name,
             {
               while (1)
                 {
-                  std::getline (_buffer_file, _buffer_line);
+                  if (!std::getline (_buffer_file, _buffer_line))
+                    {
+                      throw std::runtime_error (
+                        "MNM_IO::load_path_table, buffer file ended before "
+                        "num_path rows were read");
+                    }
                   _buffer_line = trim (_buffer_line);
-                  if (!_line.empty () && _line[0] != '#')
+                  if (!_buffer_line.empty () && _buffer_line[0] != '#')
                     {
                       break;
                     }
@@ -1041,7 +1051,12 @@ MNM_IO::load_path_table (const std::string &node_seq_file_name,
 
         for (int i = 0; i < Num_Path;)
         {
-          std::getline (_path_table_file, _line);
+          if (!std::getline (_path_table_file, _line))
+            {
+              throw std::runtime_error (
+                "MNM_IO::load_path_table, path_table file ended before "
+                "num_path paths were read");
+            }
           _line = trim (_line);
           if (_line.empty () || _line[0] == '#')
             {
@@ -1052,9 +1067,14 @@ MNM_IO::load_path_table (const std::string &node_seq_file_name,
             {
               while (1)
                 {
-                  std::getline (_buffer_file, _buffer_line);
+                  if (!std::getline (_buffer_file, _buffer_line))
+                    {
+                      throw std::runtime_error (
+                        "MNM_IO::load_path_table, buffer file ended before "
+                        "num_path rows were read");
+                    }
                   _buffer_line = trim (_buffer_line);
-                  if (!_line.empty () && _line[0] != '#')
+                  if (!_buffer_line.empty () && _buffer_line[0] != '#')
                     {
                       break;
                     }
