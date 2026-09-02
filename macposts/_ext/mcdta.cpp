@@ -602,7 +602,7 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
   bool skip_check, int cong_frequency,
   const std::string &result_folder)
 {
-  Assert (m_mcdta == nullptr);
+  if (!m_mcdta) throw std::runtime_error("call initialize_multi_route_graph first");
   MNM_ConfReader *_config
     = new MNM_ConfReader (folder + "/config.conf", "STAT");
   std::string _rec_folder = (result_folder == "")
@@ -678,20 +678,16 @@ Mcdta::run_multi_route_graph(const std::string &folder, bool verbose,
   printf ("\n====================================== Finished loading! "
           "=======================================\n\n\n");
   
-  // Redirect stdout to a file named "output.txt"
-	FILE* log_file = freopen((folder + "/" + _rec_folder + "/simulation.txt").c_str(), "w", stdout);
-	if (log_file == nullptr) {
-        // Handle the error if freopen fails
-        fprintf(stderr, "Failed to open the file for writing.\n");
-        return 1; // Exit with an error code
+  std::ofstream _stats_file (folder + "/" + _rec_folder + "/simulation.txt");
+  if (!_stats_file.is_open ())
+    {
+      throw std::runtime_error ("failed to open file: " + folder + "/"
+                                + _rec_folder + "/simulation.txt");
     }
-	// freopen((folder + "/" + rec_folder + "/simulation.txt").c_str(), "w", stdout);
-	// Now printf will write to "output.txt" instead of the terminal
-	MNM::print_vehicle_statistics (dynamic_cast<MNM_Veh_Factory_Multiclass_Subclass*>(m_mcdta -> m_veh_factory));
-	// Close the file
-	fclose(stdout);
-	// Redirect stdout back to the terminal
-  freopen("CON", "w", stdout);
+  // virtual dispatch picks the subclass override with per-subclass stats
+  _stats_file << m_mcdta->m_veh_factory->print_vehicle_statistics ()
+              << std::endl;
+  _stats_file.close ();
 
   print_simulation_results_subclass (folder + "/" + _rec_folder, cong_frequency);
   printf ("Finished DNL!\n"); 
@@ -1369,8 +1365,18 @@ Mcdta::build_link_cost_map (bool with_congestion_indicator)
 {
   MNM_Dlink_Multiclass *_link;
   // TODO: what if not hybrid routing, better way to get vot
-  TFlt _vot = dynamic_cast<MNM_Routing_Biclass_Hybrid *> (m_mcdta->m_routing)
-                ->m_routing_adaptive->m_vot
+  // MNM_Routing_Biclass_Hybrid_Subclass derives from MNM_Routing, not
+  // MNM_Routing_Biclass_Hybrid, so this cast is null in multi-route-graph
+  // (subclass) mode -- fail with a clear error instead of a segfault
+  auto *_hybrid_routing
+    = dynamic_cast<MNM_Routing_Biclass_Hybrid *> (m_mcdta->m_routing);
+  if (_hybrid_routing == nullptr)
+    {
+      throw std::runtime_error (
+        "Mcdta::build_link_cost_map is not supported for multi-route-graph "
+        "(subclass) routing");
+    }
+  TFlt _vot = _hybrid_routing->m_routing_adaptive->m_vot
               * m_mcdta->m_unit_time; // money / second -> money / interval
   for (auto _link_it : m_mcdta->m_link_factory->m_link_map)
     {
@@ -1846,8 +1852,18 @@ Mcdta::get_lowest_cost_path (int start_interval, int o_node_ID, int d_node_ID)
   MNM_Pathset *_path_set;
   MNM_TDSP_Tree *_tdsp_tree;
 
-  _path_table = dynamic_cast<MNM_Routing_Biclass_Hybrid *> (m_mcdta->m_routing)
-                  ->m_routing_fixed_car->m_path_table;
+  // MNM_Routing_Biclass_Hybrid_Subclass derives from MNM_Routing, not
+  // MNM_Routing_Biclass_Hybrid, so this cast is null in multi-route-graph
+  // (subclass) mode -- fail with a clear error instead of a segfault
+  auto *_hybrid_routing
+    = dynamic_cast<MNM_Routing_Biclass_Hybrid *> (m_mcdta->m_routing);
+  if (_hybrid_routing == nullptr)
+    {
+      throw std::runtime_error (
+        "Mcdta::get_lowest_cost_path is not supported for multi-route-graph "
+        "(subclass) routing");
+    }
+  _path_table = _hybrid_routing->m_routing_fixed_car->m_path_table;
   _path_set = nullptr;
   if (_path_table->find (o_node_ID) != _path_table->end ()
       && _path_table->find (o_node_ID)->second->find (d_node_ID)
@@ -3711,6 +3727,17 @@ Mcdta::get_car_dar_matrix (py::array_t<int> start_intervals,
   //   m_link_vec[i] -> m_N_in_tree -> print_out();
   // }
 
+  if (m_link_vec.empty ())
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::get_car_dar_matrix, no link registered");
+    }
+  if (m_path_set.empty () && m_pathID_set.empty ())
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::get_car_dar_matrix, no path registered");
+    }
+
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
       // printf("Current processing time: %d\n", t);
@@ -3800,6 +3827,17 @@ Mcdta::get_truck_dar_matrix (py::array_t<int> start_intervals,
   // for (size_t i = 0; i<m_link_vec.size(); ++i){
   //   m_link_vec[i] -> m_N_in_tree -> print_out();
   // }
+
+  if (m_link_vec.empty ())
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::get_truck_dar_matrix, no link registered");
+    }
+  if (m_path_set.empty () && m_pathID_set.empty ())
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::get_truck_dar_matrix, no path registered");
+    }
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
@@ -3908,8 +3946,21 @@ Mcdta::save_car_dar_matrix (py::array_t<int> start_intervals,
       throw std::runtime_error ("failed to open file: " + file_name);
     }
 
-  int _num_path = m_path_vec.size ();
+  // multi-route-graph mode registers only path IDs (m_path_vec stays empty);
+  // fall back to m_pathID_set so DAR columns keep the release-interval offset
+  int _num_path = m_path_vec.empty () ? (int) m_pathID_set.size ()
+                                      : (int) m_path_vec.size ();
+  if (_num_path == 0)
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::save_car_dar_matrix, no path registered");
+    }
   int _num_link = m_link_vec.size ();
+  if (_num_link == 0)
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::save_car_dar_matrix, no link registered");
+    }
   int _x, _y;
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
@@ -4030,8 +4081,21 @@ Mcdta::save_truck_dar_matrix (py::array_t<int> start_intervals,
       throw std::runtime_error ("failed to open file: " + file_name);
     }
 
-  int _num_path = m_path_vec.size ();
+  // multi-route-graph mode registers only path IDs (m_path_vec stays empty);
+  // fall back to m_pathID_set so DAR columns keep the release-interval offset
+  int _num_path = m_path_vec.empty () ? (int) m_pathID_set.size ()
+                                      : (int) m_path_vec.size ();
+  if (_num_path == 0)
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::save_truck_dar_matrix, no path registered");
+    }
   int _num_link = m_link_vec.size ();
+  if (_num_link == 0)
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::save_truck_dar_matrix, no link registered");
+    }
   int _x, _y;
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
@@ -4116,7 +4180,17 @@ Mcdta::get_complete_car_dar_matrix (py::array_t<int> start_intervals,
   // start_intervals and end_intervals are like [0, 180, 360, ...] and [180,
   // 360, 720, ...] with increment of ass_freq
   int _num_e_path = m_path_vec.size ();
+  if (_num_e_path == 0)
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::get_complete_car_dar_matrix, no path registered");
+    }
   int _num_e_link = m_link_vec.size ();
+  if (_num_e_link == 0)
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::get_complete_car_dar_matrix, no link registered");
+    }
   auto start_buf = start_intervals.request ();
   auto end_buf = end_intervals.request ();
   auto f_buf = f.request ();
@@ -4233,7 +4307,17 @@ Mcdta::get_complete_truck_dar_matrix (py::array_t<int> start_intervals,
   // start_intervals and end_intervals are like [0, 180, 360, ...] and [180,
   // 360, 720, ...] with increment of ass_freq
   int _num_e_path = m_path_vec.size ();
+  if (_num_e_path == 0)
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::get_complete_truck_dar_matrix, no path registered");
+    }
   int _num_e_link = m_link_vec.size ();
+  if (_num_e_link == 0)
+    {
+      throw std::runtime_error (
+        "Error, Mcdta::get_complete_truck_dar_matrix, no link registered");
+    }
   auto start_buf = start_intervals.request ();
   auto end_buf = end_intervals.request ();
   auto f_buf = f.request ();

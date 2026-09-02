@@ -2105,6 +2105,17 @@ Dta::get_dar_matrix (py::array_t<int> start_intervals,
   //   m_link_vec[i] -> m_N_in_tree -> print_out();
   // }
 
+  if (m_link_vec.empty ())
+    {
+      throw std::runtime_error (
+        "Error, Dta::get_dar_matrix, no link is registered");
+    }
+  if (m_path_map.empty ())
+    {
+      throw std::runtime_error (
+        "Error, Dta::get_dar_matrix, no path is registered");
+    }
+
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
       std::cout << "************ DAR link " << m_link_vec[i]->m_link_ID
@@ -2204,7 +2215,17 @@ Dta::save_dar_matrix (py::array_t<int> start_intervals,
     }
 
   int _num_path = m_path_map.size ();
+  if (_num_path == 0)
+    {
+      throw std::runtime_error (
+        "Error, Dta::save_dar_matrix, no path is registered");
+    }
   int _num_link = m_link_vec.size ();
+  if (_num_link == 0)
+    {
+      throw std::runtime_error (
+        "Error, Dta::save_dar_matrix, no link is registered");
+    }
   int _x, _y;
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
@@ -2306,6 +2327,17 @@ Dta::get_complete_dar_matrix (py::array_t<int> start_intervals,
   std::vector<Eigen::Triplet<double>> _record;
   // pre-allocate sufficient space for dar
   _record.reserve (int (1e9));
+
+  if (m_link_vec.empty ())
+    {
+      throw std::runtime_error (
+        "Error, Dta::get_complete_dar_matrix, no link is registered");
+    }
+  if (m_path_map.empty ())
+    {
+      throw std::runtime_error (
+        "Error, Dta::get_complete_dar_matrix, no path is registered");
+    }
 
   for (size_t i = 0; i < m_link_vec.size (); ++i)
     {
