@@ -2251,6 +2251,13 @@ MNM_IO_Multiclass_Subclass::build_demand_subclass (const std::string &file_folde
                         }
                         else if (_init_demand_split == 1)
                         {
+                            // previous simple spreading logic
+                            // _demand = TFlt (std::stod (_words[2 + q * _max_interval + j]))
+                            //                 / TFlt (_num_of_minute);
+                            // for (int k = 0; k < _num_of_minute; ++k)
+                            // {
+                            //     _demand_vector[j * _num_of_minute + k] = _demand;
+                            // }
                             // find suitable releasing interval so that the
                             // agent-based DNL is feasible
                             for (int p = 0; p < _num_of_minute; ++p)
@@ -2265,6 +2272,13 @@ MNM_IO_Multiclass_Subclass::build_demand_subclass (const std::string &file_folde
                                         _demand_vector[j * _num_of_minute + k] = _demand;
                                     }
                                     break;
+                                }
+                                // too low even in one minute: release it all in the first
+                                // minute and let stochastic rounding handle the fraction,
+                                // otherwise the demand is dropped
+                                else if (p == _num_of_minute - 1)
+                                {
+                                    _demand_vector[j * _num_of_minute] = _demand;
                                 }
                             }
                         }

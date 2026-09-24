@@ -3988,6 +3988,14 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
                                 }
                               break;
                             }
+                          // too low even in one minute: release it all in the
+                          // first minute and let stochastic rounding handle
+                          // the fraction, otherwise the demand is dropped
+                          else if (p == _num_of_minute - 1)
+                            {
+                              _demand_vector_car[j * _num_of_minute]
+                                = _demand_car;
+                            }
                         }
                       for (int p = 0; p < _num_of_minute; ++p)
                         {
@@ -4003,6 +4011,14 @@ MNM_IO_Multiclass::build_demand_multiclass (const std::string &file_folder,
                                     = _demand_truck;
                                 }
                               break;
+                            }
+                          // too low even in one minute: release it all in the
+                          // first minute and let stochastic rounding handle
+                          // the fraction, otherwise the demand is dropped
+                          else if (p == _num_of_minute - 1)
+                            {
+                              _demand_vector_truck[j * _num_of_minute]
+                                = _demand_truck;
                             }
                         }
                     }

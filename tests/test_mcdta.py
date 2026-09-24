@@ -1,3 +1,4 @@
+import shutil
 import macposts
 import numpy as np
 import platform
@@ -103,3 +104,34 @@ def test_7link_mc(network_7link_mc):
     assert truck_in_ccs.shape == car_in_ccs.shape
     assert truck_out_ccs.shape == truck_out_ccs.shape
     assert np.isclose(car_in_ccs[0, 0], 0)
+
+
+def test_demand_split_keeps_sub_vehicle_demand(network_7link_mc, tmp_path):
+    """init_demand_split=1 must not discard demand below one vehicle a minute.
+
+    The disaggregation loop looks for a releasing window wide enough that every
+    minute carries at least one (flow-scalar-inflated) vehicle. When even the
+    whole interval packed into a single minute stays under one vehicle, it used
+    to fall out of the loop having written nothing, silently dropping that OD's
+    demand. Here flow_scalar = 10 and the demand is 0.09 per interval, i.e. 0.9
+    vehicles -- always under the threshold, so every interval took that path.
+    """
+    net = tmp_path / "net"
+    shutil.copytree(network_7link_mc, net)
+    config = (net / "config.conf").read_text()
+    assert "init_demand_split = 0" in config
+    (net / "config.conf").write_text(
+        config.replace("init_demand_split = 0", "init_demand_split = 1")
+    )
+    (net / "MNM_input_demand").write_text("1 1 " + " ".join(["0.09"] * 20) + "\n")
+
+    macposts.set_random_state(SEED)
+    mcdta = macposts.Mcdta.from_files(net)
+    mcdta.register_links()
+    mcdta.install_cc()
+    mcdta.run_whole()
+
+    total_car = mcdta.get_car_in_ccs([1])[-1, 0]
+    total_truck = mcdta.get_truck_in_ccs([1])[-1, 0]
+    assert total_car > 0
+    assert total_truck > 0
