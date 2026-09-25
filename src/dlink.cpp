@@ -259,6 +259,12 @@ int
 MNM_Dlink_Ctm::update_out_veh ()
 {
   TFlt _temp_out_flux, _supply, _demand;
+  // The node has already moved vehicles out of m_finished_array this step, so
+  // recount the last cell before its supply is read. Vehicles still blocked in
+  // m_finished_array keep counting, so storage and spillback are unchanged.
+  m_cell_array[m_num_cells - 1]->m_volume
+    = m_cell_array[m_num_cells - 1]->m_veh_queue.size ()
+      + m_finished_array.size ();
   if (m_num_cells > 1) // if only one cell, no update is needed
     {
       for (int i = 0; i < m_num_cells - 1; ++i)

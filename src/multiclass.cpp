@@ -612,6 +612,23 @@ MNM_Dlink_Ctm_Multiclass::update_out_veh ()
   TFlt _temp_out_flux_car, _supply_car, _demand_car;
   TFlt _temp_out_flux_truck, _supply_truck, _demand_truck;
 
+  // The node has already moved vehicles out of m_finished_array this step, so
+  // recount the last cell before its supply is read. Vehicles still blocked in
+  // m_finished_array keep counting, so storage and spillback are unchanged.
+  TInt _count_car = 0, _count_truck = 0;
+  for (MNM_Veh *_v : m_finished_array)
+    {
+      MNM_Veh_Multiclass *_veh = dynamic_cast<MNM_Veh_Multiclass *> (_v);
+      if (_veh->m_class == 0)
+        _count_car += 1;
+      if (_veh->m_class == 1)
+        _count_truck += 1;
+    }
+  Ctm_Cell_Multiclass *_last = m_cell_array[m_num_cells - 1];
+  _last->m_volume_car = _last->m_veh_queue_car.size () + _count_car;
+  _last->m_volume_truck = _last->m_veh_queue_truck.size () + _count_truck;
+  _last->update_perceived_density ();
+
   // no update is needed if only one cell
   if (m_num_cells > 1)
     {
