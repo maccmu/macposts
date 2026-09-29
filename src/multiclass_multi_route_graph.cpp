@@ -1809,10 +1809,24 @@ MNM_Routing_Biclass_Hybrid_Subclass::MNM_Routing_Biclass_Hybrid_Subclass(
 
 MNM_Routing_Biclass_Hybrid_Subclass::~MNM_Routing_Biclass_Hybrid_Subclass()
 {
+    // Several subclasses (car or truck) may share one path table (e.g.
+    // subclass_truck_path_table_mapping = 3,3,3), and ~MNM_Routing_Fixed deletes
+    // its m_path_table. Let only the first router holding a table delete it;
+    // deleting it again is a double free (try-catch cannot catch that).
+    std::unordered_set<Path_Table *> _owned_path_table;
     for (auto _it : m_routing_fixed_car_subclass)
     {
-        // multiple car subclasses may share the same path table
-        // MNM_Routing_Fixed deconstructor uses try-catch to handle this
+        if (!_owned_path_table.insert (_it.second->m_path_table).second)
+            _it.second->m_path_table = nullptr;
+    }
+    for (auto _it : m_routing_fixed_truck_subclass)
+    {
+        if (!_owned_path_table.insert (_it.second->m_path_table).second)
+            _it.second->m_path_table = nullptr;
+    }
+
+    for (auto _it : m_routing_fixed_car_subclass)
+    {
         delete _it.second;
     }
     for (auto _it : m_routing_adaptive_car_subclass)
@@ -1821,8 +1835,6 @@ MNM_Routing_Biclass_Hybrid_Subclass::~MNM_Routing_Biclass_Hybrid_Subclass()
     }
     for (auto _it : m_routing_fixed_truck_subclass)
     {
-        // multiple truck subclasses may share the same path table
-        // MNM_Routing_Fixed deconstructor uses try-catch to handle this
         delete _it.second;
     }
     for (auto _it : m_routing_adaptive_truck_subclass)
