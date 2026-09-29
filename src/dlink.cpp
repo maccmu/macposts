@@ -1,5 +1,6 @@
 #include "dlink.h"
 #include <cfloat>
+#include <cmath>
 
 MNM_Dlink::MNM_Dlink (TInt ID, TInt number_of_lane, TFlt length, TFlt ffs)
 {
@@ -330,7 +331,8 @@ MNM_Dlink_Ctm::clear_incoming_array (TInt timestamp)
   // printf("link ID: %d, in comming: %d, supply : %d\n", (int
   // )m_link_ID,(int)m_incoming_array.size(), (int) (get_link_supply() *
   // m_flow_scalar) );
-  if (get_link_supply () * m_flow_scalar < m_incoming_array.size ())
+  // the node rounds the supply stochastically, so up to ceil(supply) arrive
+  if (std::ceil (get_link_supply () * m_flow_scalar) < m_incoming_array.size ())
     {
       throw std::runtime_error ("wrong incoming array size");
     }
@@ -555,7 +557,7 @@ int
 MNM_Dlink_Pq::clear_incoming_array (TInt timestamp)
 {
   TInt _num_veh_tomove = std::min (TInt (m_incoming_array.size ()),
-                                   TInt (get_link_supply () * m_flow_scalar));
+                                   TInt (std::ceil (get_link_supply () * m_flow_scalar)));
   MNM_Veh *_veh;
   for (int i = 0; i < _num_veh_tomove; ++i)
     {
@@ -755,7 +757,7 @@ int
 MNM_Dlink_Lq::clear_incoming_array (TInt timestamp)
 {
   if (TInt (m_incoming_array.size ())
-      > TInt (get_link_supply () * m_flow_scalar))
+      > TInt (std::ceil (get_link_supply () * m_flow_scalar)))
     {
       throw std::runtime_error ("invalid incoming array size");
     }
@@ -1476,7 +1478,7 @@ MNM_Dlink_Ltm::clear_incoming_array (TInt timestamp)
 {
   // printf("MNM_Dlink_Ltm::clear_incoming_array\n");
   if (TInt (m_incoming_array.size ())
-      > TInt (get_link_supply () * m_flow_scalar))
+      > TInt (std::ceil (get_link_supply () * m_flow_scalar)))
     {
       throw std::runtime_error ("invalid incoming array size");
     }

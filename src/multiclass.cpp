@@ -2668,8 +2668,7 @@ MNM_Dnode_Inout_Multiclass::move_vehicle (TInt timestamp)
                           // MNM_Dlink_Ctm_Multiclass::clear_incoming_array()
                           // was not commented out (@_@)!
 
-                          // Always move 1 more vehicle
-                          _r = 0;
+                          _r = MNM_Ults::rand_flt ();
                           if (_r <= _to_move / _equiv_num)
                             {
                               move_one_vehicle (timestamp, _in_link, _out_link, _veh, i, j, _offset);

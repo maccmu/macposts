@@ -310,7 +310,11 @@ MNM_Dnode_Inout::round_flow_to_vehicle ()
         }
       // printf("Going to loop %d vs supply %lf\n", _to_move, _out_link ->
       // get_link_supply());
-      while (TFlt (_to_move) > (_out_link->get_link_supply () * m_flow_scalar))
+      // Round the supply stochastically (unbiased), once per out-link per
+      // step; flooring it starves short links at small flow_scalar.
+      TFlt _cap = TFlt (
+        MNM_Ults::round (_out_link->get_link_supply () * m_flow_scalar));
+      while (TFlt (_to_move) > _cap)
         {
           _rand_idx = rand () % m_in_link_array.size ();
           if (m_veh_tomove[_rand_idx * _offset + j] >= 1)
