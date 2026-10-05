@@ -2,6 +2,9 @@
 
 #include "multiclass.h"
 
+#include <deque>
+#include <fstream>
+
 // multiclass vehicles
 // car and truck both have subclasses, which may use different graph for routing
 
@@ -284,6 +287,48 @@ public:
 
   int m_veh_class;
   int m_veh_subclass;
+
+  /* Congestion-responsive ("dynamic") toll.
+
+     The charged toll is the time-dependent tariff already read from
+     MNM_input_link_td_attribute, scaled by the link's congestion ratio
+     (free-flow speed / realized speed) raised to m_dyn_alpha, then clamped to
+     [m_dyn_min, m_dyn_max] x tariff. Only links with a nonzero tariff are
+     affected, so the tariff doubles as the per-link on/off switch.
+
+     The price is recomputed every route_frq intervals (5 min here) but is set
+     from the mean link travel time over the preceding dynamic_toll_window_min
+     minutes, sampled at the cadence at which MNM_Statistics_Lrn republishes
+     m_record_interval_tt (rec_mode_para, 1 min here). Real express lanes
+     recompute on a similar cycle: TEXpress and I-77 Express both every 5 min.
+     Link COST still uses the current travel time; only the toll is smoothed.
+
+     Read once per router from config.conf [ADAPTIVE]:
+
+         dynamic_toll_alpha       exponent; 0 or absent = feature OFF
+         dynamic_toll_min         price floor, multiple of tariff (default 1)
+         dynamic_toll_max         price cap,   multiple of tariff (default 4)
+         dynamic_toll_window_min  averaging window in minutes    (default 15)
+         write_dynamic_toll_trace write dynamic_toll_trace_c*_s*.txt (default 1)
+
+     ALL ARE OPTIONAL. A missing key, a missing [ADAPTIVE] section and a
+     missing config.conf all fall back, so every scenario folder written before
+     this feature runs exactly as it did. The parameters live in the folder
+     rather than the environment on purpose: a DODE/calibration run must not be
+     able to inherit dynamic pricing from a stray shell variable. */
+  TFlt m_dyn_alpha;
+  TFlt m_dyn_min;
+  TFlt m_dyn_max;
+  TInt m_dyn_t;                   // timestamp of the current routing update
+  TInt m_dyn_sample_frq;          // intervals between fresh tt publications
+  TInt m_dyn_num_samples;         // window length, in those samples
+  std::unordered_map<TInt, std::deque<TFlt>> m_dyn_tt;  // per tolled link
+  bool m_dyn_trace_on;            // dynamic_toll_trace
+  std::string m_dyn_trace_path;   // per-router trace, opened on first write
+  std::ofstream m_dyn_trace;
+
+  // collect one travel-time sample per tolled link, called every interval
+  int sample_dynamic_toll_tt (TInt timestamp);
 };
 
 class MNM_Routing_Biclass_Hybrid_Subclass : public MNM_Routing

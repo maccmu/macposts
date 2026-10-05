@@ -1,5 +1,7 @@
 #include "multiclass_multi_route_graph.h"
+#include <algorithm>
 #include <cfloat>
+#include <cmath>
 
 using macposts::graph::Direction;
 
@@ -1571,12 +1573,88 @@ MNM_Routing_Adaptive_Subclass::MNM_Routing_Adaptive_Subclass (const std::string 
 {
     m_veh_class = veh_class;
     m_veh_subclass = veh_subclass;
+
+    // Every dynamic toll parameter is OPTIONAL. A config.conf without them --
+    // which is every folder written before this feature existed -- reads
+    // dynamic_toll_alpha = 0, and the whole mechanism stays off. A missing key,
+    // a missing section and a missing file all take the fallback.
+    auto _cfg = [&file_folder](const char *section, const char *key,
+                               double fallback) {
+        try
+          {
+            MNM_ConfReader _c (file_folder + "/config.conf", section);
+            return TFlt (_c.get_float (key));
+          }
+        catch (...)
+          {
+            return TFlt (fallback);
+          }
+    };
+    m_dyn_alpha = _cfg ("ADAPTIVE", "dynamic_toll_alpha", 0.0);
+    m_dyn_min = _cfg ("ADAPTIVE", "dynamic_toll_min", 1.0);
+    m_dyn_max = _cfg ("ADAPTIVE", "dynamic_toll_max", 4.0);
+    m_dyn_t = TInt (0);
+
+    // averaging window, in samples. MNM_Statistics_Lrn republishes
+    // m_record_interval_tt every rec_mode_para intervals, so that is the
+    // cadence at which a new travel time becomes available.
+    int _unit_time = int (_cfg ("DTA", "unit_time", 5.0));
+    int _rec_n = int (_cfg ("STAT", "rec_mode_para", 12.0));
+    m_dyn_sample_frq = std::max (1, _rec_n);
+    m_dyn_num_samples
+      = std::max (1, int (_cfg ("ADAPTIVE", "dynamic_toll_window_min", 15.0) * 60)
+                       / std::max (1, _unit_time * _rec_n));
+    m_dyn_tt = std::unordered_map<TInt, std::deque<TFlt>> ();
+    m_dyn_trace_on = _cfg ("ADAPTIVE", "write_dynamic_toll_trace", 1.0) > 0;
+    m_dyn_trace_path = file_folder + "/dynamic_toll_trace_c"
+                       + std::to_string (veh_class) + "_s"
+                       + std::to_string (veh_subclass) + ".txt";
+
+    // say so in the run log: a calibration run must never price dynamically
+    // without that being visible in its own record. fflush because stdout is
+    // block-buffered whenever it is redirected or piped.
+    if (m_dyn_alpha > 0 && veh_class == 0 && veh_subclass == 0)
+      {
+        printf ("DYNAMIC TOLL ON: alpha %.3f, clamp [%.2f, %.2f] x tariff, "
+                "%d-sample (%d s) window, trace %s\n",
+                double (m_dyn_alpha), double (m_dyn_min), double (m_dyn_max),
+                int (m_dyn_num_samples),
+                int (m_dyn_num_samples) * _unit_time * _rec_n,
+                m_dyn_trace_on ? "on" : "off");
+        fflush (stdout);
+      }
 }
 
 
 MNM_Routing_Adaptive_Subclass::~MNM_Routing_Adaptive_Subclass()
 {
-    ;
+    if (m_dyn_trace.is_open ())
+      m_dyn_trace.close ();
+    m_dyn_tt.clear ();
+}
+
+int
+MNM_Routing_Adaptive_Subclass::sample_dynamic_toll_tt (TInt timestamp)
+{
+  // one sample per tolled link each time the statistics module publishes a
+  // fresh travel time; the deque keeps the trailing window
+  if (timestamp % m_dyn_sample_frq != 0 && timestamp != 0)
+    return 0;
+  for (auto _it : m_statistics->m_record_interval_tt)
+    {
+      auto *_link = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (
+        m_link_factory->get_link (_it.first));
+      TFlt _tariff = m_veh_class == 0
+                       ? _link->m_toll_car_subclass[m_veh_subclass]
+                       : _link->m_toll_truck_subclass[m_veh_subclass];
+      if (_tariff <= 0)
+        continue;
+      auto &_buf = m_dyn_tt[_it.first];
+      _buf.push_back (_it.second);
+      while (int (_buf.size ()) > m_dyn_num_samples)
+        _buf.pop_front ();
+    }
+  return 0;
 }
 
 int
@@ -1586,19 +1664,67 @@ MNM_Routing_Adaptive_Subclass::update_link_cost ()
     { // it.second in seconds
       // tolls for subclass car and truck separately
       // in dollars
-      TFlt dynamic_toll_car = dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(m_link_factory->get_link (_it.first))->get_dynamic_toll_car(_it.second);
-      TFlt dynamic_toll_truck = dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(m_link_factory->get_link (_it.first))->get_dynamic_toll_truck(_it.second);
-      if (m_veh_class == 0) {
-        m_link_cost[_it.first]
-            = _it.second * m_vot + dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(m_link_factory->get_link (_it.first))->m_toll_car_subclass[m_veh_subclass];
-      }
-      else {
-        m_link_cost[_it.first]
-            = _it.second * m_vot + dynamic_cast<MNM_Dlink_Multiclass_Subclass*>(m_link_factory->get_link (_it.first))->m_toll_truck_subclass[m_veh_subclass];
-      }
-        
+      auto *_link = dynamic_cast<MNM_Dlink_Multiclass_Subclass *> (
+        m_link_factory->get_link (_it.first));
+      TFlt _tariff = m_veh_class == 0
+                       ? _link->m_toll_car_subclass[m_veh_subclass]
+                       : _link->m_toll_truck_subclass[m_veh_subclass];
+      TFlt _toll = _tariff;
+
+      if (m_dyn_alpha > 0 && _tariff > 0)
+        {
+          // price off the MEAN TRAVEL TIME over the trailing window, not the
+          // single current sample. Averaging travel time (not speed) is the
+          // physically meaningful mean: it is the mean time to traverse.
+          TFlt _tt = _it.second;
+          auto _b = m_dyn_tt.find (_it.first);
+          if (_b != m_dyn_tt.end () && !_b->second.empty ())
+            {
+              TFlt _sum = TFlt (0);
+              for (auto _x : _b->second)
+                _sum += _x;
+              _tt = _sum / TFlt (_b->second.size ());
+            }
+          // congestion ratio = free-flow speed / realized speed, >= 1
+          TFlt _ratio = m_veh_class == 0
+                          ? _link->get_dynamic_toll_car (_tt)
+                          : _link->get_dynamic_toll_truck (_tt);
+          _toll = _tariff * std::pow (_ratio, m_dyn_alpha);
+          // the floor also absorbs the CTM cell-quantization bias in _ratio,
+          // which keeps an uncongested link a few percent above free flow
+          _toll = std::min (std::max (_toll, m_dyn_min * _tariff),
+                            m_dyn_max * _tariff);
+
+          if (m_dyn_trace_on)
+            {
+              if (!m_dyn_trace.is_open ())
+                {
+                  m_dyn_trace.open (m_dyn_trace_path);
+                  // default 6 significant digits is not enough to compare the
+                  // tariff column against MNM_input_link_td_attribute exactly
+                  m_dyn_trace.precision (10);
+                  m_dyn_trace << "t link class subclass speed_now_mph "
+                                 "speed_window_mph n_samples tariff toll\n";
+                }
+              m_dyn_trace << m_dyn_t << " " << _it.first << " " << m_veh_class
+                          << " " << m_veh_subclass << " "
+                          << _link->m_length / _it.second * 3600.0 / 1600.0
+                          << " " << _link->m_length / _tt * 3600.0 / 1600.0
+                          << " "
+                          << (_b != m_dyn_tt.end () ? int (_b->second.size ())
+                                                    : 0)
+                          << " " << _tariff << " " << _toll << "\n";
+            }
+        }
+
+      m_link_cost[_it.first] = _it.second * m_vot + _toll;
+
       // printf("link %d, cost %f\n", _it.first(), m_link_cost[_it.first]());
     }
+  // flush once per pricing tick, not per row: an interrupted run then still
+  // leaves a complete trace up to its last tick
+  if (m_dyn_trace.is_open ())
+    m_dyn_trace.flush ();
   return 0;
 }
 
@@ -1607,8 +1733,11 @@ MNM_Routing_Adaptive_Subclass::update_routing (TInt timestamp)
 {
     // relying on m_statistics -> m_record_interval_tt, which is obtained in
     // simulation, not after simulation link::get_link_tt(), based on density
-  
+
     // update m_table
+    m_dyn_t = timestamp;  // for the dynamic toll trace in update_link_cost()
+    if (m_dyn_alpha > 0)
+      sample_dynamic_toll_tt (timestamp);
     update_routing_table(timestamp);
   
     /* route the vehicle in Origin nodes */
