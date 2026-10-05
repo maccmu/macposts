@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         # Not necessary because wrong version numbers do no harm in testing, but
         # may be useful in the future.
@@ -26,7 +26,7 @@ jobs:
         submodules: true
         persist-credentials: false
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python }}
         allow-prereleases: true
