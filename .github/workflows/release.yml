@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
         fetch-tags: true
@@ -21,7 +21,7 @@ jobs:
     - name: Build sdist
       run: pipx run build --sdist
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: artifact-sdist
         path: dist/*.tar.gz
@@ -36,7 +36,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
         fetch-tags: true
@@ -44,11 +44,11 @@ jobs:
         persist-credentials: false
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.x"
 
-    - uses: pypa/cibuildwheel@v2.22.0
+    - uses: pypa/cibuildwheel@v4.3.0
       env:
         CIBW_ARCHS: auto64
         CIBW_ARCHS_MACOS: "auto64 universal2"
@@ -79,7 +79,7 @@ jobs:
         CIBW_BUILD_FRONTEND_LINUX: "pip; args: --no-build-isolation"
         CIBW_BUILD_VERBOSITY: 1
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: artifact-wheel-${{ matrix.platform }}
         path: wheelhouse/*.whl
@@ -91,11 +91,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         pattern: artifact-*
         path: dist
@@ -111,7 +111,7 @@ jobs:
           '/^## v[0-9]/{if($2==v){p=1;next}else{p=0}};p' \
           CHANGELOG.md > relnote
 
-    - uses: softprops/action-gh-release@v1
+    - uses: softprops/action-gh-release@v3
       with:
         body_path: relnote
         files: dist/*
