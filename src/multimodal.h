@@ -1236,22 +1236,22 @@ TFlt get_link_inflow_passenger (MNM_Transit_Link *link, TFlt start_time,
                                 TFlt end_time);
 
 int add_dar_records_bus (std::vector<dar_record *> &record, MNM_Bus_Link *link,
-                         std::set<MNM_Path *> pathset, TFlt start_time,
+                         const std::set<MNM_Path *> &pathset, TFlt start_time,
                          TFlt end_time);
 
 int add_dar_records_passenger (std::vector<dar_record *> &record,
                                MNM_Transit_Link *link,
-                               std::set<MNM_Path *> pathset, TFlt start_time,
-                               TFlt end_time);
+                               const std::set<MNM_Path *> &pathset,
+                               TFlt start_time, TFlt end_time);
 
 int add_dar_records_bus (std::vector<dar_record *> &record, MNM_Bus_Link *link,
-                         std::set<TInt> pathID_set, TFlt start_time,
+                         const std::set<TInt> &pathID_set, TFlt start_time,
                          TFlt end_time);
 
 int add_dar_records_passenger (std::vector<dar_record *> &record,
                                MNM_Transit_Link *link,
-                               std::set<TInt> pathID_set, TFlt start_time,
-                               TFlt end_time);
+                               const std::set<TInt> &pathID_set,
+                               TFlt start_time, TFlt end_time);
 
 TFlt get_departure_cc_slope_walking_passenger (MNM_Walking_Link *link,
                                                TFlt start_time, TFlt end_time);

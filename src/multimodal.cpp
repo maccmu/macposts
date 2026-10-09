@@ -11573,7 +11573,7 @@ get_link_inflow_passenger (MNM_Transit_Link *link, TFlt start_time,
 
 int
 add_dar_records_bus (std::vector<dar_record *> &record, MNM_Bus_Link *link,
-                     std::set<MNM_Path *> pathset, TFlt start_time,
+                     const std::set<MNM_Path *> &pathset, TFlt start_time,
                      TFlt end_time)
 {
   // pathset includes fixed bus paths
@@ -11623,8 +11623,9 @@ add_dar_records_bus (std::vector<dar_record *> &record, MNM_Bus_Link *link,
 
 int
 add_dar_records_passenger (std::vector<dar_record *> &record,
-                           MNM_Transit_Link *link, std::set<MNM_Path *> pathset,
-                           TFlt start_time, TFlt end_time)
+                           MNM_Transit_Link *link,
+                           const std::set<MNM_Path *> &pathset, TFlt start_time,
+                           TFlt end_time)
 {
   // link includes bus and walking links
   // pathset includes PnR and transit paths
@@ -11673,7 +11674,8 @@ add_dar_records_passenger (std::vector<dar_record *> &record,
 
 int
 add_dar_records_bus (std::vector<dar_record *> &record, MNM_Bus_Link *link,
-                     std::set<TInt> pathID_set, TFlt start_time, TFlt end_time)
+                     const std::set<TInt> &pathID_set, TFlt start_time,
+                     TFlt end_time)
 {
   // pathset includes fixed bus paths
   if (link == nullptr)
@@ -11722,8 +11724,9 @@ add_dar_records_bus (std::vector<dar_record *> &record, MNM_Bus_Link *link,
 
 int
 add_dar_records_passenger (std::vector<dar_record *> &record,
-                           MNM_Transit_Link *link, std::set<TInt> pathID_set,
-                           TFlt start_time, TFlt end_time)
+                           MNM_Transit_Link *link,
+                           const std::set<TInt> &pathID_set, TFlt start_time,
+                           TFlt end_time)
 {
   // link includes bus and walking links
   // pathset includes PnR and transit paths

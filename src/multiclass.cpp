@@ -5133,8 +5133,9 @@ get_path_travel_time_truck (MNM_Path *path, TFlt start_time,
 
 int
 add_dar_records_car (std::vector<dar_record *> &record,
-                     MNM_Dlink_Multiclass *link, std::set<MNM_Path *> pathset,
-                     TFlt start_time, TFlt end_time)
+                     MNM_Dlink_Multiclass *link,
+                     const std::set<MNM_Path *> &pathset, TFlt start_time,
+                     TFlt end_time)
 {
   if (link == nullptr)
     {
@@ -5182,8 +5183,9 @@ add_dar_records_car (std::vector<dar_record *> &record,
 
 int
 add_dar_records_truck (std::vector<dar_record *> &record,
-                       MNM_Dlink_Multiclass *link, std::set<MNM_Path *> pathset,
-                       TFlt start_time, TFlt end_time)
+                       MNM_Dlink_Multiclass *link,
+                       const std::set<MNM_Path *> &pathset, TFlt start_time,
+                       TFlt end_time)
 {
   if (link == nullptr)
     {
@@ -5231,8 +5233,9 @@ add_dar_records_truck (std::vector<dar_record *> &record,
 
 int
 add_dar_records_car (std::vector<dar_record *> &record,
-                     MNM_Dlink_Multiclass *link, std::set<TInt> pathID_set,
-                     TFlt start_time, TFlt end_time)
+                     MNM_Dlink_Multiclass *link,
+                     const std::set<TInt> &pathID_set, TFlt start_time,
+                     TFlt end_time)
 {
   if (link == nullptr)
     {
@@ -5281,8 +5284,9 @@ add_dar_records_car (std::vector<dar_record *> &record,
 
 int
 add_dar_records_truck (std::vector<dar_record *> &record,
-                       MNM_Dlink_Multiclass *link, std::set<TInt> pathID_set,
-                       TFlt start_time, TFlt end_time)
+                       MNM_Dlink_Multiclass *link,
+                       const std::set<TInt> &pathID_set, TFlt start_time,
+                       TFlt end_time)
 {
   if (link == nullptr)
     {
@@ -5332,7 +5336,7 @@ add_dar_records_truck (std::vector<dar_record *> &record,
 int
 add_dar_records_eigen_car (std::vector<Eigen::Triplet<double>> &record,
                            MNM_Dlink_Multiclass *link,
-                           std::set<MNM_Path *> pathset, TFlt start_time,
+                           const std::set<MNM_Path *> &pathset, TFlt start_time,
                            TFlt end_time, int link_ind, int interval_ind,
                            int num_of_minute, int num_e_link, int num_e_path,
                            const double *f_ptr)
@@ -5393,7 +5397,7 @@ add_dar_records_eigen_car (std::vector<Eigen::Triplet<double>> &record,
 int
 add_dar_records_eigen_car (Eigen::SparseMatrix<double, Eigen::RowMajor> &mat,
                            MNM_Dlink_Multiclass *link,
-                           std::set<MNM_Path *> pathset, TFlt start_time,
+                           const std::set<MNM_Path *> &pathset, TFlt start_time,
                            TFlt end_time, int link_ind, int interval_ind,
                            int num_of_minute, int num_e_link, int num_e_path,
                            const double *f_ptr)
@@ -5453,9 +5457,10 @@ add_dar_records_eigen_car (Eigen::SparseMatrix<double, Eigen::RowMajor> &mat,
 int
 add_dar_records_eigen_truck (std::vector<Eigen::Triplet<double>> &record,
                              MNM_Dlink_Multiclass *link,
-                             std::set<MNM_Path *> pathset, TFlt start_time,
-                             TFlt end_time, int link_ind, int interval_ind,
-                             int num_of_minute, int num_e_link, int num_e_path,
+                             const std::set<MNM_Path *> &pathset,
+                             TFlt start_time, TFlt end_time, int link_ind,
+                             int interval_ind, int num_of_minute,
+                             int num_e_link, int num_e_path,
                              const double *f_ptr)
 {
   if (link == nullptr)
@@ -5514,9 +5519,10 @@ add_dar_records_eigen_truck (std::vector<Eigen::Triplet<double>> &record,
 int
 add_dar_records_eigen_truck (Eigen::SparseMatrix<double, Eigen::RowMajor> &mat,
                              MNM_Dlink_Multiclass *link,
-                             std::set<MNM_Path *> pathset, TFlt start_time,
-                             TFlt end_time, int link_ind, int interval_ind,
-                             int num_of_minute, int num_e_link, int num_e_path,
+                             const std::set<MNM_Path *> &pathset,
+                             TFlt start_time, TFlt end_time, int link_ind,
+                             int interval_ind, int num_of_minute,
+                             int num_e_link, int num_e_path,
                              const double *f_ptr)
 {
   if (link == nullptr)
